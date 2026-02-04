@@ -22,25 +22,21 @@ import {
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { toast } from "sonner";
-import { writeFile } from "@tauri-apps/plugin-fs";
-import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
+import { exportJsDataCSV } from "./generateCSV";
 
-interface TableCrawlProps {
+interface TableCrawlJsProps {
   rows: Array<{
-    url?: string;
-    title?: Array<{ title?: string; title_len?: string }>;
-    headings?: { h1?: string[]; h2?: string[] };
-    status_code?: number;
-    word_count?: number;
-    mobile?: boolean;
-    meta_robots?: { meta_robots: string[] };
+    url: string;
+    index: number;
   }>;
   rowHeight?: number;
   overscan?: number;
+  tabName?: string;
 }
 
 interface TruncatedCellProps {
@@ -50,26 +46,33 @@ interface TruncatedCellProps {
 }
 
 interface ResizableDividerProps {
-  onMouseDown: (e: React.MouseEvent) => void;
+  onMouseDown: (event: React.MouseEvent) => void;
 }
 
 interface TableHeaderProps {
   headers: string[];
   columnWidths: string[];
   columnAlignments: string[];
-  onResize: (index: number, e: React.MouseEvent) => void;
+  onResize: (index: number, event: React.MouseEvent) => void;
   onAlignToggle: (index: number) => void;
   columnVisibility: boolean[];
 }
 
 interface TableRowProps {
-  row: TableCrawlProps["rows"][number];
+  row: {
+    url: string;
+    index: number;
+  };
   index: number;
   columnWidths: string[];
   columnAlignments: string[];
   columnVisibility: boolean[];
   clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number) => void;
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => void;
 }
 
 interface ColumnPickerProps {
@@ -133,42 +136,63 @@ const TableHeader = ({
   onAlignToggle,
   columnVisibility,
 }: TableHeaderProps) => {
-  return useMemo(
-    () => (
-      <thead className="sticky top-0 z-10 domainCrawl border">
-        <tr>
-          {headers.map((header, index) =>
-            columnVisibility[index] ? (
-              <th
-                key={header}
-                style={{
-                  width: index === 0 ? "20px" : columnWidths[index],
-                  position: "relative",
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  userSelect: "none",
-                  minWidth: index === 0 ? "20px" : columnWidths[index],
-                  textAlign: columnAlignments[index],
-                  backgroundColor: "var(--background, white)",
-                }}
-                onClick={() => onAlignToggle(index)}
-              >
-                {header}
-                <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-              </th>
-            ) : null,
-          )}
-        </tr>
-      </thead>
-    ),
-    [
-      headers,
-      columnWidths,
-      columnAlignments,
-      onResize,
-      onAlignToggle,
-      columnVisibility,
-    ],
+  const visibleItems = useMemo(() => {
+    return headers
+      .map((header, index) => ({
+        header,
+        width: columnWidths[index],
+        alignment: columnAlignments[index],
+        visible: columnVisibility[index],
+        originalIndex: index,
+      }))
+      .filter((item) => item.visible);
+  }, [headers, columnWidths, columnAlignments, columnVisibility]);
+
+  return (
+    <div
+      className="domainCrawl border-b bg-white dark:bg-brand-darker"
+      style={{
+        display: "grid",
+        gridTemplateColumns: visibleItems
+          .map((item) =>
+            item.originalIndex === 1 ? "1fr" : item.width,
+          )
+          .join(" "),
+        height: "30px",
+        alignItems: "center",
+        fontSize: "12px",
+        width: "100%",
+      }}
+    >
+      {visibleItems.map((item) => (
+        <div
+          key={item.header}
+          style={{
+            position: "relative",
+            padding: "8px",
+            userSelect: "none",
+            justifyContent:
+              item.alignment === "center"
+                ? "center"
+                : item.alignment === "right"
+                  ? "flex-end"
+                  : "flex-start",
+            height: "30px",
+            display: "flex",
+            alignItems: "center",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+          onClick={() => onAlignToggle(item.originalIndex)}
+          className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark  bg-white shadow dark:border"
+        >
+          {item.header}
+          <ResizableDivider
+            onMouseDown={(e) => onResize(item.originalIndex, e)}
+          />
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -181,57 +205,69 @@ const TableRow = ({
   clickedCell,
   handleCellClick,
 }: TableRowProps) => {
-  const rowData = useMemo(
-    () => [index + 1, row?.url || row || ""],
-    [row, index],
-  );
+  const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
 
-  return useMemo(
-    () => (
-      <>
-        {rowData.map((cell, cellIndex) =>
-          columnVisibility[cellIndex] ? (
-            <td
-              key={`cell-${index}-${cellIndex}`}
-              onClick={() => handleCellClick(index, cellIndex, cell.toString())}
-              style={{
-                width: cellIndex === 0 ? "40px" : columnWidths[cellIndex],
-                border: "1px solid #ddd",
-                padding: "8px",
-                paddingLeft: cellIndex === 0 ? "20px" : "0px",
-                textAlign: columnAlignments[cellIndex],
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                minWidth: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
-              }}
-              className="dark:text-white/50 cursor-pointer"
-            >
-              <TruncatedCell
-                text={cell?.toString()}
-                width={cellIndex === 0 ? "30px" : columnWidths[cellIndex]}
-              />
-            </td>
-          ) : null,
-        )}
-      </>
-    ),
-    [
-      rowData,
-      columnWidths,
-      columnAlignments,
-      columnVisibility,
-      index,
-      clickedCell,
-      handleCellClick,
-    ],
+  const visibleItems = useMemo(() => {
+    return rowData
+      .map((cell, i) => ({
+        cell,
+        width: columnWidths[i],
+        alignment: columnAlignments[i],
+        visible: columnVisibility[i],
+        originalIndex: i,
+      }))
+      .filter((item) => item.visible);
+  }, [rowData, columnWidths, columnAlignments, columnVisibility]);
+
+  const isRowClicked = clickedCell.row === index;
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: visibleItems
+          .map((item) =>
+            item.originalIndex === 1 ? "1fr" : item.width,
+          )
+          .join(" "),
+        height: "100%",
+        alignItems: "center",
+        color: isRowClicked ? "white" : "inherit",
+        width: "100%",
+      }}
+      className="dark:text-white/50 cursor-pointer not-selectable"
+    >
+      {visibleItems.map((item) => (
+        <div
+          key={`cell-${index}-${item.originalIndex}`}
+          onClick={() =>
+            handleCellClick(index, item.originalIndex, item.cell.toString())
+          }
+          style={{
+            padding: "8px",
+            justifyContent:
+              item.alignment === "center"
+                ? "center"
+                : item.alignment === "right"
+                  ? "flex-end"
+                  : "flex-start",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+          }}
+          className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
+            ? "bg-blue-600"
+            : index % 2 === 0
+              ? "bg-white dark:bg-brand-darker"
+              : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
+        >
+          <TruncatedCell text={item.cell?.toString()} width="100%" />
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -279,10 +315,10 @@ const ColumnPicker = ({
 
 const TableCrawlJs = ({
   rows,
-  rowHeight = 41,
+  rowHeight = 25,
   overscan = 18,
   tabName,
-}: TableCrawlProps) => {
+}: TableCrawlJsProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
@@ -292,50 +328,7 @@ const TableCrawlJs = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
-  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
-    useGlobalCrawlStore();
 
-  // SET THE TAURI STUFF FOR THE DOWNLOAD
-  const handleDownload = async () => {
-    if (!rows.length) {
-      toast.error("No data to download");
-      return;
-    }
-
-    // Set the loader state to true
-    setIsGeneratingExcel(true);
-    try {
-      // Call the backend command to generate the Excel file
-
-      const fileBuffer = await invoke("create_excel_two_cols", {
-        data: rows,
-      });
-
-      setIsGeneratingExcel(false);
-      // Prompt the user to choose a file path to save the Excel file
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
-      });
-
-      if (filePath) {
-        // Convert the Uint8Array to a binary file and save it
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
-      } else {
-        console.log("User canceled the save dialog.");
-      }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
-    }
-  };
-
-  // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;
     cell: number | null;
@@ -343,108 +336,99 @@ const TableCrawlJs = ({
     row: null,
     cell: null,
   });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
 
-  const filterTableURL = (arr: { url: string }[], url: string) => {
-    if (!arr || arr.length === 0) return [];
-    return arr.filter((item) => item.url === url);
+  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+
+  // Dynamically adjust ID column width based on the number of rows
+  useEffect(() => {
+    if (rows && rows.length > 0) {
+      const maxId = rows.length;
+      // Calculate width: ~8px per digit + 20px padding
+      const calculatedWidth = Math.max(40, maxId.toString().length * 8 + 20);
+      setColumnWidths((prev) => {
+        const newWidths = [...prev];
+        if (newWidths[0] !== `${calculatedWidth}px`) {
+          newWidths[0] = `${calculatedWidth}px`;
+          return newWidths;
+        }
+        return prev;
+      });
+    }
+  }, [rows.length]);
+
+  const handleDownload = async () => {
+    if (!rows.length) {
+      toast.error("No data to download");
+      return;
+    }
+
+    toast.info("Getting your data ready...");
+    try {
+      await exportJsDataCSV(rows);
+    } catch (error) {
+      console.error("Error during export:", error);
+      toast.error("Failed to export data");
+    }
   };
 
-  // Handle cell click
   const handleCellClick = (
     rowIndex: number,
     cellIndex: number,
     cellContent: string,
   ) => {
-    setClickedCell((prevClickedCell) => {
-      if (
-        prevClickedCell.row === rowIndex &&
-        prevClickedCell.cell === cellIndex
-      ) {
-        // If the clicked cell is already highlighted, unhighlight it
+    setClickedCell((prev) => {
+      if (prev.row === rowIndex && prev.cell === cellIndex) {
         return { row: null, cell: null };
-      } else {
-        // Otherwise, highlight the clicked cell
-        return { row: rowIndex, cell: cellIndex };
       }
+      return { row: rowIndex, cell: cellIndex };
     });
-
-    if (cellIndex === 1) {
-      // const urlData = filterTableURL(rows, cellContent);
-      // setSelectedTableURL(urlData);
-      // console.log(urlData);
-    }
-
-    // console.log(cellContent, rowIndex, cellIndex);
   };
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Memoize filtered rows
   const filteredRows = useMemo(() => {
     if (!rows || !Array.isArray(rows)) return [];
+    if (!searchTerm) return rows;
 
-    const normalizeText = (text: string) =>
-      text?.toString().toLowerCase().replace(/-/g, "") ?? "";
-
-    const searchTermNormalized = normalizeText(searchTerm);
-
-    return searchTerm
-      ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
-      : rows;
+    const searchTermNormalized = searchTerm.toLowerCase();
+    return rows.filter((row) =>
+      row.url.toLowerCase().includes(searchTermNormalized),
+    );
   }, [rows, searchTerm]);
 
-  // Initialize virtualizer
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    estimateSize: () => rowHeight,
     overscan,
   });
 
-  // Debounced search handler
   const debouncedSearch = useMemo(
     () => debounce((value: string) => setSearchTerm(value), 300),
     [],
   );
 
-  // Cleanup
   useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
+    return () => debouncedSearch.cancel();
   }, [debouncedSearch]);
 
-  // Column resizing handlers
-  const handleMouseDown = useCallback(
-    (index: number, event: React.MouseEvent) => {
-      setIsResizing(index);
-      startXRef.current = event.clientX;
-      event.preventDefault();
-    },
-    [],
-  );
+  const handleMouseDown = useCallback((index: number, event: React.MouseEvent) => {
+    setIsResizing(index);
+    startXRef.current = event.clientX;
+    event.preventDefault();
+  }, []);
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
       if (isResizing === null) return;
-
       const delta = event.clientX - startXRef.current;
-      setColumnWidths((prevWidths) => {
-        const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizing]);
-        newWidths[isResizing] = `${Math.max(
-          isResizing === 0 ? 40 : 50,
-          currentWidth + delta,
-        )}px`;
-        return newWidths;
+      setColumnWidths((prev) => {
+        const next = [...prev];
+        const currentWidth = parseInt(next[isResizing]);
+        next[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
+        return next;
       });
       startXRef.current = event.clientX;
     },
@@ -455,12 +439,10 @@ const TableCrawlJs = ({
     setIsResizing(null);
   }, []);
 
-  // Event listeners for resizing
   useEffect(() => {
     if (isResizing !== null) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
-
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
@@ -468,28 +450,17 @@ const TableCrawlJs = ({
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  // Calculate total table width
   const totalWidth = useMemo(
     () =>
-      columnWidths.reduce((acc, width, index) => {
-        if (typeof width === "string") {
-          if (width.endsWith("px")) {
-            return acc + parseFloat(width);
-          } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
-          }
-        }
-        return acc + (index === 0 ? 40 : 100);
-      }, 0),
+      columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
     [columnWidths],
   );
 
   const toggleColumnAlignment = useCallback((index: number) => {
     setColumnAlignments((prev) => {
-      const newAlignments = [...prev];
-      newAlignments[index] =
-        newAlignments[index] === "center" ? "left" : "center";
-      return newAlignments;
+      const next = [...prev];
+      next[index] = next[index] === "center" ? "left" : "center";
+      return next;
     });
   }, []);
 
@@ -497,12 +468,12 @@ const TableCrawlJs = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable z-20 pb-1 ">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white rounded-r outline-none focus:border-blue-500"
         />
         <DownloadButton
           download={handleDownload}
@@ -516,6 +487,7 @@ const TableCrawlJs = ({
             headerTitles={headerTitles}
           />
         </div>
+        <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full absolute -bottom-[0] -mb-1 z-50" />
       </div>
       <div
         ref={parentRef}
@@ -523,10 +495,14 @@ const TableCrawlJs = ({
       >
         <div
           ref={tableContainerRef}
-          style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent sticky top-0"
+          style={{
+            width: "100%",
+            height: `${rowVirtualizer.getTotalSize() + 30}px`,
+            position: "relative"
+          }}
+          className="domainCrawlParent"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
+          <div className="sticky top-0 z-10" style={{ width: "100%" }}>
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -535,45 +511,37 @@ const TableCrawlJs = ({
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
             />
-            <tbody>
-              {filteredRows.length > 0 ? (
-                <>
-                  <tr
-                    style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
-                    }}
+          </div>
+          <div style={{ position: "relative" }}>
+            {filteredRows.length > 0 ? (
+              virtualRows.map((virtualRow) => (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: "absolute",
+                    top: `${virtualRow.start}px`,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualRow.size}px`,
+                  }}
+                >
+                  <TableRow
+                    row={filteredRows[virtualRow.index]}
+                    index={virtualRow.index}
+                    columnWidths={columnWidths}
+                    columnAlignments={columnAlignments}
+                    columnVisibility={columnVisibility}
+                    clickedCell={clickedCell}
+                    handleCellClick={handleCellClick}
                   />
-                  {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
-                      />
-                    </tr>
-                  ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />{" "}
-                </>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={headerTitles.length}
-                    className="text-center py-4"
-                  >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-xs text-brand-bright">
+                No data available.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

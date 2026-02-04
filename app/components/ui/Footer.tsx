@@ -257,7 +257,7 @@ const Footer = () => {
 
       <ChangeLogContainer />
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 dark:border-t-brand-dark flex items-center py-1.5 text-xs h-8">
         <section className="flex items-center">
           <div className="flex items-center ml-2 space-x-1">
             {loading ? (
@@ -307,28 +307,28 @@ const Footer = () => {
           {/* HTTP CHECKER LOADER  */}
           {loaders?.httpChecker && <HttpFooterLoader />}
         </section>
-        <section className="flex items-center space-x-2">
-          <div className="flex w-50 items-center justify-center pr-3">
-            <div className="flex items-center text-xs mt-[2px] space-x-[1em]">
+        <section className="flex items-center space-x-1 pr-4">
+          <div className="flex items-center">
+            <div className="flex items-center text-xs space-x-4">
               <div
                 onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
-                className="flex items-center cursor-pointer relative group hover:delay-1000"
+                className="flex items-center cursor-pointer relative group gap-1"
               >
                 <LiaTasksSolid
-                  className={`text-sm dark:text-white/50 ${iconClasses}`}
+                  className={`text-[15px] dark:text-white/50 ${iconClasses}`}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Task List
                 </div>
-                <span>Tasks:</span>
-                <span className="text-sky-dark dark:text-sky-dark ml-1">
+                <span className="leading-none">Tasks:</span>
+                <span className="text-sky-dark dark:text-sky-dark font-medium leading-none">
                   {tasks.length}
                 </span>
               </div>
 
               {/* SYSTEM SETTINGS */}
-              <div className="relative group hover:delay-1000">
-                <button className="pt-[2px]">
+              <div className="relative group flex items-center h-full">
+                <button className="flex items-center justify-center p-0 m-0 border-none bg-transparent">
                   <System />
                 </button>
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
@@ -338,12 +338,12 @@ const Footer = () => {
 
               {/* CHAT BUTTON */}
 
-              <div className="relative group hover:delay-1000">
+              <div className="relative group flex items-center h-full">
                 <BsPeopleFill
                   onClick={() =>
                     visibility.chatbar ? hideChatbar() : showChatbar()
                   }
-                  className={`text-sm mb-[2px] cursor-pointer ${visibility.chatbar && "text-brand-bright"}`}
+                  className={`text-[15px] cursor-pointer ${visibility.chatbar ? "text-brand-bright" : "dark:text-white/50"}`}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Open chat
@@ -351,14 +351,14 @@ const Footer = () => {
               </div>
 
               {/*TERMINAL/STATUS*/}
-              <div className="relative group hover:delay-1000">
+              <div className="relative group flex items-center h-full">
                 <button
                   onClick={() =>
                     visibility.terminal ? hideTerminal() : showTerminal()
                   }
-                  className={`pt-[2px] transition-colors ${visibility.terminal ? "text-brand-bright" : "dark:text-white/50"}`}
+                  className={`transition-colors flex items-center justify-center ${visibility.terminal ? "text-brand-bright" : "dark:text-white/50"}`}
                 >
-                  <FaTerminal />
+                  <FaTerminal className="text-[14px]" />
                 </button>
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Terminal Logs
@@ -381,13 +381,13 @@ const Footer = () => {
               {/* </div> */}
 
               {/* SEO HELPKIT */}
-              <div className="relative group hover:delay-1000">
+              <div className="relative group flex items-center h-full">
                 <GiSurprisedSkull
                   onClick={() =>
                     visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
                   }
-                  className={`${iconClasses} ${visibility.seotoolkit && "text-brand-bright"}`}
-                  style={{ fontSize: "15px", marginBottom: "0.5px" }}
+                  className={`${iconClasses} ${visibility.seotoolkit ? "text-brand-bright" : "dark:text-white/50"}`}
+                  style={{ fontSize: "16px" }}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   SEO Resources
@@ -401,12 +401,12 @@ const Footer = () => {
                 }
               >
                 {/* <DrawerTrigger className="flex items-center space-x-1"> */}
-                <div className="relative group hover:delay-1000">
+                <div className="relative group flex items-center h-full">
                   <FaRobot
                     onClick={() =>
                       openedAiDrawer ? closeAiDrawer() : openAiDrawer()
                     }
-                    className={`pb-[2px] cursor-pointer z-50 text-base ${iconClasses} ${openedAiDrawer && "text-brand-bright cursor-pointer"} ${!openedAiDrawer && "cursor-pointer"}`}
+                    className={`cursor-pointer z-50 text-[16px] ${iconClasses} ${openedAiDrawer ? "text-brand-bright" : "dark:text-white/50"}`}
                   />
                   <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                     Rusty AI
@@ -444,10 +444,10 @@ const Footer = () => {
 
               <button
                 disabled={pathname === "/serverlogs"}
-                className={`relative group hover:delay-1000 ${pathname === "/serverlogs" ? "not cursor-not-allowed" : " "}`}
+                className={`relative group flex items-center h-full ${pathname === "/serverlogs" ? "cursor-not-allowed" : ""}`}
               >
                 <BsLayoutSidebarInsetReverse
-                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"} ${pathname === "/serverlogs" || pathname === "/ppc" ? "text-gray-400 cursor-not-allowed" : ""}`}
+                  className={`text-[14px] ${iconClasses} ${visibility.sidebar ? "text-brand-bright" : "dark:text-white/50"} ${pathname === "/serverlogs" || pathname === "/ppc" ? "text-gray-400 cursor-not-allowed" : ""}`}
                   onClick={() => {
                     if (visibility.sidebar) {
                       hideSidebar();

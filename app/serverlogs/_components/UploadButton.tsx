@@ -156,7 +156,7 @@ function UploadButton() {
         <aside
           data-tooltip-id="reload-tooltip"
           onClick={() => handleClearStoreLogs()}
-          className="dark:bg-red-800  bg-red-500 w-32 h-7 text-xs flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-2 rounded-r-xl pr-4"
+          className="dark:bg-red-800  bg-red-700 w-32 h-7 text-xs flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-2 rounded-r-xl pr-4"
         >
           <FaRegTrashCan className="mr-2" />
           Remove Logs

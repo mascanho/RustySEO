@@ -465,6 +465,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("googleother", "Google Other"),
         ("googleother-image", "Google Other Img"),
         ("googleother-video", "Google Other Video"),
+        ("google-read-aloud", "Google R.Aloud"),
         ("google-clouvertexbot", "Google Cloud Vertex"),
         ("google-extended", "Google Extended"),
         ("bingbot", "Bing"),
