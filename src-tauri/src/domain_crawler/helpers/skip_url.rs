@@ -6,19 +6,11 @@ pub fn should_skip_url(url: &str) -> bool {
 
     // Skip common problematic patterns (made less restrictive)
     let skip_patterns = [
-        "login",
-        "logout",
-        "signin",
-        "admin",
-        "dashboard",
-        "cart",
-        "checkout",
-        "payment",
+        "wp-admin",
+        "wp-login",
         "javascript:",
         "mailto:",
         "tel:",
-        "wp-admin",
-        "wp-login",
         ".jpg",
         ".jpeg",
         ".png",
@@ -27,8 +19,6 @@ pub fn should_skip_url(url: &str) -> bool {
         ".ico",
         ".css",
         ".js",
-        ".xml",
-        ".txt",
         ".zip",
         ".pdf",
     ];

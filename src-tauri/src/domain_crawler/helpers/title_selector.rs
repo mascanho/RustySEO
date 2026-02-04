@@ -48,24 +48,33 @@ pub fn extract_title(document: &Html) -> Option<Vec<TitleDetails>> {
     // Fallback: Try to extract the first <h2> tag
     if let Some(h2_element) = document.select(&H2_SELECTOR).next() {
         let h2_text = h2_element.text().collect::<String>().trim().to_string();
-        let h2_len = h2_text.len();
-        let mut results = Vec::new();
-        results.push(TitleDetails::new(&h2_text, h2_len));
         if !h2_text.is_empty() {
+            let mut results = Vec::new();
+            results.push(TitleDetails::new(&h2_text, h2_text.len()));
+            return Some(results);
+        }
+    }
+
+    // New Fallback: Try <h3> or <h4>
+    let h34_selector = Selector::parse("h3, h4").unwrap();
+    if let Some(el) = document.select(&h34_selector).next() {
+        let text = el.text().collect::<String>().trim().to_string();
+        if !text.is_empty() {
+            let mut results = Vec::new();
+            results.push(TitleDetails::new(&text, text.len()));
             return Some(results);
         }
     }
 
     // Fallback: Try to extract the <meta> tag with name="title" or property="og:title"
     for meta_element in document.select(&META_SELECTOR) {
-        if let Some(name) = meta_element.value().attr("name") {
-            if name.eq_ignore_ascii_case("title") || name.eq_ignore_ascii_case("og:title") {
+        if let Some(name) = meta_element.value().attr("name").or(meta_element.value().attr("property")) {
+            if name.eq_ignore_ascii_case("title") || name.eq_ignore_ascii_case("og:title") || name.eq_ignore_ascii_case("twitter:title") {
                 if let Some(content) = meta_element.value().attr("content") {
                     let meta_title = content.trim().to_string();
-                    let meta_len = meta_title.len();
-                    let mut results = Vec::new();
-                    results.push(TitleDetails::new(&meta_title, meta_len));
                     if !meta_title.is_empty() {
+                        let mut results = Vec::new();
+                        results.push(TitleDetails::new(&meta_title, meta_title.len()));
                         return Some(results);
                     }
                 }
@@ -73,7 +82,15 @@ pub fn extract_title(document: &Html) -> Option<Vec<TitleDetails>> {
         }
     }
 
-    // If no title is found, return None
+    // Ultimate Fallback: If absolutely nothing is found, use the first 50 chars of text
+    let all_text = document.root_element().text().collect::<String>();
+    let snippet = all_text.trim().chars().take(50).collect::<String>();
+    if !snippet.is_empty() {
+        let mut results = Vec::new();
+        results.push(TitleDetails::new(&format!("{}...", snippet), snippet.len()));
+        return Some(results);
+    }
+
     None
 }
 

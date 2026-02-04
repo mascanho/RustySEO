@@ -118,35 +118,39 @@ const URLTreeContainer = () => {
   }
 
   return (
-    <div className="h-full overflow-visible bg-white dark:bg-brand-darker custom-scrollbar ">
-      <div className="sticky top-0 z-10 bg-white dark:bg-brand-darker px-2 pt-2  mb-1 border-b dark:border-brand-dark relative">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-xs font-bold dark:text-white flex items-center gap-1">
-            <IconWorld size={14} className="text-blue-500" />
-            Site Tree
-          </h2>
+    <div className="h-full flex flex-col bg-white dark:bg-brand-darker overflow-hidden">
+      <div className="flex-none px-3 py-2 border-b dark:border-brand-dark bg-gray-50/50 dark:bg-brand-dark/20 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <h2 className="text-sm font-bold dark:text-white flex items-center gap-1.5">
+              <IconWorld size={16} className="text-blue-500" />
+              Site Tree
+            </h2>
+          </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2">
             <Tooltip label="Total pages" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
+              <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-500/30">
                 <IconFiles size={10} className="text-blue-500" />
-                <span className="font-bold text-blue-600 dark:text-blue-400">
+                <span className="font-bold text-[10px] text-blue-600 dark:text-blue-400">
                   {stats.totalPages}
                 </span>
               </div>
             </Tooltip>
+
             <Tooltip label="Total folders" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/30">
                 <IconFolders size={10} className="text-amber-500" />
-                <span className="font-bold text-amber-600 dark:text-amber-400">
+                <span className="font-bold text-[10px] text-amber-600 dark:text-amber-400">
                   {stats.totalFolders}
                 </span>
               </div>
             </Tooltip>
+
             <Tooltip label="Maximum depth" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">
+              <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-500/30">
                 <IconArrowsVertical size={10} className="text-emerald-500" />
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="font-bold text-[10px] text-emerald-600 dark:text-emerald-400">
                   {stats.maxDepth}
                 </span>
               </div>
@@ -155,10 +159,10 @@ const URLTreeContainer = () => {
         </div>
       </div>
 
-      <div className="px-2">
+      <div className="flex-1 overflow-y-auto px-2 custom-scrollbar py-2">
         <Tree
           data={treeData}
-          levelOffset={16}
+          levelOffset={32}
           renderNode={({ node, expanded, hasChildren, elementProps }) => {
             const customNode = node as any as TreeNode;
             return (
@@ -166,18 +170,26 @@ const URLTreeContainer = () => {
                 url={customNode.url}
                 label={customNode.label || "/"}
                 isPage={customNode.isPage || false}
+                {...elementProps}
+                className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 rounded cursor-pointer transition-all duration-200 group relative"
+                style={{
+                  ...elementProps.style,
+                  position: "relative",
+                  marginBottom: "1px",
+                }}
               >
-                <Group
-                  gap={6}
-                  {...elementProps}
-                  className="hover:bg-gray-100 dark:hover:bg-brand-dark/50 rounded cursor-pointer py-1 px-1.5 transition-colors duration-200"
-                >
+                {/* Hierarchy Guide Line */}
+                {(elementProps as any)["data-level"] > 0 && (
+                  <div className="absolute left-[-16px] top-0 bottom-0 w-px bg-gray-300/30 dark:bg-brand-dark/40 group-hover:bg-blue-400/50 transition-colors" />
+                )}
+
+                <Group gap={8} wrap="nowrap" className="py-1 px-1">
                   {hasChildren && (
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
                       {expanded ? (
-                        <IconChevronDown size={14} />
+                        <IconChevronDown size={14} stroke={2.5} />
                       ) : (
-                        <IconChevronRight size={14} />
+                        <IconChevronRight size={14} stroke={2.5} />
                       )}
                     </div>
                   )}
@@ -186,27 +198,27 @@ const URLTreeContainer = () => {
 
                   {hasChildren ? (
                     <IconFolder
-                      size={16}
-                      className="text-amber-400 fill-amber-400/20"
+                      size={18}
+                      className="text-amber-500 fill-amber-500/10"
                     />
                   ) : (
                     <IconFileText
                       size={16}
-                      className="text-blue-400 fill-blue-400/20"
+                      className="text-blue-400 fill-blue-400/10"
                     />
                   )}
 
                   <div className="flex flex-col min-w-0">
                     <Text
                       size="xs"
-                      className={`dark:text-gray-200 truncate ${customNode.isPage ? "font-medium" : ""}`}
+                      className={`truncate ${!customNode.isPage ? "font-semibold text-gray-800 dark:text-gray-100" : "font-normal text-gray-600 dark:text-gray-400"}`}
                     >
                       {customNode.label || "/"}
                     </Text>
                     {customNode.isPage && customNode.url && (
                       <Text
                         size="9px"
-                        className="text-gray-400 font-mono truncate"
+                        className="text-gray-400/70 font-mono truncate"
                       >
                         {new URL(customNode.url).pathname}
                       </Text>

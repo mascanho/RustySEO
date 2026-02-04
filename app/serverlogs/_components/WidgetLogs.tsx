@@ -499,12 +499,12 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4 ${
+            className={`grid gap-2 w-full max-w-2xl pl-4  ${
               activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-5 max-w-6xl"
+                ? "grid-cols-5 max-w-2xl mr-6"
                 : activeTab === "Status Codes"
-                  ? "grid-cols-4 max-w-xl"
-                  : "grid-cols-3"
+                  ? "grid-cols-4 mr-6"
+                  : "grid-cols-4 mr-6"
             }`}
           >
             {chartData.map((entry, idx) => (
@@ -515,7 +515,7 @@ export default function WidgetLogs() {
               >
                 <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75">
                   <div
-                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
+                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark overflow-auto"
                     style={{
                       borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
                       backgroundColor: `${COLORS[idx % COLORS.length]}10`,
@@ -632,13 +632,22 @@ export default function WidgetLogs() {
                           <WidgetTable data={overview} entries={currentLogs} />
                         )}
                         {entry?.name === "Bing" && (
-                          <WidgetTableBing data={overview} entries={currentLogs} />
+                          <WidgetTableBing
+                            data={overview}
+                            entries={currentLogs}
+                          />
                         )}
                         {entry?.name === "Openai" && (
-                          <WidgetTableOpenAi data={overview} entries={currentLogs} />
+                          <WidgetTableOpenAi
+                            data={overview}
+                            entries={currentLogs}
+                          />
                         )}
                         {entry?.name === "Claude" && (
-                          <WidgetTableClaude data={overview} entries={currentLogs} />
+                          <WidgetTableClaude
+                            data={overview}
+                            entries={currentLogs}
+                          />
                         )}
                       </Tabs.Panel>
                     </Tabs>

@@ -45,18 +45,19 @@ pub fn extract_image_urls_and_alts(document: &Html, base_url: &Url) -> Vec<(Url,
 /// Fetches the size, content type, and status code of an image using a HEAD request.
 ///
 /// # Arguments
+/// * `client` - The HTTP client to use.
 /// * `url` - The URL of the image.
 ///
 /// # Returns
 /// A tuple containing the image size in KB, content type, and status code as u16.
-async fn fetch_image_size(url: &Url) -> Result<(u64, String, u16), String> {
+async fn fetch_image_size(client: &reqwest::Client, url: &Url) -> Result<(u64, String, u16), String> {
     // Set a timeout duration for the request (e.g., 5 seconds)
     let timeout_duration = Duration::from_secs(5);
 
     // Send a HEAD request to the image URL with a timeout
     let response = timeout(
         timeout_duration,
-        reqwest::Client::new().head(url.as_str()).send(),
+        client.head(url.as_str()).send(),
     )
     .await
     .map_err(|_| format!("Timeout while fetching image: {}", url))?
@@ -103,45 +104,42 @@ async fn fetch_image_size(url: &Url) -> Result<(u64, String, u16), String> {
 /// Extracts image URLs, alt tags, sizes, content types, status codes, and a boolean indicating if width or height is not specified.
 ///
 /// # Arguments
-/// * `document` - The parsed HTML document.
-/// * `base_url` - The base URL used to resolve relative image URLs.
-///
-/// # Returns
-/// A vector of tuples containing the image URL, alt text, size in KB, content type, status code as u16, and a boolean indicating if width or height is not specified.
-/// Fetches details for a list of image URLs.
-///
-/// # Arguments
+/// * `client` - The HTTP client to use.
 /// * `image_urls_and_alts` - A vector of tuples containing the image URL, alt text, and a boolean indicating if width or height is not specified.
 ///
 /// # Returns
 /// A vector of tuples containing the image details.
 pub async fn fetch_image_details(
+    client: &reqwest::Client,
     image_urls_and_alts: Vec<(Url, String, bool)>,
 ) -> Result<Vec<(String, String, u64, String, u16, bool)>, String> {
     // Create a list of futures to fetch image sizes, content types, and status codes in parallel
     let fetch_futures =
         image_urls_and_alts
             .into_iter()
-            .map(|(image_url, alt, is_size_not_specified)| async move {
-                // Always return image URL and alt text, even if fetch fails
-                let url_string = image_url.to_string();
+            .map(|(image_url, alt, is_size_not_specified)| {
+                let client_ref = client.clone();
+                async move {
+                    // Always return image URL and alt text, even if fetch fails
+                    let url_string = image_url.to_string();
 
-                match fetch_image_size(&image_url).await {
-                    Ok((size, content_type, status_code)) => {
-                        // If successful, return a tuple with the image details and the boolean
-                        (
-                            url_string,
-                            alt,
-                            size,
-                            content_type,
-                            status_code,
-                            is_size_not_specified,
-                        )
-                    }
-                    Err(e) => {
-                        // If there's an error, log it and return with default values and error code 0
-                        eprintln!("{}", e);
-                        (url_string, alt, 0, String::new(), 0, is_size_not_specified)
+                    match fetch_image_size(&client_ref, &image_url).await {
+                        Ok((size, content_type, status_code)) => {
+                            // If successful, return a tuple with the image details and the boolean
+                            (
+                                url_string,
+                                alt,
+                                size,
+                                content_type,
+                                status_code,
+                                is_size_not_specified,
+                            )
+                        }
+                        Err(e) => {
+                            // If there's an error, log it and return with default values and error code 0
+                            eprintln!("{}", e);
+                            (url_string, alt, 0, String::new(), 0, is_size_not_specified)
+                        }
                     }
                 }
             });

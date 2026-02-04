@@ -19,6 +19,7 @@ use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::AppState;
 
 use super::database::{self, Database, DatabaseError};
+use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::state::{to_database_results, CrawlerState, FailedUrl, ProgressData};
 use super::url_processor::process_url;
 
@@ -134,7 +135,8 @@ pub async fn crawl_domain(
         None
     };
 
-    let state = Arc::new(Mutex::new(CrawlerState::new(None))); // DB is handled separately
+    let link_checker = Arc::new(SharedLinkChecker::new(&settings));
+    let state = Arc::new(Mutex::new(CrawlerState::new(None).with_link_checker(link_checker.clone()))); // DB is handled separately
     {
         let mut state_guard = state.lock().await;
         state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0
@@ -150,25 +152,18 @@ pub async fn crawl_domain(
     let mut last_stall_check = Instant::now();
     let mut last_crawled_count = 0;
 
-    loop {
-        let current_batch: Vec<(Url, usize)> = {
-            let mut state_guard = state.lock().await;
+    let mut current_crawled_count = 0;
+    let mut last_log_time = Instant::now();
 
-            // Clean up stale pending URLs
+    while state.lock().await.should_continue() {
+        let to_spawn = {
+            let mut state_guard = state.lock().await;
             state_guard.cleanup_stale_pending();
 
-            // Check if we should continue
-            if !state_guard.should_continue() {
-                break;
-            }
-
-            // Check for stalling (made less aggressive)
-            // STALL CHECK FROM SETTINGS CHECKING EVERY 30 SECONDS
+            // Check for stalling
             if last_stall_check.elapsed() > Duration::from_secs(stall_check_interval) {
-                // Only consider it stalled if no progress AND no pending URLs AND empty queue AND no active tasks
                 if state_guard.crawled_urls == last_crawled_count
-                    && state_guard.last_activity.elapsed() > Duration::from_secs(max_pending_time) // DEFAULT
-                // IS 900
+                    && state_guard.last_activity.elapsed() > Duration::from_secs(max_pending_time)
                     && state_guard.is_truly_complete()
                 {
                     tracing::info!("Crawler appears to be stalled, terminating...");
@@ -178,38 +173,53 @@ pub async fn crawl_domain(
                 last_stall_check = Instant::now();
             }
 
-            if state_guard.queue.is_empty() {
-                // Wait a bit for pending operations to complete
+            // Periodic status log
+            if last_log_time.elapsed() > Duration::from_secs(10) {
+                tracing::info!(
+                    "Status - Crawled: {}, Queue: {}, Pending: {}, Active: {}, Failed: {}",
+                    state_guard.crawled_urls,
+                    state_guard.queue.len(),
+                    state_guard.pending_urls.len(),
+                    state_guard.active_tasks,
+                    state_guard.failed_urls.len()
+                );
+                last_log_time = Instant::now();
+            }
+
+            // Don't spawn more tasks than 2x the concurrency limit to prevent memory bloat
+            // and ensure we don't overwhelm the pending_urls logic.
+            if state_guard.active_tasks >= concurrent_requests * 2 {
                 drop(state_guard);
-                sleep(Duration::from_secs(2)).await;
+                sleep(Duration::from_millis(100)).await;
                 continue;
             }
 
-            let batch_size = std::cmp::min(batch_size, state_guard.queue.len());
-            state_guard.queue.drain(..batch_size).collect()
+            if state_guard.queue.is_empty() {
+                if state_guard.is_truly_complete() {
+                    break;
+                }
+                drop(state_guard);
+                sleep(Duration::from_millis(500)).await;
+                continue;
+            }
+
+            // Calculate how many we can spawn based on semaphore and current active tasks
+            // But actually, the inner loop handles the semaphore, so we just pull a reasonable batch
+            let available_batch = std::cmp::min(batch_size, state_guard.queue.len());
+            state_guard.queue.drain(..available_batch).collect::<Vec<_>>()
         };
 
-        if current_batch.is_empty() {
-            // Check if there are truly no more URLs to process
-            let state_guard = state.lock().await;
-            if state_guard.is_truly_complete() {
-                tracing::info!("All URLs processed, crawl complete");
-                break;
-            }
-            drop(state_guard);
-            sleep(Duration::from_secs(1)).await;
+        if to_spawn.is_empty() {
             continue;
         }
 
-        // Increment active tasks counter before spawning
+        // Increment active tasks
         {
             let mut state_guard = state.lock().await;
-            state_guard.active_tasks += current_batch.len();
+            state_guard.active_tasks += to_spawn.len();
         }
 
-        let mut handles = Vec::with_capacity(current_batch.len());
-
-        for (url, depth) in current_batch {
+        for (url, depth) in to_spawn {
             let client_clone = client.clone();
             let base_url_clone = base_url.clone();
             let state_clone = state.clone();
@@ -219,11 +229,12 @@ pub async fn crawl_domain(
             let db_tx_clone = db_tx.clone();
             let settings_clone = settings.clone();
 
-            let handle = tokio::spawn(async move {
+            tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::random_range(10..50);
+                let jitter = rand::random_range(10..100);
                 sleep(Duration::from_millis(jitter)).await;
 
+                let url_str = url.to_string();
                 let result = process_url(
                     url.clone(),
                     depth,
@@ -238,39 +249,25 @@ pub async fn crawl_domain(
 
                 if let Ok(crawl_result) = &result {
                     if let Ok(db_result) = to_database_results(crawl_result) {
-                        if let Err(e) = db_tx_clone.send(db_result).await {
-                            eprintln!("Failed to send result to DB thread: {}", e);
-                        }
+                        let _ = db_tx_clone.send(db_result).await;
                     }
                 }
-                (url, result)
-            });
-            handles.push(handle);
-        }
 
-        for handle in handles {
-            if let Ok((url, result)) = handle.await {
-                match result {
-                    Err(_) => {
-                        let mut state_guard = state.lock().await;
-                        state_guard.pending_urls.remove(url.as_str());
-                        state_guard.failed_urls.insert(FailedUrl {
-                            url: url.to_string(),
-                            error: "Processing failed".to_string(),
-                            retries: 0,
-                            depth: 0,
-                            timestamp: Instant::now(),
-                        });
-                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
-                        // Don't re-queue failed URLs to prevent infinite loops
-                    }
-                    Ok(_) => {
-                        // Success case is already handled in process_url
-                        let mut state_guard = state.lock().await;
-                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
-                    }
+                let mut state_guard = state_clone.lock().await;
+                state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
+                state_guard.pending_urls.remove(&url_str);
+                
+                if let Err(e) = result {
+                    tracing::warn!("Failed to process {}: {}", url_str, e);
+                    state_guard.failed_urls.insert(FailedUrl {
+                        url: url_str,
+                        error: e,
+                        retries: 0,
+                        depth,
+                        timestamp: Instant::now(),
+                    });
                 }
-            }
+            });
         }
 
         if crawl_start_time.elapsed() > Duration::from_secs(crawl_timeout) {
@@ -278,6 +275,9 @@ pub async fn crawl_domain(
             app_handle.emit("crawl_interrupted", ()).unwrap_or_default();
             break;
         }
+
+        // Small sleep to prevent tight-looping the state lock
+        sleep(Duration::from_millis(50)).await;
     }
 
     // Final cleanup and status report
@@ -310,16 +310,19 @@ pub async fn crawl_domain(
     let final_progress = {
         let state_guard = state.lock().await;
         let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
-        let safe_completed = std::cmp::max(completed, 1);
         let progress = ProgressData {
-            total_urls: safe_completed, // Set total to actual completed count for consistency
-            crawled_urls: safe_completed,
+            total_urls: std::cmp::max(state_guard.total_urls, 1),
+            crawled_urls: completed,
             failed_urls: state_guard
                 .failed_urls
                 .iter()
                 .map(|f| f.url.clone())
                 .collect(),
-            percentage: 100.0, // Always 100% when truly complete
+            percentage: if state_guard.total_urls > 0 {
+                (completed as f32 / state_guard.total_urls as f32) * 100.0
+            } else {
+                100.0
+            },
             failed_urls_count: state_guard.failed_urls.len(),
             discovered_urls: std::cmp::max(state_guard.total_urls, 1),
             robots_blocked: Some(robots_blocked),

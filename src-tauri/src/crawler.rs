@@ -20,7 +20,7 @@ use std::{
     collections::HashMap,
     env,
     fs::{self, File},
-    io::{Read, Write},
+    io::Write,
     usize,
 };
 use std::{io, vec};
@@ -583,7 +583,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let kws = keywords[0].clone();
     let words: Vec<String> = kws.iter().map(|(word, _)| word.clone()).collect();
 
-    let mut db_data: DBData = DBData {
+    let db_data: DBData = DBData {
         title,
         description,
         keywords: words.clone(),

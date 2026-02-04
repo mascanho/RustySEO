@@ -11,6 +11,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
+use std::collections::HashSet;
+use serde_json::Value;
 
 use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
 use crate::domain_crawler::helpers::cookies;
@@ -66,7 +68,7 @@ pub async fn process_url(
     // Follow redirects manually to track the chain
     while redirect_count < 10 {
         let response_result = tokio::time::timeout(
-            Duration::from_secs(30),
+            Duration::from_secs(settings.client_timeout),
             fetch_with_exponential_backoff(client, current_url.as_str(), settings),
         )
         .await;
@@ -184,11 +186,13 @@ pub async fn process_url(
         || response.headers().contains_key("x-cdn")
         || response.headers().contains_key("x-cache")
     {
-        sleep(Duration::from_secs(2)).await;
+        // Reduced from 2s to 100ms for better speed, 
+        // as the concurrency is already managed by semaphores
+        sleep(Duration::from_millis(100)).await;
     }
 
-    let mut body = match response.text().await {
-        Ok(body) => body,
+    let mut body = match response.bytes().await {
+        Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
         Err(e) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(FailedUrl {
@@ -201,6 +205,31 @@ pub async fn process_url(
             return Err(format!("Failed to read response body: {}", e));
         }
     };
+
+    // Detect 'hidden' errors (200 OK but actually a block/error page)
+    let body_lower = body.to_lowercase();
+    let is_block_page = body_lower.contains("access denied") 
+        || body_lower.contains("rate limit") 
+        || body_lower.contains("too many requests") 
+        || body_lower.contains("forbidden")
+        || body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
+        || body_lower.contains("challenge-form") // Cloudflare
+        || body_lower.contains("cloudflare") && body_lower.contains("ray id") // Cloudflare Block
+        || body_lower.contains("one more step") // Cloudflare
+        || body_lower.contains("unusual traffic") // Google/AWS block
+        || (body.len() < 100 && (body_lower.contains("error") || body_lower.contains("wait")));
+
+    if is_block_page && status_code == 200 {
+        let mut state = state.lock().await;
+        state.failed_urls.insert(FailedUrl {
+            url: url.to_string(),
+            error: "Cloudflare/Server Block (Error 1015 or Rate Limit). Please lower 'concurrent_requests' in settings.".to_string(),
+            retries: 0,
+            depth,
+            timestamp: Instant::now(),
+        });
+        return Err(format!("Blocked/Rate Limited (1015) by server for {}. Try lowering concurrency.", url));
+    }
 
     // If Javascript Rendering is enabled and content is HTML, re-fetch via Headless Chrome
     if settings.javascript_rendering
@@ -225,7 +254,9 @@ pub async fn process_url(
 
         match js_fetch_future.await {
             Ok((js_body, js_cookies)) => {
-                body = js_body;
+                if js_body.len() > 200 {
+                    body = js_body;
+                }
                 // Merge JS cookies with existing cookies
                 // We use a HashSet (implicitly by iterating) or just append and dedup?
                 // Simple append is fine, the frontend can handle duplicates or we can dedup here if needed.
@@ -247,28 +278,10 @@ pub async fn process_url(
     }
 
     let mut pdf_files: Vec<String> = Vec::new();
-    if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
+    // We no longer early-return for non-HTML pages here.
+    // We want to try and extract whatever we can (titles, meta, etc.) from any 200 response.
+    if content_type.as_deref().map(|ct| ct.contains("pdf")).unwrap_or(false) {
         pdf_files.push(url.to_string());
-
-        let mut state = state.lock().await;
-        state.crawled_urls += 1;
-        state.visited.insert(url.to_string());
-        state.pending_urls.remove(url.as_str());
-        state.last_activity = Instant::now();
-        return Ok(DomainCrawlResults {
-            url: final_url.to_string(),
-            status_code,
-            pdf_files,
-            original_url: url.to_string(), // Store original URL
-            redirect_url,                  // Store redirect URL if any
-            had_redirect,                  // Boolean flag for easy filtering
-            redirection_type,              // Type of redirect
-            redirect_chain: Some(redirect_chain.clone()), // Full redirect chain
-            redirect_count,                // Number of hops
-            content_length: body.len(),
-            page_size: calculate_html_size(Some(body.len())),
-            ..Default::default()
-        });
     }
 
     // Update the custom HTML extractor cache before parsing
@@ -342,33 +355,58 @@ pub async fn process_url(
         )
     }; // `document` is dropped here
 
+    let link_checker = {
+        let state_guard = state.lock().await;
+        state_guard.link_checker.clone()
+    };
+
     let settings_clone = settings.clone();
-    // Now perform asynchronous checks
-    let check_links_status_code = get_links_status_code_from_settings(
-        internal_external_links.clone(),
-        base_url,
-        final_url.to_string(),
-        &settings_clone,
-    )
-    .await;
+    let internal_external_links_clone = internal_external_links.clone();
+    let base_url_clone = base_url.clone();
+    let final_url_str = final_url.to_string();
+    let image_urls_for_fetch_clone = image_urls_for_fetch.clone();
+    let psi_settings_clone = settings.clone();
 
-    let images_details = images_selector::fetch_image_details(image_urls_for_fetch).await;
+    // Perform asynchronous checks in parallel
+    let (check_links_status_code, images_details, psi_results): (
+        super::helpers::links_status_code_checker::LinkCheckResults,
+        Result<Vec<(String, String, u64, String, u16, bool)>, String>,
+        Result<Vec<Value>, String>,
+    ) = tokio::join!(
+        async {
+            if let Some(checker) = link_checker {
+                checker
+                    .check_links(
+                        internal_external_links_clone,
+                        &base_url_clone,
+                        final_url_str,
+                    )
+                    .await
+            } else {
+                get_links_status_code_from_settings(
+                    internal_external_links_clone,
+                    &base_url_clone,
+                    final_url_str,
+                    &settings_clone,
+                )
+                .await
+            }
+        },
+        images_selector::fetch_image_details(client, image_urls_for_fetch_clone),
+        async {
+            if psi_settings_clone.page_speed_bulk {
+                let url_clone = final_url.clone();
+                match tokio::spawn(async move { fetch_psi_bulk(url_clone, &psi_settings_clone).await }).await
+                {
+                    Ok(res) => res,
+                    Err(e) => Err(e.to_string()),
+                }
+            } else {
+                Ok(Vec::new())
+            }
+        }
+    );
 
-    // Start PSI fetch as a separate task
-    let psi_future = if settings.page_speed_bulk {
-        let url_clone = final_url.clone();
-        Some(tokio::spawn(async move {
-            fetch_psi_bulk(url_clone, &settings_clone).await
-        }))
-    } else {
-        None
-    };
-
-    // Do all other processing while PSI is fetching
-    let psi_results = match psi_future {
-        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
-        None => Ok(Vec::new()),                             // No PSI requested
-    };
 
     // GETS THE SPECIFIC URL DEPTH
     let url_depth = url_depth::calculate_url_depth(&url);
@@ -436,7 +474,7 @@ pub async fn process_url(
     };
 
     // Update state and emit progress
-    update_state_and_emit_progress(&state, &url, depth, &result, links_for_crawler, app_handle)
+    update_state_and_emit_progress(&state, &url, depth, &result, links_for_crawler, app_handle, settings)
         .await;
 
     Ok(result)
@@ -450,16 +488,13 @@ async fn update_state_and_emit_progress(
     result: &DomainCrawlResults,
     links_for_crawler: std::collections::HashSet<Url>,
     app_handle: &tauri::AppHandle,
+    settings: &Settings,
 ) {
     let mut state = state.lock().await;
     state.crawled_urls += 1;
     state.visited.insert(url.to_string());
     state.pending_urls.remove(url.as_str());
     state.last_activity = Instant::now();
-    state.active_tasks = state.active_tasks.saturating_sub(1);
-    let settings = settings::settings::load_settings()
-        .await
-        .unwrap_or_default();
 
     // Only process links if we haven't reached limits and depth allows
     if depth < settings.max_depth && state.total_urls < settings.max_urls_per_domain {
@@ -480,36 +515,21 @@ async fn update_state_and_emit_progress(
             let normalized_url = normalize_url(link_str);
             let url_pattern = extract_url_pattern(&normalized_url);
 
-            // More sophisticated pattern checking to reduce over-deduplication
-            let pattern_count = state
-                .url_patterns
-                .iter()
-                .filter(|p| *p == &url_pattern)
-                .count();
+            // Pattern checking to avoid infinite URL traps
+            let pattern_count = *state.url_patterns.get(&url_pattern).unwrap_or(&0);
 
-            let should_skip_pattern = if state.url_patterns.len() > 5000 {
-                // Only skip if we've seen this exact pattern many times
-                pattern_count > 10
-            } else if state.url_patterns.len() > 1000 {
-                // Be more selective about pattern matching
-                pattern_count > 5
-            } else {
-                // Allow all patterns until we have a reasonable collection
-                pattern_count > 20
-            };
+            // Set a very high limit for pattern-based skipping. 
+            // 10,000 is high enough to not interfere with normal sites but low enough to stop an infinite trap eventually.
+            let should_skip_pattern = pattern_count > 10000;
 
             if should_skip_pattern {
-                if state.crawled_urls % 200 == 0 {
-                    tracing::info!(
-                        "Skipping URL due to pattern: {} (pattern: {})",
-                        link_str, url_pattern
-                    );
+                if pattern_count == 10001 {
+                    tracing::warn!("Pattern trap detected for pattern: {}. Limiting discovery.", url_pattern);
                 }
                 continue;
             }
 
             if !state.visited.contains(link_str)
-                && !state.queue.iter().any(|(q_url, _)| q_url == &link)
                 && !state.pending_urls.contains_key(link_str)
                 && state.total_urls < settings.max_urls_per_domain
             {
@@ -523,7 +543,9 @@ async fn update_state_and_emit_progress(
                     state
                         .pending_urls
                         .insert(link_str.to_string(), Instant::now());
-                    state.url_patterns.insert(url_pattern);
+                    
+                    // Increment the pattern count
+                    *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
                 }
             }
         }
@@ -534,22 +556,20 @@ async fn update_state_and_emit_progress(
     let total_discovered = state.total_urls;
     let active_pending = state.pending_urls.len() + state.active_tasks;
 
-    // For progress calculation, consider both completed and in-progress work
-    let progress_denominator = total_discovered + active_pending;
-    let percentage = if progress_denominator > 0 {
+    // For progress calculation, use the total count of discovered URLs as the denominator
+    let progress_denominator = std::cmp::max(total_discovered, 1);
+    let percentage = {
         let base_progress = (completed_urls as f32 / progress_denominator as f32) * 100.0;
-        // Cap at 95% during active crawling, only show 100% when truly complete
+        // Cap at 99% during active crawling, only show 100% when truly complete
         if active_pending > 0 {
-            base_progress.min(95.0)
+            base_progress.min(99.0)
         } else {
             base_progress.min(100.0)
         }
-    } else {
-        0.0
     };
 
     // Ensure we never send invalid data that could cause NaN in frontend
-    let safe_total_discovered = std::cmp::max(total_discovered, 1);
+    let safe_total_discovered = progress_denominator;
     let safe_completed_urls = completed_urls;
 
     let progress = ProgressData {

@@ -17,6 +17,9 @@ export const changelogData = [
       "Deep Crawler: Table context menu now includes validation/checks ",
       "Deep Crawler: Improved keyword analysis and collection",
       "Global: Loggging on the front end",
+      "Deep Crawler: Better handling of concurrency errors",
+      "Global: Better observability",
+      "Tool: Loog Analyser - Improved UI spacing on small screens",
     ],
   },
   {
