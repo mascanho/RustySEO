@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import useLoaderStore from "@/store/loadersStore";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 interface FooterLoaderProps {
   loaderName?: string;
@@ -30,6 +31,7 @@ const FooterLoader = ({
   showLabel = true,
 }: FooterLoaderProps) => {
   const { loaders, toggleLoader } = useLoaderStore();
+  const { showUrlChecker } = useVisibilityStore();
   const [isFlashing, setIsFlashing] = useState(false);
 
   const isActive = loaders[loaderName] || false;
@@ -53,7 +55,10 @@ const FooterLoader = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center space-x-3 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 ml-4 backdrop-blur-sm transition-all hover:bg-white/60 dark:hover:bg-white/10 cursor-help active:scale-95">
+          <div
+            onClick={showUrlChecker}
+            className="flex items-center space-x-3 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 ml-4 backdrop-blur-sm transition-all hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer active:scale-95"
+          >
             {/* Status Dot */}
             <div className="relative flex items-center justify-center">
               <div
