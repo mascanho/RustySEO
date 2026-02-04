@@ -155,7 +155,7 @@ const TableHeader = ({
         display: "grid",
         gridTemplateColumns: visibleItems
           .map((item) =>
-            item.header === "URL" ? "1fr" : item.width,
+            item.originalIndex === 1 ? "1fr" : item.width,
           )
           .join(" "),
         height: "30px",
@@ -227,7 +227,7 @@ const TableRow = ({
         display: "grid",
         gridTemplateColumns: visibleItems
           .map((item) =>
-            item.header === "URL" ? "1fr" : item.width,
+            item.originalIndex === 1 ? "1fr" : item.width,
           )
           .join(" "),
         height: "100%",
