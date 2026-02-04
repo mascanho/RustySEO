@@ -121,7 +121,7 @@ const FooterLoader = () => {
         </span>
       </div>
 
-      <div className="h-4 w-[1px] bg-gray-300 dark:bg-white/10" />
+      <div className="h-4 w-[1px] bg-gray-400 dark:bg-white/10" />
 
       {/* Stats Section */}
       <div className="flex items-center space-x-4 text-[11px] tracking-tight">
