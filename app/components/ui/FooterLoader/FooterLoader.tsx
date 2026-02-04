@@ -103,14 +103,14 @@ const FooterLoader = () => {
   return (
     <div className="flex items-center space-x-4 h-full ml-4">
       {/* Progress Section */}
-      <div className="flex items-center space-x-3 bg-brand-dark/20 dark:bg-black/20 px-3 py-1 rounded-full border border-brand-dark/30 dark:border-white/10 backdrop-blur-sm">
+      <div className="flex items-center space-x-3 bg-gray-200/50 dark:bg-black/20 px-3 py-1 rounded-full border border-gray-300/50 dark:border-white/10 backdrop-blur-sm">
         {/* Progress Bar Container */}
-        <div className="relative w-36 h-2 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+        <div className="relative w-36 h-2 bg-gray-300/50 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
           <div
             className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? 'animate-pulse' : ''}`}
             style={{
               width: `${Math.min(Math.max(0, progress.percentageCrawled || 0), 100)}%`,
-              boxShadow: '0 0 10px rgba(56, 189, 248, 0.5)'
+              boxShadow: '0 0 8px rgba(56, 189, 248, 0.4)'
             }}
           />
         </div>
@@ -121,20 +121,20 @@ const FooterLoader = () => {
         </span>
       </div>
 
-      <div className="h-4 w-[1px] bg-white/10" />
+      <div className="h-4 w-[1px] bg-gray-300 dark:bg-white/10" />
 
       {/* Stats Section */}
       <div className="flex items-center space-x-4 text-[11px] tracking-tight">
         <div className="flex items-center space-x-1.5">
-          <span className="text-white/40 uppercase font-bold text-[9px]">Crawled:</span>
-          <span className="text-white font-mono font-medium">
+          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">Crawled:</span>
+          <span className="text-gray-700 dark:text-white font-mono font-medium">
             {crawlCompleted ? crawlData.length : progress.crawledPages || 0}
           </span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="text-white/40 uppercase font-bold text-[9px]">Queued:</span>
-          <span className="text-white font-mono font-medium">
+          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">Queued:</span>
+          <span className="text-gray-700 dark:text-white font-mono font-medium">
             {crawlCompleted
               ? 0
               : Math.max(0, (progress.crawledPagesCount || 0) - (progress.crawledPages || 0))}
