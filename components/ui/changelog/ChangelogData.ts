@@ -18,6 +18,7 @@ export const changelogData = [
       "Deep Crawler: Improved keyword analysis and collection",
       "Global: Loggging on the front end",
       "Deep Crawler: Better handling of concurrency errors",
+      "Global: Better observability",
     ],
   },
   {
