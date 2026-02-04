@@ -1,21 +1,20 @@
 // Column configurations
 export const initialColumnWidths = [
-  "40px", // ID
-  "120px", // URL
-  "800px", // Image Size
+  "50px", // ID
+  "250px", // Alt Text
+  "400px", // URL
+  "100px", // Image Size
   "100px", // Image Type
-  "150px", // Status code
-  "80px", // Status code
-  "90px", // Status code
+  "100px", // Status Code
 ];
 
 export const initialColumnAlignments = [
   "center", // ID
+  "left", // Alt Text
   "left", // URL
-  "left", // Image Size
-  "center", // URL
-  "center", // URL
-  "center", // Status code
+  "center", // Image Size
+  "center", // Image Type
+  "center", // Status Code
 ];
 
 export const headerTitles = [
@@ -24,5 +23,5 @@ export const headerTitles = [
   "URL",
   "Image Size",
   "Image Type",
-  "Status code",
+  "Status Code",
 ];
