@@ -37,27 +37,8 @@ fn process_link(resolve_url: &Url, scope_url: &Url, href: &str) -> Option<Url> {
 
 /// Build URL with better relative path handling
 fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
-    // Handle common cases
-    match href {
-        // Absolute URLs
-        s if s.starts_with("http://") || s.starts_with("https://") => {
-            Url::parse(s)
-        }
-        // Root-relative URLs
-        s if s.starts_with('/') => {
-            let mut new_url = base_url.clone();
-            new_url.set_path(s);
-            Ok(new_url)
-        }
-        // Protocol-relative URLs (//example.com/path)
-        s if s.starts_with("//") => {
-            let mut new_url = base_url.clone();
-            let full = format!("{}:{}", base_url.scheme(), s);
-            Url::parse(&full)
-        }
-        // Everything else is relative
-        _ => base_url.join(href),
-    }
+    // Standardize URL joining
+    base_url.join(href)
 }
 
 /// Validate and normalize with PROPER domain checking
@@ -89,16 +70,27 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
     Some(normalized)
 }
 
-/// Proper domain checking
+/// Improved domain checking: allows same domain, subdomains, and the naked domain
 fn is_same_or_subdomain(url_domain: &str, base_domain: &str) -> bool {
+    let url_domain = url_domain.to_lowercase();
+    let base_domain = base_domain.to_lowercase();
+
     if url_domain == base_domain {
         return true;
     }
 
-    // Check if url_domain is a subdomain of base_domain
-    // Properly handles cases like: api.example.com is subdomain of example.com
-    // But NOT: evil-example.com
-    url_domain.ends_with(&format!(".{}", base_domain))
+    // Strip 'www.' to get the root-like domain
+    let url_root = url_domain.strip_prefix("www.").unwrap_or(&url_domain);
+    let base_root = base_domain.strip_prefix("www.").unwrap_or(&base_domain);
+
+    if url_root == base_root {
+        return true;
+    }
+
+    // Allow subdomains of either root
+    // e.g., if base is 'example.com', allow 'shop.example.com'
+    // e.g., if base is 'www.example.com', allow 'shop.example.com'
+    url_domain.ends_with(&format!(".{}", base_root)) || base_domain.ends_with(&format!(".{}", url_root))
 }
 
 /// Comprehensive path normalization

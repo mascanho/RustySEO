@@ -8,7 +8,7 @@ use crawler::{
 };
 use directories::ProjectDirs;
 use globals::actions;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use settings::settings::delete_config_folders_command;
 use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;

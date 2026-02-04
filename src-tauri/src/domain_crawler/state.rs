@@ -49,7 +49,7 @@ pub struct CrawlerState {
     pub crawled_urls: usize,
     pub db: Option<Database>,
     pub last_activity: Instant,        // Track last crawling activity
-    pub url_patterns: HashSet<String>, // Track URL patterns to avoid duplicates
+    pub url_patterns: HashMap<String, usize>, // Track URL patterns to avoid duplicates
     pub active_tasks: usize,           // Track number of currently processing tasks
     pub link_checker: Option<Arc<SharedLinkChecker>>,
 }
@@ -65,7 +65,7 @@ impl CrawlerState {
             crawled_urls: 0,
             db,
             last_activity: Instant::now(),
-            url_patterns: HashSet::new(),
+            url_patterns: HashMap::new(),
             active_tasks: 0,
             link_checker: None,
         }
@@ -85,8 +85,7 @@ impl CrawlerState {
 
     /// Check if we should continue crawling
     pub fn should_continue(&self) -> bool {
-        self.total_urls < MAX_URLS_PER_DOMAIN
-            && (!self.queue.is_empty() || !self.pending_urls.is_empty() || self.active_tasks > 0)
+        !self.queue.is_empty() || !self.pending_urls.is_empty() || self.active_tasks > 0
     }
 
     /// Check if crawl is truly complete (no pending work)

@@ -33,6 +33,14 @@ pub fn detect_language(document: &Html) -> Option<String> {
         return Some(content);
     }
 
+    // New Fallback: Check for og:locale or name="language"
+    let extra_langs = Selector::parse(r#"meta[property="og:locale"], meta[name="language"]"#).unwrap();
+    if let Some(el) = document.select(&extra_langs).next() {
+        if let Some(content) = el.value().attr("content") {
+            return Some(content.to_string());
+        }
+    }
+
     // No language found
     None
 }
