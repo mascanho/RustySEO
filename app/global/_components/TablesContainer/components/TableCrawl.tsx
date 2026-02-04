@@ -239,7 +239,7 @@ const TableRow = memo(
         row?.schema ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
         row?.opengraph?.["og:image"] !== "" &&
-          row?.opengraph?.["og: title"] !== ""
+        row?.opengraph?.["og: title"] !== ""
           ? "Yes"
           : "No" || "", // OpenGraph
         Array.isArray(row?.cookies?.Ok)
@@ -247,6 +247,8 @@ const TableRow = memo(
           : Array.isArray(row?.cookies)
             ? row.cookies.length
             : 0, // Cookies
+
+        row?.page_size?.[0]?.kb + " KB" || "",
       ],
       [row, index],
     );
@@ -301,12 +303,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             <ContextTableMenu data={item.cell}>
               <TruncatedCell text={item.cell?.toString()} width="100%" />
@@ -384,7 +387,8 @@ const TableCrawl = ({
   const setIsGeneratingExcel = useGlobalCrawlStore(
     (s) => s.setIsGeneratingExcel,
   );
-  const { setInlinks, setOutlinks, setSelectedTableURL, selectURL } = useDataActions();
+  const { setInlinks, setOutlinks, setSelectedTableURL, selectURL } =
+    useDataActions();
 
   const handleDownload = useCallback(async () => {
     if (!rows.length) {

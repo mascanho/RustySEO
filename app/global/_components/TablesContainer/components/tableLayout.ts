@@ -24,6 +24,7 @@ export const initialColumnWidths = [
   "70px", //  Depth
   "70px", //  OpenGraph
   "70px", //  Cookies
+  "70px", //  Page Size
 ];
 
 export const initialColumnAlignments = [
@@ -51,6 +52,7 @@ export const initialColumnAlignments = [
   "center", //  Depth
   "center", //  OpenGraph
   "center", //  Cookies
+  "center", //  Page Size
 ];
 
 export const headerTitles = [
@@ -78,4 +80,5 @@ export const headerTitles = [
   "Depth",
   "OpenGraph",
   "Cookies",
+  "Size",
 ];
