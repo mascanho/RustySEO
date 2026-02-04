@@ -3,14 +3,16 @@ import React, { useEffect, useRef } from "react";
 import { useTerminalStore } from "@/store/TerminalStore";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Trash2, Terminal as TerminalIcon } from "lucide-react";
+import { X, Trash2, Terminal as TerminalIcon, Copy, Ghost, Loader2 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 
 const Terminal = () => {
   const { logs, clearLogs, addLogs } = useTerminalStore();
   const { visibility, hideTerminal } = useVisibilityStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHydrated, setIsHydrated] = React.useState(false);
+  const [filterLevel, setFilterLevel] = React.useState<string>("all");
 
   // Handle Hydration
   useEffect(() => {
@@ -18,6 +20,12 @@ const Terminal = () => {
   }, []);
 
   const logBatchRef = useRef<any[]>([]);
+
+  // Filter logs based on selected level
+  const filteredLogs = React.useMemo(() => {
+    if (filterLevel === "all") return logs;
+    return logs.filter((log) => log.level === filterLevel);
+  }, [logs, filterLevel]);
 
   // Batch logs listener to prevent UI freezes
   useEffect(() => {
@@ -70,7 +78,16 @@ const Terminal = () => {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [logs, visibility.terminal]);
+  }, [filteredLogs, visibility.terminal]);
+
+  const copyLogs = () => {
+    if (filteredLogs.length === 0) return;
+    const text = filteredLogs
+      .map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`)
+      .join("\n");
+    navigator.clipboard.writeText(text);
+    toast.success("Logs copied to clipboard");
+  };
 
   return (
     <div
@@ -79,20 +96,45 @@ const Terminal = () => {
     >
       <div className="flex items-center justify-between pl-2 pr-4 py-1.5 border-b border-brand-dark bg-brand-darker/50">
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2  border-white/10 ">
+          <div className="flex items-center space-x-2 border-white/10">
             <TerminalIcon className="w-3.5 h-3.5 text-brand-bright" />
             <span className="text-[10px] font-mono font-medium text-white/50 uppercase tracking-[0.2em]">
               RustySEO Logs
             </span>
           </div>
+
+          <div className="hidden md:flex items-center space-x-1.5 bg-brand-darker/80 border border-white/10 rounded-md p-0.5 ml-4">
+            {["all", "info", "warn", "error"].map((level) => (
+              <button
+                key={level}
+                onClick={() => setFilterLevel(level)}
+                className={`px-2 py-0.5 rounded-[3px] text-[8px] uppercase font-mono transition-all duration-200 ${filterLevel === level
+                  ? "bg-brand-bright text-white shadow-sm font-bold"
+                  : "text-white/40 hover:text-white/70"
+                  }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={copyLogs}
+            className="group flex items-center space-x-2 text-white/40 hover:text-brand-bright transition-all duration-200"
+            title="Copy Filtered Logs"
+          >
+            <span className="text-[9px] font-mono opacity-0 group-hover:opacity-100 transition-opacity uppercase">
+              COPY
+            </span>
+            <Copy className="w-3.5 h-3.5" />
+          </button>
           <button
             onClick={clearLogs}
             className="group flex items-center space-x-1.5 text-white/40 hover:text-white transition-colors duration-200"
             title="Clear Logs"
           >
-            <span className="text-[9px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[9px] font-mono opacity-0 group-hover:opacity-100 transition-opacity uppercase">
               CLEAR
             </span>
             <Trash2 className="w-3.5 h-3.5" />
@@ -107,11 +149,11 @@ const Terminal = () => {
         </div>
       </div>
       <ScrollArea
-        className="h-[calc(100%-15px)] p-4 font-mono text-[11px] leading-relaxed selection:bg-brand-bright/30"
+        className="h-[calc(100%-40px)] p-4 font-mono text-[11px] leading-relaxed selection:bg-brand-bright/30"
         ref={scrollRef}
       >
         <div className="space-y-1.5">
-          {logs.map((log, index) => (
+          {filteredLogs.map((log, index) => (
             <div
               key={index}
               className="flex space-x-3 group hover:bg-white/[0.02] -mx-2 px-2 rounded-sm transition-colors"
@@ -136,11 +178,11 @@ const Terminal = () => {
               </span>
             </div>
           ))}
-          {logs.length === 0 && (
+          {filteredLogs.length === 0 && (
             <div className="flex flex-col items-center justify-center h-40 space-y-3 opacity-20">
-              <TerminalIcon className="w-8 h-8" />
+              <Ghost className="w-8 h-8" />
               <div className="text-[10px] uppercase tracking-widest italic">
-                No logs to display
+                {logs.length === 0 ? "No logs to display" : `No ${filterLevel} logs found`}
               </div>
             </div>
           )}
