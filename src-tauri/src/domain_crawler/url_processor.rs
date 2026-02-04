@@ -191,8 +191,8 @@ pub async fn process_url(
         sleep(Duration::from_millis(100)).await;
     }
 
-    let mut body = match response.text().await {
-        Ok(body) => body,
+    let mut body = match response.bytes().await {
+        Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
         Err(e) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(FailedUrl {
