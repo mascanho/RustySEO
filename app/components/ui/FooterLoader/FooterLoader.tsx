@@ -9,6 +9,7 @@ const FooterLoader = () => {
     crawledPages: 0,
     percentageCrawled: 0,
     crawledPagesCount: 0,
+    failedPages: 0,
   });
   const [crawlCompleted, setCrawlCompleted] = useState(false);
 
@@ -21,21 +22,24 @@ const FooterLoader = () => {
         crawled_urls: number;
         percentage: number;
         total_urls: number;
+        failed_urls_count: number;
       };
     }) => {
-      const { crawled_urls, percentage, total_urls } = event.payload;
+      const { crawled_urls, percentage, total_urls, failed_urls_count } = event.payload;
 
       // Validate and sanitize the received data to prevent NaN
       const safeCrawledUrls = Math.max(0, crawled_urls || 0);
       const safePercentage = Math.min(100, Math.max(0, percentage || 0));
       const safeTotalUrls = Math.max(1, total_urls || 1); // Always at least 1 to prevent division by zero
+      const safeFailedUrls = Math.max(0, failed_urls_count || 0);
 
       // Only update state if the values have changed
       setProgress((prev) => {
         if (
           prev.crawledPages === safeCrawledUrls &&
           prev.percentageCrawled === safePercentage &&
-          prev.crawledPagesCount === safeTotalUrls
+          prev.crawledPagesCount === safeTotalUrls &&
+          prev.failedPages === safeFailedUrls
         ) {
           return prev; // No change, return previous state
         }
@@ -43,6 +47,7 @@ const FooterLoader = () => {
           crawledPages: safeCrawledUrls,
           percentageCrawled: safePercentage,
           crawledPagesCount: safeTotalUrls,
+          failedPages: safeFailedUrls,
         };
       });
 
@@ -78,6 +83,7 @@ const FooterLoader = () => {
         crawledPages: Math.max(prev.crawledPages, prev.crawledPagesCount),
         percentageCrawled: 100,
         crawledPagesCount: Math.max(prev.crawledPages, prev.crawledPagesCount),
+        failedPages: prev.failedPages,
       }));
       setCrawlCompleted(true);
     });
@@ -140,6 +146,15 @@ const FooterLoader = () => {
               : Math.max(0, (progress.crawledPagesCount || 0) - (progress.crawledPages || 0))}
           </span>
         </div>
+
+        {progress.failedPages > 0 && (
+          <div className="flex items-center space-x-1.5">
+            <span className="text-red-500/60 dark:text-red-400/60 uppercase font-bold text-[9px]">Failed:</span>
+            <span className="text-red-600 dark:text-red-400 font-mono font-medium">
+              {progress.failedPages}
+            </span>
+          </div>
+        )}
 
         {crawlCompleted && (
           <Badge
