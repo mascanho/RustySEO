@@ -180,16 +180,10 @@ const URLTreeContainer = () => {
               >
                 {/* Hierarchy Guide Line */}
                 {(elementProps as any)["data-level"] > 0 && (
-                  <div
-                    className="absolute left-[-16px] top-0 bottom-0 w-px bg-gray-300/30 dark:bg-brand-dark/40 group-hover:bg-blue-400/50 transition-colors"
-                  />
+                  <div className="absolute left-[-16px] top-0 bottom-0 w-px bg-gray-300/30 dark:bg-brand-dark/40 group-hover:bg-blue-400/50 transition-colors" />
                 )}
 
-                <Group
-                  gap={8}
-                  wrap="nowrap"
-                  className="py-1 px-1"
-                >
+                <Group gap={8} wrap="nowrap" className="py-1 px-1">
                   {hasChildren && (
                     <div className="text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
                       {expanded ? (
@@ -224,7 +218,7 @@ const URLTreeContainer = () => {
                     {customNode.isPage && customNode.url && (
                       <Text
                         size="9px"
-                        className="text-gray-400/70 font-mono truncate hidden group-hover:block"
+                        className="text-gray-400/70 font-mono truncate"
                       >
                         {new URL(customNode.url).pathname}
                       </Text>
