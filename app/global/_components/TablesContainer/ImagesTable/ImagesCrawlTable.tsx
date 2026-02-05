@@ -199,7 +199,9 @@ const TableRow = ({
       index + 1,
       row[1] || "", // Alt text
       row[0] || "", // URL
-      (row[2] ? (Number(row[2]) / 1024).toFixed(2) : "0") + " KB", // Size in KB
+      !isNaN(Number(row[2])) && Number(row[2]) > 0
+        ? (Number(row[2]) / 1024).toFixed(2) + " KB"
+        : "0 KB", // Size in KB
       row[3] || "", // Type
       row[4] || "", // Status
     ],
