@@ -69,20 +69,20 @@ export const FixesData = [
   },
   {
     id: 8,
-    title: "404 Response",
+    title: "4XX Client Error",
     description:
-      "A 404 error means the page was not found. This results in a poor user experience and wastes crawl budget as search engines try to visit non-existent pages.",
+      "4XX errors indicate client-side issues where the requested page cannot be reached (e.g., 404 Not Found, 403 Forbidden). These result in a poor user experience and wasted crawl budget.",
     fixes:
-      "Fix internal broken links pointing to the 404 page. If the page moved, implement a 301 redirect to the new URL. If it's gone, redirect to the most relevant category page.",
-    links: ["https://developers.google.com/search/docs/crawling-indexing/fix-broken-links"],
+      "For 404s, redirect to a relevant page or fix the broken link. For 403s, check permissions. For other 4xx errors, investigate the specific cause (e.g., bad request structure) and resolve it.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/http-network-errors"],
   },
   {
     id: 9,
-    title: "5XX Response",
+    title: "5XX Server Error",
     description:
-      "5XX errors indicate server-side problems where the server failed to fulfill a valid request. Consistent 5XX errors can lead to search engines de-indexing your site.",
+      "5XX errors (e.g., 500, 502, 503) indicate server-side problems where the server failed to fulfill a valid request. Consistent 5XX errors can lead to de-indexing.",
     fixes:
-      "Check your server logs to identify the specific error (e.g., 500, 503). Ensure your server has enough resources and that no scripts are timing out or crashing.",
+      "Check server logs to identify the specific error. ensuring server resources are sufficient. For 503s, ensure maintenance mode headers are correct. Fix underlying script or database crashes.",
     links: ["https://www.searchenginejournal.com/website-errors-seo/5xx-errors/"],
   },
   {
@@ -231,11 +231,11 @@ export const FixesData = [
   },
   {
     id: 26,
-    title: "Deeply Nested URLs (>5 Depth)",
+    title: "Deeply Nested URLs (4+ Depth)",
     description:
-      "URLs nested deep in the site structure (e.g., more than 5 clicks away from the homepage) are harder for both users and search engine bots to reach. They often receive less 'link juice' and may be crawled less frequently.",
+      "URLs nested deep in the site structure (e.g., more than 4 clicks away from the homepage) are harder for both users and search engine bots to reach. They often receive less 'link juice' and may be crawled less frequently.",
     fixes:
-      "Improve your internal linking structure. Use categories, breadcrumbs, or a flatter site architecture to ensure important pages are accessible within 3-4 clicks from the homepage.",
+      "Improve your internal linking structure. Use categories, breadcrumbs, or a flatter site architecture to ensure important pages are accessible within 3 clicks from the homepage.",
     links: ["https://moz.com/blog/flat-vs-deep-site-hierarchies"],
   },
   {

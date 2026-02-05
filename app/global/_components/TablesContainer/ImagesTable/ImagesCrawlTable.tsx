@@ -185,11 +185,11 @@ const TableRow = ({
   const rowData = useMemo(
     () => [
       index + 1,
-      row[1] || "",
-      row[0] || "",
-      row[2] + " KB" || "",
-      row[3] || "",
-      row[4] || "",
+      row[1] || "", // Alt text
+      row[0] || "", // URL
+      (row[2] ? (Number(row[2]) / 1024).toFixed(2) : "0") + " KB", // Size in KB
+      row[3] || "", // Type
+      row[4] || "", // Status
     ],
     [row, index],
   );
@@ -218,19 +218,18 @@ const TableRow = ({
                 select-none
                 border-gray-200 dark:border-gray-700
                 transition-colors
-                ${
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "bg-blue-600 dark:bg-blue-700 text-white hover:bg-brand-bright" // Selected cell
-                    : isOdd
-                      ? "bg-gray-100 dark:bg-brand-dark/20" // Odd row (darker)
-                      : "bg-white dark:bg-brand-darker" // Even row (lighter)
+                ${clickedCell.row === index && clickedCell.cell === cellIndex
+                  ? "bg-blue-600 dark:bg-blue-700 text-white hover:bg-brand-bright" // Selected cell
+                  : isOdd
+                    ? "bg-gray-100 dark:bg-brand-dark/20" // Odd row (darker)
+                    : "bg-white dark:bg-brand-darker" // Even row (lighter)
                 }
                 hover:bg-blue-50 dark:hover:bg-blue-900/30
               `}
             >
               <TruncatedCell
                 text={cell?.toString()}
-                width={columnWidths[cellIndex]}
+                width="100%"
               />
             </td>
           ) : null,
@@ -399,11 +398,11 @@ const ImagesCrawlTable = ({
 
     return searchTerm
       ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
+        if (!row || typeof row !== "object") return false;
+        return Object.values(row).some((value) =>
+          normalizeText(value?.toString()).includes(searchTermNormalized),
+        );
+      })
       : rows;
   }, [rows, searchTerm]);
 
@@ -415,7 +414,7 @@ const ImagesCrawlTable = ({
     overscan,
     measureElement:
       typeof window !== "undefined" &&
-      navigator.userAgent.indexOf("Firefox") === -1
+        navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
   });
