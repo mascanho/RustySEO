@@ -261,6 +261,211 @@ impl Database {
         })
         .await?
     }
+
+    pub async fn get_url_data(&self, url: String) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl WHERE url = ?1")?;
+            let data_json: String = stmt.query_row(params![url], |row| row.get(0))?;
+            let data: Value = serde_json::from_str(&data_json)?;
+            Ok(data)
+        })
+        .await?
+    }
+
+    pub async fn get_aggregated_crawl_data(&self, data_type: String) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+        println!("Getting aggregated crawl data for type: {}", data_type);
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
+            
+            // We use a stream of rows to avoid loading everything into memory at once if possible,
+            // though we still construct a large result.
+            let rows = stmt.query_map(params![], |row| {
+                let data_json: String = row.get(0)?;
+                Ok(data_json)
+            })?;
+
+            // Initialize collections
+            // Images: Map URL -> Full Image Tuple/Object to deduplicate but keep data
+            let mut images_map: std::collections::HashMap<String, Value> = std::collections::HashMap::new();
+            
+            let mut scripts_set = std::collections::HashSet::new();
+            let mut css_set = std::collections::HashSet::new();
+            let mut internal_links = Vec::new(); // Store specific link objects
+            let mut external_links = Vec::new();
+            let mut keywords = Vec::new();
+            let mut redirects = Vec::new();
+            
+            let mut row_count = 0;
+
+            for data_json_result in rows {
+                row_count += 1;
+                let data_json = match data_json_result {
+                    Ok(json) => json,
+                    Err(e) => {
+                        eprintln!("Error reading row: {}", e);
+                        continue;
+                    }
+                };
+
+                // Parse only what we need would be ideal, but for simplicity/robustness we parse to Value first
+                let data: Value = match serde_json::from_str(&data_json) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        eprintln!("Error parsing JSON for row {}: {}", row_count, e);
+                        continue;
+                    }
+                };
+                
+                match data_type.as_str() {
+                    "images" => {
+                         if let Some(imgs) = data.get("images").and_then(|v| v.get("Ok")).and_then(|v| v.as_array()) {
+                             for img in imgs {
+                                 // images tuple: (url, alt, size, type, status, is_internal)
+                                 if let Some(url) = img.get(0).and_then(|v| v.as_str()) {
+                                     // Only insert if not exists (or overwrite? overwrite is fine)
+                                     images_map.insert(url.to_string(), img.clone());
+                                 }
+                             }
+                         }
+                    },
+                    "scripts" => {
+                        if let Some(ext) = data.get("javascript").and_then(|j| j.get("external")).and_then(|v| v.as_array()) {
+                            for script in ext {
+                                if let Some(url) = script.as_str() {
+                                    scripts_set.insert(url.to_string());
+                                }
+                            }
+                        }
+                    },
+                    "stylesheets" => {
+                         if let Some(ext) = data.get("css").and_then(|c| c.get("external")).and_then(|v| v.as_array()) {
+                            for css in ext {
+                                if let Some(url) = css.as_str() {
+                                    css_set.insert(url.to_string());
+                                }
+                            }
+                        }
+                    },
+                    "internal_links" => {
+                         let page_url = data.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+                         if let Some(links) = data.get("inoutlinks_status_codes").and_then(|l| l.get("internal")).and_then(|v| v.as_array()) {
+                             for link_obj in links {
+                                 // We need to return an object structure compatible with what frontend expects ideally
+                                 // { link: url, anchor: text, status: code, error: err, page: page_url }
+                                 let mut obj = link_obj.clone();
+                                 if let Some(obj_map) = obj.as_object_mut() {
+                                     obj_map.insert("page".to_string(), Value::String(page_url.clone()));
+                                 }
+                                 internal_links.push(obj);
+                             }
+                         }
+                    },
+                    "external_links" => {
+                        let page_url = data.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+                         if let Some(links) = data.get("inoutlinks_status_codes").and_then(|l| l.get("external")).and_then(|v| v.as_array()) {
+                             for link_obj in links {
+                                 let mut obj = link_obj.clone();
+                                 if let Some(obj_map) = obj.as_object_mut() {
+                                     obj_map.insert("page".to_string(), Value::String(page_url.clone()));
+                                 }
+                                 external_links.push(obj);
+                             }
+                         }
+                    },
+                    "keywords" => {
+                        let page_url = data.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+                        if let Some(kws) = data.get("keywords").and_then(|v| v.as_array()) {
+                            if !kws.is_empty() {
+                                keywords.push(serde_json::json!({
+                                    "url": page_url,
+                                    "keywords": kws
+                                }));
+                            }
+                        }
+                    },
+                    "redirects" => {
+                         // Redirect logic: if status_code is 3xx OR if had_redirect is true
+                         let had_redirect = data.get("had_redirect").and_then(|b| b.as_bool()).unwrap_or(false);
+                         let status = data.get("status_code").and_then(|s| s.as_u64()).unwrap_or(0);
+                         
+                         if had_redirect || (status >= 300 && status < 400) {
+                             redirects.push(data.clone()); 
+                         }
+                    },
+                     "files" => {
+                        // For files we look at both internal/external links that look like files
+                        let page_url = data.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+                        let mut all_links = Vec::new();
+                        if let Some(links) = data.get("inoutlinks_status_codes").and_then(|l| l.get("internal")).and_then(|v| v.as_array()) {
+                            all_links.extend(links.iter());
+                        }
+                        if let Some(links) = data.get("inoutlinks_status_codes").and_then(|l| l.get("external")).and_then(|v| v.as_array()) {
+                             all_links.extend(links.iter());
+                        }
+
+                        for link_obj in all_links {
+                             if let Some(url) = link_obj.get("url").and_then(|u| u.as_str()) {
+                                 // Simple extension check logic here mirroring frontend or just sending all links?
+                                 // Frontend logic is complex. It's better to send ALL UNIQUE LINKS and let frontend filter for files?
+                                 // Or re-implement extension check here? 
+                                 // Re-implementing a simple check:
+                                 if has_file_extension(url) {
+                                     let mut obj = link_obj.clone();
+                                     if let Some(obj_map) = obj.as_object_mut() {
+                                        obj_map.insert("found_at".to_string(), Value::String(page_url.clone()));
+                                     }
+                                     // We re-use 'internal_links' vector temporarily or create a new one?
+                                     // Let's use internal_links as a generic container for now or create a 'files' vec
+                                     // Wait, I can't modify the scope easily. Let's just return all unique links for frontend to filter?
+                                     // No, that's too much data.
+                                     // Let's create a 'files' vec.
+                                     // I added 'files' case pattern.
+                                     internal_links.push(obj); // Reuse this vec for files to return it
+                                 }
+                             }
+                        }
+                    },
+                    _ => {}
+                }
+            }
+            
+            println!("Processed {} rows. Found {} internal links, {} external links", row_count, internal_links.len(), external_links.len());
+
+            match data_type.as_str() {
+                "images" => Ok(serde_json::to_value(images_map.into_values().collect::<Vec<Value>>())?),
+                "scripts" => Ok(serde_json::to_value(scripts_set.into_iter().collect::<Vec<String>>())?),
+                "stylesheets" => Ok(serde_json::to_value(css_set.into_iter().collect::<Vec<String>>())?),
+                "internal_links" => Ok(Value::Array(internal_links)),
+                "external_links" => Ok(Value::Array(external_links)),
+                "keywords" => Ok(Value::Array(keywords)),
+                "redirects" => Ok(Value::Array(redirects)),
+                "files" => Ok(Value::Array(internal_links)), // Reused
+                _ => Ok(Value::Null),
+            }
+        })
+        .await?
+    }
+}
+
+// Helper for file extension check
+fn has_file_extension(url: &str) -> bool {
+    let ignore = ["html", "htm", "php", "asp", "aspx", "jsp"];
+    let path = url.split('?').next().unwrap_or(url);
+    if let Some(idx) = path.rfind('.') {
+        if idx < path.len() - 1 {
+            let ext = &path[idx+1..];
+            if ext.len() <= 4 && !ignore.contains(&ext.to_lowercase().as_str()) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 pub async fn insert_crawl_data(

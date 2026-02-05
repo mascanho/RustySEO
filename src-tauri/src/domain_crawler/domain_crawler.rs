@@ -110,16 +110,41 @@ pub async fn crawl_domain(
         let db_batch_size_clone = db_batch_size;
         let handle = tokio::spawn(async move {
             let mut batch_results = Vec::with_capacity(db_batch_size_clone);
-            while let Some(result) = db_rx.recv().await {
-                batch_results.push(result);
-                if batch_results.len() >= db_batch_size {
-                    if let Err(e) = database::insert_bulk_crawl_data(
-                        db_pool.clone(),
-                        batch_results.drain(..).collect(),
-                    )
-                    .await
-                    {
-                        eprintln!("Failed to batch insert results: {}", e);
+            // Use an interval to ensure periodic flushing regardless of channel activity
+            let mut interval = tokio::time::interval(Duration::from_secs(2));
+            interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            
+            loop {
+                tokio::select! {
+                    recv_result = db_rx.recv() => {
+                        match recv_result {
+                            Some(result) => {
+                                batch_results.push(result);
+                                if batch_results.len() >= db_batch_size_clone {
+                                    if let Err(e) = database::insert_bulk_crawl_data(
+                                        db_pool.clone(),
+                                        batch_results.drain(..).collect(),
+                                    )
+                                    .await
+                                    {
+                                        eprintln!("Failed to batch insert results: {}", e);
+                                    }
+                                }
+                            }
+                            None => break,
+                        }
+                    }
+                    _ = interval.tick() => {
+                        if !batch_results.is_empty() {
+                            if let Err(e) = database::insert_bulk_crawl_data(
+                                db_pool.clone(),
+                                batch_results.drain(..).collect(),
+                            )
+                            .await
+                            {
+                                eprintln!("Failed to flush batch insert results: {}", e);
+                            }
+                        }
                     }
                 }
             }
@@ -313,11 +338,6 @@ pub async fn crawl_domain(
         let progress = ProgressData {
             total_urls: std::cmp::max(state_guard.total_urls, 1),
             crawled_urls: completed,
-            failed_urls: state_guard
-                .failed_urls
-                .iter()
-                .map(|f| f.url.clone())
-                .collect(),
             percentage: if state_guard.total_urls > 0 {
                 (completed as f32 / state_guard.total_urls as f32) * 100.0
             } else {

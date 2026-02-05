@@ -257,7 +257,7 @@ const Footer = () => {
 
       <ChangeLogContainer />
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 dark:border-t-brand-dark flex items-center py-1.5 text-xs h-8">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t dark:border-t-brand-dark flex items-center px-2 text-xs h-9">
         <section className="flex items-center">
           <div className="flex items-center ml-2 space-x-1">
             {loading ? (
@@ -307,159 +307,136 @@ const Footer = () => {
           {/* HTTP CHECKER LOADER  */}
           {loaders?.httpChecker && <HttpFooterLoader />}
         </section>
-        <section className="flex items-center space-x-1 pr-4">
-          <div className="flex items-center">
-            <div className="flex items-center text-xs space-x-4">
+        <section className="flex items-center gap-1 pr-1.5">
+          <div
+            onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
+            className={`flex items-center gap-2 px-2.5 h-7 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer relative group ${iconClasses}`}
+          >
+            <LiaTasksSolid className="text-[17px] dark:text-white/60 group-hover:dark:text-white" />
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              Task List
+            </div>
+            <span className="leading-none text-[11px] font-medium hidden sm:inline opacity-70">Tasks:</span>
+            <span className="text-sky-dark dark:text-sky-dark font-bold leading-none text-[11px]">
+              {tasks.length}
+            </span>
+          </div>
+
+          {/* SYSTEM SETTINGS */}
+          <div className="relative group flex items-center">
+            <div className="flex items-center justify-center h-7 w-8 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer">
+              <System />
+            </div>
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              System Status
+            </div>
+          </div>
+
+          {/* CHAT BUTTON */}
+          <div className="relative group flex items-center">
+            <div
+              onClick={() => (visibility.chatbar ? hideChatbar() : showChatbar())}
+              className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.chatbar ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <BsPeopleFill
+                className={`text-[16px] transition-colors ${visibility.chatbar ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+              />
+            </div>
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              AI Chat
+            </div>
+          </div>
+
+          {/* TERMINAL/STATUS */}
+          <div className="relative group flex items-center">
+            <div
+              onClick={() => (visibility.terminal ? hideTerminal() : showTerminal())}
+              className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.terminal ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <FaTerminal
+                className={`text-[15px] transition-colors ${visibility.terminal ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+              />
+            </div>
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              Terminal Logs
+            </div>
+          </div>
+
+          {/* SEO HELPKIT */}
+          <div className="relative group flex items-center">
+            <div
+              onClick={() => (visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit())}
+              className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.seotoolkit ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+            >
+              <GiSurprisedSkull
+                className={`text-[17px] transition-colors ${visibility.seotoolkit ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+              />
+            </div>
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              SEO Toolkit
+            </div>
+          </div>
+
+          {/* RUSTY AI ROBOT */}
+          <Drawer
+            open={openedAiDrawer}
+            onOpenChange={(open) => (open ? openAiDrawer() : closeAiDrawer())}
+          >
+            <div className="relative group flex items-center">
               <div
-                onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
-                className="flex items-center cursor-pointer relative group gap-1"
+                onClick={() => (openedAiDrawer ? closeAiDrawer() : openAiDrawer())}
+                className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${openedAiDrawer ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
               >
-                <LiaTasksSolid
-                  className={`text-[15px] dark:text-white/50 ${iconClasses}`}
+                <FaRobot
+                  className={`text-[18px] transition-colors ${openedAiDrawer ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
                 />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Task List
-                </div>
-                <span className="leading-none">Tasks:</span>
-                <span className="text-sky-dark dark:text-sky-dark font-medium leading-none">
-                  {tasks.length}
-                </span>
               </div>
-
-              {/* SYSTEM SETTINGS */}
-              <div className="relative group flex items-center h-full">
-                <button className="flex items-center justify-center p-0 m-0 border-none bg-transparent">
-                  <System />
-                </button>
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Status
-                </div>
+              <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+                Rusty AI
               </div>
-
-              {/* CHAT BUTTON */}
-
-              <div className="relative group flex items-center h-full">
-                <BsPeopleFill
-                  onClick={() =>
-                    visibility.chatbar ? hideChatbar() : showChatbar()
-                  }
-                  className={`text-[15px] cursor-pointer ${visibility.chatbar ? "text-brand-bright" : "dark:text-white/50"}`}
-                />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Open chat
-                </div>
-              </div>
-
-              {/*TERMINAL/STATUS*/}
-              <div className="relative group flex items-center h-full">
-                <button
-                  onClick={() =>
-                    visibility.terminal ? hideTerminal() : showTerminal()
-                  }
-                  className={`transition-colors flex items-center justify-center ${visibility.terminal ? "text-brand-bright" : "dark:text-white/50"}`}
-                >
-                  <FaTerminal className="text-[14px]" />
-                </button>
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Terminal Logs
-                </div>
-              </div>
-
-              {/* TODO: FIX THE GOOGLE CRAWL ISSUE  */}
-              {/* <div className="relative group hover:delay-1000"> */}
-              {/*   <ImGoogle3 */}
-              {/*     onClick={() => */}
-              {/*       visibility.serpKeywords */}
-              {/*         ? hideSerpKeywords() */}
-              {/*         : showSerpKeywords() */}
-              {/*     } */}
-              {/*     className={iconClasses} */}
-              {/*   /> */}
-              {/*   <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap"> */}
-              {/*     Google Crawler */}
-              {/*   </div> */}
-              {/* </div> */}
-
-              {/* SEO HELPKIT */}
-              <div className="relative group flex items-center h-full">
-                <GiSurprisedSkull
-                  onClick={() =>
-                    visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
-                  }
-                  className={`${iconClasses} ${visibility.seotoolkit ? "text-brand-bright" : "dark:text-white/50"}`}
-                  style={{ fontSize: "16px" }}
-                />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  SEO Resources
-                </div>
-              </div>
-
-              <Drawer
-                open={openedAiDrawer}
-                onOpenChange={(open) =>
-                  open ? openAiDrawer() : closeAiDrawer()
-                }
-              >
-                {/* <DrawerTrigger className="flex items-center space-x-1"> */}
-                <div className="relative group flex items-center h-full">
+            </div>
+            <DrawerContent>
+              <DrawerHeader>
+                <div className="flex items-center space-x-2">
                   <FaRobot
-                    onClick={() =>
-                      openedAiDrawer ? closeAiDrawer() : openAiDrawer()
-                    }
-                    className={`cursor-pointer z-50 text-[16px] ${iconClasses} ${openedAiDrawer ? "text-brand-bright" : "dark:text-white/50"}`}
+                    className={`text-2xl pb-1 text-brand-highlight ${iconClasses}`}
                   />
-                  <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
                     Rusty AI
-                  </div>
+                  </span>
                 </div>
-                {/* </DrawerTrigger> */}
-                <DrawerContent>
-                  <DrawerHeader>
-                    <div className="flex items-center space-x-2">
-                      <FaRobot
-                        className={`text-2xl pb-1 text-brand-highlight ${iconClasses}`}
-                      />
-                      <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
-                        Rusty AI
-                      </span>
+                <DrawerDescription>
+                  <AIcontainer />
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerFooter>
+                <DrawerClose
+                  className={`dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30 ${iconClasses}`}
+                >
+                  <div className="relative group hover:delay-1000">
+                    <IoMdClose className="text-lg" />
+                    <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                      Rusty AI
                     </div>
-                    <DrawerDescription>
-                      <AIcontainer />
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <DrawerFooter>
-                    <DrawerClose
-                      className={`dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30 ${iconClasses}`}
-                    >
-                      <div className="relative group hover:delay-1000">
-                        <IoMdClose className="text-lg" />
-                        <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                          Rusty AI
-                        </div>
-                      </div>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
+                  </div>
+                </DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
 
-              <button
-                disabled={pathname === "/serverlogs"}
-                className={`relative group flex items-center h-full ${pathname === "/serverlogs" ? "cursor-not-allowed" : ""}`}
-              >
-                <BsLayoutSidebarInsetReverse
-                  className={`text-[14px] ${iconClasses} ${visibility.sidebar ? "text-brand-bright" : "dark:text-white/50"} ${pathname === "/serverlogs" || pathname === "/ppc" ? "text-gray-400 cursor-not-allowed" : ""}`}
-                  onClick={() => {
-                    if (visibility.sidebar) {
-                      hideSidebar();
-                    } else {
-                      showSidebar();
-                    }
-                  }}
-                />
-                <div className="absolute bottom-[calc(100%+5px)] -right-2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Toggle Sidebar
-                </div>
-              </button>
+          {/* SIDEBAR TOGGLE */}
+          <div className="relative group flex items-center">
+            <button
+              disabled={pathname === "/serverlogs"}
+              onClick={() => (visibility.sidebar ? hideSidebar() : showSidebar())}
+              className={`flex items-center justify-center h-7 w-8 rounded transition-all ${pathname === "/serverlogs" ? "cursor-not-allowed opacity-30" : "hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"}`}
+            >
+              <BsLayoutSidebarInsetReverse
+                className={`text-[15px] transition-colors ${visibility.sidebar ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+              />
+            </button>
+            <div className="absolute bottom-[calc(100%+8px)] -right-1 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
+              Toggle Sidebar
             </div>
           </div>
         </section>

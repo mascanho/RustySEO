@@ -18,7 +18,7 @@ import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
 import ResizableDivider from "./components/ResizableDivider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useDataActions } from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
@@ -139,201 +139,168 @@ export default function Home() {
     return () => debouncedUpdate.cancel();
   }, [crawlData, debouncedUpdate]);
 
+  // Fetch aggregated data when tab changes
+  const { setAggregatedData } = useDataActions();
+  const aggregatedData = useGlobalCrawlStore((state) => state.aggregatedData);
+  const isFinishedDeepCrawl = useGlobalCrawlStore((state) => state.isFinishedDeepCrawl);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetchForTab = async () => {
+        try {
+          if (activeTab === "images") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "images" });
+            setAggregatedData({ images: res });
+          } else if (activeTab === "javascript") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "scripts" });
+            setAggregatedData({ scripts: res });
+          } else if (activeTab === "css") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "stylesheets" });
+            setAggregatedData({ css: res });
+          } else if (activeTab === "internalLinks") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "internal_links" });
+            setAggregatedData({ internalLinks: res });
+          } else if (activeTab === "externalLinks") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "external_links" });
+            setAggregatedData({ externalLinks: res });
+          } else if (activeTab === "keywords") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "keywords" });
+            setAggregatedData({ keywords: res });
+          } else if (activeTab === "redirects") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "redirects" });
+            setAggregatedData({ redirects: res });
+          } else if (activeTab === "files") {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "files" });
+            setAggregatedData({ files: res });
+          }
+        } catch (e) {
+          console.error("Error fetching aggregated data:", e);
+        }
+      };
+
+      // Immediate fetch check
+      let shouldFetchImmediate = false;
+      if (activeTab === "images" && aggregatedData.images.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "javascript" && aggregatedData.scripts.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "css" && aggregatedData.css.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "internalLinks" && aggregatedData.internalLinks.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "externalLinks" && aggregatedData.externalLinks.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "keywords" && aggregatedData.keywords.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "redirects" && aggregatedData.redirects.length === 0) shouldFetchImmediate = true;
+      else if (activeTab === "files" && aggregatedData.files.length === 0) shouldFetchImmediate = true;
+
+      if (shouldFetchImmediate || !isFinishedDeepCrawl) {
+        await fetchForTab();
+      }
+    };
+
+    fetchData();
+
+    // Set up polling if crawl is active
+    let intervalId = null;
+    if (!isFinishedDeepCrawl) {
+      intervalId = setInterval(fetchData, 5000); // Poll every 5 seconds
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isFinishedDeepCrawl, setAggregatedData, aggregatedData.images, aggregatedData.scripts, aggregatedData.css, aggregatedData.internalLinks, aggregatedData.externalLinks, aggregatedData.keywords, aggregatedData.redirects, aggregatedData.files]);
+
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
-    const jsSet = new Set<string>();
-    debouncedCrawlData.forEach((item) => {
-      if (item.javascript?.external) {
-        item.javascript.external.forEach((link) => jsSet.add(link));
-      }
-    });
-    return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
-  }, [debouncedCrawlData]);
+    if (activeTab !== "javascript") return [];
+    // Use fetched data
+    return aggregatedData.scripts.map((url, index) => ({ index: index + 1, url }));
+  }, [aggregatedData.scripts, activeTab]);
 
   // Filters all the CSS
   const filteredCssArr = useMemo(() => {
-    const cssSet = new Set<string>();
-    debouncedCrawlData?.forEach((item) => {
-      item?.css?.external?.forEach((link) => cssSet.add(link));
-    });
-    return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
-  }, [debouncedCrawlData]);
+    if (activeTab !== "css") return [];
+    return aggregatedData.css.map((url, index) => ({ index: index + 1, url }));
+  }, [aggregatedData.css, activeTab]);
 
   // Filters all the images
   const filteredImagesArr = useMemo(() => {
-    const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
-    return imagesArr.filter(
-      (image, index) => imagesArr.indexOf(image) === index,
-    );
-  }, [debouncedCrawlData]);
+    if (activeTab !== "images") return [];
+    return aggregatedData.images;
+  }, [aggregatedData.images, activeTab]);
 
   // Filters all the Internal links
   const filteredInternalLinks = useMemo(() => {
-    const linksWithAnchors = [];
-    const uniqueLinks = new Set();
-
-    debouncedCrawlData.forEach((item) => {
-      // Process internal links with status codes
-      item?.inoutlinks_status_codes?.internal?.forEach((statusInfo) => {
-        const link = statusInfo.url;
-        if (link && !uniqueLinks.has(link)) {
-          uniqueLinks.add(link);
-
-          linksWithAnchors.push({
-            link: link,
-            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
-            status: statusInfo.status || null,
-            error: statusInfo.error || null,
-            page: item?.url || null, // Use item.page as in original
-          });
-        }
-      });
-    });
-
-    return linksWithAnchors;
-  }, [debouncedCrawlData]);
+    if (activeTab !== "internalLinks") return [];
+    // The structure returned by backend is generic JSON link objects, map to what Table expects
+    // { link, anchor, status, error, page }
+    return aggregatedData.internalLinks.map(link => ({
+      link: link.url,
+      anchor: link.anchor_text || "",
+      status: link.status || null,
+      error: link.error || null,
+      page: link.page || ""
+    }));
+  }, [aggregatedData.internalLinks, activeTab]);
 
   // Filters all the External links
   const filteredExternalLinks = useMemo(() => {
-    const linksWithAnchors = [];
-    const uniqueLinks = new Set();
-
-    debouncedCrawlData.forEach((item) => {
-      // Process external links with status codes
-      item?.inoutlinks_status_codes?.external?.forEach((statusInfo) => {
-        const link = statusInfo.url;
-        if (link && !uniqueLinks.has(link)) {
-          uniqueLinks.add(link);
-
-          linksWithAnchors.push({
-            link: link,
-            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
-            status: statusInfo.status || null,
-            error: statusInfo.error || null,
-            page: item?.url || url, // Fallback to url if item.url is unavailable
-          });
-        }
-      });
-    });
-
-    return linksWithAnchors;
-  }, [debouncedCrawlData]);
+    if (activeTab !== "externalLinks") return [];
+    return aggregatedData.externalLinks.map(link => ({
+      link: link.url,
+      anchor: link.anchor_text || "",
+      status: link.status || null,
+      error: link.error || null,
+      page: link.page || ""
+    }));
+  }, [aggregatedData.externalLinks, activeTab]);
 
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
-    const urlKeywordsArray = []; // Array to store objects with URLs and keywords
-
-    debouncedCrawlData?.forEach((url) => {
-      const urlString = url?.url; // Extract the URL
-      const keywords = url?.keywords || []; // Extract keywords for the current URL
-
-      // Add an object with the URL and its keywords to the array
-      urlKeywordsArray.push({
-        url: urlString,
-        keywords: keywords,
-      });
-    });
-
-    return urlKeywordsArray; // Return the array
-  }, [debouncedCrawlData]);
+    if (activeTab !== "keywords") return [];
+    // The structure returned by backend is { url, keywords: [] }
+    return aggregatedData.keywords;
+  }, [aggregatedData.keywords, activeTab]);
 
   const filteredCustomSearch = useMemo(() => {
-    // Early return if no crawlData
+    if (activeTab !== "search") return [];
     if (!crawlData) {
       return [];
     }
 
     const customSearch = crawlData.filter(
-      (search) => search.extractor.html === true,
+      (search) => search?.extractor?.html === true,
     );
     return customSearch;
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
-  // TODO: Some things still seep through appearing as files. improve this behaviour later
+  // Filters all files
   const filteredFilesArr = useMemo(() => {
-    const fileSet = new Set<string>();
-    const files = [];
-
-    const imageExts = [
-      "png",
-      "jpg",
-      "jpeg",
-      "webp",
-      "svg",
-      "gif",
-      "ico",
-      "bmp",
-      "tiff",
-    ];
-    const jsExts = ["js", "mjs", "jsx", "ts", "tsx"];
-    const cssExts = ["css", "scss", "sass", "less"];
-    const htmlPhpExts = [
-      "html",
-      "htm",
-      "php",
-      "php7",
-      "phtml",
-      "asp",
-      "aspx",
-      "jsp",
-      "cfm",
-    ];
-
-    const getFileExt = (url: string) => {
-      if (!url) return null;
-      try {
-        const parts = url.split("/");
-        const lastPart = parts[parts.length - 1];
-        if (!lastPart.includes(".")) return null;
-        // This prevents email from being collected into the table
-        if (url.includes("@")) return null;
-        if (url.includes("mailto:")) return null;
-        if (url.includes("tel:")) return null;
-        if (url.includes(".com")) return null;
-
-        const ext = lastPart.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase();
-        return ext || null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    debouncedCrawlData.forEach((item) => {
-      // Collect all links from this page
-      const allLinks = [
-        ...(item?.inoutlinks_status_codes?.internal || []),
-        ...(item?.inoutlinks_status_codes?.external || []),
-      ];
-
-      allLinks.forEach((linkObj) => {
-        const url = linkObj.url;
-        if (!url) return;
-
-        const ext = getFileExt(url);
-        if (ext) {
-          if (
-            imageExts.includes(ext) ||
-            jsExts.includes(ext) ||
-            cssExts.includes(ext) ||
-            htmlPhpExts.includes(ext)
-          ) {
-            return;
-          }
-
-          if (!fileSet.has(url)) {
-            fileSet.add(url);
-            files.push({
-              url: url,
-              filetype: ext.toUpperCase(),
-              found_at: item.url || "",
-            });
-          }
-        }
-      });
+    if (activeTab !== "files") return [];
+    // Structure: { url, found_at: page }
+    // We need to derive 'filetype' from url
+    return aggregatedData.files.map((f, index) => {
+      const ext = f.url.split('.').pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
+      return {
+        id: index + 1,
+        url: f.url,
+        filetype: ext,
+        found_at: f.found_at || f.page || ""
+      };
     });
+  }, [aggregatedData.files, activeTab]);
 
-    return files.map((f, index) => ({ id: index + 1, ...f }));
-  }, [debouncedCrawlData]);
+  // Redirects logic - new 
+  const filteredRedirects = useMemo(() => {
+    if (activeTab !== "redirects") return [];
+    return aggregatedData.redirects;
+  }, [aggregatedData.redirects, activeTab]);
 
   const renderIssuesViewContent = () => {
     switch (issuesView) {
@@ -475,7 +442,7 @@ export default function Home() {
               value="redirects"
               className="flex-grow overflow-hidden"
             >
-              <RedirectsTable tabName={"AllData"} rows={debouncedCrawlData} />
+              <RedirectsTable tabName={"AllData"} rows={filteredRedirects} />
             </TabsContent>
             <TabsContent value="files" className="flex-grow overflow-hidden">
               <FilesTable tabName={"All Files"} rows={filteredFilesArr} />

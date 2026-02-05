@@ -124,51 +124,63 @@ const TableHeader = ({
   onAlignToggle,
   columnVisibility,
 }: TableHeaderProps) => {
+  const visibleItems = useMemo(() => {
+    return headers
+      .map((header, index) => ({
+        header,
+        width: columnWidths[index],
+        alignment: columnAlignments[index],
+        visible: columnVisibility[index],
+        originalIndex: index,
+      }))
+      .filter((item) => item.visible);
+  }, [headers, columnWidths, columnAlignments, columnVisibility]);
+
   return useMemo(
     () => (
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <table
-          className="w-full text-xs border-collapse"
-          style={{ tableLayout: "fixed" }}
-        >
-          <thead>
-            <tr>
-              {headers.map((header, index) =>
-                columnVisibility[index] ? (
-                  <th
-                    key={header}
-                    style={{
-                      width: columnWidths[index],
-                      position: "relative",
-                      border: "1px solid #ddd",
-                      // padding: "20px 0 10px 40px",
-                      userSelect: "none",
-                      minWidth: columnWidths[index],
-                      textAlign: columnAlignments[index],
-                      backgroundColor: "var(--background, white)",
-                      padding: "8px",
-                      height: "auto",
-                    }}
-                    className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
-                    onClick={() => onAlignToggle(index)}
-                  >
-                    {header}
-                    <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-                  </th>
-                ) : null,
-              )}
-            </tr>
-          </thead>
-        </table>
+      <div
+        className="domainCrawl border-b bg-white dark:bg-brand-darker"
+        style={{
+          display: "grid",
+          gridTemplateColumns: visibleItems.map((item) => item.width).join(" "),
+          height: "30px",
+          alignItems: "center",
+          fontSize: "12px",
+          width: "100%",
+        }}
+      >
+        {visibleItems.map((item) => (
+          <div
+            key={item.header}
+            style={{
+              position: "relative",
+              padding: "8px",
+              userSelect: "none",
+              justifyContent:
+                item.alignment === "center"
+                  ? "center"
+                  : item.alignment === "right"
+                    ? "flex-end"
+                    : "flex-start",
+              height: "30px",
+              display: "flex",
+              alignItems: "center",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+            onClick={() => onAlignToggle(item.originalIndex)}
+            className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark bg-white shadow dark:border"
+          >
+            {item.header}
+            <ResizableDivider onMouseDown={(e) => onResize(item.originalIndex, e)} />
+          </div>
+        ))}
       </div>
     ),
     [
-      headers,
-      columnWidths,
-      columnAlignments,
+      visibleItems,
       onResize,
       onAlignToggle,
-      columnVisibility,
     ],
   );
 };
@@ -185,67 +197,84 @@ const TableRow = ({
   const rowData = useMemo(
     () => [
       index + 1,
-      row[1] || "",
-      row[0] || "",
-      row[2] + " KB" || "",
-      row[3] || "",
-      row[4] || "",
+      row[1] || "", // Alt text
+      row[0] || "", // URL
+      (row[2] ? (Number(row[2]) / 1024).toFixed(2) : "0") + " KB", // Size in KB
+      row[3] || "", // Type
+      row[4] || "", // Status
     ],
     [row, index],
   );
+
+  const visibleItems = useMemo(() => {
+    return rowData
+      .map((cell, i) => ({
+        cell,
+        width: columnWidths[i],
+        alignment: columnAlignments[i],
+        visible: columnVisibility[i],
+        originalIndex: i,
+      }))
+      .filter((item) => item.visible);
+  }, [rowData, columnWidths, columnAlignments, columnVisibility]);
 
   const isOdd = index % 2 === 1;
 
   return useMemo(
     () => (
-      <>
-        {rowData.map((cell, cellIndex) =>
-          columnVisibility[cellIndex] ? (
-            <td
-              key={`cell-${index}-${cellIndex}`}
-              onClick={() => handleCellClick(index, cellIndex, cell.toString())}
-              style={{
-                width: columnWidths[cellIndex],
-                border: "1px solid #ddd",
-                padding: "8px",
-                textAlign: columnAlignments[cellIndex],
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                minWidth: columnWidths[cellIndex],
-                height: "25px",
-              }}
-              className={`
-                select-none
-                border-gray-200 dark:border-gray-700
-                transition-colors
-                ${
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "bg-blue-600 dark:bg-blue-700 text-white hover:bg-brand-bright" // Selected cell
-                    : isOdd
-                      ? "bg-gray-100 dark:bg-brand-dark/20" // Odd row (darker)
-                      : "bg-white dark:bg-brand-darker" // Even row (lighter)
-                }
-                hover:bg-blue-50 dark:hover:bg-blue-900/30
-              `}
-            >
-              <TruncatedCell
-                text={cell?.toString()}
-                width={columnWidths[cellIndex]}
-              />
-            </td>
-          ) : null,
-        )}
-      </>
+      <div
+        onClick={() => handleCellClick(index, 0, rowData[0]?.toString() || "")}
+        style={{
+          display: "grid",
+          gridTemplateColumns: visibleItems.map((item) => item.width).join(" "),
+          height: "100%",
+          alignItems: "center",
+        }}
+        className="dark:text-white/50 cursor-pointer not-selectable"
+      >
+        {visibleItems.map((item) => (
+          <div
+            key={`cell-${index}-${item.originalIndex}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCellClick(index, item.originalIndex, item.cell?.toString() || "");
+            }}
+            style={{
+              padding: "8px",
+              justifyContent:
+                item.alignment === "center"
+                  ? "center"
+                  : item.alignment === "right"
+                    ? "flex-end"
+                    : "flex-start",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+            }}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${clickedCell.row === index && clickedCell.cell === item.originalIndex
+              ? "bg-blue-600 text-white"
+              : index % 2 === 0
+                ? "bg-white dark:bg-brand-darker"
+                : "bg-gray-50 dark:bg-brand-dark/30"
+              }`}
+          >
+            <TruncatedCell
+              text={item.cell?.toString()}
+              width="100%"
+            />
+          </div>
+        ))}
+      </div>
     ),
     [
-      rowData,
-      columnWidths,
-      columnAlignments,
-      columnVisibility,
+      visibleItems,
       index,
       clickedCell,
       handleCellClick,
       isOdd,
+      rowData,
     ],
   );
 };
@@ -399,11 +428,11 @@ const ImagesCrawlTable = ({
 
     return searchTerm
       ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
+        if (!row || typeof row !== "object") return false;
+        return Object.values(row).some((value) =>
+          normalizeText(value?.toString()).includes(searchTermNormalized),
+        );
+      })
       : rows;
   }, [rows, searchTerm]);
 
@@ -415,7 +444,7 @@ const ImagesCrawlTable = ({
     overscan,
     measureElement:
       typeof window !== "undefined" &&
-      navigator.userAgent.indexOf("Firefox") === -1
+        navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
   });
@@ -529,26 +558,34 @@ const ImagesCrawlTable = ({
         style={{ contain: "strict" }}
       >
         <div
-          ref={tableContainerRef}
           style={{
-            minWidth: `${totalWidth}px`,
-            height: `${rowVirtualizer.getTotalSize() + 41}px`, // Add header height
+            width: "100%",
             position: "relative",
           }}
-          className="domainCrawlParent"
         >
           {/* Sticky Header */}
-          <TableHeader
-            headers={headerTitles}
-            columnWidths={columnWidths}
-            columnAlignments={columnAlignments}
-            onResize={handleMouseDown}
-            onAlignToggle={toggleColumnAlignment}
-            columnVisibility={columnVisibility}
-          />
+          <div
+            className="sticky top-0 z-10"
+            style={{ width: "100%" }}
+          >
+            <TableHeader
+              headers={headerTitles}
+              columnWidths={columnWidths}
+              columnAlignments={columnAlignments}
+              onResize={handleMouseDown}
+              onAlignToggle={toggleColumnAlignment}
+              columnVisibility={columnVisibility}
+            />
+          </div>
 
-          {/* Virtual rows container */}
-          <div style={{ position: "relative", paddingTop: "0px" }}>
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: "relative",
+              width: "100%",
+            }}
+            className="domainCrawlParent"
+          >
             {filteredRows.length > 0 ? (
               virtualRows.map((virtualRow) => {
                 const isOdd = virtualRow.index % 2 === 1;
@@ -562,30 +599,16 @@ const ImagesCrawlTable = ({
                       height: `${virtualRow.size}px`,
                       width: "100%",
                     }}
-                    className={`${isOdd ? "bg-gray-100 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}`}
                   >
-                    <table
-                      className="w-full text-xs border-collapse"
-                      style={{
-                        width: "100%",
-                        tableLayout: "fixed",
-                        height: "100%",
-                      }}
-                    >
-                      <tbody>
-                        <tr style={{ height: `${rowHeight}px` }}>
-                          <TableRow
-                            row={filteredRows[virtualRow.index]}
-                            index={virtualRow.index}
-                            columnWidths={columnWidths}
-                            columnAlignments={columnAlignments}
-                            columnVisibility={columnVisibility}
-                            clickedCell={clickedCell}
-                            handleCellClick={handleCellClick}
-                          />
-                        </tr>
-                      </tbody>
-                    </table>
+                    <TableRow
+                      row={filteredRows[virtualRow.index]}
+                      index={virtualRow.index}
+                      columnWidths={columnWidths}
+                      columnAlignments={columnAlignments}
+                      columnVisibility={columnVisibility}
+                      clickedCell={clickedCell}
+                      handleCellClick={handleCellClick}
+                    />
                   </div>
                 );
               })

@@ -2,7 +2,7 @@
 export const initialColumnWidths = [
   "50px", // ID
   "250px", // Alt Text
-  "400px", // URL
+  "1fr", // URL - fills remaining space
   "100px", // Image Size
   "100px", // Image Type
   "100px", // Status Code

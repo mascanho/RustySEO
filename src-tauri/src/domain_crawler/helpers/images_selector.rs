@@ -94,11 +94,8 @@ async fn fetch_image_size(client: &reqwest::Client, url: &Url) -> Result<(u64, S
             .unwrap_or(0);
     }
 
-    // Convert the size from bytes to kilobytes (KB)
-    let size_kb = content_length / 1024;
-
-    // Return the size in KB, content type, and status code as u16
-    Ok((size_kb, content_type, status_code_int))
+    // Return the size in bytes, content type, and status code as u16
+    Ok((content_length, content_type, status_code_int))
 }
 
 /// Extracts image URLs, alt tags, sizes, content types, status codes, and a boolean indicating if width or height is not specified.

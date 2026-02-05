@@ -2,7 +2,7 @@
 export const useMissingAltText = (crawlData) => {
   return (
     crawlData?.filter((page) => {
-      const images = page?.images?.Ok;
+      const images = Array.isArray(page?.images) ? page.images : page?.images?.Ok;
       if (!images || !Array.isArray(images)) return false;
       return images.some((img) => !img[1] || img[1].trim() === "");
     }) || []
@@ -12,7 +12,7 @@ export const useMissingAltText = (crawlData) => {
 export const useBrokenImages = (crawlData) => {
   return (
     crawlData?.filter((page) => {
-      const images = page?.images?.Ok;
+      const images = Array.isArray(page?.images) ? page.images : page?.images?.Ok;
       if (!images || !Array.isArray(images)) return false;
       return images.some((img) => img[4] >= 400);
     }) || []
@@ -22,9 +22,9 @@ export const useBrokenImages = (crawlData) => {
 export const useLargeImages = (crawlData) => {
   return (
     crawlData?.filter((page) => {
-      const images = page?.images?.Ok;
+      const images = Array.isArray(page?.images) ? page.images : page?.images?.Ok;
       if (!images || !Array.isArray(images)) return false;
-      return images.some((img) => img[2] > 100 * 1024); // Assuming size is in
+      return images.some((img) => img[2] > 100 * 1024); // Assuming size is in bytes
     }) || []
   );
 };
