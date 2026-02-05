@@ -17,9 +17,7 @@ const ImagesTable = ({ height }: { height: number }) => {
   // Fallback if no images are found
   if (!selectedTableURL?.[0]?.images?.Ok) {
     return (
-      <div
-        className="text-base text-black/50 dark:text-white/50 flex justify-center items-center m-auto w-full h-full"
-      >
+      <div className="text-base text-black/50 dark:text-white/50 flex justify-center items-center m-auto w-full h-full">
         <span className="text-xs">Select a URL from the HTML table</span>
       </div>
     );
@@ -42,20 +40,22 @@ const ImagesTable = ({ height }: { height: number }) => {
   };
 
   return (
-    <div
-      className="flex w-full h-full overflow-hidden"
-    >
+    <div className="flex w-full h-full overflow-hidden">
       {/* Table Section */}
       <section className="flex-1 overflow-hidden w-full h-full">
         <div className="h-full overflow-y-auto imagesSubTable">
           <table className="w-full border-collapse border border-gray-200 text-xs table-fixed">
             <thead className="sticky top-0 z-10">
               <tr className="bg-white dark:bg-brand-dark">
-                <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-10">ID</th>
+                <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-10">
+                  ID
+                </th>
                 <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-40">
                   Alt Text
                 </th>
-                <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-80">Link</th>
+                <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-80">
+                  Link
+                </th>
                 <th className="border border-gray-200 dark:border-gray-700 py-1 px-2 w-20">
                   Size (KB)
                 </th>
@@ -84,12 +84,13 @@ const ImagesTable = ({ height }: { height: number }) => {
                 (image: [string, string, number, string], index: number) => (
                   <tr
                     key={index}
-                    className={`cursor-pointer border-b dark:border-brand-dark/50 ${selectedRowIndex === index
-                      ? "bg-brand-bright text-white"
-                      : index % 2 === 0
-                        ? "bg-gray-50 dark:bg-brand-dark/20"
-                        : "bg-white dark:bg-brand-darker"
-                      } hover:opacity-80`}
+                    className={`cursor-pointer border-b dark:border-brand-dark/50 ${
+                      selectedRowIndex === index
+                        ? "bg-brand-bright text-white"
+                        : index % 2 === 0
+                          ? "bg-gray-50 dark:bg-brand-dark/20"
+                          : "bg-white dark:bg-brand-darker"
+                    } hover:opacity-80`}
                     onClick={() => handleRowClick(image, index)}
                   >
                     <td className="border-r border-gray-200 dark:border-gray-700 px-2 truncate text-center">
@@ -108,10 +109,15 @@ const ImagesTable = ({ height }: { height: number }) => {
                       <span>{image[0]}</span>
                     </td>
                     <td className="border-r border-gray-200 dark:border-gray-700 px-2 truncate text-center">
-                      {image[2]} KB
+                      {image[2] &&
+                      !isNaN(Number(image[2])) &&
+                      Number(image[2]) > 0
+                        ? (Number(image[2]) / 1024).toFixed(2)
+                        : "0"}{" "}
+                      KB
                     </td>
                     <td className="px-2 truncate text-center">
-                      {image[4]}
+                      {!isNaN(Number(image[4])) ? image[4] : ""}
                     </td>
                   </tr>
                 ),
@@ -131,9 +137,9 @@ const ImagesTable = ({ height }: { height: number }) => {
                 alt={selectedImage[1]}
                 className="rounded-lg object-contain max-h-full max-w-full shadow-md"
               />
-              <div className="mt-2 text-xs text-center max-w-full truncate px-2">
+              {/*<div className="mt-2 text-xs text-center max-w-full truncate px-2">
                 {selectedImage[0]}
-              </div>
+              </div>*/}
             </div>
           ) : (
             <div className="text-center text-gray-500 dark:text-gray-400 text-xs">
