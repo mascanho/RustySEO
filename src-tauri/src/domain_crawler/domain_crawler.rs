@@ -313,11 +313,6 @@ pub async fn crawl_domain(
         let progress = ProgressData {
             total_urls: std::cmp::max(state_guard.total_urls, 1),
             crawled_urls: completed,
-            failed_urls: state_guard
-                .failed_urls
-                .iter()
-                .map(|f| f.url.clone())
-                .collect(),
             percentage: if state_guard.total_urls > 0 {
                 (completed as f32 / state_guard.total_urls as f32) * 100.0
             } else {

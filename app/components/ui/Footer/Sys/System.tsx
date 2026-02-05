@@ -21,7 +21,7 @@ function System() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger onClick={() => setOpen(!open)}>
         {" "}
-        <GiGearStickPattern className={`${open ? "text-brand-bright" : ""}`} />
+        <GiGearStickPattern className={`text-[17px] transition-colors ${open ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`} />
       </PopoverTrigger>
       <PopoverContent className="m-0 mb-3 mr-2 p-1 min-w-80  h-[405px] overflow-hidden dark:bg-brand-darker">
         <Tabs>

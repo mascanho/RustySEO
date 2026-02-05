@@ -28,7 +28,6 @@ pub struct ProgressData {
     pub crawled_urls: usize,
     pub percentage: f32,
     pub failed_urls_count: usize,
-    pub failed_urls: Vec<String>,
     pub discovered_urls: usize,
     pub robots_blocked: Option<Vec<String>>,
 }
@@ -36,7 +35,7 @@ pub struct ProgressData {
 /// Crawl result structure for emitting events
 #[derive(Clone, Serialize)]
 pub struct CrawlResultData {
-    pub result: DomainCrawlResults,
+    pub result: super::models::LightCrawlResult,
 }
 
 /// Structure to track crawler state

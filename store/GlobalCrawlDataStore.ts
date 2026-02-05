@@ -49,6 +49,7 @@ interface CrawlStore {
   robotsBlocked: string[];
   cookies: string[];
   favicon: string[];
+  visitedUrls: Set<string>;
 
   // Original actions (maintained for backward compatibility)
   setDomainCrawlData: (data: PageDetails[]) => void;
@@ -149,12 +150,23 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
     addDomainCrawlResult: (result: PageDetails) =>
       set((state) => {
-        if (state.crawlData.some((item) => item.url === result.url)) {
+        // Use a private set for deduplication if we want to be super fast, 
+        // but for now let's at least optimize the logic.
+        // We can't easily add a Set to the store state without changing too much, 
+        // but we can at least avoid the check if the length is large and we trust the backend.
+        // Actually, let's keep a Set of visited URLs in the store.
+        if (!state.visitedUrls) {
+          state.visitedUrls = new Set(state.crawlData.map(item => item.url));
+        }
+
+        if (state.visitedUrls.has(result.url)) {
           return state;
         }
+
+        state.visitedUrls.add(result.url);
         return { crawlData: [...state.crawlData, result] };
       }),
-    clearDomainCrawlData: () => set({ crawlData: [] }),
+    clearDomainCrawlData: () => set({ crawlData: [], visitedUrls: new Set() }),
     setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
     setCrawlerType: createSetter<string>("crawlerType"),
     setIssues: createSetter<string[]>("issues"),
@@ -231,6 +243,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     robotsBlocked: [],
     cookies: [],
     favicon: "",
+    visitedUrls: new Set(),
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -259,11 +272,23 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setRobotsBlocked: setters.setRobotsBlocked,
         setCookies: setters.setCookies,
         setFavicon: setters.setFavicon,
-        selectURL: (url: string) => {
+        selectURL: async (url: string) => {
           const state = get();
           const rows = state.crawlData;
-          const pageData = rows.find((item) => item.url === url);
+
+          let pageData = rows.find((item) => item.url === url);
           if (!pageData) return;
+
+          // Fetch full data from backend because we only have LightCrawlResult in state
+          try {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const fullData = await invoke("get_url_data_command", { url });
+            if (fullData) {
+              pageData = fullData;
+            }
+          } catch (error) {
+            console.error("Failed to fetch full URL data:", error);
+          }
 
           setters.setSelectedTableURL([pageData]);
 
@@ -285,6 +310,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
 
           const targetUrlNormalized = normalizeUrl(url);
+
+          // Use debouncedCrawlData from TablesContainer? No, we use store state.
+          // This matched call is still O(N) but only on click.
           const innerLinksMatched = rows.filter((r) => {
             const internalLinks = r?.inoutlinks_status_codes?.internal || [];
             return internalLinks.some(

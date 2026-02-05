@@ -141,34 +141,49 @@ export default function Home() {
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
+    if (activeTab !== "javascript") return [];
     const jsSet = new Set<string>();
     debouncedCrawlData.forEach((item) => {
-      if (item.javascript?.external) {
-        item.javascript.external.forEach((link) => jsSet.add(link));
+      // Handle both old and new shapes if necessary
+      const js = item.javascript;
+      if (js?.external) {
+        js.external.forEach((link) => jsSet.add(link));
       }
     });
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   // Filters all the CSS
   const filteredCssArr = useMemo(() => {
+    if (activeTab !== "css") return [];
     const cssSet = new Set<string>();
     debouncedCrawlData?.forEach((item) => {
       item?.css?.external?.forEach((link) => cssSet.add(link));
     });
     return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   // Filters all the images
   const filteredImagesArr = useMemo(() => {
-    const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
-    return imagesArr.filter(
-      (image, index) => imagesArr.indexOf(image) === index,
-    );
-  }, [debouncedCrawlData]);
+    if (activeTab !== "images") return [];
+    // OPTIMIZED: Use a Set for deduplication instead of indexOf (O(N^2) -> O(N))
+    const uniqueImages = new Set<string>();
+    debouncedCrawlData.forEach((page) => {
+      const images = page?.images?.Ok || [];
+      images.forEach((img: any) => {
+        // Assuming image is a string or has a URL property. 
+        // Based on models.rs it's a tuple (String, String, u64, String, u16, bool)
+        // Let's use the first element (URL) as the key.
+        const url = Array.isArray(img) ? img[0] : img;
+        if (url) uniqueImages.add(url);
+      });
+    });
+    return Array.from(uniqueImages);
+  }, [debouncedCrawlData, activeTab]);
 
   // Filters all the Internal links
   const filteredInternalLinks = useMemo(() => {
+    if (activeTab !== "internalLinks") return [];
     const linksWithAnchors = [];
     const uniqueLinks = new Set();
 
@@ -181,20 +196,21 @@ export default function Home() {
 
           linksWithAnchors.push({
             link: link,
-            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
+            anchor: statusInfo.anchor_text || "",
             status: statusInfo.status || null,
             error: statusInfo.error || null,
-            page: item?.url || null, // Use item.page as in original
+            page: item?.url || null,
           });
         }
       });
     });
 
     return linksWithAnchors;
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   // Filters all the External links
   const filteredExternalLinks = useMemo(() => {
+    if (activeTab !== "externalLinks") return [];
     const linksWithAnchors = [];
     const uniqueLinks = new Set();
 
@@ -207,77 +223,58 @@ export default function Home() {
 
           linksWithAnchors.push({
             link: link,
-            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
+            anchor: statusInfo.anchor_text || "",
             status: statusInfo.status || null,
             error: statusInfo.error || null,
-            page: item?.url || url, // Fallback to url if item.url is unavailable
+            page: item?.url || url,
           });
         }
       });
     });
 
     return linksWithAnchors;
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
-    const urlKeywordsArray = []; // Array to store objects with URLs and keywords
+    if (activeTab !== "keywords") return [];
+    const urlKeywordsArray = [];
 
     debouncedCrawlData?.forEach((url) => {
-      const urlString = url?.url; // Extract the URL
-      const keywords = url?.keywords || []; // Extract keywords for the current URL
+      const urlString = url?.url;
+      const keywords = url?.keywords || [];
 
-      // Add an object with the URL and its keywords to the array
       urlKeywordsArray.push({
         url: urlString,
         keywords: keywords,
       });
     });
 
-    return urlKeywordsArray; // Return the array
-  }, [debouncedCrawlData]);
+    return urlKeywordsArray;
+  }, [debouncedCrawlData, activeTab]);
 
   const filteredCustomSearch = useMemo(() => {
-    // Early return if no crawlData
+    if (activeTab !== "search") return [];
     if (!crawlData) {
       return [];
     }
 
     const customSearch = crawlData.filter(
-      (search) => search.extractor.html === true,
+      (search) => search?.extractor?.html === true,
     );
     return customSearch;
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   // TODO: Some things still seep through appearing as files. improve this behaviour later
   const filteredFilesArr = useMemo(() => {
+    if (activeTab !== "files") return [];
     const fileSet = new Set<string>();
     const files = [];
 
-    const imageExts = [
-      "png",
-      "jpg",
-      "jpeg",
-      "webp",
-      "svg",
-      "gif",
-      "ico",
-      "bmp",
-      "tiff",
-    ];
+    const imageExts = ["png", "jpg", "jpeg", "webp", "svg", "gif", "ico", "bmp", "tiff"];
     const jsExts = ["js", "mjs", "jsx", "ts", "tsx"];
     const cssExts = ["css", "scss", "sass", "less"];
-    const htmlPhpExts = [
-      "html",
-      "htm",
-      "php",
-      "php7",
-      "phtml",
-      "asp",
-      "aspx",
-      "jsp",
-      "cfm",
-    ];
+    const htmlPhpExts = ["html", "htm", "php", "php7", "phtml", "asp", "aspx", "jsp", "cfm"];
 
     const getFileExt = (url: string) => {
       if (!url) return null;
@@ -285,7 +282,6 @@ export default function Home() {
         const parts = url.split("/");
         const lastPart = parts[parts.length - 1];
         if (!lastPart.includes(".")) return null;
-        // This prevents email from being collected into the table
         if (url.includes("@")) return null;
         if (url.includes("mailto:")) return null;
         if (url.includes("tel:")) return null;
@@ -299,7 +295,6 @@ export default function Home() {
     };
 
     debouncedCrawlData.forEach((item) => {
-      // Collect all links from this page
       const allLinks = [
         ...(item?.inoutlinks_status_codes?.internal || []),
         ...(item?.inoutlinks_status_codes?.external || []),
@@ -333,7 +328,7 @@ export default function Home() {
     });
 
     return files.map((f, index) => ({ id: index + 1, ...f }));
-  }, [debouncedCrawlData]);
+  }, [debouncedCrawlData, activeTab]);
 
   const renderIssuesViewContent = () => {
     switch (issuesView) {

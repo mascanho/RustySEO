@@ -575,7 +575,6 @@ async fn update_state_and_emit_progress(
     let progress = ProgressData {
         total_urls: safe_total_discovered,
         crawled_urls: safe_completed_urls,
-        failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
         percentage,
         failed_urls_count: state.failed_urls.len(),
         discovered_urls: safe_total_discovered,
@@ -617,7 +616,7 @@ async fn update_state_and_emit_progress(
     }
 
     let result_data = CrawlResultData {
-        result: result.clone(),
+        result: super::models::LightCrawlResult::from_full(result),
     };
     if let Err(err) = app_handle.emit("crawl_result", result_data) {
         eprintln!("Failed to emit crawl result: {}", err);

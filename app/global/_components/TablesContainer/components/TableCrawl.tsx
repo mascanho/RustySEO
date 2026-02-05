@@ -228,27 +228,32 @@ const TableRow = memo(
         row?.headings?.h2?.[0]?.length || "", // H2 Size
         row?.status_code || "", // Status Code
         row?.word_count || "", // Word Count
-        row?.text_ratio?.[0]?.text_ratio?.toFixed(1) || "", // Text Ratio
-        row?.flesch?.Ok?.[0]?.toFixed(1) || "", // Flesch Score
-        row?.flesch?.Ok?.[1] || "", // Flesch Grade
+        typeof row?.text_ratio === "number"
+          ? row.text_ratio.toFixed(1)
+          : row?.text_ratio?.[0]?.text_ratio?.toFixed(1) || "", // Text Ratio
+        typeof row?.flesch === "number"
+          ? row.flesch.toFixed(1)
+          : row?.flesch?.Ok?.[0]?.toFixed(1) || "", // Flesch Score
+        row?.flesch_grade || row?.flesch?.Ok?.[1] || "", // Flesch Grade
         row?.mobile ? "Yes" : "No", // Mobile
         row?.meta_robots?.meta_robots?.[0] || "", // Meta Robots
-        row?.content_type || "", // Content Type - ADD THIS
+        row?.content_type || "", // Content Type
         row?.indexability?.indexability >= 0.5 ? "Indexable" : "Not Indexable", // Indexability
         row?.language || "", // Language
-        row?.schema ? "Yes" : "No", // Schema
+        row?.schema === true || row?.schema === "Yes" ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
-        row?.opengraph?.["og:image"] !== "" &&
-        row?.opengraph?.["og: title"] !== ""
+        row?.opengraph === true ||
+          (row?.opengraph?.["og:image"] && row?.opengraph?.["og:title"])
           ? "Yes"
-          : "No" || "", // OpenGraph
-        Array.isArray(row?.cookies?.Ok)
-          ? row.cookies.Ok.length
-          : Array.isArray(row?.cookies)
-            ? row.cookies.length
-            : 0, // Cookies
-
-        row?.page_size?.[0]?.kb + " KB" || "",
+          : "No", // OpenGraph
+        typeof row?.cookies_count === "number"
+          ? row.cookies_count
+          : Array.isArray(row?.cookies?.Ok)
+            ? row.cookies.Ok.length
+            : Array.isArray(row?.cookies)
+              ? row.cookies.length
+              : 0, // Cookies
+        row?.page_size?.[0]?.kb ? row.page_size[0].kb + " KB" : "",
       ],
       [row, index],
     );
@@ -303,13 +308,12 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
-              isRowClicked
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
                 ? "bg-blue-600"
                 : index % 2 === 0
                   ? "bg-white dark:bg-brand-darker"
                   : "bg-gray-50 dark:bg-brand-dark/30"
-            }`}
+              }`}
           >
             <ContextTableMenu data={item.cell}>
               <TruncatedCell text={item.cell?.toString()} width="100%" />

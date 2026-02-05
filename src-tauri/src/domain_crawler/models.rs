@@ -152,3 +152,61 @@ impl Default for DomainCrawlResults {
         }
     }
 }
+
+#[derive(Serialize, Debug, Deserialize, Clone)]
+pub struct LightCrawlResult {
+    pub url: String,
+    pub title: Option<Vec<TitleDetails>>,
+    pub description: String,
+    pub headings: HashMap<String, Vec<String>>,
+    pub status_code: u16,
+    pub word_count: usize,
+    pub response_time: Option<f64>,
+    pub mobile: bool,
+    pub indexability: Indexability,
+    pub language: Option<String>,
+    pub schema: bool,
+    pub url_depth: Option<usize>,
+    pub cookies_count: usize,
+    pub page_size: Vec<Sizes>,
+    pub content_type: String,
+    pub opengraph: bool,
+    pub flesch: Option<f64>,
+    pub flesch_grade: Option<String>,
+    pub text_ratio: Option<f64>,
+    pub extractor: Extractor,
+}
+
+impl LightCrawlResult {
+    pub fn from_full(full: &DomainCrawlResults) -> Self {
+        Self {
+            url: full.url.clone(),
+            title: full.title.clone(),
+            description: full.description.clone(),
+            headings: full.headings.clone(),
+            status_code: full.status_code,
+            word_count: full.word_count,
+            response_time: full.response_time,
+            mobile: full.mobile,
+            indexability: full.indexability.clone(),
+            language: full.language.clone(),
+            schema: full.schema.is_some(),
+            url_depth: full.url_depth,
+            cookies_count: match &full.cookies {
+                Ok(c) => c.len(),
+                Err(_) => 0,
+            },
+            page_size: full.page_size.clone(),
+            content_type: full.content_type.clone(),
+            opengraph: !full.opengraph.is_empty(),
+            flesch: full.flesch.as_ref().ok().map(|(s, _)| *s),
+            flesch_grade: full.flesch.as_ref().ok().map(|(_, g)| g.clone()),
+            text_ratio: full
+                .text_ratio
+                .as_ref()
+                .and_then(|tr| tr.first())
+                .map(|tr| tr.text_ratio),
+            extractor: full.extractor.clone(),
+        }
+    }
+}

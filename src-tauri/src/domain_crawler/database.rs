@@ -261,6 +261,19 @@ impl Database {
         })
         .await?
     }
+
+    pub async fn get_url_data(&self, url: String) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl WHERE url = ?1")?;
+            let data_json: String = stmt.query_row(params![url], |row| row.get(0))?;
+            let data: Value = serde_json::from_str(&data_json)?;
+            Ok(data)
+        })
+        .await?
+    }
 }
 
 pub async fn insert_crawl_data(
