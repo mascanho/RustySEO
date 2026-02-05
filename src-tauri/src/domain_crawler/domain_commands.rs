@@ -155,3 +155,9 @@ pub async fn get_url_data_command(url: String) -> Result<Value, String> {
     let db = database::Database::new("deep_crawl_batches.db").map_err(|e| e.to_string())?;
     db.get_url_data(url).await.map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn get_aggregated_crawl_data_command(data_type: String) -> Result<Value, String> {
+    let db = database::Database::new("deep_crawl_batches.db").map_err(|e| e.to_string())?;
+    db.get_aggregated_crawl_data(data_type).await.map_err(|e| e.to_string())
+}

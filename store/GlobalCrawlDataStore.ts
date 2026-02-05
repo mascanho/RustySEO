@@ -49,9 +49,18 @@ interface CrawlStore {
   robotsBlocked: string[];
   cookies: string[];
   favicon: string[];
-  visitedUrls: Set<string>;
+  aggregatedData: {
+    images: any[];
+    scripts: string[];
+    css: string[];
+    internalLinks: any[];
+    externalLinks: any[];
+    keywords: any[];
+    redirects: any[];
+    files: any[];
+  };
+  setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
 
-  // Original actions (maintained for backward compatibility)
   setDomainCrawlData: (data: PageDetails[]) => void;
   addDomainCrawlResult: (result: PageDetails) => void;
   clearDomainCrawlData: () => void;
@@ -115,6 +124,7 @@ interface CrawlStore {
       setCookies: (cookies: string[]) => void;
       setFavicon: (favicon: string) => void;
       selectURL: (url: string) => void;
+      setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -148,6 +158,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
   // Common setter functions
   const setters = {
     setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
+    setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) =>
+      set((state) => ({
+        aggregatedData: { ...state.aggregatedData, ...data }
+      })),
     addDomainCrawlResult: (result: PageDetails) =>
       set((state) => {
         // Use a private set for deduplication if we want to be super fast, 
@@ -166,7 +180,20 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         state.visitedUrls.add(result.url);
         return { crawlData: [...state.crawlData, result] };
       }),
-    clearDomainCrawlData: () => set({ crawlData: [], visitedUrls: new Set() }),
+    clearDomainCrawlData: () => set({
+      crawlData: [],
+      visitedUrls: new Set(),
+      aggregatedData: {
+        images: [],
+        scripts: [],
+        css: [],
+        internalLinks: [],
+        externalLinks: [],
+        keywords: [],
+        redirects: [],
+        files: [],
+      }
+    }),
     setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
     setCrawlerType: createSetter<string>("crawlerType"),
     setIssues: createSetter<string[]>("issues"),
@@ -214,6 +241,16 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
   return {
     // Initial State
     crawlData: [],
+    aggregatedData: {
+      images: [],
+      scripts: [],
+      css: [],
+      internalLinks: [],
+      externalLinks: [],
+      keywords: [],
+      redirects: [],
+      files: [],
+    },
     domainCrawlLoading: false,
     crawlerType: "spider",
     issues: [],
@@ -272,6 +309,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setRobotsBlocked: setters.setRobotsBlocked,
         setCookies: setters.setCookies,
         setFavicon: setters.setFavicon,
+        setAggregatedData: setters.setAggregatedData,
         selectURL: async (url: string) => {
           const state = get();
           const rows = state.crawlData;
@@ -372,6 +410,11 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 // Memoized selectors
 export const useCrawlData = () => {
   const selector = useCallback((state: CrawlStore) => state.crawlData, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useAggregatedData = () => {
+  const selector = useCallback((state: CrawlStore) => state.aggregatedData, []);
   return useGlobalCrawlStore(selector, shallow);
 };
 
