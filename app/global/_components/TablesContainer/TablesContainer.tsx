@@ -214,7 +214,7 @@ export default function Home() {
       if (intervalId) clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isFinishedDeepCrawl, setAggregatedData, aggregatedData.images, aggregatedData.scripts, aggregatedData.css, aggregatedData.internalLinks, aggregatedData.externalLinks, aggregatedData.keywords, aggregatedData.redirects, aggregatedData.files]);
+  }, [activeTab, isFinishedDeepCrawl, setAggregatedData]);
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
