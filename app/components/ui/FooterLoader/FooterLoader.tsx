@@ -25,7 +25,8 @@ const FooterLoader = () => {
         failed_urls_count: number;
       };
     }) => {
-      const { crawled_urls, percentage, total_urls, failed_urls_count } = event.payload;
+      const { crawled_urls, percentage, total_urls, failed_urls_count } =
+        event.payload;
 
       // Validate and sanitize the received data to prevent NaN
       const safeCrawledUrls = Math.max(0, crawled_urls || 0);
@@ -113,10 +114,10 @@ const FooterLoader = () => {
         {/* Progress Bar Container */}
         <div className="relative w-36 h-2 bg-gray-300/50 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
           <div
-            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? 'animate-pulse' : ''}`}
+            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? "animate-pulse" : ""}`}
             style={{
               width: `${Math.min(Math.max(0, progress.percentageCrawled || 0), 100)}%`,
-              boxShadow: '0 0 8px rgba(56, 189, 248, 0.4)'
+              boxShadow: "0 0 8px rgba(56, 189, 248, 0.4)",
             }}
           />
         </div>
@@ -132,24 +133,34 @@ const FooterLoader = () => {
       {/* Stats Section */}
       <div className="flex items-center space-x-4 text-[11px] tracking-tight">
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">Crawled:</span>
+          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+            Crawled:
+          </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
             {crawlCompleted ? crawlData.length : progress.crawledPages || 0}
           </span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">Queued:</span>
+          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+            Queued:
+          </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
             {crawlCompleted
               ? 0
-              : Math.max(0, (progress.crawledPagesCount || 0) - (progress.crawledPages || 0))}
+              : Math.max(
+                  0,
+                  (progress.crawledPagesCount || 0) -
+                    (progress.crawledPages || 0),
+                )}
           </span>
         </div>
 
         {progress.failedPages > 0 && (
           <div className="flex items-center space-x-1.5">
-            <span className="text-red-500/60 dark:text-red-400/60 uppercase font-bold text-[9px]">Failed:</span>
+            <span className="text-red-500/60 dark:text-red-400/60 uppercase font-bold text-[9px]">
+              Failed:
+            </span>
             <span className="text-red-600 dark:text-red-400 font-mono font-medium">
               {progress.failedPages}
             </span>
@@ -159,9 +170,8 @@ const FooterLoader = () => {
         {crawlCompleted && (
           <Badge
             variant="filled"
-            color="blue"
             size="xs"
-            className="animate-in fade-in zoom-in duration-300 h-4.5 py-0 px-1.5 text-[9px]"
+            className="animate-in fade-in zoom-in duration-300 h-4.5 py-0 px-1.5 text-[9px] bg-brand-bright"
           >
             Crawl Complete
           </Badge>

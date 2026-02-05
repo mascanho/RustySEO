@@ -316,7 +316,9 @@ const Footer = () => {
             <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
               Task List
             </div>
-            <span className="leading-none text-[11px] font-medium hidden sm:inline opacity-70">Tasks:</span>
+            <span className="leading-none text-[11px] font-medium hidden sm:inline opacity-70">
+              Tasks:
+            </span>
             <span className="text-sky-dark dark:text-sky-dark font-bold leading-none text-[11px]">
               {tasks.length}
             </span>
@@ -335,7 +337,9 @@ const Footer = () => {
           {/* CHAT BUTTON */}
           <div className="relative group flex items-center">
             <div
-              onClick={() => (visibility.chatbar ? hideChatbar() : showChatbar())}
+              onClick={() =>
+                visibility.chatbar ? hideChatbar() : showChatbar()
+              }
               className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.chatbar ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <BsPeopleFill
@@ -350,7 +354,9 @@ const Footer = () => {
           {/* TERMINAL/STATUS */}
           <div className="relative group flex items-center">
             <div
-              onClick={() => (visibility.terminal ? hideTerminal() : showTerminal())}
+              onClick={() =>
+                visibility.terminal ? hideTerminal() : showTerminal()
+              }
               className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.terminal ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <FaTerminal
@@ -365,11 +371,13 @@ const Footer = () => {
           {/* SEO HELPKIT */}
           <div className="relative group flex items-center">
             <div
-              onClick={() => (visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit())}
+              onClick={() =>
+                visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
+              }
               className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.seotoolkit ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
             >
               <GiSurprisedSkull
-                className={`text-[17px] transition-colors ${visibility.seotoolkit ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+                className={`text-[18px] transition-colors ${visibility.seotoolkit ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
               />
             </div>
             <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
@@ -384,11 +392,13 @@ const Footer = () => {
           >
             <div className="relative group flex items-center">
               <div
-                onClick={() => (openedAiDrawer ? closeAiDrawer() : openAiDrawer())}
+                onClick={() =>
+                  openedAiDrawer ? closeAiDrawer() : openAiDrawer()
+                }
                 className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${openedAiDrawer ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
               >
                 <FaRobot
-                  className={`text-[18px] transition-colors ${openedAiDrawer ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+                  className={`text-[19px]  transition-colors ${openedAiDrawer ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
                 />
               </div>
               <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
@@ -428,7 +438,9 @@ const Footer = () => {
           <div className="relative group flex items-center">
             <button
               disabled={pathname === "/serverlogs"}
-              onClick={() => (visibility.sidebar ? hideSidebar() : showSidebar())}
+              onClick={() =>
+                visibility.sidebar ? hideSidebar() : showSidebar()
+              }
               className={`flex items-center justify-center h-7 w-8 rounded transition-all ${pathname === "/serverlogs" ? "cursor-not-allowed opacity-30" : "hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"}`}
             >
               <BsLayoutSidebarInsetReverse
