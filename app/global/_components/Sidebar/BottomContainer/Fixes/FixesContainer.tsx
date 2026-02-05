@@ -5,7 +5,7 @@ import {
   IconBulb,
   IconInfoCircle,
   IconExternalLink,
-  IconCircleCheck
+  IconCircleCheck,
 } from "@tabler/icons-react";
 
 const FixesContainer = () => {
@@ -19,16 +19,17 @@ const FixesContainer = () => {
       <div className="h-64 flex flex-col justify-center items-center w-full text-center px-8">
         <IconBulb size={48} className="text-gray-300 dark:text-gray-700 mb-4" />
         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          Select an issue from the list above to see detailed optimization recommendations.
+          Select an issue from the list above to see detailed optimization
+          recommendations.
         </span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-[calc(100vh - 200px)] bg-white dark:bg-gray-900 overflow-y-auto custom-scrollbar ">
       {/* Header */}
-      <div className="p-4 border-b dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+      <div className="px-4 py-2 border-b dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
         <div className="flex items-center gap-2 mb-1">
           <IconCircleCheck size={18} className="text-brand-bright" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white truncate">
@@ -47,7 +48,9 @@ const FixesContainer = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
                 <IconInfoCircle size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-tight">Understanding the Issue</span>
+                <span className="text-[10px] font-bold uppercase tracking-tight">
+                  Understanding the Issue
+                </span>
               </div>
               <div className="p-3 rounded-lg bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/20">
                 <p className="text-xs leading-relaxed text-gray-700 dark:text-gray-300">
@@ -60,7 +63,9 @@ const FixesContainer = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-1 text-brand-bright">
                 <IconBulb size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-tight">How to improve</span>
+                <span className="text-[10px] font-bold uppercase tracking-tight">
+                  How to improve
+                </span>
               </div>
               <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20">
                 <p className="text-xs leading-relaxed text-gray-700 dark:text-gray-300 italic">
@@ -74,9 +79,11 @@ const FixesContainer = () => {
               <div className="space-y-2 pt-2">
                 <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
                   <IconExternalLink size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-tight">Learn More</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight">
+                    Learn More
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 ">
                   {fixDetail.links.map((link, index) => (
                     <a
                       key={index}
@@ -100,7 +107,8 @@ const FixesContainer = () => {
         ) : (
           <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 text-center">
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              Technical details for this issue are still being generated. Please check back shortly.
+              Technical details for this issue are still being generated. Please
+              check back shortly.
             </p>
           </div>
         )}
