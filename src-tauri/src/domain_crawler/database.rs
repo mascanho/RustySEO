@@ -411,21 +411,11 @@ impl Database {
 
                         for link_obj in all_links {
                              if let Some(url) = link_obj.get("url").and_then(|u| u.as_str()) {
-                                 // Simple extension check logic here mirroring frontend or just sending all links?
-                                 // Frontend logic is complex. It's better to send ALL UNIQUE LINKS and let frontend filter for files?
-                                 // Or re-implement extension check here? 
-                                 // Re-implementing a simple check:
                                  if has_file_extension(url) {
                                      let mut obj = link_obj.clone();
                                      if let Some(obj_map) = obj.as_object_mut() {
                                         obj_map.insert("found_at".to_string(), Value::String(page_url.clone()));
                                      }
-                                     // We re-use 'internal_links' vector temporarily or create a new one?
-                                     // Let's use internal_links as a generic container for now or create a 'files' vec
-                                     // Wait, I can't modify the scope easily. Let's just return all unique links for frontend to filter?
-                                     // No, that's too much data.
-                                     // Let's create a 'files' vec.
-                                     // I added 'files' case pattern.
                                      internal_links.push(obj); // Reuse this vec for files to return it
                                  }
                              }
@@ -448,6 +438,69 @@ impl Database {
                 "files" => Ok(Value::Array(internal_links)), // Reused
                 _ => Ok(Value::Null),
             }
+        })
+        .await?
+    }
+
+    pub async fn get_incoming_links(&self, target_url: String) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+        
+        // Helper to normalize URL for matching
+        fn normalize_url(url: &str) -> String {
+            let mut u = url.trim().to_lowercase();
+            // Remove protocol
+            if u.starts_with("http://") { u = u[7..].to_string(); }
+            else if u.starts_with("https://") { u = u[8..].to_string(); }
+            // Remove www
+            if u.starts_with("www.") { u = u[4..].to_string(); }
+            // Remove query/hash
+            if let Some(idx) = u.find('?') { u = u[..idx].to_string(); }
+            if let Some(idx) = u.find('#') { u = u[..idx].to_string(); }
+            // Remove trailing slash
+            if u.ends_with('/') { u.pop(); }
+            u
+        }
+
+        let normalized_target = normalize_url(&target_url);
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
+            
+            let rows = stmt.query_map(params![], |row| {
+                let data_json: String = row.get(0)?;
+                Ok(data_json)
+            })?;
+
+            let mut matched_pages = Vec::new(); // Pages that link TO the target
+
+            for data_json_result in rows {
+                let data_json = match data_json_result {
+                    Ok(json) => json,
+                    Err(_) => continue,
+                };
+                
+                let data: Value = match serde_json::from_str(&data_json) {
+                    Ok(v) => v,
+                    Err(_) => continue,
+                };
+
+                let page_url = data.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+
+                if let Some(links) = data.get("inoutlinks_status_codes").and_then(|l| l.get("internal")).and_then(|v| v.as_array()) {
+                    for link_obj in links {
+                         if let Some(link_url) = link_obj.get("url").and_then(|u| u.as_str()) {
+                             if normalize_url(link_url) == normalized_target {
+                                 // Found a match! This page links to our target
+                                 matched_pages.push(data.clone());
+                                 break; // One link per page is enough to count it as "linking page"
+                             }
+                         }
+                    }
+                }
+            }
+
+            Ok(Value::Array(matched_pages))
         })
         .await?
     }
@@ -662,7 +715,7 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
         ));
     }
 
-    let result = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         let conn = Connection::open(&db_path).map_err(|e| {
             DatabaseError::ConnectionError(format!("Failed to open database: {}", e))
         })?;
@@ -808,8 +861,7 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
                 .or_else(|| previous_first.clone())
                 .or_else(|| current_first.clone()),
             pages: {
-                let mut pages: Vec<String> =
-                    removed_records.iter().map(|r| r.url.clone()).collect();
+                let mut pages: Vec<String> = removed_records.iter().map(|r| r.url.clone()).collect();
                 if let Some(ref first) = previous_first {
                     if !pages.contains(first) {
                         pages.push(first.clone());
@@ -833,8 +885,5 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
             removed: removed_differential,
         })
     })
-    .await
-    .map_err(|e| DatabaseError::JoinError(format!("Task join error: {}", e)))??;
-
-    Ok(result)
+    .await?
 }

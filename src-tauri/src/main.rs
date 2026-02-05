@@ -294,6 +294,7 @@ async fn main() {
             domain_commands::generate_links_table_xlsx_command,
             domain_commands::get_url_data_command,
             domain_commands::get_aggregated_crawl_data_command,
+            domain_commands::get_incoming_links_command,
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::helpers::parse_logs::set_taxonomies,
