@@ -103,7 +103,7 @@ Use at your own risk, this software is new and under development.
 |  2  | More integrations                        |   ✅   |
 |  3  | Better reporting                         |   ✅   |
 |  4  | Password protection & encryption         |   ⚠️   |
-|  5  | Client-side OAuth2 authentication        |   ⚠️   |
+|  5  | Client-side OAuth2 authentication        |   ✅   |
 |  6  | Better local LLM support                 |   ❌   |
 |  7  | SEMrush Integration                      |   ⚠️   |
 |  8  | Topic / Content calendar view            |   ✅   |
@@ -112,7 +112,7 @@ Use at your own risk, this software is new and under development.
 | 11  | Chatbot Crawl Context                    |   ✅   |
 | 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
 | 13  | Schema Generator & Validator             |   ✅   |
-| 14  | Keyword Clustering                       |   ⏳   |
+| 14  | Keyword Clustering                       |   ✅   |
 | 15  | Machine Learning                         |   ✅   |
 | 16  | Collaboration                            |   ⏳   |
 | 17  | API / Streaming                          |   ⏳   |
