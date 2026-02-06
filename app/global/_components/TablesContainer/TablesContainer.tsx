@@ -202,7 +202,7 @@ export default function Home() {
         }
       };
 
-      // Immediate fetch check
+      // Immediate fetch check This is important to avoid unnecessary re-renders
       let shouldFetchImmediate = true;
       if (activeTab === "images" && aggregatedData.images.length === 0)
         shouldFetchImmediate = true;
