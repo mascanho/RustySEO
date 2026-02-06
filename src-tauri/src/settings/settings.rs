@@ -55,6 +55,9 @@ pub struct Settings {
     pub max_pending_time: u64,     // 15 MINUTES MAX PENDING TIME, set in seconds
     pub max_depth: usize,
     pub max_urls_per_domain: usize,
+    pub links_jitter_factor: f32,
+    pub links_pool_idle_timeout: u64,
+    pub links_max_idle_per_host: usize,
 }
 
 impl Settings {
@@ -98,6 +101,9 @@ impl Settings {
             max_pending_time: 900,    // SECONDS
             max_depth: 50,
             max_urls_per_domain: 10000000,
+            links_jitter_factor: 0.3,
+            links_pool_idle_timeout: 60,
+            links_max_idle_per_host: 10,
         }
     }
 
@@ -435,6 +441,27 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.max_urls_per_domain = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("links_jitter_factor")
+        .and_then(|v| v.as_float())
+    {
+        settings.links_jitter_factor = val as f32;
+    }
+
+    if let Some(val) = updates
+        .get("links_pool_idle_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_pool_idle_timeout = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("links_pool_idle_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_max_idle_per_host = val as usize;
     }
 
     // Explicit file writing with flush

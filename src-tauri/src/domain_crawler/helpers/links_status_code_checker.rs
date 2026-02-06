@@ -43,13 +43,13 @@ impl From<&Settings> for LinkCheckConfig {
             max_delay_ms: settings.links_retry_delay * 2,
             max_retries: settings.links_max_retries,
             request_timeout_secs: settings.links_request_timeout,
-            jitter_factor: 0.3,
+            jitter_factor: settings.links_jitter_factor,
             max_requests_per_domain: settings.max_urls_per_domain,
             initial_task_capacity: settings.links_initial_task_capacity,
             retry_delay_ms: settings.links_retry_delay,
             connection_timeout_secs: settings.client_connect_timeout,
-            pool_idle_timeout_secs: 60,
-            pool_max_idle_per_host: 10,
+            pool_idle_timeout_secs: settings.links_pool_idle_timeout,
+            pool_max_idle_per_host: settings.links_max_idle_per_host,
         }
     }
 }
@@ -385,7 +385,7 @@ async fn fetch_with_retry(
         // Get domain-specific delay
         let delay = domain_tracker.get_delay_for(domain).await;
         if delay.as_millis() > 0 {
-             sleep(delay).await;
+            sleep(delay).await;
         }
 
         let permit = match Semaphore::acquire_owned(semaphore.clone()).await {
