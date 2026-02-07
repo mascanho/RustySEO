@@ -324,16 +324,24 @@ export default function Home() {
     if (activeTab !== "files") return [];
     // Structure: { url, found_at: page }
     // We need to derive 'filetype' from url
-    return aggregatedData.files.map((f, index) => {
-      const ext =
-        f.url.split(".").pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
-      return {
-        id: index + 1,
-        url: f.url,
-        filetype: ext,
-        found_at: f.found_at || f.page || "",
-      };
-    });
+    return aggregatedData.files
+      .map((f, index) => {
+        const ext =
+          f.url.split(".").pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
+
+        // Only include PDF files
+        if (ext !== "PDF") {
+          return null;
+        }
+
+        return {
+          id: index + 1,
+          url: f.url,
+          filetype: ext,
+          found_at: f.found_at || f.page || "",
+        };
+      })
+      .filter(Boolean);
   }, [aggregatedData.files, activeTab]);
 
   // Redirects logic - new
@@ -345,7 +353,7 @@ export default function Home() {
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
-        return <div>Content for Duplicated Titles</div>;
+        return;
       case "404 response":
         return <div>Content for 404 response</div>;
       // Add more cases as needed
