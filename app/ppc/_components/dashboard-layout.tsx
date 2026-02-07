@@ -62,7 +62,7 @@ export function DashboardLayout({
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent className="pl-0">
+          <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
