@@ -29,11 +29,23 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
   const [adTypeFilter, setAdTypeFilter] = useState<AdType | "all">("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const processedAds = ads.map(ad => ({
+  const processedAds = ads.map((ad) => ({
     ...ad,
-    headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-    descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-    keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+    headlines: Array.isArray(ad.headlines)
+      ? ad.headlines
+      : typeof ad.headlines === "string"
+        ? ad.headlines.split("\n")
+        : [],
+    descriptions: Array.isArray(ad.descriptions)
+      ? ad.descriptions
+      : typeof ad.descriptions === "string"
+        ? ad.descriptions.split("\n")
+        : [],
+    keywords: Array.isArray(ad.keywords)
+      ? ad.keywords
+      : typeof ad.keywords === "string"
+        ? ad.keywords.split("\n")
+        : [],
   }));
 
   if (processedAds.length === 0) {
@@ -51,12 +63,18 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
 
   // Filter ads by type
   const filteredAds =
-    adTypeFilter === "all" ? processedAds : processedAds.filter((ad) => ad.type === adTypeFilter);
+    adTypeFilter === "all"
+      ? processedAds
+      : processedAds.filter((ad) => ad.type === adTypeFilter);
 
   // Count ads by type
-  const searchAdsCount = processedAds.filter((ad) => ad.type === "search").length;
+  const searchAdsCount = processedAds.filter(
+    (ad) => ad.type === "search",
+  ).length;
   const pmaxAdsCount = processedAds.filter((ad) => ad.type === "pmax").length;
-  const displayAdsCount = processedAds.filter((ad) => ad.type === "display").length;
+  const displayAdsCount = processedAds.filter(
+    (ad) => ad.type === "display",
+  ).length;
 
   const handleDeleteClick = (adId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -98,21 +116,22 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full  overflow-auto h-[calc(100vh-20rem)] pr-4">
           {filteredAds.map((ad) => (
             <div
               key={ad.id}
-              className="group relative bg-white dark:bg-brand-darker border border-gray-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
+              className="group relative bg-white dark:bg-brand-darker  border border-gray-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200  flex flex-col"
             >
               {/* Type Badge */}
               <div className="absolute top-3 right-3 z-10">
                 <Badge
-                  className={`capitalize px-2 py-0.5 text-[9px] font-bold tracking-wider rounded border-none shadow-sm ${ad.type === "search"
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : ad.type === "pmax"
-                      ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                      : "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                    }`}
+                  className={`capitalize px-2 py-0.5 text-[9px] font-bold tracking-wider rounded border-none shadow-sm ${
+                    ad.type === "search"
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                      : ad.type === "pmax"
+                        ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        : "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                  }`}
                 >
                   {ad.type}
                 </Badge>
@@ -134,7 +153,10 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                       Primary Headline
                     </div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-200 line-clamp-1 italic">
-                      "{(ad.headlines || []).find(h => h.trim()) || 'No headlines'}"
+                      "
+                      {(ad.headlines || []).find((h) => h.trim()) ||
+                        "No headlines"}
+                      "
                     </p>
                   </div>
 
@@ -144,16 +166,29 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     </div>
                     <div className="flex gap-3">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-900 dark:text-white">{(ad.headlines || []).filter(h => h.trim()).length}</span>
-                        <span className="text-[9px] text-gray-500">Headlines</span>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                          {(ad.headlines || []).filter((h) => h.trim()).length}
+                        </span>
+                        <span className="text-[9px] text-gray-500">
+                          Headlines
+                        </span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-900 dark:text-white">{(ad.descriptions || []).filter(d => d.trim()).length}</span>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                          {
+                            (ad.descriptions || []).filter((d) => d.trim())
+                              .length
+                          }
+                        </span>
                         <span className="text-[9px] text-gray-500">Descs</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-900 dark:text-white">{(ad.keywords || []).length}</span>
-                        <span className="text-[9px] text-gray-500">Keywords</span>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                          {(ad.keywords || []).length}
+                        </span>
+                        <span className="text-[9px] text-gray-500">
+                          Keywords
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -189,11 +224,16 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     variant="ghost"
                     size="icon"
                     onClick={(e) => handleDeleteClick(ad.id, e)}
-                    className={`h-7 w-7 rounded-md ${confirmDelete === ad.id
-                      ? "bg-red-50 text-red-600 dark:bg-red-900/20 shadow-inner"
-                      : "text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                      }`}
-                    title={confirmDelete === ad.id ? "Click to confirm deletion" : "Delete ad"}
+                    className={`h-7 w-7 rounded-md ${
+                      confirmDelete === ad.id
+                        ? "bg-red-50 text-red-600 dark:bg-red-900/20 shadow-inner"
+                        : "text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                    }`}
+                    title={
+                      confirmDelete === ad.id
+                        ? "Click to confirm deletion"
+                        : "Delete ad"
+                    }
                   >
                     <Trash className="h-3.5 w-3.5" />
                   </Button>
