@@ -58,6 +58,7 @@ pub struct Settings {
     pub links_jitter_factor: f32,
     pub links_pool_idle_timeout: u64,
     pub links_max_idle_per_host: usize,
+    pub db_chunk_size_domain_crawler: usize,
 }
 
 impl Settings {
@@ -104,6 +105,7 @@ impl Settings {
             links_jitter_factor: 0.3,
             links_pool_idle_timeout: 60,
             links_max_idle_per_host: 10,
+            db_chunk_size_domain_crawler: 500,
         }
     }
 
@@ -462,6 +464,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.links_max_idle_per_host = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("db_chunk_size_domain_crawler")
+        .and_then(|v| v.as_integer())
+    {
+        settings.db_chunk_size_domain_crawler = val as usize;
     }
 
     // Explicit file writing with flush
