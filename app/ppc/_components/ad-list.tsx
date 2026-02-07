@@ -116,11 +116,11 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full  overflow-auto h-[calc(100vh-20rem)] pr-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full  overflow-auto pr-4 h-[calc(100vh-20rem)]">
           {filteredAds.map((ad) => (
             <div
               key={ad.id}
-              className="group relative bg-white dark:bg-brand-darker  border border-gray-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200  flex flex-col"
+              className="group relative bg-white dark:bg-brand-darker  border border-gray-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200  flex flex-col h-full"
             >
               {/* Type Badge */}
               <div className="absolute top-3 right-3 z-10">
