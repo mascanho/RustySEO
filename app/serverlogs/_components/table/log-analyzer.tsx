@@ -1621,7 +1621,7 @@ function PaginationControls({
       </div>
 
       <Pagination className="text-xs">
-        <PaginationContent style={{ marginTop: "-5px" }}>
+        <PaginationContent style={{ marginTop: "-10px" }}>
           <PaginationItem>
             <PaginationPrevious
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
