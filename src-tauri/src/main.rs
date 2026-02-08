@@ -255,6 +255,7 @@ async fn main() {
             downloads::excel::export_to_excel_command,
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,
+            globals::actions::clear_ai_model_cache,
             commands::get_google_analytics_command,
             commands::set_google_analytics_credentials,
             commands::read_ga4_credentials_file,

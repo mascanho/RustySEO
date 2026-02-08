@@ -2,7 +2,10 @@ use crate::crawler::libs::read_credentials_file;
 use crate::crawler::libs::InstalledInfo;
 use directories::ProjectDirs;
 use std::fs;
+use std::sync::{Mutex, OnceLock};
 use uuid::Uuid;
+
+static AI_MODEL_CACHE: OnceLock<Mutex<Option<String>>> = OnceLock::new();
 
 // ------------- Check if the UUID is present in the system  ---------------
 pub fn uuid_creation_check() -> String {
@@ -16,23 +19,30 @@ pub fn uuid_creation_check() -> String {
 
     // Create directories if they don't exist
     if !config_dir.exists() {
-        std::fs::create_dir_all(config_dir).unwrap();
+        std::fs::create_dir_all(config_dir).expect("Failed to create config directory");
     }
 
     // Check if the file exists
     if uuid_file.exists() {
-        let uuid = std::fs::read_to_string(&uuid_file).unwrap();
-        return uuid;
+        match std::fs::read_to_string(&uuid_file) {
+            Ok(uuid) => uuid,
+            Err(e) => {
+                eprintln!("Failed to read UUID file: {}", e);
+                Uuid::new_v4().to_string()
+            }
+        }
     } else {
         let uuid = Uuid::new_v4().to_string();
-        std::fs::write(&uuid_file, &uuid).unwrap();
-        return uuid;
+        if let Err(e) = std::fs::write(&uuid_file, &uuid) {
+            eprintln!("Failed to write UUID file: {}", e);
+        }
+        uuid
     }
 }
 
 // ---------- Write to disk the AI Model being used
 #[tauri::command]
-pub fn ai_model_selected(model: String) -> String {
+pub fn ai_model_selected(model: String) -> Result<String, String> {
     // CHECK FOR THE FILE IN THE CONFIG DIRECTORY
     println!("Checking for AI Model file");
     let project_dirs =
@@ -41,17 +51,34 @@ pub fn ai_model_selected(model: String) -> String {
     let config_dir = project_dirs.config_dir();
     let ai_model_file = config_dir.join("chosen_ai_model.toml");
 
-    std::fs::write(&ai_model_file, &model).unwrap();
-    return model;
+    // Update cache and write new model
+    let cache = AI_MODEL_CACHE.get_or_init(|| Mutex::new(None));
+    if let Ok(mut cache_guard) = cache.lock() {
+        *cache_guard = Some(model.clone());
+    }
+    
+    match std::fs::write(&ai_model_file, &model) {
+        Ok(_) => Ok(model),
+        Err(e) => Err(format!("Failed to write AI model file: {}", e)),
+    }
 }
 
 // ------ read the AI Model being used
 #[tauri::command]
 pub fn check_ai_model() -> String {
-    let ai_model = ai_model_read();
-    return ai_model;
+    ai_model_read()
 }
 pub fn ai_model_read() -> String {
+    // Initialize cache if not already done
+    let cache = AI_MODEL_CACHE.get_or_init(|| Mutex::new(None));
+    
+    // Try to get cached value
+    if let Ok(cached_model) = cache.lock() {
+        if let Some(ref model) = *cached_model {
+            return model.clone();
+        }
+    }
+
     // CHECK FOR THE FILE IN THE CONFIG DIRECTORY
     println!("Checking for AI Model file");
     let project_dirs =
@@ -62,16 +89,42 @@ pub fn ai_model_read() -> String {
 
     // Create directories if they don't exist
     if !config_dir.exists() {
-        std::fs::create_dir_all(config_dir).unwrap();
+        std::fs::create_dir_all(config_dir).expect("Failed to create config directory");
     }
 
     // Check if the file exists
-    if ai_model_file.exists() {
-        let ai_model = std::fs::read_to_string(&ai_model_file).unwrap();
-        println!("General AI Model Selected : {:?}", ai_model);
-        return ai_model;
+    let ai_model = if ai_model_file.exists() {
+        match std::fs::read_to_string(&ai_model_file) {
+            Ok(model) => {
+                println!("General AI Model Selected : {:?}", model);
+                model
+            }
+            Err(e) => {
+                eprintln!("Failed to read AI model file: {}", e);
+                "No AI Model selected".to_string()
+            }
+        }
     } else {
-        return "No AI Model selected".to_string();
+        "No AI Model selected".to_string()
+    };
+
+    // Cache the result
+    if let Ok(mut cache_guard) = cache.lock() {
+        *cache_guard = Some(ai_model.clone());
+    }
+
+    ai_model
+}
+
+#[tauri::command]
+pub fn clear_ai_model_cache() -> Result<(), String> {
+    let cache = AI_MODEL_CACHE.get_or_init(|| Mutex::new(None));
+    match cache.lock() {
+        Ok(mut cache_guard) => {
+            *cache_guard = None;
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to clear cache: {}", e)),
     }
 }
 
@@ -79,6 +132,6 @@ pub fn ai_model_read() -> String {
 pub async fn get_search_console_credentials() -> Result<InstalledInfo, String> {
     let credentials = read_credentials_file()
         .await
-        .expect("Failed to read credentials file");
+        .map_err(|e| format!("Failed to read credentials file: {}", e))?;
     Ok(credentials)
 }
