@@ -97,7 +97,7 @@ impl Settings {
             log_bots: generate_default_user_bots(),
             gsc_row_limit: 25000,
             javascript_rendering: false,
-            javascript_concurrency: 8,
+            javascript_concurrency: 3,
             stall_check_interval: 30, // SECONDS
             max_pending_time: 900,    // SECONDS
             max_depth: 50,

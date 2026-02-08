@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use futures::future::join_all;
+use futures::{stream, StreamExt};
 use rand::seq::IndexedRandom;
 use reqwest::{
     header::{
@@ -91,31 +91,50 @@ impl SharedLinkChecker {
             self.config.initial_task_capacity,
         )));
 
-        let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
-            Vec::with_capacity(self.config.initial_task_capacity);
+        let mut results = Vec::new();
 
         if let Some(links_data) = links {
-            for (link, anchor, rel, title, target, is_internal) in prepare_links(links_data) {
-                spawn_link_check_task(
-                    &mut tasks,
-                    self.client.clone(),
-                    self.semaphore.clone(),
-                    base_url_arc.clone(),
-                    page_arc.clone(),
-                    seen_urls.clone(),
-                    self.domain_tracker.clone(),
-                    link,
-                    anchor,
-                    rel,
-                    title,
-                    target,
-                    is_internal,
-                    self.config.clone(),
-                );
+            let links_iter = prepare_links(links_data);
+            
+            let mut stream = stream::iter(links_iter)
+                .map(|(link, anchor, rel, title, target, is_internal)| {
+                    let client = self.client.clone();
+                    let semaphore = self.semaphore.clone();
+                    let base_url_arc = base_url_arc.clone();
+                    let page_arc = page_arc.clone();
+                    let seen_urls = seen_urls.clone();
+                    let domain_tracker = self.domain_tracker.clone();
+                    let config = self.config.clone();
+
+                    async move {
+                        process_single_link(
+                            client,
+                            semaphore,
+                            base_url_arc,
+                            page_arc,
+                            seen_urls,
+                            domain_tracker,
+                            link,
+                            anchor,
+                            rel,
+                            title,
+                            target,
+                            is_internal,
+                            config,
+                        )
+                        .await
+                    }
+                })
+                .buffer_unordered(self.config.concurrent_requests);
+
+            while let Some(result) = stream.next().await {
+                if let Some(res) = result {
+                    results.push(res);
+                }
             }
         }
 
-        process_results(join_all(tasks).await, page_arc, base_url_arc)
+        process_results(results, page_arc, base_url_arc)
     }
 }
 
@@ -279,8 +298,7 @@ fn prepare_links(
         )
 }
 
-fn spawn_link_check_task(
-    tasks: &mut Vec<JoinHandle<Option<(LinkStatus, bool)>>>,
+async fn process_single_link(
     client: Arc<Client>,
     semaphore: Arc<Semaphore>,
     base_url: Arc<Url>,
@@ -294,74 +312,72 @@ fn spawn_link_check_task(
     target: Option<String>,
     is_internal: bool,
     config: LinkCheckConfig,
-) {
-    tasks.push(tokio::spawn(async move {
-        let full_url = match if is_internal {
-            base_url.join(&link)
-        } else {
-            Url::parse(&link)
-        } {
-            Ok(u) => u,
-            Err(e) => {
-                eprintln!("Skipping invalid URL '{}' on page '{}': {}", link, page, e);
-                return None;
-            }
-        };
-
-        let full_url_str = full_url.to_string();
-        let domain = full_url.domain().unwrap_or("").to_string();
-
-        {
-            let mut seen = seen_urls.lock().await;
-            if !seen.insert(full_url_str.clone()) {
-                return None;
-            }
+) -> Option<(LinkStatus, bool)> {
+    let full_url = match if is_internal {
+        base_url.join(&link)
+    } else {
+        Url::parse(&link)
+    } {
+        Ok(u) => u,
+        Err(e) => {
+            eprintln!("Skipping invalid URL '{}' on page '{}': {}", link, page, e);
+            return None;
         }
+    };
 
-        let relative_path = is_internal.then(|| link.clone());
-        let anchor_text = Some(anchor.clone());
+    let full_url_str = full_url.to_string();
+    let domain = full_url.domain().unwrap_or("").to_string();
 
-        // Check if we should throttle this domain
-        if domain_tracker.should_throttle(&domain).await {
-            return Some((
-                LinkStatus {
-                    base_url: (*base_url).clone(),
-                    url: full_url_str,
-                    relative_path,
-                    status: None,
-                    error: Some("Throttled: Max requests per domain reached".to_string()),
-                    anchor_text,
-                    rel,
-                    title,
-                    target,
-                },
-                is_internal,
-            ));
+    {
+        let mut seen = seen_urls.lock().await;
+        if !seen.insert(full_url_str.clone()) {
+            return None;
         }
+    }
 
-        let relative_path = is_internal.then(|| link);
-        let anchor_text = Some(anchor);
+    let relative_path = is_internal.then(|| link.clone());
+    let anchor_text = Some(anchor.clone());
 
-        let result = fetch_with_retry(
-            &client,
-            &full_url_str,
-            &domain,
-            &domain_tracker,
-            Arc::clone(&base_url),
-            relative_path.clone(),
-            anchor_text.clone(),
-            rel,
-            title,
-            target,
-            Arc::clone(&semaphore),
-            &config,
-        )
-        .await;
+    // Check if we should throttle this domain
+    if domain_tracker.should_throttle(&domain).await {
+        return Some((
+            LinkStatus {
+                base_url: (*base_url).clone(),
+                url: full_url_str,
+                relative_path,
+                status: None,
+                error: Some("Throttled: Max requests per domain reached".to_string()),
+                anchor_text,
+                rel,
+                title,
+                target,
+            },
+            is_internal,
+        ));
+    }
 
-        domain_tracker.record_request(&domain).await;
+    let relative_path = is_internal.then(|| link);
+    let anchor_text = Some(anchor);
 
-        Some((result, is_internal))
-    }));
+    let result = fetch_with_retry(
+        &client,
+        &full_url_str,
+        &domain,
+        &domain_tracker,
+        Arc::clone(&base_url),
+        relative_path.clone(),
+        anchor_text.clone(),
+        rel,
+        title,
+        target,
+        Arc::clone(&semaphore),
+        &config,
+    )
+    .await;
+
+    domain_tracker.record_request(&domain).await;
+
+    Some((result, is_internal))
 }
 
 async fn fetch_with_retry(
@@ -451,18 +467,17 @@ async fn fetch_with_retry(
 }
 
 fn process_results(
-    results: Vec<Result<Option<(LinkStatus, bool)>, JoinError>>,
+    results: Vec<(LinkStatus, bool)>,
     page_arc: Arc<String>,
     base_url_arc: Arc<Url>,
 ) -> LinkCheckResults {
     let (mut internal_statuses, mut external_statuses) = (Vec::new(), Vec::new());
 
-    for result in results {
-        match result {
-            Ok(Some((status, true))) => internal_statuses.push(status),
-            Ok(Some((status, false))) => external_statuses.push(status),
-            Ok(None) => {}
-            Err(e) => eprintln!("Task failed: {}", e),
+    for (status, is_internal) in results {
+        if is_internal {
+            internal_statuses.push(status);
+        } else {
+            external_statuses.push(status);
         }
     }
 
