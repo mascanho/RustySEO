@@ -43,6 +43,8 @@ pub async fn crawl_domain(
     let batch_size = settings.batch_size;
     let crawl_timeout = settings.crawl_timeout;
     let db_batch_size = settings.db_batch_size;
+    let base_delay = settings.base_delay;
+    let max_delay = settings.max_delay;
 
     let client = Client::builder()
         .cookie_store(true)
@@ -256,8 +258,12 @@ pub async fn crawl_domain(
 
             tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::random_range(50..250);
-                sleep(Duration::from_millis(jitter)).await;
+                let delay = if base_delay < max_delay {
+                    rand::random_range(base_delay..max_delay)
+                } else {
+                    base_delay
+                };
+                sleep(Duration::from_millis(delay)).await;
 
                 let url_str = url.to_string();
                 let result = process_url(

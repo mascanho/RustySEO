@@ -70,18 +70,18 @@ impl Settings {
             client_connect_timeout: 15,
             redirect_policy: 5,
             max_retries: 5,
-            base_delay: 500,
-            max_delay: 8000,
-            concurrent_requests: 50,
+            base_delay: 1000, // Increased from 500
+            max_delay: 5000,  // Reduced from 8000 (tighter range)
+            concurrent_requests: 10, // Reduced from 50
             batch_size: 40,
             db_batch_size: 200,
             user_agents: user_agents::agents(),
             html: false,
-            links_max_concurrent_requests: 250,
+            links_max_concurrent_requests: 25, // Reduced from 250
             links_initial_task_capacity: 100,
             links_max_retries: 3,
             links_request_timeout: 15,
-            links_retry_delay: 500,
+            links_retry_delay: 2000, // Increased from 500
             taxonomies: set_taxonomies(),
             rustyid: Uuid::new_v4(),
             page_speed_bulk: false,
@@ -102,7 +102,7 @@ impl Settings {
             max_pending_time: 900,    // SECONDS
             max_depth: 50,
             max_urls_per_domain: 10000000,
-            links_jitter_factor: 0.3,
+            links_jitter_factor: 0.5, // Increased from 0.3
             links_pool_idle_timeout: 60,
             links_max_idle_per_host: 10,
             db_chunk_size_domain_crawler: 500,
