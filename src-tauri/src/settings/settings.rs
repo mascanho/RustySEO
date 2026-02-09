@@ -59,6 +59,8 @@ pub struct Settings {
     pub links_pool_idle_timeout: u64,
     pub links_max_idle_per_host: usize,
     pub db_chunk_size_domain_crawler: usize,
+    pub adaptive_crawling: bool,
+    pub min_crawl_delay: u64,
 }
 
 impl Settings {
@@ -70,8 +72,8 @@ impl Settings {
             client_connect_timeout: 15,
             redirect_policy: 5,
             max_retries: 5,
-            base_delay: 1000, // Increased from 500
-            max_delay: 5000,  // Reduced from 8000 (tighter range)
+            base_delay: 1000,        // Increased from 500
+            max_delay: 5000,         // Reduced from 8000 (tighter range)
             concurrent_requests: 10, // Reduced from 50
             batch_size: 40,
             db_batch_size: 200,
@@ -81,7 +83,7 @@ impl Settings {
             links_initial_task_capacity: 100,
             links_max_retries: 3,
             links_request_timeout: 15,
-            links_retry_delay: 2000, // Increased from 500
+            links_retry_delay: 500, // Reduced to allow faster adaptive crawling
             taxonomies: set_taxonomies(),
             rustyid: Uuid::new_v4(),
             page_speed_bulk: false,
@@ -106,6 +108,8 @@ impl Settings {
             links_pool_idle_timeout: 60,
             links_max_idle_per_host: 10,
             db_chunk_size_domain_crawler: 500,
+            adaptive_crawling: true,
+            min_crawl_delay: 200,
         }
     }
 
@@ -239,6 +243,8 @@ pub fn print_settings(settings: &Settings) {
     println!("Log Bots: {:#?}", settings.log_bots);
 
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
+    println!("Adaptive Crawling: {}", settings.adaptive_crawling);
+    println!("Min Crawl Delay: {}", settings.min_crawl_delay);
 
     println!("")
 }
@@ -471,6 +477,14 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.db_chunk_size_domain_crawler = val as usize;
+    }
+
+    if let Some(val) = updates.get("adaptive_crawling").and_then(|v| v.as_bool()) {
+        settings.adaptive_crawling = val;
+    }
+
+    if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
+        settings.min_crawl_delay = val as u64;
     }
 
     // Explicit file writing with flush

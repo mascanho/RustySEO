@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, Instant};
 
 use futures::{stream, StreamExt};
@@ -87,7 +87,7 @@ impl SharedLinkChecker {
     ) -> LinkCheckResults {
         let base_url_arc = Arc::new(base_url.clone());
         let page_arc = Arc::new(page);
-        let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(
+        let seen_urls = Arc::new(StdMutex::new(HashSet::with_capacity(
             self.config.initial_task_capacity,
         )));
 
@@ -160,32 +160,32 @@ pub struct LinkCheckResults {
 }
 
 struct DomainTracker {
-    last_request: Mutex<HashMap<String, Instant>>,
-    delays: Mutex<HashMap<String, Duration>>,
-    request_counts: Mutex<HashMap<String, usize>>,
+    last_request: StdMutex<HashMap<String, Instant>>,
+    delays: StdMutex<HashMap<String, Duration>>,
+    request_counts: StdMutex<HashMap<String, usize>>,
     config: LinkCheckConfig,
 }
 
 impl DomainTracker {
     fn new(config: &LinkCheckConfig) -> Self {
         DomainTracker {
-            last_request: Mutex::new(HashMap::new()),
-            delays: Mutex::new(HashMap::new()),
-            request_counts: Mutex::new(HashMap::new()),
+            last_request: StdMutex::new(HashMap::new()),
+            delays: StdMutex::new(HashMap::new()),
+            request_counts: StdMutex::new(HashMap::new()),
             config: config.clone(),
         }
     }
 
-    async fn get_delay_for(&self, domain: &str) -> Duration {
-        let delays = self.delays.lock().await;
+    fn get_delay_for(&self, domain: &str) -> Duration {
+        let delays = self.delays.lock().unwrap();
         delays
             .get(domain)
             .copied()
             .unwrap_or(Duration::from_millis(self.config.min_delay_ms))
     }
 
-    async fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
-        let mut delays = self.delays.lock().await;
+    fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
+        let mut delays = self.delays.lock().unwrap();
         if response.status() == 429 {
             // Increase delay for this domain
             let current = delays
@@ -200,15 +200,15 @@ impl DomainTracker {
         }
     }
 
-    async fn should_throttle(&self, domain: &str) -> bool {
-        let mut counts = self.request_counts.lock().await;
+    fn should_throttle(&self, domain: &str) -> bool {
+        let mut counts = self.request_counts.lock().unwrap();
         let count = counts.entry(domain.to_string()).or_insert(0);
         *count += 1;
         *count > self.config.max_requests_per_domain
     }
 
-    async fn record_request(&self, domain: &str) {
-        let mut last_request = self.last_request.lock().await;
+    fn record_request(&self, domain: &str) {
+        let mut last_request = self.last_request.lock().unwrap();
         last_request.insert(domain.to_string(), Instant::now());
     }
 }
@@ -303,7 +303,7 @@ async fn process_single_link(
     semaphore: Arc<Semaphore>,
     base_url: Arc<Url>,
     page: Arc<String>,
-    seen_urls: Arc<Mutex<HashSet<String>>>,
+    seen_urls: Arc<StdMutex<HashSet<String>>>,
     domain_tracker: Arc<DomainTracker>,
     link: String,
     anchor: String,
@@ -329,7 +329,7 @@ async fn process_single_link(
     let domain = full_url.domain().unwrap_or("").to_string();
 
     {
-        let mut seen = seen_urls.lock().await;
+        let mut seen = seen_urls.lock().unwrap();
         if !seen.insert(full_url_str.clone()) {
             return None;
         }
@@ -339,7 +339,7 @@ async fn process_single_link(
     let anchor_text = Some(anchor.clone());
 
     // Check if we should throttle this domain
-    if domain_tracker.should_throttle(&domain).await {
+    if domain_tracker.should_throttle(&domain) {
         return Some((
             LinkStatus {
                 base_url: (*base_url).clone(),
@@ -375,7 +375,7 @@ async fn process_single_link(
     )
     .await;
 
-    domain_tracker.record_request(&domain).await;
+    domain_tracker.record_request(&domain);
 
     Some((result, is_internal))
 }
@@ -399,7 +399,7 @@ async fn fetch_with_retry(
 
     loop {
         // Get domain-specific delay
-        let delay = domain_tracker.get_delay_for(domain).await;
+        let delay = domain_tracker.get_delay_for(domain);
         if delay.as_millis() > 0 {
             sleep(delay).await;
         }
@@ -419,7 +419,7 @@ async fn fetch_with_retry(
         .await
         {
             Ok(Ok(response)) => {
-                domain_tracker.update_delay_for(domain, &response).await;
+                domain_tracker.update_delay_for(domain, &response);
                 drop(permit);
                 return handle_success_response(
                     response,

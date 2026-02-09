@@ -604,7 +604,10 @@ async fn update_state_and_emit_progress(
     }
 
     // Only emit progress update if we have valid data
-    if safe_total_discovered > 0 && !percentage.is_nan() {
+    // Throttle updates to prevent UI freezing: emit every 10 URLs or when queue is empty/done
+    let should_emit_progress = state.crawled_urls % 10 == 0 || active_pending == 0;
+
+    if should_emit_progress && safe_total_discovered > 0 && !percentage.is_nan() {
         if let Err(err) = app_handle.emit("progress_update", progress) {
             eprintln!("Failed to emit progress update: {}", err);
         }

@@ -72,8 +72,9 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
 
 /// Improved domain checking: allows same domain, subdomains, and the naked domain
 fn is_same_or_subdomain(url_domain: &str, base_domain: &str) -> bool {
-    let url_domain = url_domain.to_lowercase();
-    let base_domain = base_domain.to_lowercase();
+    // url_domain and base_domain are already lowercase from Url::domain()
+    // so we don't need to allocate new strings here
+
 
     if url_domain == base_domain {
         return true;

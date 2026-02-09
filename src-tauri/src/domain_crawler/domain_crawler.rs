@@ -12,6 +12,7 @@ use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
@@ -45,6 +46,8 @@ pub async fn crawl_domain(
     let db_batch_size = settings.db_batch_size;
     let base_delay = settings.base_delay;
     let max_delay = settings.max_delay;
+    let adaptive_crawling = settings.adaptive_crawling;
+    let min_crawl_delay = settings.min_crawl_delay;
 
     let client = Client::builder()
         .cookie_store(true)
@@ -175,6 +178,9 @@ pub async fn crawl_domain(
 
     let semaphore = Arc::new(Semaphore::new(concurrent_requests));
     let js_semaphore = Arc::new(Semaphore::new(js_concurrency));
+    // Initialize adaptive delay with base_delay
+    let current_atomic_delay = Arc::new(AtomicU64::new(base_delay));
+    
     let crawl_start_time = Instant::now();
     let mut last_stall_check = Instant::now();
     let mut last_crawled_count = 0;
@@ -255,15 +261,33 @@ pub async fn crawl_domain(
             let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
             let settings_clone = settings.clone();
+            let current_atomic_delay_clone = current_atomic_delay.clone();
 
             tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let delay = if base_delay < max_delay {
-                    rand::random_range(base_delay..max_delay)
+                
+                // Calculate delay logic
+                let delay = if adaptive_crawling {
+                    let current_val = current_atomic_delay_clone.load(Ordering::Relaxed);
+                    // Add +/- 20% jitter
+                    let jitter_range = current_val as f32 * 0.2;
+                    let jitter = if jitter_range > 0.0 {
+                        rand::random_range(-jitter_range..jitter_range) as i64
+                    } else {
+                        0
+                    };
+                    (current_val as i64 + jitter).max(0) as u64
                 } else {
-                    base_delay
+                     if base_delay < max_delay {
+                        rand::random_range(base_delay..max_delay)
+                    } else {
+                        base_delay
+                    }
                 };
-                sleep(Duration::from_millis(delay)).await;
+                
+                if delay > 0 {
+                    sleep(Duration::from_millis(delay)).await;
+                }
 
                 let url_str = url.to_string();
                 let result = process_url(
@@ -279,9 +303,31 @@ pub async fn crawl_domain(
                 .await;
 
                 if let Ok(crawl_result) = &result {
+                    if adaptive_crawling {
+                        let status = crawl_result.status_code;
+                        if status == 429 || status == 503 {
+                             // Backoff aggressively
+                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                             let new_val = (current * 2).min(max_delay).max(2000); // Ensure at least 2s on 429
+                             current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        } else if status >= 200 && status < 300 {
+                             // Speed up (decrease delay)
+                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                             // Decrease by 10% or 50ms, whichever is larger, but don't go below min
+                             let decrement = std::cmp::max((current as f32 * 0.1) as u64, 50);
+                             let new_val = current.saturating_sub(decrement).max(min_crawl_delay);
+                             current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        }
+                    }
+
                     if let Ok(db_result) = to_database_results(crawl_result) {
                         let _ = db_tx_clone.send(db_result).await;
                     }
+                } else if adaptive_crawling {
+                    // Error case (timeout, network error) - slow down slightly
+                    let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                    let new_val = (current + 200).min(max_delay);
+                    current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
                 }
 
                 let mut state_guard = state_clone.lock().await;
