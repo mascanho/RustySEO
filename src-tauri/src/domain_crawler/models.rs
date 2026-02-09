@@ -175,10 +175,25 @@ pub struct LightCrawlResult {
     pub flesch_grade: Option<String>,
     pub text_ratio: Option<f64>,
     pub extractor: Extractor,
+    pub images_count: usize,
+    pub images_with_alt: usize,
+    pub images_without_alt: usize,
+    pub css_external_count: usize,
+    pub css_inline_count: usize,
+    pub https: bool,
+    pub security: SecuritySummary,
 }
 
 impl LightCrawlResult {
     pub fn from_full(full: &DomainCrawlResults) -> Self {
+        let (img_count, img_with_alt, img_without_alt) = match &full.images {
+            Ok(imgs) => {
+                let with_alt = imgs.iter().filter(|i| !i.1.trim().is_empty()).count();
+                (imgs.len(), with_alt, imgs.len() - with_alt)
+            }
+            Err(_) => (0, 0, 0),
+        };
+
         Self {
             url: full.url.clone(),
             title: full.title.clone(),
@@ -207,6 +222,13 @@ impl LightCrawlResult {
                 .and_then(|tr| tr.first())
                 .map(|tr| tr.text_ratio),
             extractor: full.extractor.clone(),
+            images_count: img_count,
+            images_with_alt: img_with_alt,
+            images_without_alt: img_without_alt,
+            css_external_count: full.css.external.len(),
+            css_inline_count: full.css.inline.len(),
+            https: full.https,
+            security: full.cross_origin.clone(),
         }
     }
 }

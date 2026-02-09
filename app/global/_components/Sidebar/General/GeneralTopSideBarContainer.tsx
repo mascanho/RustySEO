@@ -50,11 +50,8 @@ const GeneralTopSideBarContainer = () => {
         <Cookies />
         <Language />
         <Mobile />
-        {/* TODO: Needs to be finished */}
         <Security />
-        {/* TODO: Needs to be finished */}
         <URLinfo />
-        {/* TODO: Needs to be finished */}
         <StatusCodes />
         <Redirects />
         <CustomSearch />

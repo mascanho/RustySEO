@@ -11,8 +11,7 @@ const Css = () => {
   const externalCss = useMemo(
     () =>
       crawlData?.reduce((acc, item) => {
-        const externalCount = item?.css?.external?.length || 0;
-        return acc + externalCount;
+        return acc + (item?.css_external_count || 0);
       }, 0) || 0,
     [crawlData],
   );
@@ -20,8 +19,7 @@ const Css = () => {
   const inlineCss = useMemo(
     () =>
       crawlData?.reduce((acc, item) => {
-        const inlineCount = item?.css?.inline?.length || 0;
-        return acc + inlineCount;
+        return acc + (item?.css_inline_count || 0);
       }, 0) || 0,
     [crawlData],
   );
