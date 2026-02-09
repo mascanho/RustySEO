@@ -51,6 +51,7 @@ pub struct CrawlerState {
     pub url_patterns: HashMap<String, usize>, // Track URL patterns to avoid duplicates
     pub active_tasks: usize,           // Track number of currently processing tasks
     pub link_checker: Option<Arc<SharedLinkChecker>>,
+    pub last_progress_emit: Instant,   // Track time of last progress emission
 }
 
 impl CrawlerState {
@@ -67,6 +68,7 @@ impl CrawlerState {
             url_patterns: HashMap::new(),
             active_tasks: 0,
             link_checker: None,
+            last_progress_emit: Instant::now(),
         }
     }
 

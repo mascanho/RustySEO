@@ -192,123 +192,123 @@ impl Settings {
         let mut s = String::new();
 
         s.push_str("# --- System ---\n");
-        s.push_str("/// Current version of the application\n");
+        s.push_str("# Current version of the application\n");
         s.push_str(&format!("version = {:?}\n", self.version));
-        s.push_str("/// Unique ID for this instance\n");
+        s.push_str("# Unique ID for this instance\n");
         s.push_str(&format!("rustyid = {:?}\n", self.rustyid));
 
         s.push_str("\n# --- General Crawler Settings ---\n");
-        s.push_str("/// List of user agents to rotate\n");
+        s.push_str("# List of user agents to rotate\n");
         let ua = serde_json::to_string(&self.user_agents).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("user_agents = {}\n", ua));
 
-        s.push_str("/// Number of concurrent requests for domain crawling\n");
+        s.push_str("# Number of concurrent requests for domain crawling\n");
         s.push_str(&format!("concurrent_requests = {}\n", self.concurrent_requests));
 
-        s.push_str("/// Number of URLs to process between sleeps/checks\n");
+        s.push_str("# Number of URLs to process between sleeps/checks\n");
         s.push_str(&format!("batch_size = {}\n", self.batch_size));
 
-        s.push_str("/// Maximum depth to crawl\n");
+        s.push_str("# Maximum depth to crawl\n");
         s.push_str(&format!("max_depth = {}\n", self.max_depth));
 
-        s.push_str("/// Maximum URLs to crawl per domain\n");
+        s.push_str("# Maximum URLs to crawl per domain\n");
         s.push_str(&format!("max_urls_per_domain = {}\n", self.max_urls_per_domain));
 
         s.push_str("\n# --- Timing & Throttling (Adaptive) ---\n");
-        s.push_str("/// Enable adaptive crawling speed based on server response\n");
+        s.push_str("# Enable adaptive crawling speed based on server response\n");
         s.push_str(&format!("adaptive_crawling = {}\n", self.adaptive_crawling));
 
-        s.push_str("/// Base delay between requests (ms)\n");
+        s.push_str("# Base delay between requests (ms)\n");
         s.push_str(&format!("base_delay = {}\n", self.base_delay));
 
-        s.push_str("/// Maximum delay between requests (ms)\n");
+        s.push_str("# Maximum delay between requests (ms)\n");
         s.push_str(&format!("max_delay = {}\n", self.max_delay));
 
-        s.push_str("/// Minimum delay allowed in adaptive mode (ms)\n");
+        s.push_str("# Minimum delay allowed in adaptive mode (ms)\n");
         s.push_str(&format!("min_crawl_delay = {}\n", self.min_crawl_delay));
 
-        s.push_str("/// Total timeout for a crawl job (seconds)\n");
+        s.push_str("# Total timeout for a crawl job (seconds)\n");
         s.push_str(&format!("crawl_timeout = {}\n", self.crawl_timeout));
 
-        s.push_str("/// Interval to check for stalled crawlers (seconds)\n");
+        s.push_str("# Interval to check for stalled crawlers (seconds)\n");
         s.push_str(&format!("stall_check_interval = {}\n", self.stall_check_interval));
 
-        s.push_str("/// Maximum time a URL can be pending before considered stalled (seconds)\n");
+        s.push_str("# Maximum time a URL can be pending before considered stalled (seconds)\n");
         s.push_str(&format!("max_pending_time = {}\n", self.max_pending_time));
 
         s.push_str("\n# --- Request / Network ---\n");
-        s.push_str("/// Timeout for individual HTTP requests (seconds)\n");
+        s.push_str("# Timeout for individual HTTP requests (seconds)\n");
         s.push_str(&format!("client_timeout = {}\n", self.client_timeout));
 
-        s.push_str("/// Timeout for connection establishment (seconds)\n");
+        s.push_str("# Timeout for connection establishment (seconds)\n");
         s.push_str(&format!("client_connect_timeout = {}\n", self.client_connect_timeout));
 
-        s.push_str("/// Number of redirects to follow\n");
+        s.push_str("# Number of redirects to follow\n");
         s.push_str(&format!("redirect_policy = {}\n", self.redirect_policy));
 
-        s.push_str("/// Maximum retries for failed requests\n");
+        s.push_str("# Maximum retries for failed requests\n");
         s.push_str(&format!("max_retries = {}\n", self.max_retries));
 
         s.push_str("\n# --- JavaScript & Rendering ---\n");
-        s.push_str("/// Whether to expect HTML content\n");
+        s.push_str("# Whether to expect HTML content\n");
         s.push_str(&format!("html = {}\n", self.html));
 
-        s.push_str("/// Enable Headless Chrome rendering\n");
+        s.push_str("# Enable Headless Chrome rendering\n");
         s.push_str(&format!("javascript_rendering = {}\n", self.javascript_rendering));
 
-        s.push_str("/// Concurrency for Headless Chrome\n");
+        s.push_str("# Concurrency for Headless Chrome\n");
         s.push_str(&format!("javascript_concurrency = {}\n", self.javascript_concurrency));
 
         s.push_str("\n# --- Link Processor (Internal/External Check) ---\n");
-        s.push_str("/// Max concurrent checks for link status\n");
+        s.push_str("# Max concurrent checks for link status\n");
         s.push_str(&format!(
             "links_max_concurrent_requests = {}\n",
             self.links_max_concurrent_requests
         ));
 
-        s.push_str("/// Initial capacity for link checking tasks\n");
+        s.push_str("# Initial capacity for link checking tasks\n");
         s.push_str(&format!(
             "links_initial_task_capacity = {}\n",
             self.links_initial_task_capacity
         ));
 
-        s.push_str("/// Max retries for link checks\n");
+        s.push_str("# Max retries for link checks\n");
         s.push_str(&format!("links_max_retries = {}\n", self.links_max_retries));
 
-        s.push_str("/// Delay between link check retries (ms)\n");
+        s.push_str("# Delay between link check retries (ms)\n");
         s.push_str(&format!("links_retry_delay = {}\n", self.links_retry_delay));
 
-        s.push_str("/// Timeout for link check requests (seconds)\n");
+        s.push_str("# Timeout for link check requests (seconds)\n");
         s.push_str(&format!("links_request_timeout = {}\n", self.links_request_timeout));
 
-        s.push_str("/// Jitter factor for randomized delays (0.0 - 1.0)\n");
+        s.push_str("# Jitter factor for randomized delays (0.0 - 1.0)\n");
         s.push_str(&format!("links_jitter_factor = {}\n", self.links_jitter_factor));
 
-        s.push_str("/// Idle timeout for connection pool (seconds)\n");
+        s.push_str("# Idle timeout for connection pool (seconds)\n");
         s.push_str(&format!("links_pool_idle_timeout = {}\n", self.links_pool_idle_timeout));
 
-        s.push_str("/// Max idle connections per host\n");
+        s.push_str("# Max idle connections per host\n");
         s.push_str(&format!("links_max_idle_per_host = {}\n", self.links_max_idle_per_host));
 
         s.push_str("\n# --- Extraction & Content ---\n");
-        s.push_str("/// Enable N-gram extraction\n");
+        s.push_str("# Enable N-gram extraction\n");
         s.push_str(&format!("extract_ngrams = {}\n", self.extract_ngrams));
 
-        s.push_str("/// Set of stop words for keyword extraction\n");
+        s.push_str("# Set of stop words for keyword extraction\n");
         let stop_words =
             serde_json::to_string(&self.stop_words).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("stop_words = {}\n", stop_words));
 
-        s.push_str("/// Classification taxonomies\n");
+        s.push_str("# Classification taxonomies\n");
         let taxonomies =
             serde_json::to_string(&self.taxonomies).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("taxonomies = {}\n", taxonomies));
 
         s.push_str("\n# --- Database & Batching ---\n");
-        s.push_str("/// Batch size for database inserts\n");
+        s.push_str("# Batch size for database inserts\n");
         s.push_str(&format!("db_batch_size = {}\n", self.db_batch_size));
 
-        s.push_str("/// Chunk size for domain crawler results\n");
+        s.push_str("# Chunk size for domain crawler results\n");
         s.push_str(&format!(
             "db_chunk_size_domain_crawler = {}\n",
             self.db_chunk_size_domain_crawler
@@ -317,37 +317,45 @@ impl Settings {
         s.push_str("\n# --- Logs & File System ---\n");
         s.push_str("# log_batchsize\n");
         s.push_str(&format!("log_batchsize = {}\n", self.log_batchsize));
+
         s.push_str("# log_chunk_size\n");
         s.push_str(&format!("log_chunk_size = {}\n", self.log_chunk_size));
+
         s.push_str("# log_sleep_stream_duration\n");
         s.push_str(&format!(
             "log_sleep_stream_duration = {}\n",
             self.log_sleep_stream_duration
         ));
+
         s.push_str("# log_capacity\n");
         s.push_str(&format!("log_capacity = {}\n", self.log_capacity));
+
         s.push_str("# log_project_chunk_size\n");
         s.push_str(&format!(
             "log_project_chunk_size = {}\n",
             self.log_project_chunk_size
         ));
+
         s.push_str("# log_file_upload_size\n");
-        s.push_str(&format!("log_file_upload_size = {}\n", self.log_file_upload_size));
+        s.push_str(&format!(
+            "log_file_upload_size = {}\n",
+            self.log_file_upload_size
+        ));
 
         s.push_str("# Log Bots\n");
-        let log_bots = serde_json::to_string(&self.log_bots).unwrap_or_else(|_| "[]".to_string());
-        s.push_str(&format!("log_bots = {}\n", log_bots));
+        let bots = serde_json::to_string(&self.log_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("log_bots = {}\n", bots));
 
         s.push_str("\n# --- Integrations ---\n");
-        s.push_str("/// Enable PageSpeed Insights bulk fetching\n");
+        s.push_str("# Enable PageSpeed Insights bulk fetching\n");
         s.push_str(&format!("page_speed_bulk = {}\n", self.page_speed_bulk));
 
         if let Some(Some(key)) = &self.page_speed_bulk_api_key {
-            s.push_str("/// API Key for PageSpeed Insights\n");
+            s.push_str("# API Key for PageSpeed Insights\n");
             s.push_str(&format!("page_speed_bulk_api_key = {:?}\n", key));
         }
 
-        s.push_str("/// Row limit for GSC data\n");
+        s.push_str("# Row limit for GSC data\n");
         s.push_str(&format!("gsc_row_limit = {}\n", self.gsc_row_limit));
 
         s

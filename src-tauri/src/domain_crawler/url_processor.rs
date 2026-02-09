@@ -604,18 +604,25 @@ async fn update_state_and_emit_progress(
     }
 
     // Only emit progress update if we have valid data
-    // Throttle updates to prevent UI freezing: emit every 10 URLs or when queue is empty/done
-    let should_emit_progress = state.crawled_urls % 10 == 0 || active_pending == 0;
+    // Throttle updates to prevent UI freezing and ensure frontend debounce has time to fire.
+    // Frontend uses a 300ms debounce, so we emit every 400ms to ensure updates go through during active crawling.
+    let now = Instant::now();
+    let should_emit_progress = state.last_progress_emit.elapsed() > Duration::from_millis(400) || active_pending == 0;
 
     if should_emit_progress && safe_total_discovered > 0 && !percentage.is_nan() {
         if let Err(err) = app_handle.emit("progress_update", progress) {
             eprintln!("Failed to emit progress update: {}", err);
         }
+        state.last_progress_emit = now;
     } else {
-        println!(
-            "Skipping invalid progress update: total_discovered={}, percentage={}",
-            safe_total_discovered, percentage
-        );
+        // Only log this debug message if we're not emitting due to invalid data, 
+        // not just because of throttling.
+        if should_emit_progress && (safe_total_discovered == 0 || percentage.is_nan()) {
+            println!(
+                "Skipping invalid progress update: total_discovered={}, percentage={}",
+                safe_total_discovered, percentage
+            );
+        }
     }
 
     let result_data = CrawlResultData {
