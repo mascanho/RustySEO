@@ -195,7 +195,7 @@ impl Settings {
         s.push_str("# Current version of the application\n");
         s.push_str(&format!("version = {:?}\n", self.version));
         s.push_str("# Unique ID for this instance\n");
-        s.push_str(&format!("rustyid = {:?}\n", self.rustyid));
+        s.push_str(&format!("rustyid = {:?}\n", self.rustyid.to_string()));
 
         s.push_str("\n# --- General Crawler Settings ---\n");
         s.push_str("# List of user agents to rotate\n");
@@ -428,6 +428,13 @@ pub async fn init_settings() -> Result<Settings, String> {
         }
         Err(e) => {
             println!("Failed to load settings: {}. Creating config file...", e);
+            // If the file exists but is invalid, delete it so create_config_file can write a new one
+            if let Ok(config_path) = Settings::config_path() {
+                if config_path.exists() {
+                    let _ = fs::remove_file(&config_path).await;
+                    println!("Deleted invalid config file at {:?}", config_path);
+                }
+            }
             create_config_file().await
         }
     }
