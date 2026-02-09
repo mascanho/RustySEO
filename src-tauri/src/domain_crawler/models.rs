@@ -170,7 +170,7 @@ pub struct LightCrawlResult {
     pub cookies_count: usize,
     pub page_size: Vec<Sizes>,
     pub content_type: String,
-    pub opengraph: bool,
+    pub opengraph: HashMap<String, String>,
     pub flesch: Option<f64>,
     pub flesch_grade: Option<String>,
     pub text_ratio: Option<f64>,
@@ -180,6 +180,8 @@ pub struct LightCrawlResult {
     pub images_without_alt: usize,
     pub css_external_count: usize,
     pub css_inline_count: usize,
+    pub internal_links_count: usize,
+    pub external_links_count: usize,
     pub https: bool,
     pub security: SecuritySummary,
 }
@@ -213,7 +215,7 @@ impl LightCrawlResult {
             },
             page_size: full.page_size.clone(),
             content_type: full.content_type.clone(),
-            opengraph: !full.opengraph.is_empty(),
+            opengraph: full.opengraph.clone(),
             flesch: full.flesch.as_ref().ok().map(|(s, _)| *s),
             flesch_grade: full.flesch.as_ref().ok().map(|(_, g)| g.clone()),
             text_ratio: full
@@ -227,6 +229,8 @@ impl LightCrawlResult {
             images_without_alt: img_without_alt,
             css_external_count: full.css.external.len(),
             css_inline_count: full.css.inline.len(),
+            internal_links_count: full.inoutlinks_status_codes.internal.len(),
+            external_links_count: full.inoutlinks_status_codes.external.len(),
             https: full.https,
             security: full.cross_origin.clone(),
         }
