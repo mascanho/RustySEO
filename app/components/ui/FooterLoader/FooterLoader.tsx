@@ -1,111 +1,91 @@
 // @ts-nocheck
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { Badge } from "@mantine/core";
+import { debounce } from "lodash";
 
 const FooterLoader = () => {
-  const [progress, setProgress] = useState({
-    crawledPages: 0,
-    percentageCrawled: 0,
-    crawledPagesCount: 0,
-    failedPages: 0,
-  });
+  const {
+    streamedCrawledPages,
+    streamedTotalPages,
+    setStreamedCrawledPages,
+    setStreamedTotalPages,
+    crawlData,
+    setTotalUrlsCrawled,
+  } = useCrawlStore();
+
+  const [failedPages, setFailedPages] = useState(0);
   const [crawlCompleted, setCrawlCompleted] = useState(false);
 
-  const { setTotalUrlsCrawled, crawlData } = useCrawlStore();
+  // Debounced update function to ensure smooth UI and sync with store
+  const debouncedUpdate = useCallback(
+    debounce((crawled_urls, total_urls, failed_urls) => {
+      setStreamedCrawledPages(crawled_urls);
+      setStreamedTotalPages(total_urls);
+      setTotalUrlsCrawled(total_urls);
+      setFailedPages(failed_urls);
+    }, 300),
+    [setStreamedCrawledPages, setStreamedTotalPages, setTotalUrlsCrawled]
+  );
 
-  // Memoize the event handler to avoid recreating it on every render
-  const handleProgressUpdate = useCallback(
-    (event: {
-      payload: {
-        crawled_urls: number;
-        percentage: number;
-        total_urls: number;
-        failed_urls_count: number;
-      };
-    }) => {
-      const { crawled_urls, percentage, total_urls, failed_urls_count } =
-        event.payload;
+  useEffect(() => {
+    // Progress listener
+    const progressUnlistenPromise = listen("progress_update", (event: any) => {
+      const { crawled_urls, percentage, total_urls, failed_urls_count } = event.payload;
 
-      // Validate and sanitize the received data to prevent NaN
       const safeCrawledUrls = Math.max(0, crawled_urls || 0);
-      const safePercentage = Math.min(100, Math.max(0, percentage || 0));
-      const safeTotalUrls = Math.max(1, total_urls || 1); // Always at least 1 to prevent division by zero
+      const safeTotalUrls = Math.max(1, total_urls || 1);
       const safeFailedUrls = Math.max(0, failed_urls_count || 0);
 
-      // Only update state if the values have changed
-      setProgress((prev) => {
-        if (
-          prev.crawledPages === safeCrawledUrls &&
-          prev.percentageCrawled === safePercentage &&
-          prev.crawledPagesCount === safeTotalUrls &&
-          prev.failedPages === safeFailedUrls
-        ) {
-          return prev; // No change, return previous state
-        }
-        return {
-          crawledPages: safeCrawledUrls,
-          percentageCrawled: safePercentage,
-          crawledPagesCount: safeTotalUrls,
-          failedPages: safeFailedUrls,
-        };
-      });
+      debouncedUpdate(safeCrawledUrls, safeTotalUrls, safeFailedUrls);
 
-      // Reset completion state if new crawl starts (only if significantly less than 100%)
+      // Reset completion state if new crawl starts (heuristic)
       if (percentage < 95 && crawlCompleted) {
         setCrawlCompleted(false);
       }
 
-      // Auto-complete when we reach 100% progress (fallback for JavaScript mode)
+      // Auto-complete (fallback)
       if (percentage >= 100 && !crawlCompleted) {
         setCrawlCompleted(true);
       }
+    });
 
-      // Update global state only if the total URLs have changed
-      setTotalUrlsCrawled((prev) =>
-        prev === safeTotalUrls ? prev : safeTotalUrls,
-      );
-    },
-    [setTotalUrlsCrawled, crawlCompleted],
-  );
-
-  useEffect(() => {
-    // Set up the event listener with the direct handler (no debounce)
-    const progressUnlistenPromise = listen(
-      "progress_update",
-      handleProgressUpdate,
-    );
-
-    // Set up crawl completion listener
+    // Completion listener
     const completeUnlistenPromise = listen("crawl_complete", () => {
-      // Use current progress data instead of potentially empty crawlData
-      setProgress((prev) => ({
-        crawledPages: Math.max(prev.crawledPages, prev.crawledPagesCount),
-        percentageCrawled: 100,
-        crawledPagesCount: Math.max(prev.crawledPages, prev.crawledPagesCount),
-        failedPages: prev.failedPages,
-      }));
+      // Upon completion, ensure we show the final data from crawlData
+      // But we might want to keep the "streamed" values until they are reset?
+      // OverviewChart sets streamed values to crawlData.length on complete.
+      const finalCount = crawlData?.length || 0;
+      setStreamedCrawledPages(finalCount);
+      setStreamedTotalPages(finalCount);
       setCrawlCompleted(true);
+
+      // We can also calculate failed pages here if needed, but the event doesn't pass them
+      // We'll rely on the last progress update for failed count or existing logic
     });
 
-    // Also listen for any other completion-related events
-    const crawlErrorUnlistenPromise = listen("crawl_error", (event) => {
-      // Handle crawl errors
-    });
-
-    const crawlStoppedUnlistenPromise = listen("crawl_stopped", () => {
-      // Handle crawl stops
-    });
-
-    // Cleanup the event listeners on unmount
     return () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
-      crawlErrorUnlistenPromise.then((unlisten) => unlisten());
-      crawlStoppedUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [handleProgressUpdate]); // Remove crawlData.length from dependencies
+  }, [debouncedUpdate, crawlData, setStreamedCrawledPages, setStreamedTotalPages, crawlCompleted]);
+
+  // Derived state for rendering
+  const displayCrawled = useMemo(() => {
+    return crawlCompleted ? (crawlData?.length || 0) : (streamedCrawledPages || 0);
+  }, [crawlCompleted, crawlData, streamedCrawledPages]);
+
+  const displayTotal = useMemo(() => {
+    return crawlCompleted ? (crawlData?.length || 0) : (streamedTotalPages || 0);
+  }, [crawlCompleted, crawlData, streamedTotalPages]);
+
+  // Percentage calculation
+  const percentage = useMemo(() => {
+    if (displayTotal === 0) return 0;
+    const pct = (displayCrawled / displayTotal) * 100;
+    return Math.min(100, Math.max(0, pct));
+  }, [displayCrawled, displayTotal]);
 
   return (
     <div className="flex items-center space-x-4 h-full ml-4">
@@ -116,7 +96,7 @@ const FooterLoader = () => {
           <div
             className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? "animate-pulse" : ""}`}
             style={{
-              width: `${Math.min(Math.max(0, progress.percentageCrawled || 0), 100)}%`,
+              width: `${percentage}%`,
               boxShadow: "0 0 8px rgba(56, 189, 248, 0.4)",
             }}
           />
@@ -124,7 +104,7 @@ const FooterLoader = () => {
 
         {/* Percentage */}
         <span className="text-[11px] font-bold text-brand-bright min-w-[32px] font-mono">
-          {Math.min(progress.percentageCrawled || 0, 100).toFixed(0)}%
+          {percentage.toFixed(0)}%
         </span>
       </div>
 
@@ -137,7 +117,7 @@ const FooterLoader = () => {
             Crawled:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
-            {crawlCompleted ? crawlData.length : progress.crawledPages || 0}
+            {displayCrawled}
           </span>
         </div>
 
@@ -148,21 +128,17 @@ const FooterLoader = () => {
           <span className="text-gray-700 dark:text-white font-mono font-medium">
             {crawlCompleted
               ? 0
-              : Math.max(
-                  0,
-                  (progress.crawledPagesCount || 0) -
-                    (progress.crawledPages || 0),
-                )}
+              : Math.max(0, displayTotal - displayCrawled)}
           </span>
         </div>
 
-        {progress.failedPages > 0 && (
+        {failedPages > 0 && (
           <div className="flex items-center space-x-1.5">
             <span className="text-red-500/60 dark:text-red-400/60 uppercase font-bold text-[9px]">
               Failed:
             </span>
             <span className="text-red-600 dark:text-red-400 font-mono font-medium">
-              {progress.failedPages}
+              {failedPages}
             </span>
           </div>
         )}
