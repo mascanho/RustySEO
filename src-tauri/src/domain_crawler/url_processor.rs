@@ -275,7 +275,7 @@ pub async fn process_url(
                 cookies_data.dedup();
             }
             Err(e) => {
-                tracing::warn!(
+                tracing::error!(
                     "Failed to render JS for {}: {}. Falling back to static content.",
                     final_url,
                     e

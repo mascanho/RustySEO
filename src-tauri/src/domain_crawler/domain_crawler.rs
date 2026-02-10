@@ -402,7 +402,7 @@ pub async fn crawl_domain(
             robots_blocked: Some(robots_blocked),
         };
 
-        println!(
+        tracing::info!(
             "Final crawl stats: {} total processed ({} succeeded, {} failed)",
             completed,
             state_guard.crawled_urls,
