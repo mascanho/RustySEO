@@ -191,6 +191,11 @@ export default function Home() {
               dataType: "redirects",
             });
             setAggregatedData({ redirects: res });
+          } else if (activeTab === "cwv") {
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "cwv",
+            });
+            setAggregatedData({ cwv: res });
           } else if (activeTab === "files") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "files",
@@ -231,6 +236,8 @@ export default function Home() {
       )
         shouldFetchImmediate = true;
       else if (activeTab === "files" && aggregatedData.files.length === 0)
+        shouldFetchImmediate = true;
+      else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
         shouldFetchImmediate = true;
 
       if (shouldFetchImmediate || !isFinishedDeepCrawl) {
@@ -475,7 +482,10 @@ export default function Home() {
 
             {/* CORE WEB VITALS TABLe */}
             <TabsContent value="cwv" className="flex-grow overflow-hidden">
-              <CoreWebVitalsTable tabName={"AllData"} rows={crawlData} />
+              <CoreWebVitalsTable
+                tabName={"AllData"}
+                rows={aggregatedData?.cwv?.length > 0 ? aggregatedData.cwv : crawlData}
+              />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}

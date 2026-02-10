@@ -57,6 +57,7 @@ interface CrawlStore {
     externalLinks: any[];
     keywords: any[];
     redirects: any[];
+    cwv: any[];
     files: any[];
   };
   setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
@@ -191,6 +192,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         externalLinks: [],
         keywords: [],
         redirects: [],
+        cwv: [],
         files: [],
       }
     }),
@@ -249,6 +251,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       externalLinks: [],
       keywords: [],
       redirects: [],
+      cwv: [],
       files: [],
     },
     domainCrawlLoading: false,

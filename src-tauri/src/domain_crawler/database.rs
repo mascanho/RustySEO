@@ -448,6 +448,18 @@ impl Database {
                             redirects.push(data.clone());
                         }
                     }
+                    "cwv" => {
+                        let page_url = data
+                            .get("url")
+                            .and_then(|u| u.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let psi = data.get("psi_results").cloned().unwrap_or(Value::Null);
+                        keywords.push(serde_json::json!({
+                            "url": page_url,
+                            "psi_results": psi
+                        }));
+                    }
                     "files" => {
                         // For files we look at both internal/external links that look like files
                         let page_url = data
@@ -511,6 +523,7 @@ impl Database {
                 "external_links" => Ok(Value::Array(external_links)),
                 "keywords" => Ok(Value::Array(keywords)),
                 "redirects" => Ok(Value::Array(redirects)),
+                "cwv" => Ok(Value::Array(keywords)), // Reused keywords vec for CWV
                 "files" => Ok(Value::Array(internal_links)), // Reused
                 _ => Ok(Value::Null),
             }
