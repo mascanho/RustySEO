@@ -105,15 +105,17 @@ function OverviewChart() {
       setStreamedTotalPages(crawlData.length);
 
       // Calculate 4XX and 5XX separately from crawlData
-      const count4xx = crawlData?.filter((page) => {
-        const status = page?.status_code || 0;
-        return status >= 400 && status < 500;
-      }).length || 0;
+      const count4xx =
+        crawlData?.filter((page) => {
+          const status = page?.status_code || 0;
+          return status >= 400 && status < 500;
+        }).length || 0;
 
-      const count5xx = crawlData?.filter((page) => {
-        const status = page?.status_code || 0;
-        return status >= 500;
-      }).length || 0;
+      const count5xx =
+        crawlData?.filter((page) => {
+          const status = page?.status_code || 0;
+          return status >= 500;
+        }).length || 0;
 
       setFailed4xxCount(count4xx);
       setFailed5xxCount(count5xx);
@@ -136,31 +138,39 @@ function OverviewChart() {
   ]);
 
   // Memoized chart data
-  const chartData = useMemo(
-    () => [
+  const chartData = useMemo(() => {
+    const crawled = Math.max(0, crawledPages || 0);
+    const errors4xx = Math.max(0, failed4xxCount || 0);
+    const errors5xx = Math.max(0, failed5xxCount || 0);
+    const queued = Math.max(0, queuedPages || 0);
+
+    // If all values are 0, show a small segment to make the chart visible
+    const totalValue = crawled + errors4xx + errors5xx + queued;
+    const hasData = totalValue > 0;
+
+    return [
       {
         browser: "Crawled",
-        visitors: crawledPages,
-        fill: "hsl(210, 100%, 50%)"
+        visitors: hasData ? crawled : 1,
+        fill: "hsl(210, 100%, 50%)",
       },
       {
         browser: "4XX Errors",
-        visitors: failed4xxCount,
-        fill: "hsl(210, 100%, 65%)"
+        visitors: hasData ? errors4xx : 0,
+        fill: "hsl(210, 100%, 65%)",
       },
       {
         browser: "5XX Errors",
-        visitors: failed5xxCount,
-        fill: "hsl(210, 100%, 80%)"
+        visitors: hasData ? errors5xx : 0,
+        fill: "hsl(210, 100%, 80%)",
       },
       {
         browser: "Queued",
-        visitors: queuedPages,
+        visitors: hasData ? queued : 0,
         fill: "hsl(210, 100%, 90%)",
       },
-    ],
-    [crawledPages, failed4xxCount, failed5xxCount, queuedPages],
-  );
+    ];
+  }, [crawledPages, failed4xxCount, failed5xxCount, queuedPages]);
 
   // Memoized total pages crawled in session
   const totalPagesCrawledInSession = useMemo(() => {
@@ -254,6 +264,9 @@ function OverviewChart() {
               innerRadius={60}
               strokeWidth={5}
               className="text-white"
+              // Ensure chart is always visible even with zero data
+              startAngle={90}
+              endAngle={-270}
             >
               <Label content={renderLabel} />
             </Pie>
