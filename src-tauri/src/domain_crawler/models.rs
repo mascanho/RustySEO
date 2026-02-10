@@ -182,6 +182,9 @@ pub struct LightCrawlResult {
     pub css_inline_count: usize,
     pub internal_links_count: usize,
     pub external_links_count: usize,
+    pub canonicals: Option<Vec<String>>,
+    pub had_redirect: bool,
+    pub redirect_count: usize,
     pub https: bool,
     pub security: SecuritySummary,
 }
@@ -231,6 +234,9 @@ impl LightCrawlResult {
             css_inline_count: full.css.inline.len(),
             internal_links_count: full.inoutlinks_status_codes.internal.len(),
             external_links_count: full.inoutlinks_status_codes.external.len(),
+            canonicals: full.canonicals.clone(),
+            had_redirect: full.had_redirect,
+            redirect_count: full.redirect_count,
             https: full.https,
             security: full.cross_origin.clone(),
         }
