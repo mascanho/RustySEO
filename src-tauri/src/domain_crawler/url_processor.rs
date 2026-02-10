@@ -3,6 +3,8 @@
 use colored::*;
 use reqwest::Client;
 use scraper::Html;
+use serde_json::Value;
+use std::collections::HashSet;
 use std::io::Write;
 use std::sync::Arc;
 use std::time::Instant;
@@ -11,8 +13,6 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
-use std::collections::HashSet;
-use serde_json::Value;
 
 use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
 use crate::domain_crawler::helpers::cookies;
@@ -161,7 +161,10 @@ pub async fn process_url(
         // ~2% sampling rate
         tracing::info!(
             "Redirect: {} -> {} (status: {}, hops: {})",
-            url, final_url, status_code, redirect_count
+            url,
+            final_url,
+            status_code,
+            redirect_count
         );
     }
 
@@ -186,7 +189,7 @@ pub async fn process_url(
         || response.headers().contains_key("x-cdn")
         || response.headers().contains_key("x-cache")
     {
-        // Reduced from 2s to 100ms for better speed, 
+        // Reduced from 2s to 100ms for better speed,
         // as the concurrency is already managed by semaphores
         sleep(Duration::from_millis(100)).await;
     }
@@ -208,9 +211,9 @@ pub async fn process_url(
 
     // Detect 'hidden' errors (200 OK but actually a block/error page)
     let body_lower = body.to_lowercase();
-    let is_block_page = body_lower.contains("access denied") 
-        || body_lower.contains("rate limit") 
-        || body_lower.contains("too many requests") 
+    let is_block_page = body_lower.contains("access denied")
+        || body_lower.contains("rate limit")
+        || body_lower.contains("too many requests")
         || body_lower.contains("forbidden")
         || body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
         || body_lower.contains("challenge-form") // Cloudflare
@@ -228,7 +231,10 @@ pub async fn process_url(
             depth,
             timestamp: Instant::now(),
         });
-        return Err(format!("Blocked/Rate Limited (1015) by server for {}. Try lowering concurrency.", url));
+        return Err(format!(
+            "Blocked/Rate Limited (1015) by server for {}. Try lowering concurrency.",
+            url
+        ));
     }
 
     // If Javascript Rendering is enabled and content is HTML, re-fetch via Headless Chrome
@@ -271,16 +277,20 @@ pub async fn process_url(
             Err(e) => {
                 tracing::warn!(
                     "Failed to render JS for {}: {}. Falling back to static content.",
-                    final_url, e
+                    final_url,
+                    e
                 );
             }
         }
     }
 
     let mut pdf_files: Vec<String> = Vec::new();
-    // We no longer early-return for non-HTML pages here.
     // We want to try and extract whatever we can (titles, meta, etc.) from any 200 response.
-    if content_type.as_deref().map(|ct| ct.contains("pdf")).unwrap_or(false) {
+    if content_type
+        .as_deref()
+        .map(|ct| ct.contains("pdf"))
+        .unwrap_or(false)
+    {
         pdf_files.push(url.to_string());
     }
 
@@ -396,7 +406,10 @@ pub async fn process_url(
         async {
             if psi_settings_clone.page_speed_bulk {
                 let url_clone = final_url.clone();
-                match tokio::spawn(async move { fetch_psi_bulk(url_clone, &psi_settings_clone).await }).await
+                match tokio::spawn(
+                    async move { fetch_psi_bulk(url_clone, &psi_settings_clone).await },
+                )
+                .await
                 {
                     Ok(res) => res,
                     Err(e) => Err(e.to_string()),
@@ -406,7 +419,6 @@ pub async fn process_url(
             }
         }
     );
-
 
     // GETS THE SPECIFIC URL DEPTH
     let url_depth = url_depth::calculate_url_depth(&url);
@@ -474,8 +486,16 @@ pub async fn process_url(
     };
 
     // Update state and emit progress
-    update_state_and_emit_progress(&state, &url, depth, &result, links_for_crawler, app_handle, settings)
-        .await;
+    update_state_and_emit_progress(
+        &state,
+        &url,
+        depth,
+        &result,
+        links_for_crawler,
+        app_handle,
+        settings,
+    )
+    .await;
 
     Ok(result)
 }
@@ -518,13 +538,16 @@ async fn update_state_and_emit_progress(
             // Pattern checking to avoid infinite URL traps
             let pattern_count = *state.url_patterns.get(&url_pattern).unwrap_or(&0);
 
-            // Set a very high limit for pattern-based skipping. 
+            // Set a very high limit for pattern-based skipping.
             // 10,000 is high enough to not interfere with normal sites but low enough to stop an infinite trap eventually.
             let should_skip_pattern = pattern_count > 10000;
 
             if should_skip_pattern {
                 if pattern_count == 10001 {
-                    tracing::warn!("Pattern trap detected for pattern: {}. Limiting discovery.", url_pattern);
+                    tracing::warn!(
+                        "Pattern trap detected for pattern: {}. Limiting discovery.",
+                        url_pattern
+                    );
                 }
                 continue;
             }
@@ -543,7 +566,7 @@ async fn update_state_and_emit_progress(
                     state
                         .pending_urls
                         .insert(link_str.to_string(), Instant::now());
-                    
+
                     // Increment the pattern count
                     *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
                 }
@@ -607,7 +630,8 @@ async fn update_state_and_emit_progress(
     // Throttle updates to prevent UI freezing and ensure frontend debounce has time to fire.
     // Frontend uses a 300ms debounce, so we emit every 400ms to ensure updates go through during active crawling.
     let now = Instant::now();
-    let should_emit_progress = state.last_progress_emit.elapsed() > Duration::from_millis(400) || active_pending == 0;
+    let should_emit_progress =
+        state.last_progress_emit.elapsed() > Duration::from_millis(400) || active_pending == 0;
 
     if should_emit_progress && safe_total_discovered > 0 && !percentage.is_nan() {
         if let Err(err) = app_handle.emit("progress_update", progress) {
@@ -615,7 +639,7 @@ async fn update_state_and_emit_progress(
         }
         state.last_progress_emit = now;
     } else {
-        // Only log this debug message if we're not emitting due to invalid data, 
+        // Only log this debug message if we're not emitting due to invalid data,
         // not just because of throttling.
         if should_emit_progress && (safe_total_discovered == 0 || percentage.is_nan()) {
             println!(
