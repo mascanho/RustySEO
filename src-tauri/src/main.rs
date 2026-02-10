@@ -56,6 +56,7 @@ mod image_converter;
 pub mod loganalyser;
 pub mod server;
 pub mod version;
+pub mod ai_preamble;
 
 // Handling the app state
 pub struct AppState {
@@ -252,6 +253,7 @@ async fn main() {
             get_genai,
             crawler::db::clear_table_command,
             server::ask_rusty_command,
+            server::ask_rusty_with_context_command,
             downloads::excel::export_to_excel_command,
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,

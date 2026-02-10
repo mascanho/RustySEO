@@ -15,6 +15,8 @@ import useOnPageSeo from "@/store/storeOnPageSeo";
 import ChatLoading from "./chatLoading";
 import useContentStore from "@/store/storeContent";
 import { usePathname } from "next/navigation";
+import useCrawlStore from "@/store/GlobalCrawlDataStore";
+import { buildRustyAiContext } from "./libs/rustyAiPrompts";
 
 interface Message {
   id: number;
@@ -39,57 +41,8 @@ const AIcontainer = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isThinking, setIsThinking] = useState(false);
-
-  // PAGE SPEED PERFORMANCE
-  const performance = pageSpeedStore.performance || "No page crawled yet";
-  const fcp = pageSpeedStore.fcp || "No page crawled yet";
-  const lcp = pageSpeedStore.lcp || "No page crawled yet";
-  const tti = pageSpeedStore.tti || "No page crawled yet";
-  const cls = pageSpeedStore.cls || "No page crawled yet";
-  const speedIndex = pageSpeedStore.speedIndex || "No page crawled yet";
-  const serverResponse = pageSpeedStore.serverResponse || "No page crawled yet";
-  const largePayloads = pageSpeedStore.largePayloads || "No page crawled yet";
-  const domSize = pageSpeedStore.domSize || "No page crawled yet";
-  const urlRedirects = pageSpeedStore.urlRedirects || "No page crawled yet";
-  const longTasks = pageSpeedStore.longTasks || "No page crawled yet";
-  const renderBlocking = pageSpeedStore.renderBlocking || "No page crawled yet";
-  const netowrkRequests =
-    pageSpeedStore.netowrkRequests || "No page crawled yet";
-  const passedChecks = pageSpeedStore.passedChecks || "No page crawled yet";
-  const failedChecks = pageSpeedStore.failedChecks || "No page crawled yet";
-  const GlobalPerformanceScore =
-    pageSpeedStore.GlobalPerformanceScore || "No page crawled yet";
-
-  // ON PAGE SEO
-  const seoLoading = onPageSEO.seoLoading || "No page crawled yet";
-  const favicon = onPageSEO.favicon || "No page crawled yet";
-  const seopagetitle = onPageSEO.seopagetitle || "No page crawled yet";
-  const seodescription = onPageSEO.seodescription || "No page crawled yet";
-  const seocanonical = onPageSEO.seocanonical || "No page crawled yet";
-  const seohreflangs = onPageSEO.seohreflangs || "No page crawled yet";
-  const seoopengraph = onPageSEO.seoopengraph || "No page crawled yet";
-  const seoschema = onPageSEO.seoschema || "No page crawled yet";
-  const seocharset = onPageSEO.seocharset || "No page crawled yet";
-  const seoindexability = onPageSEO.seoindexability || "No page crawled yet";
-  const seoalttags = onPageSEO.seoalttags || "No page crawled yet";
-  const seostatusCodes = onPageSEO.seostatusCodes || "No page crawled yet";
-  const seoheadings = onPageSEO.seoheadings || "No page crawled yet";
-  const seoImages = onPageSEO.seoImages || "No page crawled yet";
-  const seoOpenGraph = onPageSEO.seoOpenGraph || "No page crawled yet";
-  const seoRenderBlocking =
-    onPageSEO.seoRenderBlocking || "No page crawled yet";
-  const seoContentQuality =
-    onPageSEO.seoContentQuality || "No page crawled yet";
-  const seoMedia = onPageSEO.seoMedia || "No page crawled yet";
-  const seoUrlLength = onPageSEO.seoUrlLength || "No page crawled yet";
-
-  // CONTENT STORE
-  const readingTime = contentStore.readingTime || "No page crawled yet";
-  const wordCount = contentStore.wordCount || "No page crawled yet";
-  const readingLevel = contentStore.readingLevel || "No page crawled yet";
-  const textRatio = contentStore.textRatio || "No page crawled yet";
-  const contentKeywords = contentStore.keywords || "No page crawled yet";
-  const contentVideo = contentStore.video || "No page crawled yet";
+  const crawlStore = useCrawlStore();
+  const issuesData = crawlStore.issuesData || [];
 
   const pathname = usePathname();
 
@@ -164,67 +117,19 @@ const AIcontainer = () => {
     setInput("");
     setIsThinking(true);
 
-    const shallowRusty = `You are RustySEO, a SEO and GEO marketing toolkit. Besides my prompt, here is a report of how a page I crawled is performing.
-
-    **Performance Metrics:**
-    - **Overall Page Performance:** ${performance}. This is a general score indicating how well the page performs.
-    - **First Contentful Paint (FCP):** ${fcp}. This measures the time it takes for the first text or image to appear on the screen.
-    - **Largest Contentful Paint (LCP):** ${lcp}. This measures the time it takes for the largest content element to become visible.
-    - **Time To Interactive (TTI):** ${tti}. This measures how long it takes for the page to become fully interactive.
-    - **Cumulative Layout Shift (CLS):** ${cls}. This measures the visual stability of the page, quantifying how much elements move around unexpectedly.
-    - **Speed Index:** ${speedIndex}. This measures how quickly the content of a page is visually populated.
-    - **Server Response Time:** ${serverResponse}. This measures how long it takes for the server to respond to the initial request.
-    - **Large Payloads:** ${largePayloads}. Indicates if there are large files that are slowing down the page.
-    - **DOM Size:** ${domSize} nodes. The number of nodes in the Document Object Model, too many can affect performance.
-    - **URL Redirects:** ${urlRedirects}. Number of redirects that the page performs
-    - **Long Tasks:** ${longTasks}. Indicates tasks that take a long time to complete, blocking the main thread.
-    - **Render Blocking Resources:** ${renderBlocking}. Resources that prevent the page from rendering quickly.
-    - **Network Requests:** ${netowrkRequests}. The amount of network requests the page performs
-    - **Passed Checks:** ${passedChecks}. Number of performance checks that passed.
-    - **Failed Checks:** ${failedChecks}. Number of performance checks that failed.
-    - **Global Performance Score:** ${GlobalPerformanceScore}. Overall score of the website performance.
-
-    **SEO Information:**
-    - **SEO Loading:** ${seoLoading}. Indicates if the SEO data is loading correctly.
-    - **Favicon:** ${favicon}.  Indicates if the page has a favicon.
-    - **Page Title:** ${seopagetitle}. The title of the page, important for SEO.
-    - **Description:** ${seodescription}. The meta description, a brief summary of the page content.
-    - **Canonical URL:** ${seocanonical}. The preferred URL for the page, used to avoid duplicate content issues.
-    - **Hreflangs:** ${seohreflangs}. Used to indicate the language and geographic targeting of the page.
-    - **Open Graph:** ${seoopengraph}.  Data used by social media platforms to display shared content.
-    -  **Schema:** ${seoschema}. Indicates if the page has schema markup.
-    - **Charset:** ${seocharset}. The character encoding of the page.
-    - **Indexability:** ${seoindexability}. Indicates if the page is indexable by search engines.
-    - **Images without Alt Tags:** ${seoImages.length}. Number of images that lack alt text, which is important for accessibility and SEO.
-    -  **Total images:** ${seoalttags.length}. The total amount of images on the page.
-     - **Images with alt tags:** ${-(seoImages.length - seoalttags.length)}. The total number of images with a valid alt tag.
-    - **Status Codes:** ${seostatusCodes}. HTTP status codes of the page and its resources.
-    - **Headings:** ${seoheadings}. Structure of the headings in the page.
-    - **Images:** ${seoImages}. List of the images in the page.
-    - **Open Graph Data:** ${seoOpenGraph}. The open graph data of the page.
-    - **Render Blocking Resources:** ${seoRenderBlocking}. List of render blocking resources.
-    - **Content Quality:** ${seoContentQuality}. An assessment of the quality of the content on the page.
-     -   **Media:** ${seoMedia}. All the media files on the page.
-    -   **URL Length:** ${seoUrlLength}. The length of the URL of the page.
-
-    **Content Analysis:**
-    -   **Reading Time:** ${readingTime}. The estimated time it takes to read the content.
-    -   **Word Count:** ${wordCount}. The total number of words in the content.
-    -   **Reading Level:** ${readingLevel}. The reading level of the content.
-    -   **Text Ratio:** ${textRatio}. The ratio of text to HTML on the page.
-    - **Keywords:** ${contentKeywords}. The important keywords found in the content.
-    -   **Video:** ${contentVideo}. The video found on the page.
-
-     My prompt is: ${input}`;
-
-    const deepRusty =
-      "You are RustySEO, a SEO/GEO marketing toolkit. You have the knowledge of the greatest SEOs and have been developed by google to help improve websites";
-
-    const prompt = pathname === "/" ? shallowRusty : deepRusty;
+    const context = buildRustyAiContext(
+      pathname,
+      pageSpeedStore,
+      onPageSEO,
+      contentStore,
+      crawlStore,
+      issuesData
+    );
 
     try {
-      const response = await invoke("ask_rusty_command", {
-        prompt: prompt,
+      const response = await invoke("ask_rusty_with_context_command", {
+        prompt: input,
+        context: context,
       });
 
       const assistantMessage: Message = {
@@ -330,8 +235,8 @@ const AIcontainer = () => {
                     // @ts-ignore
                     ref={bubbleRef}
                     className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${m.role === "user"
-                        ? "bg-blue-100 dark:bg-blue-900  dark:text-white"
-                        : "bg-brand-dark/10 dark:bg-purple-900"
+                      ? "bg-blue-100 dark:bg-blue-900  dark:text-white"
+                      : "bg-brand-dark/10 dark:bg-purple-900"
                       }`}
                   >
                     {m.content}
