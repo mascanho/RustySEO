@@ -13,10 +13,14 @@ const FooterLoader = () => {
     setStreamedTotalPages,
     crawlData,
     setTotalUrlsCrawled,
+    domainCrawlLoading,
+    isFinishedDeepCrawl,
+    setFinishedDeepCrawl,
   } = useCrawlStore();
 
   const [failedPages, setFailedPages] = useState(0);
-  const [crawlCompleted, setCrawlCompleted] = useState(false);
+  // Internal state to track if we've shown the "Complete" message for the current session
+  const [showComplete, setShowComplete] = useState(false);
 
   // Debounced update function to ensure smooth UI and sync with store
   const debouncedUpdate = useCallback(
@@ -40,45 +44,47 @@ const FooterLoader = () => {
 
       debouncedUpdate(safeCrawledUrls, safeTotalUrls, safeFailedUrls);
 
-      // Reset completion state if new crawl starts (heuristic)
-      if (percentage < 95 && crawlCompleted) {
-        setCrawlCompleted(false);
-      }
-
-      // Auto-complete (fallback)
-      if (percentage >= 100 && !crawlCompleted) {
-        setCrawlCompleted(true);
+      // Reset internal completion state if a real progress update comes through with < 100%
+      if (percentage < 100 && showComplete) {
+        setShowComplete(false);
       }
     });
 
     // Completion listener
-    const completeUnlistenPromise = listen("crawl_complete", () => {
-      // Upon completion, ensure we show the final data from crawlData
-      // But we might want to keep the "streamed" values until they are reset?
-      // OverviewChart sets streamed values to crawlData.length on complete.
-      const finalCount = crawlData?.length || 0;
-      setStreamedCrawledPages(finalCount);
-      setStreamedTotalPages(finalCount);
-      setCrawlCompleted(true);
+    const completeUnlistenPromise = listen("crawl_complete", (event: any) => {
+      console.log("🏁 Crawl complete event received in FooterLoader", event.payload);
 
-      // We can also calculate failed pages here if needed, but the event doesn't pass them
-      // We'll rely on the last progress update for failed count or existing logic
+      // Ensure we show the final data from the event or fallback to crawlData
+      const finalCount = event.payload?.crawled_urls || crawlData?.length || 0;
+      setStreamedCrawledPages(finalCount);
+      setStreamedTotalPages(event.payload?.total_urls || finalCount);
+      setShowComplete(true);
+      setFinishedDeepCrawl(true);
     });
 
     return () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [debouncedUpdate, crawlData, setStreamedCrawledPages, setStreamedTotalPages, crawlCompleted]);
+  }, [debouncedUpdate, crawlData, setStreamedCrawledPages, setStreamedTotalPages, setFinishedDeepCrawl, showComplete]);
+
+  // Sync showComplete with store state
+  useEffect(() => {
+    if (domainCrawlLoading) {
+      setShowComplete(false);
+    } else if (isFinishedDeepCrawl && crawlData.length > 0) {
+      setShowComplete(true);
+    }
+  }, [domainCrawlLoading, isFinishedDeepCrawl, crawlData.length]);
 
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
-    return crawlCompleted ? (crawlData?.length || 0) : (streamedCrawledPages || 0);
-  }, [crawlCompleted, crawlData, streamedCrawledPages]);
+    return showComplete ? (crawlData?.length || streamedCrawledPages || 0) : (streamedCrawledPages || 0);
+  }, [showComplete, crawlData.length, streamedCrawledPages]);
 
   const displayTotal = useMemo(() => {
-    return crawlCompleted ? (crawlData?.length || 0) : (streamedTotalPages || 0);
-  }, [crawlCompleted, crawlData, streamedTotalPages]);
+    return showComplete ? (crawlData?.length || streamedTotalPages || 0) : (streamedTotalPages || 0);
+  }, [showComplete, crawlData.length, streamedTotalPages]);
 
   // Percentage calculation
   const percentage = useMemo(() => {
@@ -94,7 +100,7 @@ const FooterLoader = () => {
         {/* Progress Bar Container */}
         <div className="relative w-36 h-2 bg-gray-300/50 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
           <div
-            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? "animate-pulse" : ""}`}
+            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!showComplete ? "animate-pulse" : ""}`}
             style={{
               width: `${percentage}%`,
               boxShadow: "0 0 8px rgba(56, 189, 248, 0.4)",
@@ -126,7 +132,7 @@ const FooterLoader = () => {
             Queued:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
-            {crawlCompleted
+            {showComplete
               ? 0
               : Math.max(0, displayTotal - displayCrawled)}
           </span>
@@ -143,7 +149,7 @@ const FooterLoader = () => {
           </div>
         )}
 
-        {crawlCompleted && (
+        {(showComplete || (percentage >= 99.9 && !domainCrawlLoading && crawlData.length > 0)) && (
           <Badge
             variant="filled"
             size="xs"

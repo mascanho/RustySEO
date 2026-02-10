@@ -185,6 +185,10 @@ pub struct LightCrawlResult {
     pub canonicals: Option<Vec<String>>,
     pub had_redirect: bool,
     pub redirect_count: usize,
+    pub performance_score: Option<f64>,
+    pub accessibility_score: Option<f64>,
+    pub best_practices_score: Option<f64>,
+    pub seo_score: Option<f64>,
     pub https: bool,
     pub security: SecuritySummary,
 }
@@ -237,8 +241,36 @@ impl LightCrawlResult {
             canonicals: full.canonicals.clone(),
             had_redirect: full.had_redirect,
             redirect_count: full.redirect_count,
+            performance_score: Self::get_psi_score(full, "performance"),
+            accessibility_score: Self::get_psi_score(full, "accessibility"),
+            best_practices_score: Self::get_psi_score(full, "best-practices"),
+            seo_score: Self::get_psi_score(full, "seo"),
             https: full.https,
             security: full.cross_origin.clone(),
         }
+    }
+
+    fn get_psi_score(full: &DomainCrawlResults, category: &str) -> Option<f64> {
+        if let Ok(psi) = &full.psi_results {
+            if psi.is_empty() {
+                return None;
+            }
+            let mut total = 0.0;
+            let mut count = 0;
+            for res in psi {
+                if let Some(cats) = res.get("categories") {
+                    if let Some(cat) = cats.get(category) {
+                        if let Some(score) = cat.get("score").and_then(|s| s.as_f64()) {
+                            total += score;
+                            count += 1;
+                        }
+                    }
+                }
+            }
+            if count > 0 {
+                return Some(total / count as f64);
+            }
+        }
+        None
     }
 }

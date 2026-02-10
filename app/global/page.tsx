@@ -105,6 +105,8 @@ export default function Page() {
       setRobotsBlocked([]);
       setFavicon("");
       setIsGlobalCrawling(true);
+      setFinishedDeepCrawl(false);
+      setIsFinishedDeepCrawl(false);
 
       const result = await invoke("domain_crawl_command", { domain: url });
       // console.log("%cCrawl Result:", "color: red;", result);
@@ -161,8 +163,6 @@ export default function Page() {
 
         if (result && typeof result === "object") {
           addDomainCrawlResult(result);
-          setFinishedDeepCrawl(true);
-          setIsFinishedDeepCrawl(true);
         } else {
           console.warn("⚠️ Result is not an object:", result);
         }
@@ -185,6 +185,9 @@ export default function Page() {
         // @ts-ignore
         setRobotsBlocked(event.payload.robots_blocked);
       }
+
+      setFinishedDeepCrawl(true);
+      setIsFinishedDeepCrawl(true);
     }).catch((error) => {
       console.error("Failed to setup crawl_complete listener:", error);
     });
