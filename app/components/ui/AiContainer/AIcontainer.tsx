@@ -16,6 +16,7 @@ import ChatLoading from "./chatLoading";
 import useContentStore from "@/store/storeContent";
 import { usePathname } from "next/navigation";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { buildRustyAiContext } from "./libs/rustyAiPrompts";
 
 interface Message {
@@ -42,6 +43,7 @@ const AIcontainer = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isThinking, setIsThinking] = useState(false);
   const crawlStore = useCrawlStore();
+  const logAnalysisStore = useLogAnalysisStore();
   const issuesData = crawlStore.issuesData || [];
 
   const pathname = usePathname();
@@ -123,6 +125,7 @@ const AIcontainer = () => {
       onPageSEO,
       contentStore,
       crawlStore,
+      logAnalysisStore,
       issuesData
     );
 

@@ -4,6 +4,7 @@ export const changelogData = [
     date: "2025-02-21",
     type: "feature",
     changes: [
+      "Global: Better context to Rusty AI",
       "Deep Crawler: Adaptive Crawling",
       "Deep Crawler: Javascript Crawling",
       "Deep Crawler: Tree view with context menu",

@@ -151,11 +151,11 @@ export function ChatBar() {
   return (
     <div
       className={`flex flex-col overflow-hidden border border-l-2 font-mono shadow-xl transition ease-in delay-75 z-[999999] absolute right-0
-  ${visibility.chatbar ? "w-[20.4rem]" : "w-0"}
+  ${visibility.chatbar ? "w-[30.4rem]" : "w-0"}
   border-gray-200 text-gray-800 dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-gray-200
-  ${pathname === "/" && "top-0 h-[calc(100vh-8.1rem)]"}
-${pathname === "/global" && "top-[5.1rem] h-[calc(100vh-8.4rem)]"}
-${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
+  ${pathname === "/" && "top-0 h-[calc(100vh-8.6rem)]"}
+${pathname === "/global" && "top-[5.1rem] h-[calc(100vh-8.6rem)]"}
+${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
 `}
     >
       {/* Header */}
@@ -225,10 +225,11 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
                       )}
                       <div className="flex items-end space-x-2">
                         <div
-                          className={`rounded-md px-3 py-2 ${isCurrentUser
-                            ? "bg-blue-600 text-white dark:bg-[#2a4365]"
-                            : "bg-gray-100 text-gray-800 dark:bg-[#2d2d2d] dark:text-gray-200"
-                            }`}
+                          className={`rounded-md px-3 py-2 ${
+                            isCurrentUser
+                              ? "bg-blue-600 text-white dark:bg-[#2a4365]"
+                              : "bg-gray-100 text-gray-800 dark:bg-[#2d2d2d] dark:text-gray-200"
+                          }`}
                         >
                           <p className="whitespace-pre-wrap text-xs">
                             {message.text}

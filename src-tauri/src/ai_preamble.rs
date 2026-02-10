@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub enum CrawlMode {
     Shallow,
     Deep,
+    LogAnalyser,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,6 +26,8 @@ pub struct SeoInfo {
     pub indexability: String,
     pub h1: String,
     pub word_count: String,
+    pub reading_time: String,
+    pub reading_level: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,6 +36,18 @@ pub struct DeepCrawlSummary {
     pub total_issues: usize,
     pub domain: String,
     pub status_codes_distribution: String,
+    pub depth_distribution: String,
+    pub avg_response_time: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LogAnalysisSummary {
+    pub total_lines: usize,
+    pub unique_ips: usize,
+    pub crawler_count: usize,
+    pub success_rate: String,
+    pub bot_breakdown: String,
+    pub top_pages: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -41,6 +56,7 @@ pub struct RustyAiContext {
     pub page_metrics: Option<PageMetrics>,
     pub seo_info: Option<SeoInfo>,
     pub deep_summary: Option<DeepCrawlSummary>,
+    pub log_summary: Option<LogAnalysisSummary>,
 }
 
 pub fn generate_preamble(context: &RustyAiContext) -> String {
@@ -68,7 +84,9 @@ pub fn generate_preamble(context: &RustyAiContext) -> String {
                 - Canonical: {}\n\
                 - Indexability: {}\n\
                 - Main H1: {}\n\
-                - Word Count: {}\n\n\
+                - Word Count: {}\n\
+                - Reading Time: {}\n\
+                - Reading Level: {}\n\n\
                 Provide expert advice, identify issues, and suggest improvements for this specific page.",
                 base,
                 metrics.map(|m| m.performance.as_str()).unwrap_or("N/A"),
@@ -83,6 +101,8 @@ pub fn generate_preamble(context: &RustyAiContext) -> String {
                 seo.map(|s| s.indexability.as_str()).unwrap_or("N/A"),
                 seo.map(|s| s.h1.as_str()).unwrap_or("N/A"),
                 seo.map(|s| s.word_count.as_str()).unwrap_or("N/A"),
+                seo.map(|s| s.reading_time.as_str()).unwrap_or("N/A"),
+                seo.map(|s| s.reading_level.as_str()).unwrap_or("N/A"),
             )
         }
         CrawlMode::Deep => {
@@ -93,13 +113,39 @@ pub fn generate_preamble(context: &RustyAiContext) -> String {
                 Project Overview:\n\
                 - Total Pages Crawled: {}\n\
                 - Total SEO Issues Identified: {}\n\
-                - Status Code Distribution: {}\n\n\
+                - Status Code Distribution: {}\n\
+                - Crawl Depth Distribution: {}\n\
+                - Average Response Time: {}\n\n\
                 Analyze the website's health as a whole. Focus on site-wide patterns, architecture, and overall SEO strategy.",
                 base,
                 summary.map(|s| s.domain.as_str()).unwrap_or("Unknown"),
                 summary.map(|s| s.total_pages).unwrap_or(0),
                 summary.map(|s| s.total_issues).unwrap_or(0),
                 summary.map(|s| s.status_codes_distribution.as_str()).unwrap_or("N/A"),
+                summary.map(|s| s.depth_distribution.as_str()).unwrap_or("N/A"),
+                summary.map(|s| s.avg_response_time.as_str()).unwrap_or("N/A"),
+            )
+        }
+        CrawlMode::LogAnalyser => {
+            let summary = context.log_summary.as_ref();
+            format!(
+                "{}\n\nCONTEXT: Log File Analysis\n\
+                You are analyzing server access logs to understand bot behavior and site usage.\n\
+                Log Insights:\n\
+                - Total Lines Processed: {}\n\
+                - Unique IP Addresses: {}\n\
+                - Search Engine Crawler Hits: {}\n\
+                - Success Rate (2xx/3xx): {}\n\
+                - Bot Breakdown: {}\n\
+                - Most Frequent Pages: {}\n\n\
+                Identify crawl budget issues, orphan pages, or suspicious bot activity based on these logs.",
+                base,
+                summary.map(|s| s.total_lines).unwrap_or(0),
+                summary.map(|s| s.unique_ips).unwrap_or(0),
+                summary.map(|s| s.crawler_count).unwrap_or(0),
+                summary.map(|s| s.success_rate.as_str()).unwrap_or("N/A"),
+                summary.map(|s| s.bot_breakdown.as_str()).unwrap_or("N/A"),
+                summary.map(|s| s.top_pages.as_str()).unwrap_or("N/A"),
             )
         }
     }

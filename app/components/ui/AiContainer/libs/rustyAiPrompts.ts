@@ -1,5 +1,5 @@
 export interface RustyAiContext {
-    mode: 'Shallow' | 'Deep';
+    mode: 'Shallow' | 'Deep' | 'LogAnalyser';
     page_metrics?: {
         performance: string;
         fcp: string;
@@ -16,12 +16,24 @@ export interface RustyAiContext {
         indexability: string;
         h1: string;
         word_count: string;
+        reading_time: string;
+        reading_level: string;
     };
     deep_summary?: {
         total_pages: number;
         total_issues: number;
         domain: string;
         status_codes_distribution: string;
+        depth_distribution: string;
+        avg_response_time: string;
+    };
+    log_summary?: {
+        total_lines: number;
+        unique_ips: number;
+        crawler_count: number;
+        success_rate: string;
+        bot_breakdown: string;
+        top_pages: string;
     };
 }
 
@@ -31,9 +43,11 @@ export const buildRustyAiContext = (
     onPageSEO: any,
     contentStore: any,
     crawlStore: any,
+    logAnalysisStore: any,
     issuesData: any[] = []
 ): RustyAiContext => {
     const isShallow = pathname === "/";
+    const isLogAnalyser = pathname === "/serverlogs";
 
     if (isShallow) {
         return {
@@ -54,6 +68,27 @@ export const buildRustyAiContext = (
                 indexability: String(onPageSEO.seoindexability ?? "N/A"),
                 h1: Array.isArray(onPageSEO.seoheadings) ? onPageSEO.seoheadings.join(", ") : String(onPageSEO.seoheadings ?? "N/A"),
                 word_count: String(contentStore.wordCount ?? 0),
+                reading_time: String(contentStore.readingTime ?? "N/A"),
+                reading_level: String(contentStore.readingLevel ?? "N/A"),
+            }
+        };
+    } else if (isLogAnalyser) {
+        const overview = logAnalysisStore.overview;
+        const botBreakdown = Object.entries(overview.totals.bot_stats || {})
+            .map(([bot, stats]: [string, any]) => `${bot}: ${stats.count || 0}`)
+            .join(", ");
+
+        const topPages = (overview.totals.google_bot_pages || []).slice(0, 10).join(", ");
+
+        return {
+            mode: 'LogAnalyser',
+            log_summary: {
+                total_lines: overview.line_count,
+                unique_ips: overview.unique_ips,
+                crawler_count: overview.crawler_count,
+                success_rate: `${(overview.success_rate * 100).toFixed(1)}%`,
+                bot_breakdown: botBreakdown || "N/A",
+                top_pages: topPages || "N/A",
             }
         };
     } else {
@@ -61,14 +96,27 @@ export const buildRustyAiContext = (
         const crawlData = crawlStore.crawlData || [];
         const domain = crawlData.length > 0 ? new URL(crawlData[0].url).hostname : "Unknown";
 
-        // Calculate status code distribution
-        const statusCodes = crawlData.reduce((acc: any, page: any) => {
-            acc[page.status_code] = (acc[page.status_code] || 0) + 1;
-            return acc;
-        }, {});
+        // Distribution calculations
+        const statusCodes: Record<string, number> = {};
+        const depthDist: Record<string, number> = {};
+        let totalResponseTime = 0;
+        let responseTimeCount = 0;
 
-        const distributionStr = Object.entries(statusCodes)
+        crawlData.forEach((page: any) => {
+            statusCodes[page.status_code] = (statusCodes[page.status_code] || 0) + 1;
+            depthDist[page.depth] = (depthDist[page.depth] || 0) + 1;
+            if (page.response_time) {
+                totalResponseTime += page.response_time;
+                responseTimeCount++;
+            }
+        });
+
+        const statusDistStr = Object.entries(statusCodes)
             .map(([code, count]) => `${code}: ${count}`)
+            .join(", ");
+
+        const depthDistStr = Object.entries(depthDist)
+            .map(([depth, count]) => `Level ${depth}: ${count}`)
             .join(", ");
 
         return {
@@ -77,7 +125,11 @@ export const buildRustyAiContext = (
                 total_pages: crawlData.length,
                 total_issues: issuesData.length,
                 domain: domain,
-                status_codes_distribution: distributionStr || "N/A",
+                status_codes_distribution: statusDistStr || "N/A",
+                depth_distribution: depthDistStr || "N/A",
+                avg_response_time: responseTimeCount > 0
+                    ? `${(totalResponseTime / responseTimeCount).toFixed(2)}ms`
+                    : "N/A",
             }
         };
     }
