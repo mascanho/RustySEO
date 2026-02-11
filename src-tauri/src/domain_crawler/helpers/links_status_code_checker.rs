@@ -65,17 +65,20 @@ pub struct SharedLinkChecker {
     domain_tracker: Arc<DomainTracker>,
     semaphore: Arc<Semaphore>,
     pub config: LinkCheckConfig,
+    /// Global cache of link statuses: URL -> (StatusCode, Error)
+    status_cache: Arc<Mutex<HashMap<String, (Option<u16>, Option<String>)>>>,
 }
 
 impl SharedLinkChecker {
-    pub fn new(settings: &Settings) -> Self {
+    pub fn new(settings: &Settings, user_agent: Option<String>) -> Self {
         let config = LinkCheckConfig::from_settings(settings);
-        let client = build_client(&config);
+        let client = build_client(&config, settings, user_agent);
         SharedLinkChecker {
             client: Arc::new(client),
             domain_tracker: Arc::new(DomainTracker::new(&config)),
             semaphore: Arc::new(Semaphore::new(config.concurrent_requests)),
             config,
+            status_cache: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -105,6 +108,7 @@ impl SharedLinkChecker {
                     let seen_urls = seen_urls.clone();
                     let domain_tracker = self.domain_tracker.clone();
                     let config = self.config.clone();
+                    let status_cache = self.status_cache.clone();
 
                     async move {
                         process_single_link(
@@ -121,6 +125,7 @@ impl SharedLinkChecker {
                             target,
                             is_internal,
                             config,
+                            status_cache,
                         )
                         .await
                     }
@@ -220,7 +225,7 @@ pub async fn get_links_status_code(
     config: LinkCheckConfig,
 ) -> LinkCheckResults {
     let settings = Settings::default(); // Fallback
-    let checker = SharedLinkChecker::new(&settings);
+    let checker = SharedLinkChecker::new(&settings, None);
     checker.check_links(links, base_url, page).await
 }
 
@@ -230,11 +235,11 @@ pub async fn get_links_status_code_from_settings(
     page: String,
     settings: &Settings,
 ) -> LinkCheckResults {
-    let checker = SharedLinkChecker::new(settings);
+    let checker = SharedLinkChecker::new(settings, None);
     checker.check_links(links, base_url, page).await
 }
 
-fn build_client(config: &LinkCheckConfig) -> Client {
+fn build_client(config: &LinkCheckConfig, settings: &Settings, user_agent: Option<String>) -> Client {
     let mut headers = HeaderMap::new();
     headers.insert(
         ACCEPT,
@@ -254,7 +259,11 @@ fn build_client(config: &LinkCheckConfig) -> Client {
         .connect_timeout(Duration::from_secs(config.connection_timeout_secs))
         .pool_idle_timeout(Duration::from_secs(config.pool_idle_timeout_secs))
         .pool_max_idle_per_host(config.pool_max_idle_per_host)
-        .user_agent(user_agents::agents().choose(&mut rand::rng()).unwrap())
+        .user_agent(user_agent.unwrap_or_else(|| {
+            settings.user_agents.choose(&mut rand::rng()).cloned().unwrap_or_else(|| {
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string()
+            })
+        }))
         .redirect(reqwest::redirect::Policy::limited(5))
         .default_headers(headers)
         .danger_accept_invalid_certs(false)
@@ -312,6 +321,7 @@ async fn process_single_link(
     target: Option<String>,
     is_internal: bool,
     config: LinkCheckConfig,
+    status_cache: Arc<Mutex<HashMap<String, (Option<u16>, Option<String>)>>>,
 ) -> Option<(LinkStatus, bool)> {
     let full_url = match if is_internal {
         base_url.join(&link)
@@ -337,6 +347,29 @@ async fn process_single_link(
 
     let relative_path = is_internal.then(|| link.clone());
     let anchor_text = Some(anchor.clone());
+
+    // Check Global Cache first
+    let cached_result = {
+        let cache = status_cache.lock().await;
+        cache.get(&full_url_str).cloned()
+    };
+
+    if let Some((status, error)) = cached_result {
+        return Some((
+            LinkStatus {
+                base_url: (*base_url).clone(),
+                url: full_url_str,
+                relative_path,
+                status,
+                error,
+                anchor_text,
+                rel,
+                title,
+                target,
+            },
+            is_internal,
+        ));
+    }
 
     // Check if we should throttle this domain
     if domain_tracker.should_throttle(&domain) {
@@ -374,6 +407,12 @@ async fn process_single_link(
         &config,
     )
     .await;
+
+    // Update Global Cache
+    {
+        let mut cache = status_cache.lock().await;
+        cache.insert(full_url_str.clone(), (result.status, result.error.clone()));
+    }
 
     domain_tracker.record_request(&domain);
 

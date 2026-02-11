@@ -189,9 +189,8 @@ pub async fn process_url(
         || response.headers().contains_key("x-cdn")
         || response.headers().contains_key("x-cache")
     {
-        // Reduced from 2s to 100ms for better speed,
-        // as the concurrency is already managed by semaphores
-        sleep(Duration::from_millis(100)).await;
+        // Increased for better politeness on CDNs
+        sleep(Duration::from_millis(500)).await;
     }
 
     let mut body = match response.bytes().await {
@@ -216,11 +215,15 @@ pub async fn process_url(
         || body_lower.contains("too many requests")
         || body_lower.contains("forbidden")
         || body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
+        || body_lower.contains("error 1020") // Cloudflare Access Denied
         || body_lower.contains("challenge-form") // Cloudflare
         || body_lower.contains("cloudflare") && body_lower.contains("ray id") // Cloudflare Block
         || body_lower.contains("one more step") // Cloudflare
         || body_lower.contains("unusual traffic") // Google/AWS block
-        || (body.len() < 100 && (body_lower.contains("error") || body_lower.contains("wait")));
+        || body_lower.contains("distilnetworks") // Distil Networks
+        || body_lower.contains("bot detection")
+        || body_lower.contains("please enable js") // Anti-bot
+        || (body.len() < 500 && (body_lower.contains("error") || body_lower.contains("wait") || body_lower.contains("blocked")));
 
     if is_block_page && status_code == 200 {
         let mut state = state.lock().await;

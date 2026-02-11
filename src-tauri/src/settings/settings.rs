@@ -128,16 +128,16 @@ impl Settings {
 
             // --- General Crawler Settings ---
             user_agents: user_agents::agents(),
-            concurrent_requests: 10, // Reduced from 50
+            concurrent_requests: 5, // Reduced from 10
             batch_size: 40,
             max_depth: 50,
             max_urls_per_domain: 10000000,
 
             // --- Timing & Throttling ---
             adaptive_crawling: true,
-            base_delay: 1000,        // Increased from 500
-            max_delay: 5000,         // Reduced from 8000 (tighter range)
-            min_crawl_delay: 200,
+            base_delay: 1500,        // Increased from 1000
+            max_delay: 10000,        // Increased from 5000 for better safety
+            min_crawl_delay: 300,    // Increased from 200
             crawl_timeout: 28800,
             stall_check_interval: 30, // SECONDS
             max_pending_time: 900,    // SECONDS
@@ -154,14 +154,14 @@ impl Settings {
             javascript_concurrency: 3,
 
             // --- Link Processor ---
-            links_max_concurrent_requests: 25, // Reduced from 250
+            links_max_concurrent_requests: 5, // Reduced from 10
             links_initial_task_capacity: 100,
             links_max_retries: 3,
-            links_retry_delay: 500, // Reduced to allow faster adaptive crawling
+            links_retry_delay: 1000, // Increased from 500
             links_request_timeout: 15,
-            links_jitter_factor: 0.5, // Increased from 0.3
+            links_jitter_factor: 0.6, // Increased from 0.5
             links_pool_idle_timeout: 60,
-            links_max_idle_per_host: 10,
+            links_max_idle_per_host: 5, // Reduced from 10
 
             // --- Extraction & Content ---
             extract_ngrams: false,

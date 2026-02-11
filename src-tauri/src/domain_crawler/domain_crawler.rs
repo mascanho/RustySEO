@@ -4,6 +4,7 @@
 //! the entire crawling process. The actual URL processing is delegated to
 //! the `url_processor` module.
 
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use reqwest::Client;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -49,9 +50,12 @@ pub async fn crawl_domain(
     let adaptive_crawling = settings.adaptive_crawling;
     let min_crawl_delay = settings.min_crawl_delay;
 
+    let selected_user_agent = user_agents.choose(&mut rand::rng()).cloned()
+        .unwrap_or_else(|| "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string());
+
     let client = Client::builder()
         .cookie_store(true)
-        .user_agent(&user_agents[rand::random_range(0..user_agents.len())])
+        .user_agent(&selected_user_agent)
         .timeout(Duration::from_secs(client_timeout))
         .connect_timeout(Duration::from_secs(client_connect_timeout))
         .redirect(reqwest::redirect::Policy::none())
@@ -163,7 +167,7 @@ pub async fn crawl_domain(
         None
     };
 
-    let link_checker = Arc::new(SharedLinkChecker::new(&settings));
+    let link_checker = Arc::new(SharedLinkChecker::new(&settings, Some(selected_user_agent.clone())));
     let state = Arc::new(Mutex::new(
         CrawlerState::new(None).with_link_checker(link_checker.clone()),
     )); // DB is handled separately
@@ -310,13 +314,17 @@ pub async fn crawl_domain(
                         if status == 429 || status == 503 {
                             // Backoff aggressively
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                            let new_val = (current * 2).min(max_delay).max(2000); // Ensure at least 2s on 429
+                            // Double the delay, and add a random jitter of 1-3 seconds
+                            let jitter = rand::random_range(1000..3000);
+                            let new_val = (current * 2 + jitter).min(max_delay).max(3000); 
                             current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                            tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms", status, new_val);
                         } else if status >= 200 && status < 300 {
                             // Speed up (decrease delay)
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                            // Decrease by 10% or 50ms, whichever is larger, but don't go below min
-                            let decrement = std::cmp::max((current as f32 * 0.1) as u64, 50);
+                            // Decrease by 5% or 50ms, whichever is larger, but don't go below min
+                            // Slower speedup than slowdown for stability
+                            let decrement = std::cmp::max((current as f32 * 0.05) as u64, 50);
                             let new_val = current.saturating_sub(decrement).max(min_crawl_delay);
                             current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
                         }
@@ -326,10 +334,20 @@ pub async fn crawl_domain(
                         let _ = db_tx_clone.send(db_result).await;
                     }
                 } else if adaptive_crawling {
-                    // Error case (timeout, network error) - slow down slightly
+                    // Error case (timeout, network error, or detected block)
                     let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                    let new_val = (current + 200).min(max_delay);
-                    current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                    let err_str = result.as_ref().err().map(|e| e.to_string()).unwrap_or_default();
+                    
+                    if err_str.contains("Block") || err_str.contains("Rate Limit") {
+                        // Aggressive backoff for detected blocks
+                        let new_val = (current * 2 + 2000).min(max_delay).max(5000);
+                        current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        tracing::warn!("Block detected in response content. Increasing adaptive delay to {}ms", new_val);
+                    } else {
+                        // Standard network error - slow down slightly
+                        let new_val = (current + 500).min(max_delay);
+                        current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                    }
                 }
 
                 let mut state_guard = state_clone.lock().await;
