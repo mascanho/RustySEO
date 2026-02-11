@@ -57,7 +57,9 @@
         "width": 1800,
         "height": 800,
         "decorations": true,
-        "useHttpsScheme": true
+        "useHttpsScheme": true,
+        "dragDropEnabled": false,
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {
