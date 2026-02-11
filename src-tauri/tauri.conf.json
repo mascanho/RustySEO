@@ -58,8 +58,7 @@
         "height": 800,
         "decorations": true,
         "useHttpsScheme": true,
-        "dragDropEnabled": false,
-        "titleBarStyle": "Overlay"
+        "dragDropEnabled": false
       }
     ],
     "security": {

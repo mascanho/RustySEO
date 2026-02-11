@@ -9,9 +9,26 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, OnceCell};
 
 use crate::settings;
+
+/// Lazy global shared Database instance for query commands.
+/// This prevents creating a new connection pool (and leaking file descriptors)
+/// every time a frontend query command is invoked.
+static SHARED_BATCHES_DB: OnceCell<Database> = OnceCell::const_new();
+
+/// Get or create a shared Database instance for the deep_crawl_batches.db.
+/// All read-only query commands should use this instead of Database::new().
+pub async fn get_or_create_shared_db() -> Result<Database, DatabaseError> {
+    let db = SHARED_BATCHES_DB
+        .get_or_try_init(|| async {
+            let db = Database::new("deep_crawl_batches.db")?;
+            Ok::<Database, DatabaseError>(db)
+        })
+        .await?;
+    Ok(db.clone())
+}
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
@@ -105,10 +122,10 @@ impl Database {
             });
 
             let pool = Pool::builder()
-                .max_size(16)
-                .connection_timeout(Duration::from_secs(60))
-                .max_lifetime(Some(Duration::from_secs(1800)))
-                .idle_timeout(Some(Duration::from_secs(300)))
+                .max_size(4)
+                .connection_timeout(Duration::from_secs(30))
+                .max_lifetime(Some(Duration::from_secs(900)))
+                .idle_timeout(Some(Duration::from_secs(120)))
                 .build(manager)
                 .map_err(|e| {
                     DatabaseError::ConnectionError(format!(
@@ -184,10 +201,10 @@ impl Database {
         });
 
         let pool = Pool::builder()
-            .max_size(16)
-            .connection_timeout(Duration::from_secs(60))
-            .max_lifetime(Some(Duration::from_secs(1800)))
-            .idle_timeout(Some(Duration::from_secs(300)))
+            .max_size(4)
+            .connection_timeout(Duration::from_secs(30))
+            .max_lifetime(Some(Duration::from_secs(900)))
+            .idle_timeout(Some(Duration::from_secs(120)))
             .build(manager)
             .map_err(|e| {
                 DatabaseError::ConnectionError(format!(
@@ -654,20 +671,12 @@ pub async fn insert_bulk_crawl_data(
     data: Vec<DatabaseResults>,
 ) -> Result<(), DatabaseError> {
     if data.is_empty() {
-        println!("No data provided for bulk insert");
         return Ok(());
     }
 
-    // GETS THE SETTINGS FROM THE TOML FILE AND IF IT DOES NOT EXIST SIMPLY LOAD THE DEFAULT ONES.
-    // MAYBE THERE IS A CLEANER WAY TO DO THIS?
-    let settings = match settings::settings::load_settings().await {
-        Ok(s) => s,
-        Err(err) => {
-            tracing::error!("Failed to load settings: {err}");
-            settings::settings::Settings::default()
-        }
-    };
-    let db_batch_size = settings.db_chunk_size_domain_crawler;
+    // Use a reasonable default chunk size to avoid opening the settings file on every batch.
+    // The caller (domain_crawler) already reads settings once at startup.
+    let db_batch_size: usize = 100;
 
     let data_len = data.len(); // Only keep the length
     let result = tokio::task::spawn_blocking(move || -> Result<usize, DatabaseError> {
