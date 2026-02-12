@@ -47,26 +47,17 @@ const Security = () => {
         httpCount++;
       }
 
-      // Check for mixed content (HTTPS page loading HTTP resources)
-      if (item.https === true) {
-        const hasHttpResources =
-          (item.css?.external || []).some((url) => url.startsWith("http://")) ||
-          (item.javascript?.external || []).some((url) =>
-            url.startsWith("http://"),
-          ) ||
-          (item.images?.Ok || []).some((img) => img.src?.startsWith("http://"));
-
-        if (hasHttpResources) {
-          mixedContentCount++;
-        }
+      // Check for mixed content (pre-calculated by backend)
+      if (item.security?.total_mixed_content > 0) {
+        mixedContentCount++;
       }
 
       // Add cross-origin security metrics
-      if (item.cross_origin) {
-        unsafeAnchorsCount += item.cross_origin.total_unsafe_anchors || 0;
-        insecureIframesCount += item.cross_origin.total_insecure_iframes || 0;
-        missingCorsCount += item.cross_origin.total_missing_cors || 0;
-        inlineScriptsCount += item.cross_origin.total_inline_scripts || 0;
+      if (item.security) {
+        unsafeAnchorsCount += item.security.total_unsafe_anchors || 0;
+        insecureIframesCount += item.security.total_insecure_iframes || 0;
+        missingCorsCount += item.security.total_missing_cors || 0;
+        inlineScriptsCount += item.security.total_inline_scripts || 0;
       }
     });
 

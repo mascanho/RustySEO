@@ -1,15 +1,8 @@
+// @ts-nocheck
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { ArrowLeftRight, Download } from "lucide-react";
+import { ArrowLeftRight, Download, X } from "lucide-react";
 import type { ImageFile, ResizeSettings } from "./types/image";
 
 interface PreviewModalProps {
@@ -29,6 +22,8 @@ export function PreviewModal({
     "side-by-side" | "before" | "after"
   >("side-by-side");
 
+  if (!previewImage) return null;
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -39,171 +34,173 @@ export function PreviewModal({
     );
   };
 
+  const processedUrl = previewImage.processedBlob
+    ? URL.createObjectURL(previewImage.processedBlob)
+    : null;
+
   return (
-    <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="font-serif">
-            {previewImage?.file.name}
-          </DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-brand-darker w-full max-w-6xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-white/10">
+        {/* Modal Header */}
+        <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-black/60">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-sky-500">
+              <ArrowLeftRight className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-xl font-black dark:text-white truncate max-w-md uppercase tracking-tight">
+              {previewImage.file.name}
+            </h2>
+          </div>
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-brand-dark transition-colors text-slate-400"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-        {previewImage && (
-          <div className="space-y-4">
-            {previewImage.status === "completed" &&
-              previewImage.processedPreview && (
-                <Tabs
-                  value={previewMode}
-                  onValueChange={(value) =>
-                    setPreviewMode(value as typeof previewMode)
-                  }
-                >
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger
-                      value="side-by-side"
-                      className="flex items-center gap-2"
+        {/* Modal Content */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white dark:bg-brand-darker">
+          <div className="space-y-8">
+            {previewImage.status === "completed" && (
+              <div className="space-y-6">
+                {/* Custom Tabs */}
+                <div className="flex p-1 bg-slate-100 dark:bg-black p-1.5 rounded-[1.25rem] w-full max-w-md mx-auto border border-slate-200 dark:border-white/10">
+                  {[
+                    { id: "side-by-side", label: "Comparison", icon: ArrowLeftRight },
+                    { id: "before", label: "Original" },
+                    { id: "after", label: "Optimized" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setPreviewMode(tab.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl border ${previewMode === tab.id
+                          ? "bg-white dark:bg-brand-dark text-sky-500 shadow-xl border-slate-100 dark:border-white/10"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
+                        }`}
                     >
-                      <ArrowLeftRight className="w-4 h-4" />
-                      Side by Side
-                    </TabsTrigger>
-                    <TabsTrigger value="before">Original</TabsTrigger>
-                    <TabsTrigger value="after">Processed</TabsTrigger>
-                  </TabsList>
+                      {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
 
-                  <TabsContent value="side-by-side" className="mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-center">Original</h4>
-                        <div className="relative bg-muted rounded-lg overflow-hidden">
-                          <img
-                            src={previewImage.preview || "/placeholder.svg"}
-                            alt="Original"
-                            className="w-full h-auto max-h-96 object-contain"
-                          />
-                        </div>
-                        <div className="text-center text-sm text-muted-foreground space-y-1">
-                          <p>{formatFileSize(previewImage.originalSize)}</p>
-                          {previewImage.originalDimensions && (
-                            <p>
-                              {previewImage.originalDimensions.width} ×{" "}
-                              {previewImage.originalDimensions.height}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-center">Processed</h4>
-                        <div className="relative bg-muted rounded-lg overflow-hidden">
-                          <img
-                            src={
-                              previewImage.processedPreview ||
-                              "/placeholder.svg"
-                            }
-                            alt="Processed"
-                            className="w-full h-auto max-h-96 object-contain"
-                          />
-                        </div>
-                        <div className="text-center text-sm text-muted-foreground space-y-1">
-                          <p className="text-accent font-medium">
-                            {formatFileSize(previewImage.processedSize || 0)}
-                          </p>
-                          {previewImage.processedDimensions && (
-                            <p className="text-accent font-medium">
-                              {previewImage.processedDimensions.width} ×{" "}
-                              {previewImage.processedDimensions.height}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="before" className="mt-4">
-                    <div className="text-center space-y-4">
-                      <h4 className="font-medium">Original Image</h4>
-                      <div className="relative bg-muted rounded-lg overflow-hidden max-w-4xl mx-auto">
+                {previewMode === "side-by-side" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Source Asset</p>
+                      <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 shadow-inner">
                         <img
-                          src={previewImage.preview || "/placeholder.svg"}
+                          src={previewImage.preview}
                           alt="Original"
-                          className="w-full h-auto max-h-[60vh] object-contain"
+                          className="max-w-full max-h-full object-contain shadow-2xl rounded-xl border border-white/10"
                         />
                       </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p>{formatFileSize(previewImage.originalSize)}</p>
-                        {previewImage.originalDimensions && (
-                          <p>
-                            {previewImage.originalDimensions.width} ×{" "}
-                            {previewImage.originalDimensions.height}
-                          </p>
-                        )}
+                      <div className="p-5 bg-slate-50 dark:bg-black/40 rounded-2xl flex justify-around border border-slate-100 dark:border-white/5 shadow-sm">
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mass</p>
+                          <p className="text-sm font-black dark:text-white">{formatFileSize(previewImage.originalSize)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Canvas</p>
+                          <p className="text-sm font-black dark:text-white">{previewImage.originalDimensions?.width}×{previewImage.originalDimensions?.height}</p>
+                        </div>
                       </div>
                     </div>
-                  </TabsContent>
 
-                  <TabsContent value="after" className="mt-4">
-                    <div className="text-center space-y-4">
-                      <h4 className="font-medium">Processed Image</h4>
-                      <div className="relative bg-muted rounded-lg overflow-hidden max-w-4xl mx-auto">
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black text-sky-500 uppercase tracking-[0.2em] text-center italic">Optimized Target</p>
+                      <div className="aspect-video bg-sky-500/5 dark:bg-sky-500/10 rounded-3xl overflow-hidden border border-sky-200 dark:border-sky-500/20 flex items-center justify-center p-6 shadow-inner">
                         <img
-                          src={
-                            previewImage.processedPreview || "/placeholder.svg"
-                          }
+                          src={processedUrl}
                           alt="Processed"
-                          className="w-full h-auto max-h-[60vh] object-contain"
+                          className="max-w-full max-h-full object-contain shadow-2xl rounded-xl border border-white/10"
                         />
                       </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p className="text-accent font-medium">
-                          {formatFileSize(previewImage.processedSize || 0)}
-                        </p>
-                        {previewImage.processedDimensions && (
-                          <p className="text-accent font-medium">
-                            {previewImage.processedDimensions.width} ×{" "}
-                            {previewImage.processedDimensions.height}
-                          </p>
-                        )}
+                      <div className="p-5 bg-sky-500/10 rounded-2xl flex justify-around border border-sky-500/20 shadow-sm shadow-sky-500/5">
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">New Mass</p>
+                          <p className="text-sm font-black dark:text-white">{formatFileSize(previewImage.processedSize || 0)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Resolution</p>
+                          <p className="text-sm font-black dark:text-white">{previewImage.processedDimensions?.width}×{previewImage.processedDimensions?.height}</p>
+                        </div>
                       </div>
                     </div>
-                  </TabsContent>
-                </Tabs>
-              )}
+                  </div>
+                )}
 
-            {previewImage.status !== "completed" && (
-              <div className="text-center space-y-4">
-                <h4 className="font-medium">Original Image</h4>
-                <div className="relative bg-muted rounded-lg overflow-hidden max-w-4xl mx-auto">
-                  <img
-                    src={previewImage.preview || "/placeholder.svg"}
-                    alt="Original"
-                    className="w-full h-auto max-h-[60vh] object-contain"
-                  />
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>{formatFileSize(previewImage.originalSize)}</p>
-                  {previewImage.originalDimensions && (
-                    <p>
-                      {previewImage.originalDimensions.width} ×{" "}
-                      {previewImage.originalDimensions.height}
-                    </p>
-                  )}
-                </div>
+                {(previewMode === "before" || previewMode === "after") && (
+                  <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
+                    <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
+                      <img
+                        src={previewMode === "before" ? previewImage.preview : processedUrl}
+                        alt="Preview"
+                        className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
+                      />
+                    </div>
+                    <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                      <div className="text-center">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Mass</p>
+                        <p className="text-2xl font-black dark:text-white">
+                          {formatFileSize(previewMode === "before" ? previewImage.originalSize : (previewImage.processedSize || 0))}
+                        </p>
+                      </div>
+                      <div className="text-center border-l border-slate-200 dark:border-white/10 pl-16">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Canvas Resolution</p>
+                        <p className="text-2xl font-black dark:text-white">
+                          {previewMode === "before"
+                            ? `${previewImage.originalDimensions?.width}×${previewImage.originalDimensions?.height}`
+                            : `${previewImage.processedDimensions?.width}×${previewImage.processedDimensions?.height}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {previewImage.status === "completed" && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={() => onDownload(previewImage)}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download Processed Image
-                </Button>
+            {previewImage.status !== "completed" && (
+              <div className="flex flex-col items-center gap-6">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Source Preview</p>
+                <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
+                  <img
+                    src={previewImage.preview}
+                    alt="Original"
+                    className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
+                  />
+                </div>
+                <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Mass</p>
+                    <p className="text-2xl font-black dark:text-white">{formatFileSize(previewImage.originalSize)}</p>
+                  </div>
+                  <div className="text-center border-l border-slate-200 dark:border-white/10 pl-16">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution</p>
+                    <p className="text-2xl font-black dark:text-white">
+                      {previewImage.originalDimensions?.width}×{previewImage.originalDimensions?.height}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+        </div>
+
+        {/* Modal Footer */}
+        {previewImage.status === "completed" && (
+          <div className="p-6 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/60 flex justify-end">
+            <button
+              onClick={() => onDownload(previewImage)}
+              className="h-14 px-10 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-3 transition-all shadow-xl shadow-sky-500/40 active:scale-[0.98] border border-sky-600"
+            >
+              <Download className="w-5 h-5" />
+              Export Optimised Asset
+            </button>
+          </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

@@ -11,8 +11,7 @@ const Images = () => {
   const imageCounts = useMemo(
     () =>
       crawlData?.reduce((acc, item) => {
-        const imageCount = item?.images?.Ok?.length || 0;
-        return acc + imageCount;
+        return acc + (item?.images_count || 0);
       }, 0) || 0,
     [crawlData],
   );
@@ -20,11 +19,7 @@ const Images = () => {
   const hasAltTags = useMemo(
     () =>
       crawlData?.reduce((acc, item) => {
-        const imagesWithAltTags =
-          item?.images?.Ok?.filter(
-            (image) => image[1] && image[1].trim() !== "",
-          ).length || 0;
-        return acc + imagesWithAltTags;
+        return acc + (item?.images_with_alt || 0);
       }, 0) || 0,
     [crawlData],
   );
@@ -32,11 +27,7 @@ const Images = () => {
   const hasNoAltTags = useMemo(
     () =>
       crawlData?.reduce((acc, item) => {
-        const imagesWithoutAltTags =
-          item?.images?.Ok?.filter(
-            (image) => !image[1] || image[1].trim() === "",
-          ).length || 0;
-        return acc + imagesWithoutAltTags;
+        return acc + (item?.images_without_alt || 0);
       }, 0) || 0,
     [crawlData],
   );

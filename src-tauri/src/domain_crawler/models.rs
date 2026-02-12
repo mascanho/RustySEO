@@ -170,15 +170,39 @@ pub struct LightCrawlResult {
     pub cookies_count: usize,
     pub page_size: Vec<Sizes>,
     pub content_type: String,
-    pub opengraph: bool,
+    pub opengraph: HashMap<String, String>,
     pub flesch: Option<f64>,
     pub flesch_grade: Option<String>,
     pub text_ratio: Option<f64>,
     pub extractor: Extractor,
+    pub images_count: usize,
+    pub images_with_alt: usize,
+    pub images_without_alt: usize,
+    pub css_external_count: usize,
+    pub css_inline_count: usize,
+    pub internal_links_count: usize,
+    pub external_links_count: usize,
+    pub canonicals: Option<Vec<String>>,
+    pub had_redirect: bool,
+    pub redirect_count: usize,
+    pub performance_score: Option<f64>,
+    pub accessibility_score: Option<f64>,
+    pub best_practices_score: Option<f64>,
+    pub seo_score: Option<f64>,
+    pub https: bool,
+    pub security: SecuritySummary,
 }
 
 impl LightCrawlResult {
     pub fn from_full(full: &DomainCrawlResults) -> Self {
+        let (img_count, img_with_alt, img_without_alt) = match &full.images {
+            Ok(imgs) => {
+                let with_alt = imgs.iter().filter(|i| !i.1.trim().is_empty()).count();
+                (imgs.len(), with_alt, imgs.len() - with_alt)
+            }
+            Err(_) => (0, 0, 0),
+        };
+
         Self {
             url: full.url.clone(),
             title: full.title.clone(),
@@ -198,7 +222,7 @@ impl LightCrawlResult {
             },
             page_size: full.page_size.clone(),
             content_type: full.content_type.clone(),
-            opengraph: !full.opengraph.is_empty(),
+            opengraph: full.opengraph.clone(),
             flesch: full.flesch.as_ref().ok().map(|(s, _)| *s),
             flesch_grade: full.flesch.as_ref().ok().map(|(_, g)| g.clone()),
             text_ratio: full
@@ -207,6 +231,46 @@ impl LightCrawlResult {
                 .and_then(|tr| tr.first())
                 .map(|tr| tr.text_ratio),
             extractor: full.extractor.clone(),
+            images_count: img_count,
+            images_with_alt: img_with_alt,
+            images_without_alt: img_without_alt,
+            css_external_count: full.css.external.len(),
+            css_inline_count: full.css.inline.len(),
+            internal_links_count: full.inoutlinks_status_codes.internal.len(),
+            external_links_count: full.inoutlinks_status_codes.external.len(),
+            canonicals: full.canonicals.clone(),
+            had_redirect: full.had_redirect,
+            redirect_count: full.redirect_count,
+            performance_score: Self::get_psi_score(full, "performance"),
+            accessibility_score: Self::get_psi_score(full, "accessibility"),
+            best_practices_score: Self::get_psi_score(full, "best-practices"),
+            seo_score: Self::get_psi_score(full, "seo"),
+            https: full.https,
+            security: full.cross_origin.clone(),
         }
+    }
+
+    fn get_psi_score(full: &DomainCrawlResults, category: &str) -> Option<f64> {
+        if let Ok(psi) = &full.psi_results {
+            if psi.is_empty() {
+                return None;
+            }
+            let mut total = 0.0;
+            let mut count = 0;
+            for res in psi {
+                if let Some(cats) = res.get("categories") {
+                    if let Some(cat) = cats.get(category) {
+                        if let Some(score) = cat.get("score").and_then(|s| s.as_f64()) {
+                            total += score;
+                            count += 1;
+                        }
+                    }
+                }
+            }
+            if count > 0 {
+                return Some(total / count as f64);
+            }
+        }
+        None
     }
 }

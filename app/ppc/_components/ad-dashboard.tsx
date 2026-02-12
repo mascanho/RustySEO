@@ -261,10 +261,10 @@ export function AdDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-lg font-semibold border-gray-200 dark:border-white/10"
+                        className="rounded-lg font-semibold border-gray-200 dark:border-white/10 dark:text-white px-4"
                         onClick={() => setSidebarView("previews")}
                       >
-                        Preview Studio
+                        Preview
                       </Button>
                     </div>
                   </div>

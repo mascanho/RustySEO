@@ -13,10 +13,8 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
 
 interface CrawlDataItem {
-  anchor_links?: {
-    internal?: { links?: string[] };
-    external?: { links?: string[] };
-  };
+  internal_links_count?: number;
+  external_links_count?: number;
   indexability?: {
     indexability?: number;
   };
@@ -41,8 +39,8 @@ const SummaryItemRow: React.FC<SummaryItem> = memo(
 SummaryItemRow.displayName = "SummaryItemRow";
 
 type State = {
-  internalLinks: string[];
-  externalLinks: string[];
+  internalLinks: number;
+  externalLinks: number;
   totalIndexablePages: number;
   isProcessing: boolean;
 };
@@ -53,8 +51,8 @@ type Action = {
 };
 
 const initialState: State = {
-  internalLinks: [],
-  externalLinks: [],
+  internalLinks: 0,
+  externalLinks: 0,
   totalIndexablePages: 0,
   isProcessing: false,
 };
@@ -62,25 +60,21 @@ const initialState: State = {
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "UPDATE_DATA":
-      const internalLinksSet = new Set(state.internalLinks);
-      const externalLinksSet = new Set(state.externalLinks);
+      let internalLinks = 0;
+      let externalLinks = 0;
       let totalIndexablePages = 0;
 
       for (const item of action.payload) {
-        item?.anchor_links?.internal?.links?.forEach((link) =>
-          internalLinksSet.add(link),
-        );
-        item?.anchor_links?.external?.links?.forEach((link) =>
-          externalLinksSet.add(link),
-        );
+        internalLinks += item?.internal_links_count || 0;
+        externalLinks += item?.external_links_count || 0;
         if ((item?.indexability?.indexability || 0) > 0.5) {
           totalIndexablePages++;
         }
       }
 
       return {
-        internalLinks: Array.from(internalLinksSet),
-        externalLinks: Array.from(externalLinksSet),
+        internalLinks,
+        externalLinks,
         totalIndexablePages,
         isProcessing: false,
       };
@@ -109,11 +103,10 @@ const Summary: React.FC = () => {
   useEffect(() => {
     if (!state.isProcessing) {
       setSummary({
-        totaPagesCrawled: stableCrawlData.length,
-        totalInternalLinks: state.internalLinks.length,
-        totalExternalLinks: state.externalLinks.length,
-        totalLinksFound:
-          state.internalLinks.length + state.externalLinks.length,
+        totalPagesCrawled: stableCrawlData.length,
+        totalInternalLinks: state.internalLinks,
+        totalExternalLinks: state.externalLinks,
+        totalLinksFound: state.internalLinks + state.externalLinks,
         notIndexablePages: stableCrawlData.length - state.totalIndexablePages,
         indexablePages: state.totalIndexablePages,
       });
@@ -146,23 +139,23 @@ const Summary: React.FC = () => {
       },
       {
         label: "Total Links Found",
-        value: state.internalLinks.length + state.externalLinks.length,
+        value: state.internalLinks + state.externalLinks,
         percentage: "100%",
       },
       {
         label: "Total Internal Links",
-        value: state.internalLinks.length,
+        value: state.internalLinks,
         percentage:
-          state.internalLinks.length + state.externalLinks.length
-            ? `${((state.internalLinks.length / (state.internalLinks.length + state.externalLinks.length)) * 100).toFixed(0)}%`
+          state.internalLinks + state.externalLinks
+            ? `${((state.internalLinks / (state.internalLinks + state.externalLinks)) * 100).toFixed(0)}%`
             : "0%",
       },
       {
         label: "Total External Links",
-        value: state.externalLinks.length,
+        value: state.externalLinks,
         percentage:
-          state.internalLinks.length + state.externalLinks.length
-            ? `${((state.externalLinks.length / (state.internalLinks.length + state.externalLinks.length)) * 100).toFixed(0)}%`
+          state.internalLinks + state.externalLinks
+            ? `${((state.externalLinks / (state.internalLinks + state.externalLinks)) * 100).toFixed(0)}%`
             : "0%",
       },
       {

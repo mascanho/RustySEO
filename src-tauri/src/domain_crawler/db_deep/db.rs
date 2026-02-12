@@ -1,9 +1,6 @@
 use directories::ProjectDirs;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::task;
 
 pub struct DomainDataBase {
@@ -215,30 +212,21 @@ pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
 }
 
 // GET THE RESULTS STORED IN THE DB
+// Uses a direct Connection instead of creating a pool every time,
+// since this is called for every URL during crawling.
 pub async fn fetch_custom_search() -> Result<Vec<ExtractorConfig>, String> {
-    // Get the project directories
     let project_dirs =
         ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
 
-    // Define the directory of the domain db file
-    let db_dir = project_dirs.data_dir().join("db"); // appends /db to the data dir
+    let db_dir = project_dirs.data_dir().join("db");
     let db_path = db_dir.join("deep_crawl.db");
 
-    // Ensure the directory exists
     if !db_dir.exists() {
         std::fs::create_dir_all(&db_dir).expect("Failed to create directory");
     }
 
-    // println!("Using database file at: {:?}", db_path);
-
-    // Initialize the connection pool with the correct path
-    let manager = SqliteConnectionManager::file(db_path);
-    let pool = Arc::new(Pool::new(manager).map_err(|e| e.to_string())?);
-
-    // Rest of the function remains the same
-    let conn = pool.get().map_err(|e| e.to_string())?;
-
     let configs = task::spawn_blocking(move || {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         let mut stmt = conn
             .prepare("SELECT type, selector, search_text FROM custom_search")
             .map_err(|e| e.to_string())?;

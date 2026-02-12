@@ -22,6 +22,10 @@ import Mobile from "./DropDowns/Mobile";
 import Redirects from "./DropDowns/Redirects";
 import OpenGraph from "./DropDowns/OpenGraph";
 import Cookies from "./DropDowns/Cookies";
+import Indexing from "./DropDowns/Indexing";
+import Performance from "./DropDowns/Performance";
+import ResponseTime from "./DropDowns/ResponseTime";
+import CrawlDepth from "./DropDowns/CrawlDepth";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -33,6 +37,7 @@ const GeneralTopSideBarContainer = () => {
       </section>
       <div className="overflow-y-auto overflow-x-hidden not-selectable flex-1">
         <Summary />
+        <CrawlDepth />
         {/* TODO: Needs to be finished */}
         {/* <Content /> */}
         <PageTitles />
@@ -45,16 +50,16 @@ const GeneralTopSideBarContainer = () => {
         {/* <Iframes /> */}
         <Javascript />
         <Schema />
+        <Indexing />
         <Canonicals />
         <OpenGraph />
         <Cookies />
         <Language />
         <Mobile />
-        {/* TODO: Needs to be finished */}
         <Security />
-        {/* TODO: Needs to be finished */}
+        <Performance />
+        <ResponseTime />
         <URLinfo />
-        {/* TODO: Needs to be finished */}
         <StatusCodes />
         <Redirects />
         <CustomSearch />

@@ -1,17 +1,11 @@
+// @ts-nocheck
 "use client";
 
-import type React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import React, { useState } from "react";
 import {
   Settings,
   Zap,
   FileImage,
-  Palette,
   Monitor,
   Smartphone,
   Camera,
@@ -32,7 +26,7 @@ const PRESETS = {
     height: 1080,
     quality: 90,
     format: "jpeg",
-    name: "Social Media (1080×1080)",
+    name: "Social (1080×1080)",
     icon: Smartphone,
   },
   thumbnail: {
@@ -48,24 +42,16 @@ const PRESETS = {
     height: 2000,
     quality: 95,
     format: "png",
-    name: "Print Quality (3000×2000)",
+    name: "Print (3000×2000)",
     icon: Camera,
-  },
-  email: {
-    width: 800,
-    height: 600,
-    quality: 75,
-    format: "jpeg",
-    name: "Email (800×600)",
-    icon: FileImage,
   },
 };
 
 const QUALITY_PRESETS = {
-  low: { quality: 60, name: "Low (Smaller file)" },
-  medium: { quality: 80, name: "Medium (Balanced)" },
-  high: { quality: 90, name: "High (Better quality)" },
-  maximum: { quality: 95, name: "Maximum (Largest file)" },
+  low: { quality: 60, name: "Low" },
+  medium: { quality: 80, name: "Medium" },
+  high: { quality: 90, name: "High" },
+  maximum: { quality: 95, name: "Maximum" },
 };
 
 interface SettingsPanelProps {
@@ -74,6 +60,7 @@ interface SettingsPanelProps {
   images: ImageFile[];
   processing: boolean;
   onProcessImages: () => void;
+  isEmbedded?: boolean;
 }
 
 export function SettingsPanel({
@@ -82,7 +69,10 @@ export function SettingsPanel({
   images,
   processing,
   onProcessImages,
+  isEmbedded = false,
 }: SettingsPanelProps) {
+  const [activeTab, setActiveTab] = useState("presets");
+
   const applyPreset = (presetKey: keyof typeof PRESETS) => {
     const preset = PRESETS[presetKey];
     setResizeSettings((prev) => ({
@@ -137,350 +127,282 @@ export function SettingsPanel({
     return `${fileName}.${settings.format}`;
   };
 
+  const containerClasses = isEmbedded
+    ? "flex flex-col bg-white dark:bg-brand-dark overflow-hidden"
+    : "flex flex-col bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 h-[calc(100vh-10rem)] shadow-2xl";
+
   return (
-    <Card className="h-[calc(100vh-1vh)] max-h-[calc(100vh-32.5vh)] px-0 mx-0">
-      <CardHeader>
-        <CardTitle className="font-serif flex items-center gap-2">
-          <Settings className="w-5 h-5" />
-          Output Settings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-0">
-        <Tabs defaultValue="presets" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 border-b -mt-3 ">
-            <TabsTrigger
-              value="presets"
-              className="flex items-center gap-1 rounded-t-lg"
-            >
-              <Zap className="w-3 h-3" />
-              Presets
-            </TabsTrigger>
-            <TabsTrigger
-              value="custom"
-              className="flex items-center gap-1 rounded-t-lg"
-            >
-              <Settings className="w-3 h-3" />
-              Custom
-            </TabsTrigger>
-            <TabsTrigger
-              value="naming"
-              className="flex items-center gap-1 rounded-t-lg"
-            >
-              {" "}
-              <FileImage className="w-3 h-3" />
-              Naming
-            </TabsTrigger>
-          </TabsList>
+    <div className={containerClasses}>
+      {!isEmbedded && (
+        <div className="pb-4 pt-5 px-6 border-b border-slate-100 dark:border-white/10 flex-shrink-0 bg-white dark:bg-brand-darker">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black dark:text-white flex items-center gap-2 uppercase tracking-tight">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5">
+                <Settings className="w-4 h-4 text-sky-500" />
+              </div>
+              Engine Config
+            </h2>
+          </div>
+        </div>
+      )}
 
-          <TabsContent
-            value="presets"
-            className="space-y-4 mt-4 h-[36rem] pb-6 pt-2 overflow-auto m-0 px-2"
-          >
-            <div>
-              <Label className="text-sm font-medium mb-3 block">
-                Size Presets
-              </Label>
-              <div className="grid grid-cols-1 gap-2">
-                {Object.entries(PRESETS).map(([key, preset]) => {
-                  const IconComponent = preset.icon;
-                  const isActive = isPresetActive(key as keyof typeof PRESETS);
-                  return (
-                    <Button
-                      key={key}
-                      variant={isActive ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => applyPreset(key as keyof typeof PRESETS)}
-                      className={`justify-start h-auto p-3 transition-all duration-200 ${
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
-                          : "hover:bg-primary/10 hover:border-primary/50"
-                      }`}
-                      disabled={processing}
-                    >
-                      <IconComponent
-                        className={`w-4 h-4 mr-2 flex-shrink-0 ${
-                          isActive ? "text-primary-foreground" : ""
-                        }`}
-                      />
-                      <div className="text-left">
-                        <div className="font-medium text-sm">{preset.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {preset.quality}% quality,{" "}
-                          {preset.format.toUpperCase()}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex w-full bg-slate-100 dark:bg-black/40 p-1 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+          {[
+            { id: "presets", label: "Presets", icon: Zap },
+            { id: "custom", label: "Custom", icon: Monitor },
+            { id: "naming", label: "Schema", icon: FileImage },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-lg ${activeTab === tab.id
+                  ? "bg-white dark:bg-brand-dark text-sky-500 shadow-md border border-slate-100 dark:border-white/5"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                }`}
+            >
+              <tab.icon className="w-3 h-3" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className={`flex-1 ${isEmbedded ? 'max-h-[600px]' : ''} overflow-y-auto min-h-0 p-5 pt-4 space-y-6 custom-scrollbar bg-white dark:bg-brand-dark`}>
+          {activeTab === "presets" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Presets</label>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(PRESETS).map(([key, preset]) => {
+                    const IconComponent = preset.icon;
+                    const isActive = isPresetActive(key as keyof typeof PRESETS);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => applyPreset(key as keyof typeof PRESETS)}
+                        disabled={processing}
+                        className={`group relative flex items-center gap-3 p-3 rounded-xl transition-all duration-300 border text-left ${isActive
+                            ? "bg-sky-500 border-sky-600 shadow-lg shadow-sky-500/20"
+                            : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/5 hover:border-sky-300"
+                          }`}
+                      >
+                        <div className={`p-2 rounded-lg transition-colors ${isActive ? "bg-white/20" : "bg-white dark:bg-brand-dark group-hover:bg-sky-50 border border-slate-100 dark:border-white/5"
+                          }`}>
+                          <IconComponent className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400 group-hover:text-sky-500"
+                            }`} />
                         </div>
-                      </div>
-                    </Button>
-                  );
-                })}
+                        <div className="flex-1">
+                          <div className={`text-xs font-black ${isActive ? "text-white" : "dark:text-white"}`}>
+                            {preset.name}
+                          </div>
+                          <div className={`text-[9px] font-bold ${isActive ? "text-white/70" : "text-slate-400"}`}>
+                            {preset.quality}% Optim • {preset.format.toUpperCase()}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-bright" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Directives</label>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(QUALITY_PRESETS).map(([key, preset]) => {
+                    const isActive = isQualityPresetActive(key as keyof typeof QUALITY_PRESETS);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => applyQualityPreset(key as keyof typeof QUALITY_PRESETS)}
+                        disabled={processing}
+                        className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${isActive
+                            ? "bg-brand-bright border-sky-600 text-white shadow-md font-black"
+                            : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 hover:border-sky-300 dark:text-slate-400"
+                          }`}
+                      >
+                        {preset.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-
-            <Separator />
-
-            <div>
-              <Label className="text-sm font-medium mb-3 block">
-                Quality Presets
-              </Label>
-              <div className="grid grid-cols-1 gap-2">
-                {Object.entries(QUALITY_PRESETS).map(([key, preset]) => {
-                  const isActive = isQualityPresetActive(
-                    key as keyof typeof QUALITY_PRESETS,
-                  );
-                  return (
-                    <Button
-                      key={key}
-                      variant={isActive ? "default" : "outline"}
-                      size="sm"
-                      onClick={() =>
-                        applyQualityPreset(key as keyof typeof QUALITY_PRESETS)
-                      }
-                      className={`justify-start transition-all duration-200 ${
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
-                          : "hover:bg-primary/10 hover:border-primary/50"
-                      }`}
-                      disabled={processing}
-                    >
-                      <Palette
-                        className={`w-4 h-4 mr-2 ${
-                          isActive ? "text-primary-foreground" : ""
-                        }`}
-                      />
-                      {preset.name}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="custom" className="space-y-4 mt-4 px-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="width">Width (px)</Label>
-                <Input
-                  id="width"
-                  type="number"
-                  value={resizeSettings.width}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      width: Number.parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  disabled={processing}
-                />
-              </div>
-              <div>
-                <Label htmlFor="height">Height (px)</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  value={resizeSettings.height}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      height: Number.parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  disabled={processing}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="quality">
-                Quality ({resizeSettings.quality}%)
-              </Label>
-              <Input
-                id="quality"
-                type="range"
-                min="1"
-                max="100"
-                value={resizeSettings.quality}
-                onChange={(e) =>
-                  setResizeSettings((prev) => ({
-                    ...prev,
-                    quality: Number.parseInt(e.target.value) || 80,
-                  }))
-                }
-                disabled={processing}
-                className="mt-2"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Low</span>
-                <span className="font-medium text-primary">
-                  {resizeSettings.quality <= 60
-                    ? "Low"
-                    : resizeSettings.quality <= 80
-                      ? "Medium"
-                      : resizeSettings.quality <= 90
-                        ? "High"
-                        : resizeSettings.quality === 100
-                          ? "Maximum"
-                          : "Custom"}
-                </span>
-                <span>Maximum</span>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="format">Output Format</Label>
-              <select
-                id="format"
-                className="w-full px-3 py-2 border border-input rounded-md bg-background disabled:opacity-50 mt-1"
-                value={resizeSettings.format}
-                onChange={(e) =>
-                  setResizeSettings((prev) => ({
-                    ...prev,
-                    format: e.target.value,
-                  }))
-                }
-                disabled={processing}
-              >
-                <option value="jpeg">JPEG</option>
-                <option value="png">PNG</option>
-                <option value="webp">WebP</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="aspectRatio"
-                checked={resizeSettings.maintainAspectRatio}
-                onChange={(e) =>
-                  setResizeSettings((prev) => ({
-                    ...prev,
-                    maintainAspectRatio: e.target.checked,
-                  }))
-                }
-                className="rounded border-input"
-                disabled={processing}
-              />
-              <Label htmlFor="aspectRatio" className="text-sm">
-                Maintain aspect ratio
-              </Label>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="naming" className="space-y-4 mt-4 px-2">
-            <div>
-              <Label htmlFor="fileNamePattern">File Name Pattern</Label>
-              <Input
-                id="fileNamePattern"
-                value={resizeSettings.fileNamePattern}
-                onChange={(e) =>
-                  setResizeSettings((prev) => ({
-                    ...prev,
-                    fileNamePattern: e.target.value,
-                  }))
-                }
-                disabled={processing}
-                placeholder="resized_{name}"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Use: {"{name}"}, {"{width}"}, {"{height}"}, {"{quality}"},{" "}
-                {"{format}"}
-              </p>
-            </div>
-
-            {/* ... existing naming options ... */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="addPrefix"
-                  checked={resizeSettings.addPrefix}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      addPrefix: e.target.checked,
-                    }))
-                  }
-                  className="rounded border-input"
-                  disabled={processing}
-                />
-                <Label htmlFor="addPrefix" className="text-sm">
-                  Add prefix
-                </Label>
-              </div>
-              {resizeSettings.addPrefix && (
-                <Input
-                  value={resizeSettings.prefix}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      prefix: e.target.value,
-                    }))
-                  }
-                  disabled={processing}
-                  placeholder="prefix"
-                />
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="addSuffix"
-                  checked={resizeSettings.addSuffix}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      addSuffix: e.target.checked,
-                    }))
-                  }
-                  className="rounded border-input"
-                  disabled={processing}
-                />
-                <Label htmlFor="addSuffix" className="text-sm">
-                  Add suffix
-                </Label>
-              </div>
-              {resizeSettings.addSuffix && (
-                <Input
-                  value={resizeSettings.suffix}
-                  onChange={(e) =>
-                    setResizeSettings((prev) => ({
-                      ...prev,
-                      suffix: e.target.value,
-                    }))
-                  }
-                  disabled={processing}
-                  placeholder="suffix"
-                />
-              )}
-            </div>
-
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-1">Preview:</p>
-              <p className="text-sm text-muted-foreground">
-                {generateFileName("example.jpg", resizeSettings)}
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <Button
-          className=" mt-6 text-xs absolute top-20 right-10 w-40"
-          onClick={onProcessImages}
-          disabled={images.length === 0 || processing}
-        >
-          {processing ? (
-            <>
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <FileImage className="w-4 h-4 mr-2" />
-              Resize Images ({images.length})
-            </>
           )}
-        </Button>
-      </CardContent>
-    </Card>
+
+          {activeTab === "custom" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Width</label>
+                  <input
+                    type="number"
+                    value={resizeSettings.width}
+                    onChange={(e) => setResizeSettings((prev) => ({ ...prev, width: parseInt(e.target.value) || 0 }))}
+                    disabled={processing}
+                    className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Height</label>
+                  <input
+                    type="number"
+                    value={resizeSettings.height}
+                    onChange={(e) => setResizeSettings((prev) => ({ ...prev, height: parseInt(e.target.value) || 0 }))}
+                    disabled={processing}
+                    className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Quality</label>
+                  <span className="text-xs font-black text-sky-500">{resizeSettings.quality}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={resizeSettings.quality}
+                  onChange={(e) => setResizeSettings((prev) => ({ ...prev, quality: parseInt(e.target.value) || 80 }))}
+                  disabled={processing}
+                  className="w-full accent-sky-500 h-2 bg-slate-200 dark:bg-white/10 rounded-full appearance-none cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Format</label>
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-black/40 rounded-xl border border-slate-200 dark:border-white/10">
+                  {['jpeg', 'png', 'webp'].map((fmt) => (
+                    <button
+                      key={fmt}
+                      onClick={() => setResizeSettings(prev => ({ ...prev, format: fmt }))}
+                      disabled={processing}
+                      className={`py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${resizeSettings.format === fmt
+                          ? "bg-white dark:bg-brand-dark text-sky-500 shadow-md border border-slate-100 dark:border-white/5"
+                          : "text-slate-400 hover:text-white"
+                        }`}
+                    >
+                      {fmt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                onClick={() => !processing && setResizeSettings(prev => ({ ...prev, maintainAspectRatio: !prev.maintainAspectRatio }))}
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 cursor-pointer hover:border-sky-500 transition-all group shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <Smartphone className={`w-3.5 h-3.5 ${resizeSettings.maintainAspectRatio ? "text-sky-500" : "text-slate-400"}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Lock Aspect</span>
+                </div>
+                <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${resizeSettings.maintainAspectRatio ? "bg-sky-500" : "bg-slate-300 dark:bg-white/20"
+                  }`}>
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${resizeSettings.maintainAspectRatio ? "left-4.5" : "left-0.5"
+                    }`} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "naming" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pattern</label>
+                <input
+                  value={resizeSettings.fileNamePattern}
+                  onChange={(e) => setResizeSettings(prev => ({ ...prev, fileNamePattern: e.target.value }))}
+                  disabled={processing}
+                  placeholder="resized_{name}"
+                  className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 shadow-inner"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <button
+                    onClick={() => !processing && setResizeSettings(prev => ({ ...prev, addPrefix: !prev.addPrefix }))}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${resizeSettings.addPrefix
+                        ? "bg-sky-500 border-sky-600 text-white shadow-md font-black"
+                        : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                      }`}
+                  >
+                    Prefix
+                    <div className={`w-2.5 h-2.5 rounded-sm border ${resizeSettings.addPrefix ? "bg-white border-white" : "border-slate-300"}`} />
+                  </button>
+                  {resizeSettings.addPrefix && (
+                    <input
+                      value={resizeSettings.prefix}
+                      onChange={(e) => setResizeSettings(prev => ({ ...prev, prefix: e.target.value }))}
+                      disabled={processing}
+                      placeholder="prefix"
+                      className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 font-bold"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => !processing && setResizeSettings(prev => ({ ...prev, addSuffix: !prev.addSuffix }))}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${resizeSettings.addSuffix
+                        ? "bg-sky-500 border-sky-600 text-white shadow-md font-black"
+                        : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                      }`}
+                  >
+                    Suffix
+                    <div className={`w-2.5 h-2.5 rounded-sm border ${resizeSettings.addSuffix ? "bg-white border-white" : "border-slate-300"}`} />
+                  </button>
+                  {resizeSettings.addSuffix && (
+                    <input
+                      value={resizeSettings.suffix}
+                      onChange={(e) => setResizeSettings(prev => ({ ...prev, suffix: e.target.value }))}
+                      disabled={processing}
+                      placeholder="suffix"
+                      className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 font-bold"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 bg-sky-500/10 rounded-xl border border-sky-500/20">
+                <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Preview</p>
+                <p className="text-[11px] font-bold dark:text-white truncate">
+                  {generateFileName("asset.jpg", resizeSettings)}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 pt-2 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
+          <button
+            onClick={onProcessImages}
+            disabled={images.length === 0 || processing}
+            className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${images.length === 0 || processing
+                ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
+                : "bg-sky-500 text-white hover:bg-sky-600 hover:shadow-sky-500/40 active:scale-[0.98] border border-sky-600"
+              }`}
+          >
+            {processing ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Processing Streaming...
+              </>
+            ) : (
+              <>
+                <Zap className="w-3.5 h-3.5 group-hover:animate-bounce" />
+                Initialize Engine ({images.length})
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

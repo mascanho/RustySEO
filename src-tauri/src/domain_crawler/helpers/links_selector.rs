@@ -72,8 +72,9 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
 
 /// Improved domain checking: allows same domain, subdomains, and the naked domain
 fn is_same_or_subdomain(url_domain: &str, base_domain: &str) -> bool {
-    let url_domain = url_domain.to_lowercase();
-    let base_domain = base_domain.to_lowercase();
+    // url_domain and base_domain are already lowercase from Url::domain()
+    // so we don't need to allocate new strings here
+
 
     if url_domain == base_domain {
         return true;
@@ -90,7 +91,10 @@ fn is_same_or_subdomain(url_domain: &str, base_domain: &str) -> bool {
     // Allow subdomains of either root
     // e.g., if base is 'example.com', allow 'shop.example.com'
     // e.g., if base is 'www.example.com', allow 'shop.example.com'
-    url_domain.ends_with(&format!(".{}", base_root)) || base_domain.ends_with(&format!(".{}", url_root))
+    // Check for dot before the root to ensure it's a true subdomain
+    // e.g. "shop.example.com" ends with ".example.com"
+    (url_domain.ends_with(base_root) && url_domain.len() > base_root.len() && url_domain.as_bytes()[url_domain.len() - base_root.len() - 1] == b'.')
+        || (base_domain.ends_with(url_root) && base_domain.len() > url_root.len() && base_domain.as_bytes()[base_domain.len() - url_root.len() - 1] == b'.')
 }
 
 /// Comprehensive path normalization

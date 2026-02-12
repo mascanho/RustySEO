@@ -4,23 +4,7 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
 interface InlinksSubTableProps {
-  data: {
-    anchor_links: {
-      internal: {
-        anchors: string[];
-        links: string[];
-      };
-    };
-    inoutlinks_status_codes: {
-      internal: {
-        anchor_text: string;
-        url: string;
-        relative_path: string | null;
-        status: number | null;
-        error: string | null;
-      }[];
-    };
-  }[];
+  data: any[]; // [TargetPageObject, SourcePagesArray]
 }
 
 const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, InlinksSubTableProps>(({ data, height }, ref) => {
@@ -359,15 +343,15 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
                   </td>
                   <td
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
-                    title={data?.[0].url}
-                  >
-                    {data?.[0].url}
-                  </td>
-                  <td
-                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
                     title={item?.url}
                   >
                     {item?.url}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={data?.[0].url}
+                  >
+                    {data?.[0].url}
                   </td>
                   <td
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"

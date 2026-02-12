@@ -18,7 +18,9 @@ import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
 import ResizableDivider from "./components/ResizableDivider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import useGlobalCrawlStore, { useDataActions } from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, {
+  useDataActions,
+} from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
@@ -32,6 +34,7 @@ import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTabl
 import RedirectsTable from "./RedirectsTable/RedirectsTable";
 import FilesTable from "./FilesTable/FilesTable";
 import OpenGraphPreview from "./SubTables/OpenGraphPreview/OpenGraphPreview";
+import { invoke } from "@tauri-apps/api/core";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -142,43 +145,61 @@ export default function Home() {
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
   const aggregatedData = useGlobalCrawlStore((state) => state.aggregatedData);
-  const isFinishedDeepCrawl = useGlobalCrawlStore((state) => state.isFinishedDeepCrawl);
+  const isFinishedDeepCrawl = useGlobalCrawlStore(
+    (state) => state.isFinishedDeepCrawl,
+  );
 
+  // THIS HANDLES THE DATA FETCHING FROM THE DATABSE TO NO OVERWHELM THE MEMORY.
+  // ON TAB CLICK IT SHOULD LOAD THE DATA INTO THE RESPECTIVE TAB.
+  // TODO: Make this better in the future as it might still be too when crawling is on.
   useEffect(() => {
     const fetchData = async () => {
       const fetchForTab = async () => {
         try {
           if (activeTab === "images") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "images" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "images",
+            });
             setAggregatedData({ images: res });
           } else if (activeTab === "javascript") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "scripts" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "scripts",
+            });
             setAggregatedData({ scripts: res });
           } else if (activeTab === "css") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "stylesheets" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "stylesheets",
+            });
             setAggregatedData({ css: res });
           } else if (activeTab === "internalLinks") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "internal_links" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "internal_links",
+            });
             setAggregatedData({ internalLinks: res });
           } else if (activeTab === "externalLinks") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "external_links" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "external_links",
+            });
             setAggregatedData({ externalLinks: res });
           } else if (activeTab === "keywords") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "keywords" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "keywords",
+            });
             setAggregatedData({ keywords: res });
           } else if (activeTab === "redirects") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "redirects" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "redirects",
+            });
             setAggregatedData({ redirects: res });
+          } else if (activeTab === "cwv") {
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "cwv",
+            });
+            setAggregatedData({ cwv: res });
           } else if (activeTab === "files") {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const res = await invoke("get_aggregated_crawl_data_command", { dataType: "files" });
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "files",
+            });
             setAggregatedData({ files: res });
           }
         } catch (e) {
@@ -186,16 +207,38 @@ export default function Home() {
         }
       };
 
-      // Immediate fetch check
-      let shouldFetchImmediate = false;
-      if (activeTab === "images" && aggregatedData.images.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "javascript" && aggregatedData.scripts.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "css" && aggregatedData.css.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "internalLinks" && aggregatedData.internalLinks.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "externalLinks" && aggregatedData.externalLinks.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "keywords" && aggregatedData.keywords.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "redirects" && aggregatedData.redirects.length === 0) shouldFetchImmediate = true;
-      else if (activeTab === "files" && aggregatedData.files.length === 0) shouldFetchImmediate = true;
+      // Immediate fetch check This is important to avoid unnecessary re-renders
+      let shouldFetchImmediate = true;
+      if (activeTab === "images" && aggregatedData.images.length === 0)
+        shouldFetchImmediate = true;
+      else if (
+        activeTab === "javascript" &&
+        aggregatedData.scripts.length === 0
+      )
+        shouldFetchImmediate = true;
+      else if (activeTab === "css" && aggregatedData.css.length === 0)
+        shouldFetchImmediate = true;
+      else if (
+        activeTab === "internalLinks" &&
+        aggregatedData.internalLinks.length === 0
+      )
+        shouldFetchImmediate = true;
+      else if (
+        activeTab === "externalLinks" &&
+        aggregatedData.externalLinks.length === 0
+      )
+        shouldFetchImmediate = true;
+      else if (activeTab === "keywords" && aggregatedData.keywords.length === 0)
+        shouldFetchImmediate = true;
+      else if (
+        activeTab === "redirects" &&
+        aggregatedData.redirects.length === 0
+      )
+        shouldFetchImmediate = true;
+      else if (activeTab === "files" && aggregatedData.files.length === 0)
+        shouldFetchImmediate = true;
+      else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
+        shouldFetchImmediate = true;
 
       if (shouldFetchImmediate || !isFinishedDeepCrawl) {
         await fetchForTab();
@@ -214,13 +257,16 @@ export default function Home() {
       if (intervalId) clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isFinishedDeepCrawl, setAggregatedData, aggregatedData.images, aggregatedData.scripts, aggregatedData.css, aggregatedData.internalLinks, aggregatedData.externalLinks, aggregatedData.keywords, aggregatedData.redirects, aggregatedData.files]);
+  }, [activeTab, isFinishedDeepCrawl, setAggregatedData]);
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
     if (activeTab !== "javascript") return [];
     // Use fetched data
-    return aggregatedData.scripts.map((url, index) => ({ index: index + 1, url }));
+    return aggregatedData.scripts.map((url, index) => ({
+      index: index + 1,
+      url,
+    }));
   }, [aggregatedData.scripts, activeTab]);
 
   // Filters all the CSS
@@ -240,24 +286,24 @@ export default function Home() {
     if (activeTab !== "internalLinks") return [];
     // The structure returned by backend is generic JSON link objects, map to what Table expects
     // { link, anchor, status, error, page }
-    return aggregatedData.internalLinks.map(link => ({
+    return aggregatedData.internalLinks.map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
       status: link.status || null,
       error: link.error || null,
-      page: link.page || ""
+      page: link.page || "",
     }));
   }, [aggregatedData.internalLinks, activeTab]);
 
   // Filters all the External links
   const filteredExternalLinks = useMemo(() => {
     if (activeTab !== "externalLinks") return [];
-    return aggregatedData.externalLinks.map(link => ({
+    return aggregatedData.externalLinks.map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
       status: link.status || null,
       error: link.error || null,
-      page: link.page || ""
+      page: link.page || "",
     }));
   }, [aggregatedData.externalLinks, activeTab]);
 
@@ -285,18 +331,27 @@ export default function Home() {
     if (activeTab !== "files") return [];
     // Structure: { url, found_at: page }
     // We need to derive 'filetype' from url
-    return aggregatedData.files.map((f, index) => {
-      const ext = f.url.split('.').pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
-      return {
-        id: index + 1,
-        url: f.url,
-        filetype: ext,
-        found_at: f.found_at || f.page || ""
-      };
-    });
+    return aggregatedData.files
+      .map((f, index) => {
+        const ext =
+          f.url.split(".").pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
+
+        // Only include PDF files
+        if (ext !== "PDF") {
+          return null;
+        }
+
+        return {
+          id: index + 1,
+          url: f.url,
+          filetype: ext,
+          found_at: f.found_at || f.page || "",
+        };
+      })
+      .filter(Boolean);
   }, [aggregatedData.files, activeTab]);
 
-  // Redirects logic - new 
+  // Redirects logic - new
   const filteredRedirects = useMemo(() => {
     if (activeTab !== "redirects") return [];
     return aggregatedData.redirects;
@@ -305,7 +360,7 @@ export default function Home() {
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
-        return <div>Content for Duplicated Titles</div>;
+        return;
       case "404 response":
         return <div>Content for 404 response</div>;
       // Add more cases as needed
@@ -427,7 +482,10 @@ export default function Home() {
 
             {/* CORE WEB VITALS TABLe */}
             <TabsContent value="cwv" className="flex-grow overflow-hidden">
-              <CoreWebVitalsTable tabName={"AllData"} rows={crawlData} />
+              <CoreWebVitalsTable
+                tabName={"AllData"}
+                rows={aggregatedData?.cwv?.length > 0 ? aggregatedData.cwv : crawlData}
+              />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
@@ -462,7 +520,11 @@ export default function Home() {
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
           className="dark:bg-brand-darker h-auto relative"
-          style={{ height: `${bottomTableHeight}px`, minHeight: "100px", overflow: "hidden" }}
+          style={{
+            height: `${bottomTableHeight}px`,
+            minHeight: "100px",
+            overflow: "hidden",
+          }}
         >
           <Tabs
             value={activeBottomTab}

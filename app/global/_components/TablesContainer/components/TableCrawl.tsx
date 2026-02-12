@@ -242,8 +242,8 @@ const TableRow = memo(
         row?.language || "", // Language
         row?.schema === true || row?.schema === "Yes" ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
-        row?.opengraph === true ||
-          (row?.opengraph?.["og:image"] && row?.opengraph?.["og:title"])
+        row?.opengraph &&
+          (typeof row.opengraph === 'boolean' ? row.opengraph : Object.keys(row.opengraph).length > 0)
           ? "Yes"
           : "No", // OpenGraph
         typeof row?.cookies_count === "number"
@@ -309,10 +309,10 @@ const TableRow = memo(
               alignItems: "center",
             }}
             className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-                ? "bg-blue-600"
-                : index % 2 === 0
-                  ? "bg-white dark:bg-brand-darker"
-                  : "bg-gray-50 dark:bg-brand-dark/30"
+              ? "bg-blue-600"
+              : index % 2 === 0
+                ? "bg-white dark:bg-brand-darker"
+                : "bg-gray-50 dark:bg-brand-dark/30"
               }`}
           >
             <ContextTableMenu data={item.cell}>

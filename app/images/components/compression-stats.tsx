@@ -1,6 +1,7 @@
+// @ts-nocheck
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingDown, Info, Zap } from "lucide-react";
 import type { ImageFile } from "./types/image";
 
 interface CompressionStatsProps {
@@ -10,65 +11,76 @@ interface CompressionStatsProps {
 export function CompressionStats({ images }: CompressionStatsProps) {
   const completedImages = images.filter((img) => img.status === "completed");
 
-  if (completedImages.length === 0) return null;
+  if (completedImages.length === 0) {
+    return (
+      <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 flex items-center justify-center gap-3 shadow-md">
+        <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/5">
+          <Info className="w-4 h-4 text-slate-400" />
+        </div>
+        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic text-center">
+          Metrics pending processing
+        </p>
+      </div>
+    );
+  }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
+  const originalTotal = completedImages.reduce(
+    (acc, img) => acc + img.originalSize,
+    0,
+  );
+  const processedTotal = completedImages.reduce(
+    (acc, img) => acc + (img.processedSize || 0),
+    0,
+  );
+  const totalSaved = originalTotal - processedTotal;
+  const reductionPercentage = ((totalSaved / originalTotal) * 100).toFixed(1);
+
+  const formatSize = (bytes: number) => {
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const sizes = ["B", "KB", "MB", "GB"];
+    if (bytes === 0) return "0 B";
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return (
-      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i]
     );
   };
 
-  const totalOriginalSize = completedImages.reduce(
-    (sum, img) => sum + img.originalSize,
-    0,
-  );
-  const totalProcessedSize = completedImages.reduce(
-    (sum, img) => sum + (img.processedSize || 0),
-    0,
-  );
-  const compressionRatio =
-    ((totalOriginalSize - totalProcessedSize) / totalOriginalSize) * 100;
-  const savedSpace = totalOriginalSize - totalProcessedSize;
+  const stats = [
+    {
+      label: "Optimization",
+      value: `${reductionPercentage}%`,
+      sub: "Net Reduction",
+      icon: TrendingDown,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      label: "Relieved",
+      value: formatSize(totalSaved),
+      sub: "Storage Saved",
+      icon: Zap,
+      color: "text-sky-500",
+      bg: "bg-sky-500/10",
+    },
+  ];
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="font-serif text-lg">
-          Compression Results
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-primary">
-              {Math.max(0, compressionRatio).toFixed(1)}%
-            </p>
-            <p className="text-sm text-muted-foreground">Size Reduction</p>
+    <div className="grid grid-cols-1 gap-3">
+      {stats.map((stat, i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-4 group hover:border-sky-500 transition-all duration-300"
+        >
+          <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}>
+            <stat.icon className="w-5 h-5" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">
-              {formatFileSize(totalOriginalSize)}
-            </p>
-            <p className="text-sm text-muted-foreground">Original Size</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">
-              {formatFileSize(totalProcessedSize)}
-            </p>
-            <p className="text-sm text-muted-foreground">New Size</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-accent">
-              {formatFileSize(savedSpace)}
-            </p>
-            <p className="text-sm text-muted-foreground">Space Saved</p>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{stat.label}</p>
+            <h4 className="text-base font-black dark:text-white leading-none mb-1">{stat.value}</h4>
+            <p className="text-[9px] font-bold text-slate-400 italic">{stat.sub}</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 }

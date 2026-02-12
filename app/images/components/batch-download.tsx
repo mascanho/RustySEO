@@ -2,21 +2,11 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, WriteFileOptions } from "@tauri-apps/plugin-fs";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Archive, Download, CheckSquare, Square } from "lucide-react";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { Download, CheckSquare, Square } from "lucide-react";
 import type { ImageFile, ResizeSettings } from "./types/image";
 
 interface BatchDownloadProps {
@@ -157,60 +147,72 @@ export function BatchDownload({
   };
 
   return (
-    <section className="w-full">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-serif text-lg flex items-center gap-2">
-            <Archive className="w-5 h-5" />
-            Batch Download
-          </CardTitle>
-          <CardDescription>
-            Select images to download individually or as a ZIP file
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleAllSelection}
-                className="flex items-center gap-2 bg-transparent"
-              >
-                {completedImages.every((img) => img.selected) ? (
-                  <CheckSquare className="w-4 h-4" />
-                ) : (
-                  <Square className="w-4 h-4" />
-                )}
-                {completedImages.every((img) => img.selected)
-                  ? "Deselect All"
-                  : "Select All"}
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {selectedImages.length} of {completedImages.length} selected
-              </span>
-            </div>
-            <Button
-              onClick={downloadSelectedImages}
-              disabled={selectedImages.length === 0 || downloadingZip}
-              className="flex items-center gap-2"
-            >
-              {downloadingZip ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Creating ZIP...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  Download {selectedImages.length > 1 ? "as ZIP" : "Selected"} (
-                  {selectedImages.length})
-                </>
-              )}
-            </Button>
+    <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-right-4 duration-500">
+      {/* Selection Control Card */}
+      <div className="bg-white dark:bg-brand-darker p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleAllSelection}
+            disabled={downloadingZip}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${completedImages.every((img) => img.selected)
+                ? "bg-sky-500 border-sky-600 text-white shadow-lg shadow-sky-500/20"
+                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
+              }`}
+          >
+            {completedImages.every((img) => img.selected) ? (
+              <CheckSquare className="w-4 h-4" />
+            ) : (
+              <Square className="w-4 h-4" />
+            )}
+          </button>
+          <div className="space-y-0.5">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Status</p>
+            <p className="text-sm font-black dark:text-white leading-none">
+              {selectedImages.length} <span className="text-slate-400 font-bold">/ {completedImages.length}</span> Ready
+            </p>
           </div>
-        </CardContent>
-      </Card>
-    </section>
+        </div>
+      </div>
+
+      {/* Compile Progress */}
+      {downloadingZip && (
+        <div className="space-y-2 animate-in fade-in zoom-in duration-300 p-2">
+          <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-sky-500 italic">
+            <span>Compiling Bundle</span>
+            <span>{Math.round(zipProgress)}%</span>
+          </div>
+          <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden border border-slate-300 dark:border-white/10">
+            <div
+              className="h-full bg-sky-500 transition-all duration-300"
+              style={{ width: `${zipProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Export Action */}
+      <button
+        onClick={downloadSelectedImages}
+        disabled={selectedImages.length === 0 || downloadingZip}
+        className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest text-xs relative overflow-hidden group shadow-xl ${selectedImages.length === 0 || downloadingZip
+            ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
+            : "bg-sky-500 text-white hover:bg-sky-600 hover:scale-[1.02] active:scale-[0.98] shadow-sky-500/40 border border-sky-600"
+          }`}
+      >
+        {downloadingZip ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>Building ZIP...</span>
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+            <span>
+              {selectedImages.length > 1 ? "Download Bundle" : "Download Asset"}
+            </span>
+          </>
+        )}
+      </button>
+    </div>
   );
 }

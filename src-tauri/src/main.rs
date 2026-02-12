@@ -56,6 +56,7 @@ mod image_converter;
 pub mod loganalyser;
 pub mod server;
 pub mod version;
+pub mod ai_preamble;
 
 // Handling the app state
 pub struct AppState {
@@ -252,9 +253,11 @@ async fn main() {
             get_genai,
             crawler::db::clear_table_command,
             server::ask_rusty_command,
+            server::ask_rusty_with_context_command,
             downloads::excel::export_to_excel_command,
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,
+            globals::actions::clear_ai_model_cache,
             commands::get_google_analytics_command,
             commands::set_google_analytics_credentials,
             commands::read_ga4_credentials_file,
@@ -294,6 +297,7 @@ async fn main() {
             domain_commands::generate_links_table_xlsx_command,
             domain_commands::get_url_data_command,
             domain_commands::get_aggregated_crawl_data_command,
+            domain_commands::get_incoming_links_command,
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::helpers::parse_logs::set_taxonomies,

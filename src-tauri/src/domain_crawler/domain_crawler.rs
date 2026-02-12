@@ -4,8 +4,10 @@
 //! the entire crawling process. The actual URL processing is delegated to
 //! the `url_processor` module.
 
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use reqwest::Client;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
@@ -43,10 +45,17 @@ pub async fn crawl_domain(
     let batch_size = settings.batch_size;
     let crawl_timeout = settings.crawl_timeout;
     let db_batch_size = settings.db_batch_size;
+    let base_delay = settings.base_delay;
+    let max_delay = settings.max_delay;
+    let adaptive_crawling = settings.adaptive_crawling;
+    let min_crawl_delay = settings.min_crawl_delay;
+
+    let selected_user_agent = user_agents.choose(&mut rand::rng()).cloned()
+        .unwrap_or_else(|| "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string());
 
     let client = Client::builder()
         .cookie_store(true)
-        .user_agent(&user_agents[rand::random_range(0..user_agents.len())])
+        .user_agent(&selected_user_agent)
         .timeout(Duration::from_secs(client_timeout))
         .connect_timeout(Duration::from_secs(client_connect_timeout))
         .redirect(reqwest::redirect::Policy::none())
@@ -56,8 +65,6 @@ pub async fn crawl_domain(
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
     let domain = base_url.clone();
-
-    let app_handle_clone = app_handle.clone();
 
     //TODO: Better to check the efficiency of this
     // INITIAL DATA FETCHING (Robots.txt)
@@ -113,7 +120,7 @@ pub async fn crawl_domain(
             // Use an interval to ensure periodic flushing regardless of channel activity
             let mut interval = tokio::time::interval(Duration::from_secs(2));
             interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
-            
+
             loop {
                 tokio::select! {
                     recv_result = db_rx.recv() => {
@@ -127,7 +134,7 @@ pub async fn crawl_domain(
                                     )
                                     .await
                                     {
-                                        eprintln!("Failed to batch insert results: {}", e);
+                                        tracing::error!("Failed to batch insert results: {}", e);
                                     }
                                 }
                             }
@@ -142,7 +149,7 @@ pub async fn crawl_domain(
                             )
                             .await
                             {
-                                eprintln!("Failed to flush batch insert results: {}", e);
+                                tracing::error!("Failed to flush batch insert results: {}", e);
                             }
                         }
                     }
@@ -150,18 +157,20 @@ pub async fn crawl_domain(
             }
             if !batch_results.is_empty() {
                 if let Err(e) = database::insert_bulk_crawl_data(db_pool, batch_results).await {
-                    eprintln!("Failed to insert remaining results: {}", e);
+                    tracing::error!("Failed to insert remaining results: {}", e);
                 }
             }
         });
         Some(handle)
     } else {
-        eprintln!("Database connection failed");
+        tracing::error!("Database connection failed");
         None
     };
 
-    let link_checker = Arc::new(SharedLinkChecker::new(&settings));
-    let state = Arc::new(Mutex::new(CrawlerState::new(None).with_link_checker(link_checker.clone()))); // DB is handled separately
+    let link_checker = Arc::new(SharedLinkChecker::new(&settings, Some(selected_user_agent.clone())));
+    let state = Arc::new(Mutex::new(
+        CrawlerState::new(None).with_link_checker(link_checker.clone()),
+    )); // DB is handled separately
     {
         let mut state_guard = state.lock().await;
         state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0
@@ -173,11 +182,15 @@ pub async fn crawl_domain(
 
     let semaphore = Arc::new(Semaphore::new(concurrent_requests));
     let js_semaphore = Arc::new(Semaphore::new(js_concurrency));
+    // Initialize adaptive delay with base_delay
+    let current_atomic_delay = Arc::new(AtomicU64::new(base_delay));
+    // Track when the crawler should pause due to rate limiting (epoch millis)
+    let rate_limit_cooldown_until = Arc::new(AtomicU64::new(0));
+
     let crawl_start_time = Instant::now();
     let mut last_stall_check = Instant::now();
     let mut last_crawled_count = 0;
 
-    let mut current_crawled_count = 0;
     let mut last_log_time = Instant::now();
 
     while state.lock().await.should_continue() {
@@ -219,6 +232,20 @@ pub async fn crawl_domain(
                 continue;
             }
 
+            // Check if we're in a rate limit cooldown period
+            let now_epoch_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64;
+            let cooldown_until = rate_limit_cooldown_until.load(Ordering::Relaxed);
+            if now_epoch_ms < cooldown_until {
+                let wait_ms = cooldown_until - now_epoch_ms;
+                tracing::info!("Rate limit cooldown active. Pausing new tasks for {}ms", wait_ms);
+                drop(state_guard);
+                sleep(Duration::from_millis(wait_ms.min(5000))).await;
+                continue;
+            }
+
             if state_guard.queue.is_empty() {
                 if state_guard.is_truly_complete() {
                     break;
@@ -231,7 +258,10 @@ pub async fn crawl_domain(
             // Calculate how many we can spawn based on semaphore and current active tasks
             // But actually, the inner loop handles the semaphore, so we just pull a reasonable batch
             let available_batch = std::cmp::min(batch_size, state_guard.queue.len());
-            state_guard.queue.drain(..available_batch).collect::<Vec<_>>()
+            state_guard
+                .queue
+                .drain(..available_batch)
+                .collect::<Vec<_>>()
         };
 
         if to_spawn.is_empty() {
@@ -253,11 +283,34 @@ pub async fn crawl_domain(
             let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
             let settings_clone = settings.clone();
+            let current_atomic_delay_clone = current_atomic_delay.clone();
+            let rate_limit_cooldown_clone = rate_limit_cooldown_until.clone();
 
             tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::random_range(10..100);
-                sleep(Duration::from_millis(jitter)).await;
+
+                // Calculate delay logic
+                let delay = if adaptive_crawling {
+                    let current_val = current_atomic_delay_clone.load(Ordering::Relaxed);
+                    // Add +/- 20% jitter
+                    let jitter_range = current_val as f32 * 0.2;
+                    let jitter = if jitter_range > 0.0 {
+                        rand::random_range(-jitter_range..jitter_range) as i64
+                    } else {
+                        0
+                    };
+                    (current_val as i64 + jitter).max(0) as u64
+                } else {
+                    if base_delay < max_delay {
+                        rand::random_range(base_delay..max_delay)
+                    } else {
+                        base_delay
+                    }
+                };
+
+                if delay > 0 {
+                    sleep(Duration::from_millis(delay)).await;
+                }
 
                 let url_str = url.to_string();
                 let result = process_url(
@@ -273,17 +326,60 @@ pub async fn crawl_domain(
                 .await;
 
                 if let Ok(crawl_result) = &result {
+                    if adaptive_crawling {
+                        let status = crawl_result.status_code;
+                        if status == 429 || status == 503 {
+                            // Backoff aggressively using fetch_max to avoid race conditions
+                            let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                            let jitter = rand::random_range(1000..3000);
+                            let new_val = (current.saturating_mul(2).saturating_add(jitter)).min(max_delay).max(5000); 
+                            // Use fetch_max so concurrent 429s only increase, never decrease
+                            current_atomic_delay_clone.fetch_max(new_val, Ordering::Relaxed);
+                            
+                            // Set a global cooldown to pause new task spawning
+                            let cooldown_ms = new_val.min(30000); // Max 30s cooldown
+                            let cooldown_until = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_millis() as u64 + cooldown_ms;
+                            rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
+                            
+                            tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms and pausing new tasks for {}ms", status, new_val, cooldown_ms);
+                        } else if status >= 200 && status < 300 {
+                            // Speed up (decrease delay) — only decrease by 3% for stability
+                            let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                            let decrement = std::cmp::max((current as f32 * 0.03) as u64, 25);
+                            let new_val = current.saturating_sub(decrement).max(min_crawl_delay);
+                            current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        }
+                    }
+
                     if let Ok(db_result) = to_database_results(crawl_result) {
                         let _ = db_tx_clone.send(db_result).await;
+                    }
+                } else if adaptive_crawling {
+                    // Error case (timeout, network error, or detected block)
+                    let current = current_atomic_delay_clone.load(Ordering::Relaxed);
+                    let err_str = result.as_ref().err().map(|e| e.to_string()).unwrap_or_default();
+                    
+                    if err_str.contains("Block") || err_str.contains("Rate Limit") {
+                        // Aggressive backoff for detected blocks
+                        let new_val = (current * 2 + 2000).min(max_delay).max(5000);
+                        current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        tracing::warn!("Block detected in response content. Increasing adaptive delay to {}ms", new_val);
+                    } else {
+                        // Standard network error - slow down slightly
+                        let new_val = (current + 500).min(max_delay);
+                        current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
                     }
                 }
 
                 let mut state_guard = state_clone.lock().await;
                 state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                 state_guard.pending_urls.remove(&url_str);
-                
+
                 if let Err(e) = result {
-                    tracing::warn!("Failed to process {}: {}", url_str, e);
+                    tracing::error!("Failed to process {}: {}", url_str, e);
                     state_guard.failed_urls.insert(FailedUrl {
                         url: url_str,
                         error: e,
@@ -348,7 +444,7 @@ pub async fn crawl_domain(
             robots_blocked: Some(robots_blocked),
         };
 
-        println!(
+        tracing::info!(
             "Final crawl stats: {} total processed ({} succeeded, {} failed)",
             completed,
             state_guard.crawled_urls,

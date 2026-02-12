@@ -1,111 +1,112 @@
 // @ts-nocheck
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { Badge } from "@mantine/core";
+import { debounce } from "lodash";
 
 const FooterLoader = () => {
-  const [progress, setProgress] = useState({
-    crawledPages: 0,
-    percentageCrawled: 0,
-    crawledPagesCount: 0,
-    failedPages: 0,
-  });
-  const [crawlCompleted, setCrawlCompleted] = useState(false);
+  const {
+    streamedCrawledPages,
+    streamedTotalPages,
+    setStreamedCrawledPages,
+    setStreamedTotalPages,
+    crawlData,
+    setTotalUrlsCrawled,
+    domainCrawlLoading,
+    isFinishedDeepCrawl,
+    setFinishedDeepCrawl,
+  } = useCrawlStore();
 
-  const { setTotalUrlsCrawled, crawlData } = useCrawlStore();
+  const [failedPages, setFailedPages] = useState(0);
+  // Internal state to track if we've shown the "Complete" message for the current session
+  const [showComplete, setShowComplete] = useState(false);
 
-  // Memoize the event handler to avoid recreating it on every render
-  const handleProgressUpdate = useCallback(
-    (event: {
-      payload: {
-        crawled_urls: number;
-        percentage: number;
-        total_urls: number;
-        failed_urls_count: number;
-      };
-    }) => {
-      const { crawled_urls, percentage, total_urls, failed_urls_count } =
-        event.payload;
-
-      // Validate and sanitize the received data to prevent NaN
-      const safeCrawledUrls = Math.max(0, crawled_urls || 0);
-      const safePercentage = Math.min(100, Math.max(0, percentage || 0));
-      const safeTotalUrls = Math.max(1, total_urls || 1); // Always at least 1 to prevent division by zero
-      const safeFailedUrls = Math.max(0, failed_urls_count || 0);
-
-      // Only update state if the values have changed
-      setProgress((prev) => {
-        if (
-          prev.crawledPages === safeCrawledUrls &&
-          prev.percentageCrawled === safePercentage &&
-          prev.crawledPagesCount === safeTotalUrls &&
-          prev.failedPages === safeFailedUrls
-        ) {
-          return prev; // No change, return previous state
-        }
-        return {
-          crawledPages: safeCrawledUrls,
-          percentageCrawled: safePercentage,
-          crawledPagesCount: safeTotalUrls,
-          failedPages: safeFailedUrls,
-        };
-      });
-
-      // Reset completion state if new crawl starts (only if significantly less than 100%)
-      if (percentage < 95 && crawlCompleted) {
-        setCrawlCompleted(false);
-      }
-
-      // Auto-complete when we reach 100% progress (fallback for JavaScript mode)
-      if (percentage >= 100 && !crawlCompleted) {
-        setCrawlCompleted(true);
-      }
-
-      // Update global state only if the total URLs have changed
-      setTotalUrlsCrawled((prev) =>
-        prev === safeTotalUrls ? prev : safeTotalUrls,
-      );
-    },
-    [setTotalUrlsCrawled, crawlCompleted],
+  // Debounced update function to ensure smooth UI and sync with store
+  const debouncedUpdate = useCallback(
+    debounce((crawled_urls, total_urls, failed_urls) => {
+      setStreamedCrawledPages(crawled_urls);
+      setStreamedTotalPages(total_urls);
+      setTotalUrlsCrawled(total_urls);
+      setFailedPages(failed_urls);
+    }, 300),
+    [setStreamedCrawledPages, setStreamedTotalPages, setTotalUrlsCrawled],
   );
 
   useEffect(() => {
-    // Set up the event listener with the direct handler (no debounce)
-    const progressUnlistenPromise = listen(
-      "progress_update",
-      handleProgressUpdate,
-    );
+    // Progress listener
+    const progressUnlistenPromise = listen("progress_update", (event: any) => {
+      const { crawled_urls, percentage, total_urls, failed_urls_count } =
+        event.payload;
 
-    // Set up crawl completion listener
-    const completeUnlistenPromise = listen("crawl_complete", () => {
-      // Use current progress data instead of potentially empty crawlData
-      setProgress((prev) => ({
-        crawledPages: Math.max(prev.crawledPages, prev.crawledPagesCount),
-        percentageCrawled: 100,
-        crawledPagesCount: Math.max(prev.crawledPages, prev.crawledPagesCount),
-        failedPages: prev.failedPages,
-      }));
-      setCrawlCompleted(true);
+      const safeCrawledUrls = Math.max(0, crawled_urls || 0);
+      const safeTotalUrls = Math.max(1, total_urls || 1);
+      const safeFailedUrls = Math.max(0, failed_urls_count || 0);
+
+      debouncedUpdate(safeCrawledUrls, safeTotalUrls, safeFailedUrls);
+
+      // Reset internal completion state if a real progress update comes through with < 100%
+      if (percentage < 100 && showComplete) {
+        setShowComplete(false);
+      }
     });
 
-    // Also listen for any other completion-related events
-    const crawlErrorUnlistenPromise = listen("crawl_error", (event) => {
-      // Handle crawl errors
+    // Completion listener
+    const completeUnlistenPromise = listen("crawl_complete", (event: any) => {
+      console.log(
+        "🏁 Crawl complete event received in FooterLoader",
+        event.payload,
+      );
+
+      // Ensure we show the final data from the event or fallback to crawlData
+      const finalCount = event.payload?.crawled_urls || crawlData?.length || 0;
+      setStreamedCrawledPages(finalCount);
+      setStreamedTotalPages(event.payload?.total_urls || finalCount);
+      setShowComplete(true);
+      setFinishedDeepCrawl(true);
     });
 
-    const crawlStoppedUnlistenPromise = listen("crawl_stopped", () => {
-      // Handle crawl stops
-    });
-
-    // Cleanup the event listeners on unmount
     return () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
-      crawlErrorUnlistenPromise.then((unlisten) => unlisten());
-      crawlStoppedUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [handleProgressUpdate]); // Remove crawlData.length from dependencies
+  }, [
+    debouncedUpdate,
+    crawlData,
+    setStreamedCrawledPages,
+    setStreamedTotalPages,
+    setFinishedDeepCrawl,
+    showComplete,
+  ]);
+
+  // Sync showComplete with store state
+  useEffect(() => {
+    if (domainCrawlLoading) {
+      setShowComplete(false);
+    } else if (isFinishedDeepCrawl && crawlData.length > 0) {
+      setShowComplete(true);
+    }
+  }, [domainCrawlLoading, isFinishedDeepCrawl, crawlData.length]);
+
+  // Derived state for rendering
+  const displayCrawled = useMemo(() => {
+    return showComplete
+      ? crawlData?.length || streamedCrawledPages || 0
+      : streamedCrawledPages || 0;
+  }, [showComplete, crawlData.length, streamedCrawledPages]);
+
+  const displayTotal = useMemo(() => {
+    return showComplete
+      ? crawlData?.length || streamedTotalPages || 0
+      : streamedTotalPages || 0;
+  }, [showComplete, crawlData.length, streamedTotalPages]);
+
+  // Percentage calculation
+  const percentage = useMemo(() => {
+    if (displayTotal === 0) return 0;
+    const pct = (displayCrawled / displayTotal) * 100;
+    return Math.min(100, Math.max(0, pct));
+  }, [displayCrawled, displayTotal]);
 
   return (
     <div className="flex items-center space-x-4 h-full ml-4">
@@ -114,9 +115,9 @@ const FooterLoader = () => {
         {/* Progress Bar Container */}
         <div className="relative w-36 h-2 bg-gray-300/50 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
           <div
-            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!crawlCompleted ? "animate-pulse" : ""}`}
+            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright via-sky-400 to-brand-bright rounded-full transition-all duration-500 ease-out ${!showComplete ? "animate-pulse" : ""}`}
             style={{
-              width: `${Math.min(Math.max(0, progress.percentageCrawled || 0), 100)}%`,
+              width: `${percentage}%`,
               boxShadow: "0 0 8px rgba(56, 189, 248, 0.4)",
             }}
           />
@@ -124,7 +125,7 @@ const FooterLoader = () => {
 
         {/* Percentage */}
         <span className="text-[11px] font-bold text-brand-bright min-w-[32px] font-mono">
-          {Math.min(progress.percentageCrawled || 0, 100).toFixed(0)}%
+          {percentage.toFixed(0)}%
         </span>
       </div>
 
@@ -133,41 +134,38 @@ const FooterLoader = () => {
       {/* Stats Section */}
       <div className="flex items-center space-x-4 text-[11px] tracking-tight">
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+          <span className="text-black dark:text-white/40 uppercase font-bold text-[9px]">
             Crawled:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
-            {crawlCompleted ? crawlData.length : progress.crawledPages || 0}
+            {displayCrawled}
           </span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+          <span className="text-black dark:text-white/40 uppercase font-bold text-[9px]">
             Queued:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
-            {crawlCompleted
-              ? 0
-              : Math.max(
-                  0,
-                  (progress.crawledPagesCount || 0) -
-                    (progress.crawledPages || 0),
-                )}
+            {showComplete ? 0 : Math.max(0, displayTotal - displayCrawled)}
           </span>
         </div>
 
-        {progress.failedPages > 0 && (
+        {failedPages > 0 && (
           <div className="flex items-center space-x-1.5">
             <span className="text-red-500/60 dark:text-red-400/60 uppercase font-bold text-[9px]">
               Failed:
             </span>
             <span className="text-red-600 dark:text-red-400 font-mono font-medium">
-              {progress.failedPages}
+              {failedPages}
             </span>
           </div>
         )}
 
-        {crawlCompleted && (
+        {(showComplete ||
+          (percentage >= 99.9 &&
+            !domainCrawlLoading &&
+            crawlData.length > 0)) && (
           <Badge
             variant="filled"
             size="xs"

@@ -2,17 +2,7 @@
 "use client";
 
 import React, { useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Upload, X, Eye, Download, CheckSquare, Square } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import type { ImageFile } from "./types/image";
 
 interface FileUploadProps {
@@ -72,26 +62,27 @@ export function FileUpload({
       progress: 0,
       selected: true,
     }));
+
     setImages((prev) => [...prev, ...newImages]);
 
     newImages.forEach((imageFile) => {
-      const img = new Image();
-      img.onload = () => {
+      const imgElement = new Image();
+      imgElement.onload = () => {
         setImages((prev) =>
-          prev.map((img) =>
-            img.id === imageFile.id
+          prev.map((item) =>
+            item.id === imageFile.id
               ? {
-                  ...img,
-                  originalDimensions: {
-                    width: img.naturalWidth,
-                    height: img.naturalHeight,
-                  },
-                }
-              : img,
+                ...item,
+                originalDimensions: {
+                  width: imgElement.naturalWidth,
+                  height: imgElement.naturalHeight,
+                },
+              }
+              : item,
           ),
         );
       };
-      img.src = imageFile.preview;
+      imgElement.src = imageFile.preview;
     });
   };
 
@@ -100,12 +91,6 @@ export function FileUpload({
       const image = prev.find((img) => img.id === id);
       if (image) {
         URL.revokeObjectURL(image.preview);
-        if (image.processedBlob) {
-          URL.revokeObjectURL(URL.createObjectURL(image.processedBlob));
-        }
-        if (image.processedPreview) {
-          URL.revokeObjectURL(image.processedPreview);
-        }
       }
       return prev.filter((img) => img.id !== id);
     });
@@ -122,21 +107,25 @@ export function FileUpload({
   };
 
   return (
-    <Card className=" h-[900px] max-h-fit">
-      <CardHeader>
-        <CardTitle className="font-serif">Upload Images</CardTitle>
-        <CardDescription>
-          Drag and drop your images here or click to browse. Supports JPG, PNG,
-          WebP formats.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="shadow-xl bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">Assets Studio</h2>
+          <p className="text-slate-400 dark:text-slate-500 font-bold text-xs mt-1">
+            Media optimization pipeline
+          </p>
+        </div>
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+          <Upload className="w-6 h-6 text-sky-500" />
+        </div>
+      </div>
+
+      <div className="space-y-6">
         <div
-          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50"
-          }`}
+          className={`relative ${images.length > 0 ? 'h-32' : 'h-64'} border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 group ${dragActive
+            ? "border-sky-500 bg-sky-50 dark:bg-sky-500/5 scale-[0.99]"
+            : "border-slate-200 dark:border-white/10 hover:border-sky-400 dark:hover:border-sky-500/50 hover:bg-slate-50 dark:hover:bg-white/5"
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -147,189 +136,166 @@ export function FileUpload({
             multiple
             accept="image/*"
             onChange={handleFileInput}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
-          <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Drop images here</h3>
-          <p className="text-muted-foreground mb-4">
-            or <span className="text-primary font-medium">browse files</span>
-          </p>
-          <Badge variant="secondary">
-            {images.filter((img) => img.selected).length} of {images.length}{" "}
-            image{images.length !== 1 ? "s" : ""} selected
-          </Badge>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {images.length === 0 ? (
+              <div className="space-y-4 flex flex-col items-center">
+                <div className="p-4 rounded-full bg-white dark:bg-brand-dark group-hover:bg-sky-50 dark:group-hover:bg-sky-500/10 transition-all duration-300 shadow-sm border border-slate-100 dark:border-white/10">
+                  <Upload className="w-10 h-10 text-slate-300 group-hover:text-sky-500 transition-colors" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black dark:text-white transition-colors group-hover:text-sky-500">
+                    {dragActive ? "DROP ASSETS NOW" : "IMPORT ASSETS"}
+                  </h3>
+                  <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">
+                    Drag & Drop or <span className="text-sky-500">Source local files</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-sky-500">
+                  <Upload className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs font-black dark:text-white uppercase tracking-widest">
+                  APPEND MORE ASSETS TO QUEUE
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {images.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium">Selected Images</h4>
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-3">
+                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Active Pipeline</h4>
+                <span className="px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-black text-[9px] uppercase tracking-widest">
+                  {images.length} Units
+                </span>
+              </div>
               <div className="flex gap-2">
-                {images.some((img) => img.status === "completed") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const completedImages = images.filter(
-                        (img) => img.status === "completed",
-                      );
-                      const allSelected = completedImages.every(
-                        (img) => img.selected,
-                      );
-                      setImages((prev) =>
-                        prev.map((img) =>
-                          img.status === "completed"
-                            ? { ...img, selected: !allSelected }
-                            : img,
-                        ),
-                      );
-                    }}
-                    disabled={processing}
-                  >
-                    {images
-                      .filter((img) => img.status === "completed")
-                      .every((img) => img.selected)
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  className="h-7 text-[9px] font-black uppercase tracking-wider text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg px-3 transition-all border border-rose-500/20"
                   onClick={() => setImages([])}
                   disabled={processing}
                 >
-                  Clear All
-                </Button>
+                  Terminate Sequence
+                </button>
               </div>
             </div>
-            <div className="max-h-64 overflow-y-auto space-y-2">
+
+            <div className="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
               {images.map((image) => (
                 <div
                   key={image.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                    image.selected && image.status === "completed"
-                      ? "bg-primary/10 border-2 border-primary/30 shadow-sm"
-                      : "bg-muted/50 border-2 border-transparent"
-                  }`}
-                >
-                  {image.status === "completed" && (
-                    <button
-                      onClick={() => onToggleSelection(image.id)}
-                      className="flex-shrink-0 p-1 rounded hover:bg-primary/10 transition-colors duration-200 group"
-                      title={image.selected ? "Deselect image" : "Select image"}
-                    >
-                      {image.selected ? (
-                        <CheckSquare className="w-5 h-5 text-primary group-hover:text-primary/80 transition-colors" />
-                      ) : (
-                        <Square className="w-5 h-5 text-muted-foreground group-hover:text-primary/60 transition-colors" />
-                      )}
-                    </button>
-                  )}
-                  <img
-                    src={image.preview || "/placeholder.svg"}
-                    alt="Preview"
-                    className={`w-12 h-12 object-cover rounded cursor-pointer transition-all duration-200 hover:opacity-80 hover:scale-105 ${
-                      image.selected && image.status === "completed"
-                        ? "ring-2 ring-primary/50"
-                        : ""
+                  className={`group relative flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 border ${image.selected && image.status === "completed"
+                    ? "bg-slate-50 dark:bg-white/5 border-sky-500/50 shadow-md"
+                    : "bg-white dark:bg-brand-dark border-slate-100 dark:border-white/10 hover:border-sky-500"
                     }`}
-                    onClick={() => onPreview(image)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {image.file.name}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatFileSize(image.originalSize)}</span>
-                      {image.processedSize && (
-                        <>
-                          <span>→</span>
-                          <span className="text-accent font-medium">
-                            {formatFileSize(image.processedSize)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    {image.originalDimensions && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>
-                          {image.originalDimensions.width}×
-                          {image.originalDimensions.height}
-                        </span>
-                        {image.processedDimensions && (
-                          <>
-                            <span>→</span>
-                            <span className="text-accent font-medium">
-                              {image.processedDimensions.width}×
-                              {image.processedDimensions.height}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    {image.status === "processing" &&
-                      image.progress !== undefined && (
-                        <Progress
-                          value={image.progress}
-                          className="w-full h-1 mt-1"
-                        />
-                      )}
-                    {image.status === "error" && image.errorMessage && (
-                      <p className="text-xs text-destructive mt-1">
-                        {image.errorMessage}
-                      </p>
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={image.preview || "/placeholder.svg"}
+                      alt="Preview"
+                      className={`w-14 h-14 object-cover rounded-xl shadow-lg transition-all duration-500 group-hover:scale-105 cursor-pointer ${image.selected && image.status === "completed" ? "ring-2 ring-sky-500" : ""
+                        }`}
+                      onClick={() => onPreview(image)}
+                    />
+                    {image.status === "completed" && (
+                      <button
+                        onClick={() => onToggleSelection(image.id)}
+                        className={`absolute -top-1.5 -left-1.5 w-6 h-6 rounded-lg flex items-center justify-center shadow-xl transition-all border ${image.selected
+                          ? "bg-sky-500 border-sky-600 text-white"
+                          : "bg-white dark:bg-brand-darker border-slate-200 dark:border-white/20 text-slate-400"
+                          }`}
+                      >
+                        {image.selected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                      </button>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {image.status === "completed" && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onPreview(image)}
-                          title="Preview"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDownload(image)}
-                          title="Download"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                    <Badge
-                      variant={
-                        image.status === "completed"
-                          ? "default"
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[11px] font-black dark:text-white truncate pr-4 uppercase tracking-tight">
+                        {image.file.name}
+                      </p>
+                      <span
+                        className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border ${image.status === "completed"
+                          ? "bg-emerald-500 border-emerald-600 text-white"
                           : image.status === "processing"
-                            ? "secondary"
+                            ? "bg-sky-500 border-sky-600 text-white animate-pulse"
                             : image.status === "error"
-                              ? "destructive"
-                              : "outline"
-                      }
-                    >
-                      {image.status}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                              ? "bg-rose-500 border-rose-600 text-white"
+                              : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"
+                          }`}
+                      >
+                        {image.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Mass</span>
+                        <span className="text-[9px] font-black dark:text-white">
+                          {formatFileSize(image.originalSize)}
+                          {image.processedSize && (
+                            <span className="text-sky-500 ml-1">
+                              → {formatFileSize(image.processedSize)}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+
+                      {image.originalDimensions && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Res</span>
+                          <span className="text-[9px] font-black dark:text-white">
+                            {image.originalDimensions.width}×{image.originalDimensions.height}
+                            {image.processedDimensions && (
+                              <span className="text-sky-500 ml-1">
+                                → {image.processedDimensions.width}×{image.processedDimensions.height}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {image.status === "processing" && image.progress !== undefined && (
+                      <div className="mt-2 relative h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
+                        <div
+                          className="absolute top-0 left-0 h-full bg-sky-500 transition-all duration-300"
+                          style={{ width: `${image.progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {image.status === "completed" && (
+                      <button
+                        className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-sky-500 hover:border-sky-500/50 flex items-center justify-center transition-all shadow-sm"
+                        onClick={() => onPreview(image)}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-rose-500 hover:border-rose-500/50 flex items-center justify-center transition-all shadow-sm"
                       onClick={() => removeImage(image.id)}
                       disabled={processing}
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

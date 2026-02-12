@@ -122,27 +122,27 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   // Now safe to use ad and allAds since we've returned early if they're invalid
   const validHeadlines = ad.headlines
     ? (Array.isArray(ad.headlines)
-      ? ad.headlines
-      : typeof ad.headlines === "string"
-        ? ad.headlines.split("\n")
-        : []
-    ).filter((h) => h.trim())
+        ? ad.headlines
+        : typeof ad.headlines === "string"
+          ? ad.headlines.split("\n")
+          : []
+      ).filter((h) => h.trim())
     : [];
   const validDescriptions = ad.descriptions
     ? (Array.isArray(ad.descriptions)
-      ? ad.descriptions
-      : typeof ad.descriptions === "string"
-        ? ad.descriptions.split("\n")
-        : []
-    ).filter((d) => d.trim())
+        ? ad.descriptions
+        : typeof ad.descriptions === "string"
+          ? ad.descriptions.split("\n")
+          : []
+      ).filter((d) => d.trim())
     : [];
   const validKeywords = ad.keywords
     ? (Array.isArray(ad.keywords)
-      ? ad.keywords
-      : typeof ad.keywords === "string"
-        ? ad.keywords.split("\n")
-        : []
-    ).filter((k) => k.trim())
+        ? ad.keywords
+        : typeof ad.keywords === "string"
+          ? ad.keywords.split("\n")
+          : []
+      ).filter((k) => k.trim())
     : [];
 
   // Calculate max indices for cycling
@@ -217,7 +217,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
             </div>
             <div className="flex flex-col">
               <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
-                Creative Studio
+                RustySEO Preview
               </CardTitle>
               <div className="flex items-center gap-2 mt-0">
                 <Badge
@@ -250,10 +250,11 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   <button
                     key={item.id}
                     onClick={() => setPreviewType(item.id as any)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all duration-200 ${previewType === item.id
-                      ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-sm"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-                      }`}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all duration-200 ${
+                      previewType === item.id
+                        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-sm"
+                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                    }`}
                   >
                     <item.icon className="h-3 w-3" />
                     {item.label}

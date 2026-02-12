@@ -1,5 +1,6 @@
 use crate::gemini;
 use crate::globals;
+use crate::ai_preamble::{self, RustyAiContext};
 use actix_web::{web, App, HttpServer, Responder};
 use directories::ProjectDirs;
 use reqwest::Client;
@@ -76,6 +77,21 @@ struct GenerateResponse {
 #[tauri::command]
 pub async fn ask_rusty_command(prompt: String) -> Result<String, String> {
     let result = ask_rusty(prompt).await;
+    match result {
+        Ok(response) => Ok(response),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn ask_rusty_with_context_command(
+    prompt: String,
+    context: RustyAiContext,
+) -> Result<String, String> {
+    let preamble = ai_preamble::generate_preamble(&context);
+    let full_prompt = format!("{}\n\nUser Question: {}", preamble, prompt);
+    
+    let result = ask_rusty(full_prompt).await;
     match result {
         Ok(response) => Ok(response),
         Err(err) => Err(err.to_string()),

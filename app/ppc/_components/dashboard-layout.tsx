@@ -62,7 +62,7 @@ export function DashboardLayout({
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent className="pl-0">
+          <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -116,7 +116,7 @@ export function DashboardLayout({
               {/* </SidebarMenuItem> */}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="border-t dark:border-brand-dark">
+          <SidebarFooter className="border-t dark:border-brand-dark mb-2">
             <div className="p-2 pt-1">
               {onAddNew && (
                 <Button

@@ -17,88 +17,348 @@ use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    // --- System ---
+    /// Current version of the application
     pub version: String,
-    pub crawl_timeout: u64,
-    pub client_timeout: u64,
-    pub client_connect_timeout: u64,
-    pub redirect_policy: usize,
-    pub max_retries: u32,
-    pub base_delay: u64,
-    pub max_delay: u64,
-    pub concurrent_requests: usize,
-    pub batch_size: usize,
-    pub db_batch_size: usize,
-    pub user_agents: Vec<String>,
-    pub html: bool,
-    pub links_max_concurrent_requests: usize,
-    pub links_initial_task_capacity: usize,
-    pub links_max_retries: usize,
-    pub links_retry_delay: u64,
-    pub links_request_timeout: u64,
-    pub taxonomies: Vec<String>,
+    /// Unique ID for this instance
     pub rustyid: Uuid,
-    pub page_speed_bulk: bool,
-    pub page_speed_bulk_api_key: Option<Option<String>>,
+
+    // --- General Crawler Settings ---
+    /// List of user agents to rotate
+    pub user_agents: Vec<String>,
+    /// Number of concurrent requests for domain crawling
+    pub concurrent_requests: usize,
+    /// Number of URLs to process between sleeps/checks
+    pub batch_size: usize,
+    /// Maximum depth to crawl
+    pub max_depth: usize,
+    /// Maximum URLs to crawl per domain
+    pub max_urls_per_domain: usize,
+
+    // --- Timing & Throttling (Adaptive) ---
+    /// Enable adaptive crawling speed based on server response
+    pub adaptive_crawling: bool,
+    /// Base delay between requests (ms)
+    pub base_delay: u64,
+    /// Maximum delay between requests (ms)
+    pub max_delay: u64,
+    /// Minimum delay allowed in adaptive mode (ms)
+    pub min_crawl_delay: u64,
+    /// Total timeout for a crawl job (seconds)
+    pub crawl_timeout: u64,
+    /// Interval to check for stalled crawlers (seconds)
+    pub stall_check_interval: u64,
+    /// Maximum time a URL can be pending before considered stalled (seconds)
+    pub max_pending_time: u64,
+
+    // --- Request / Network ---
+    /// Timeout for individual HTTP requests (seconds)
+    pub client_timeout: u64,
+    /// Timeout for connection establishment (seconds)
+    pub client_connect_timeout: u64,
+    /// Number of redirects to follow
+    pub redirect_policy: usize,
+    /// Maximum retries for failed requests
+    pub max_retries: u32,
+
+    // --- JavaScript & Rendering ---
+    /// Whether to expect HTML content
+    pub html: bool,
+    /// Enable Headless Chrome rendering
+    pub javascript_rendering: bool,
+    /// Concurrency for Headless Chrome
+    pub javascript_concurrency: usize,
+
+    // --- Link Processor (Internal/External Check) ---
+    /// Max concurrent checks for link status
+    pub links_max_concurrent_requests: usize,
+    /// Initial capacity for link checking tasks
+    pub links_initial_task_capacity: usize,
+    /// Max retries for link checks
+    pub links_max_retries: usize,
+    /// Delay between link check retries (ms)
+    pub links_retry_delay: u64,
+    /// Timeout for link check requests (seconds)
+    pub links_request_timeout: u64,
+    /// Jitter factor for randomized delays (0.0 - 1.0)
+    pub links_jitter_factor: f32,
+    /// Idle timeout for connection pool (seconds)
+    pub links_pool_idle_timeout: u64,
+    /// Max idle connections per host
+    pub links_max_idle_per_host: usize,
+
+    // --- Extraction & Content ---
+    /// Enable N-gram extraction
+    pub extract_ngrams: bool,
+    /// Set of stop words for keyword extraction
+    pub stop_words: HashSet<String>,
+    /// Classification taxonomies
+    pub taxonomies: Vec<String>,
+
+    // --- Database & Batching ---
+    /// Batch size for database inserts
+    pub db_batch_size: usize,
+    /// Chunk size for domain crawler results
+    pub db_chunk_size_domain_crawler: usize,
+
+    // --- Logs & File System ---
     pub log_batchsize: usize,
     pub log_chunk_size: usize,
     pub log_sleep_stream_duration: u64,
     pub log_capacity: usize,
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
-    pub extract_ngrams: bool,
-    pub stop_words: HashSet<String>,
     pub log_bots: Vec<(String, String)>,
+
+    // --- Integrations ---
+    /// Enable PageSpeed Insights bulk fetching
+    pub page_speed_bulk: bool,
+    /// API Key for PageSpeed Insights
+    pub page_speed_bulk_api_key: Option<Option<String>>,
+    /// Row limit for GSC data
     pub gsc_row_limit: i32,
-    pub javascript_rendering: bool,
-    pub javascript_concurrency: usize,
-    pub stall_check_interval: u64, // CHECKS CRAWLER STALLS EVERY 30 SECONDS
-    pub max_pending_time: u64,     // 15 MINUTES MAX PENDING TIME, set in seconds
-    pub max_depth: usize,
-    pub max_urls_per_domain: usize,
 }
 
 impl Settings {
     pub fn new() -> Self {
         Self {
+            // --- System ---
             version: local_version(),
+            rustyid: Uuid::new_v4(),
+
+            // --- General Crawler Settings ---
+            user_agents: user_agents::agents(),
+            concurrent_requests: 5, // Reduced from 10
+            batch_size: 40,
+            max_depth: 50,
+            max_urls_per_domain: 10000000,
+
+            // --- Timing & Throttling ---
+            adaptive_crawling: true,
+            base_delay: 1500,        // Increased from 1000
+            max_delay: 30000,        // Increased from 10000 — gives adaptive system more room
+            min_crawl_delay: 500,    // Increased from 300
             crawl_timeout: 28800,
+            stall_check_interval: 30, // SECONDS
+            max_pending_time: 900,    // SECONDS
+
+            // --- Request / Network ---
             client_timeout: 60,
             client_connect_timeout: 15,
             redirect_policy: 5,
             max_retries: 5,
-            base_delay: 500,
-            max_delay: 8000,
-            concurrent_requests: 50,
-            batch_size: 40,
-            db_batch_size: 200,
-            user_agents: user_agents::agents(),
+
+            // --- JavaScript & Rendering ---
             html: false,
-            links_max_concurrent_requests: 250,
+            javascript_rendering: false,
+            javascript_concurrency: 3,
+
+            // --- Link Processor ---
+            links_max_concurrent_requests: 5, // Reduced from 10
             links_initial_task_capacity: 100,
             links_max_retries: 3,
+            links_retry_delay: 1000, // Increased from 500
             links_request_timeout: 15,
-            links_retry_delay: 500,
+            links_jitter_factor: 0.6, // Increased from 0.5
+            links_pool_idle_timeout: 60,
+            links_max_idle_per_host: 5, // Reduced from 10
+
+            // --- Extraction & Content ---
+            extract_ngrams: false,
+            stop_words: default_stop_words(),
             taxonomies: set_taxonomies(),
-            rustyid: Uuid::new_v4(),
-            page_speed_bulk: false,
-            page_speed_bulk_api_key: None,
+
+            // --- Database & Batching ---
+            db_batch_size: 200,
+            db_chunk_size_domain_crawler: 500,
+
+            // --- Logs & File System ---
             log_batchsize: 2,
             log_chunk_size: 500000,
             log_sleep_stream_duration: 1,
             log_capacity: 1,
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
-            extract_ngrams: false,
-            stop_words: default_stop_words(),
             log_bots: generate_default_user_bots(),
+
+            // --- Integrations ---
+            page_speed_bulk: false,
+            page_speed_bulk_api_key: None,
             gsc_row_limit: 25000,
-            javascript_rendering: false,
-            javascript_concurrency: 8,
-            stall_check_interval: 30, // SECONDS
-            max_pending_time: 900,    // SECONDS
-            max_depth: 50,
-            max_urls_per_domain: 10000000,
         }
+    }
+
+    pub fn generate_commented_config(&self) -> String {
+        let mut s = String::new();
+
+        s.push_str("# --- System ---\n");
+        s.push_str("# Current version of the application\n");
+        s.push_str(&format!("version = {:?}\n", self.version));
+        s.push_str("# Unique ID for this instance\n");
+        s.push_str(&format!("rustyid = {:?}\n", self.rustyid.to_string()));
+
+        s.push_str("\n# --- General Crawler Settings ---\n");
+        s.push_str("# List of user agents to rotate\n");
+        let ua = serde_json::to_string(&self.user_agents).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("user_agents = {}\n", ua));
+
+        s.push_str("# Number of concurrent requests for domain crawling\n");
+        s.push_str(&format!("concurrent_requests = {}\n", self.concurrent_requests));
+
+        s.push_str("# Number of URLs to process between sleeps/checks\n");
+        s.push_str(&format!("batch_size = {}\n", self.batch_size));
+
+        s.push_str("# Maximum depth to crawl\n");
+        s.push_str(&format!("max_depth = {}\n", self.max_depth));
+
+        s.push_str("# Maximum URLs to crawl per domain\n");
+        s.push_str(&format!("max_urls_per_domain = {}\n", self.max_urls_per_domain));
+
+        s.push_str("\n# --- Timing & Throttling (Adaptive) ---\n");
+        s.push_str("# Enable adaptive crawling speed based on server response\n");
+        s.push_str(&format!("adaptive_crawling = {}\n", self.adaptive_crawling));
+
+        s.push_str("# Base delay between requests (ms)\n");
+        s.push_str(&format!("base_delay = {}\n", self.base_delay));
+
+        s.push_str("# Maximum delay between requests (ms)\n");
+        s.push_str(&format!("max_delay = {}\n", self.max_delay));
+
+        s.push_str("# Minimum delay allowed in adaptive mode (ms)\n");
+        s.push_str(&format!("min_crawl_delay = {}\n", self.min_crawl_delay));
+
+        s.push_str("# Total timeout for a crawl job (seconds)\n");
+        s.push_str(&format!("crawl_timeout = {}\n", self.crawl_timeout));
+
+        s.push_str("# Interval to check for stalled crawlers (seconds)\n");
+        s.push_str(&format!("stall_check_interval = {}\n", self.stall_check_interval));
+
+        s.push_str("# Maximum time a URL can be pending before considered stalled (seconds)\n");
+        s.push_str(&format!("max_pending_time = {}\n", self.max_pending_time));
+
+        s.push_str("\n# --- Request / Network ---\n");
+        s.push_str("# Timeout for individual HTTP requests (seconds)\n");
+        s.push_str(&format!("client_timeout = {}\n", self.client_timeout));
+
+        s.push_str("# Timeout for connection establishment (seconds)\n");
+        s.push_str(&format!("client_connect_timeout = {}\n", self.client_connect_timeout));
+
+        s.push_str("# Number of redirects to follow\n");
+        s.push_str(&format!("redirect_policy = {}\n", self.redirect_policy));
+
+        s.push_str("# Maximum retries for failed requests\n");
+        s.push_str(&format!("max_retries = {}\n", self.max_retries));
+
+        s.push_str("\n# --- JavaScript & Rendering ---\n");
+        s.push_str("# Whether to expect HTML content\n");
+        s.push_str(&format!("html = {}\n", self.html));
+
+        s.push_str("# Enable Headless Chrome rendering\n");
+        s.push_str(&format!("javascript_rendering = {}\n", self.javascript_rendering));
+
+        s.push_str("# Concurrency for Headless Chrome\n");
+        s.push_str(&format!("javascript_concurrency = {}\n", self.javascript_concurrency));
+
+        s.push_str("\n# --- Link Processor (Internal/External Check) ---\n");
+        s.push_str("# Max concurrent checks for link status\n");
+        s.push_str(&format!(
+            "links_max_concurrent_requests = {}\n",
+            self.links_max_concurrent_requests
+        ));
+
+        s.push_str("# Initial capacity for link checking tasks\n");
+        s.push_str(&format!(
+            "links_initial_task_capacity = {}\n",
+            self.links_initial_task_capacity
+        ));
+
+        s.push_str("# Max retries for link checks\n");
+        s.push_str(&format!("links_max_retries = {}\n", self.links_max_retries));
+
+        s.push_str("# Delay between link check retries (ms)\n");
+        s.push_str(&format!("links_retry_delay = {}\n", self.links_retry_delay));
+
+        s.push_str("# Timeout for link check requests (seconds)\n");
+        s.push_str(&format!("links_request_timeout = {}\n", self.links_request_timeout));
+
+        s.push_str("# Jitter factor for randomized delays (0.0 - 1.0)\n");
+        s.push_str(&format!("links_jitter_factor = {}\n", self.links_jitter_factor));
+
+        s.push_str("# Idle timeout for connection pool (seconds)\n");
+        s.push_str(&format!("links_pool_idle_timeout = {}\n", self.links_pool_idle_timeout));
+
+        s.push_str("# Max idle connections per host\n");
+        s.push_str(&format!("links_max_idle_per_host = {}\n", self.links_max_idle_per_host));
+
+        s.push_str("\n# --- Extraction & Content ---\n");
+        s.push_str("# Enable N-gram extraction\n");
+        s.push_str(&format!("extract_ngrams = {}\n", self.extract_ngrams));
+
+        s.push_str("# Set of stop words for keyword extraction\n");
+        let stop_words =
+            serde_json::to_string(&self.stop_words).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("stop_words = {}\n", stop_words));
+
+        s.push_str("# Classification taxonomies\n");
+        let taxonomies =
+            serde_json::to_string(&self.taxonomies).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("taxonomies = {}\n", taxonomies));
+
+        s.push_str("\n# --- Database & Batching ---\n");
+        s.push_str("# Batch size for database inserts\n");
+        s.push_str(&format!("db_batch_size = {}\n", self.db_batch_size));
+
+        s.push_str("# Chunk size for domain crawler results\n");
+        s.push_str(&format!(
+            "db_chunk_size_domain_crawler = {}\n",
+            self.db_chunk_size_domain_crawler
+        ));
+
+        s.push_str("\n# --- Logs & File System ---\n");
+        s.push_str("# log_batchsize\n");
+        s.push_str(&format!("log_batchsize = {}\n", self.log_batchsize));
+
+        s.push_str("# log_chunk_size\n");
+        s.push_str(&format!("log_chunk_size = {}\n", self.log_chunk_size));
+
+        s.push_str("# log_sleep_stream_duration\n");
+        s.push_str(&format!(
+            "log_sleep_stream_duration = {}\n",
+            self.log_sleep_stream_duration
+        ));
+
+        s.push_str("# log_capacity\n");
+        s.push_str(&format!("log_capacity = {}\n", self.log_capacity));
+
+        s.push_str("# log_project_chunk_size\n");
+        s.push_str(&format!(
+            "log_project_chunk_size = {}\n",
+            self.log_project_chunk_size
+        ));
+
+        s.push_str("# log_file_upload_size\n");
+        s.push_str(&format!(
+            "log_file_upload_size = {}\n",
+            self.log_file_upload_size
+        ));
+
+        s.push_str("# Log Bots\n");
+        let bots = serde_json::to_string(&self.log_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("log_bots = {}\n", bots));
+
+        s.push_str("\n# --- Integrations ---\n");
+        s.push_str("# Enable PageSpeed Insights bulk fetching\n");
+        s.push_str(&format!("page_speed_bulk = {}\n", self.page_speed_bulk));
+
+        if let Some(Some(key)) = &self.page_speed_bulk_api_key {
+            s.push_str("# API Key for PageSpeed Insights\n");
+            s.push_str(&format!("page_speed_bulk_api_key = {:?}\n", key));
+        }
+
+        s.push_str("# Row limit for GSC data\n");
+        s.push_str(&format!("gsc_row_limit = {}\n", self.gsc_row_limit));
+
+        s
     }
 
     pub fn config_path() -> Result<PathBuf, String> {
@@ -145,8 +405,8 @@ pub async fn create_config_file() -> Result<Settings, String> {
     let settings = Settings::new();
 
     if !config_path.exists() {
-        let toml_str = toml::to_string(&settings)
-            .map_err(|e| format!("Failed to serialize settings: {}", e))?;
+        let toml_str = settings.generate_commented_config();
+        
         fs::write(&config_path, toml_str)
             .await
             .map_err(|e| format!("Failed to write config: {}", e))?;
@@ -168,6 +428,13 @@ pub async fn init_settings() -> Result<Settings, String> {
         }
         Err(e) => {
             println!("Failed to load settings: {}. Creating config file...", e);
+            // If the file exists but is invalid, delete it so create_config_file can write a new one
+            if let Ok(config_path) = Settings::config_path() {
+                if config_path.exists() {
+                    let _ = fs::remove_file(&config_path).await;
+                    println!("Deleted invalid config file at {:?}", config_path);
+                }
+            }
             create_config_file().await
         }
     }
@@ -231,6 +498,8 @@ pub fn print_settings(settings: &Settings) {
     println!("Log Bots: {:#?}", settings.log_bots);
 
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
+    println!("Adaptive Crawling: {}", settings.adaptive_crawling);
+    println!("Min Crawl Delay: {}", settings.min_crawl_delay);
 
     println!("")
 }
@@ -435,6 +704,42 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.max_urls_per_domain = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("links_jitter_factor")
+        .and_then(|v| v.as_float())
+    {
+        settings.links_jitter_factor = val as f32;
+    }
+
+    if let Some(val) = updates
+        .get("links_pool_idle_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_pool_idle_timeout = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("links_pool_idle_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_max_idle_per_host = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("db_chunk_size_domain_crawler")
+        .and_then(|v| v.as_integer())
+    {
+        settings.db_chunk_size_domain_crawler = val as usize;
+    }
+
+    if let Some(val) = updates.get("adaptive_crawling").and_then(|v| v.as_bool()) {
+        settings.adaptive_crawling = val;
+    }
+
+    if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
+        settings.min_crawl_delay = val as u64;
     }
 
     // Explicit file writing with flush
