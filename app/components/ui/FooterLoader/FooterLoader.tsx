@@ -30,13 +30,14 @@ const FooterLoader = () => {
       setTotalUrlsCrawled(total_urls);
       setFailedPages(failed_urls);
     }, 300),
-    [setStreamedCrawledPages, setStreamedTotalPages, setTotalUrlsCrawled]
+    [setStreamedCrawledPages, setStreamedTotalPages, setTotalUrlsCrawled],
   );
 
   useEffect(() => {
     // Progress listener
     const progressUnlistenPromise = listen("progress_update", (event: any) => {
-      const { crawled_urls, percentage, total_urls, failed_urls_count } = event.payload;
+      const { crawled_urls, percentage, total_urls, failed_urls_count } =
+        event.payload;
 
       const safeCrawledUrls = Math.max(0, crawled_urls || 0);
       const safeTotalUrls = Math.max(1, total_urls || 1);
@@ -52,7 +53,10 @@ const FooterLoader = () => {
 
     // Completion listener
     const completeUnlistenPromise = listen("crawl_complete", (event: any) => {
-      console.log("🏁 Crawl complete event received in FooterLoader", event.payload);
+      console.log(
+        "🏁 Crawl complete event received in FooterLoader",
+        event.payload,
+      );
 
       // Ensure we show the final data from the event or fallback to crawlData
       const finalCount = event.payload?.crawled_urls || crawlData?.length || 0;
@@ -66,7 +70,14 @@ const FooterLoader = () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [debouncedUpdate, crawlData, setStreamedCrawledPages, setStreamedTotalPages, setFinishedDeepCrawl, showComplete]);
+  }, [
+    debouncedUpdate,
+    crawlData,
+    setStreamedCrawledPages,
+    setStreamedTotalPages,
+    setFinishedDeepCrawl,
+    showComplete,
+  ]);
 
   // Sync showComplete with store state
   useEffect(() => {
@@ -79,11 +90,15 @@ const FooterLoader = () => {
 
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
-    return showComplete ? (crawlData?.length || streamedCrawledPages || 0) : (streamedCrawledPages || 0);
+    return showComplete
+      ? crawlData?.length || streamedCrawledPages || 0
+      : streamedCrawledPages || 0;
   }, [showComplete, crawlData.length, streamedCrawledPages]);
 
   const displayTotal = useMemo(() => {
-    return showComplete ? (crawlData?.length || streamedTotalPages || 0) : (streamedTotalPages || 0);
+    return showComplete
+      ? crawlData?.length || streamedTotalPages || 0
+      : streamedTotalPages || 0;
   }, [showComplete, crawlData.length, streamedTotalPages]);
 
   // Percentage calculation
@@ -119,7 +134,7 @@ const FooterLoader = () => {
       {/* Stats Section */}
       <div className="flex items-center space-x-4 text-[11px] tracking-tight">
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+          <span className="text-black dark:text-white/40 uppercase font-bold text-[9px]">
             Crawled:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
@@ -128,13 +143,11 @@ const FooterLoader = () => {
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="text-gray-500 dark:text-white/40 uppercase font-bold text-[9px]">
+          <span className="text-black dark:text-white/40 uppercase font-bold text-[9px]">
             Queued:
           </span>
           <span className="text-gray-700 dark:text-white font-mono font-medium">
-            {showComplete
-              ? 0
-              : Math.max(0, displayTotal - displayCrawled)}
+            {showComplete ? 0 : Math.max(0, displayTotal - displayCrawled)}
           </span>
         </div>
 
@@ -149,7 +162,10 @@ const FooterLoader = () => {
           </div>
         )}
 
-        {(showComplete || (percentage >= 99.9 && !domainCrawlLoading && crawlData.length > 0)) && (
+        {(showComplete ||
+          (percentage >= 99.9 &&
+            !domainCrawlLoading &&
+            crawlData.length > 0)) && (
           <Badge
             variant="filled"
             size="xs"

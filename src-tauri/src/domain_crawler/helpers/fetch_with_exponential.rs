@@ -45,12 +45,15 @@ pub async fn fetch_with_exponential_backoff(
                         });
 
                     let delay = if let Some(ra_duration) = retry_after {
-                        ra_duration
+                        // Respect server's Retry-After but enforce a floor
+                        ra_duration.max(Duration::from_secs(2))
                     } else {
-                        Duration::from_millis(std::cmp::min(
-                            settings.max_delay,
-                            settings.base_delay * 2u64.pow(attempt as u32),
-                        ))
+                        // Exponential backoff: base * 2^attempt, with a minimum floor of 2s
+                        // Use saturating_mul to avoid overflow
+                        let effective_base = settings.base_delay.max(1000); // At least 1s base
+                        let backoff = effective_base.saturating_mul(2u64.saturating_pow(attempt as u32));
+                        let capped = std::cmp::min(settings.max_delay.max(10000), backoff);
+                        Duration::from_millis(capped.max(2000)) // Never less than 2s for 429
                     };
 
                     tracing::warn!("Rate limited ({}). Retrying in {:?} (Attempt {})", status, delay, attempt + 1);

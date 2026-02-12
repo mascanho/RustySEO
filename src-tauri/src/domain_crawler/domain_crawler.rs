@@ -184,6 +184,8 @@ pub async fn crawl_domain(
     let js_semaphore = Arc::new(Semaphore::new(js_concurrency));
     // Initialize adaptive delay with base_delay
     let current_atomic_delay = Arc::new(AtomicU64::new(base_delay));
+    // Track when the crawler should pause due to rate limiting (epoch millis)
+    let rate_limit_cooldown_until = Arc::new(AtomicU64::new(0));
 
     let crawl_start_time = Instant::now();
     let mut last_stall_check = Instant::now();
@@ -230,6 +232,20 @@ pub async fn crawl_domain(
                 continue;
             }
 
+            // Check if we're in a rate limit cooldown period
+            let now_epoch_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64;
+            let cooldown_until = rate_limit_cooldown_until.load(Ordering::Relaxed);
+            if now_epoch_ms < cooldown_until {
+                let wait_ms = cooldown_until - now_epoch_ms;
+                tracing::info!("Rate limit cooldown active. Pausing new tasks for {}ms", wait_ms);
+                drop(state_guard);
+                sleep(Duration::from_millis(wait_ms.min(5000))).await;
+                continue;
+            }
+
             if state_guard.queue.is_empty() {
                 if state_guard.is_truly_complete() {
                     break;
@@ -268,6 +284,7 @@ pub async fn crawl_domain(
             let db_tx_clone = db_tx.clone();
             let settings_clone = settings.clone();
             let current_atomic_delay_clone = current_atomic_delay.clone();
+            let rate_limit_cooldown_clone = rate_limit_cooldown_until.clone();
 
             tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
@@ -312,19 +329,26 @@ pub async fn crawl_domain(
                     if adaptive_crawling {
                         let status = crawl_result.status_code;
                         if status == 429 || status == 503 {
-                            // Backoff aggressively
+                            // Backoff aggressively using fetch_max to avoid race conditions
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                            // Double the delay, and add a random jitter of 1-3 seconds
                             let jitter = rand::random_range(1000..3000);
-                            let new_val = (current * 2 + jitter).min(max_delay).max(3000); 
-                            current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
-                            tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms", status, new_val);
+                            let new_val = (current.saturating_mul(2).saturating_add(jitter)).min(max_delay).max(5000); 
+                            // Use fetch_max so concurrent 429s only increase, never decrease
+                            current_atomic_delay_clone.fetch_max(new_val, Ordering::Relaxed);
+                            
+                            // Set a global cooldown to pause new task spawning
+                            let cooldown_ms = new_val.min(30000); // Max 30s cooldown
+                            let cooldown_until = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_millis() as u64 + cooldown_ms;
+                            rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
+                            
+                            tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms and pausing new tasks for {}ms", status, new_val, cooldown_ms);
                         } else if status >= 200 && status < 300 {
-                            // Speed up (decrease delay)
+                            // Speed up (decrease delay) — only decrease by 3% for stability
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                            // Decrease by 5% or 50ms, whichever is larger, but don't go below min
-                            // Slower speedup than slowdown for stability
-                            let decrement = std::cmp::max((current as f32 * 0.05) as u64, 50);
+                            let decrement = std::cmp::max((current as f32 * 0.03) as u64, 25);
                             let new_val = current.saturating_sub(decrement).max(min_crawl_delay);
                             current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
                         }

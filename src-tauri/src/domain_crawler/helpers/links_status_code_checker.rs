@@ -191,16 +191,19 @@ impl DomainTracker {
 
     fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
         let mut delays = self.delays.lock().unwrap();
-        if response.status() == 429 {
-            // Increase delay for this domain
+        if response.status() == 429 || response.status() == 503 {
+            // Increase delay aggressively for this domain
             let current = delays
                 .entry(domain.to_string())
-                .or_insert(Duration::from_millis(self.config.min_delay_ms));
-            *current = (*current * 2).min(Duration::from_secs(5));
+                .or_insert(Duration::from_millis(self.config.min_delay_ms.max(1000)));
+            *current = (*current * 2).min(Duration::from_secs(30));
+            tracing::warn!("Link checker: 429 from {}, increasing per-domain delay to {:?}", domain, *current);
         } else if response.status().is_success() {
-            // Gradually decrease delay for well-behaved domains
+            // Gradually decrease delay — very slowly to avoid re-triggering
             if let Some(delay) = delays.get_mut(domain) {
-                *delay = (*delay / 2).max(Duration::from_millis(self.config.retry_delay_ms));
+                // Only decrease by 25% each time instead of halving
+                let new_delay = Duration::from_millis((delay.as_millis() as u64 * 3) / 4);
+                *delay = new_delay.max(Duration::from_millis(self.config.retry_delay_ms));
             }
         }
     }

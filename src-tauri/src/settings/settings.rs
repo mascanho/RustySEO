@@ -136,8 +136,8 @@ impl Settings {
             // --- Timing & Throttling ---
             adaptive_crawling: true,
             base_delay: 1500,        // Increased from 1000
-            max_delay: 10000,        // Increased from 5000 for better safety
-            min_crawl_delay: 300,    // Increased from 200
+            max_delay: 30000,        // Increased from 10000 — gives adaptive system more room
+            min_crawl_delay: 500,    // Increased from 300
             crawl_timeout: 28800,
             stall_check_interval: 30, // SECONDS
             max_pending_time: 900,    // SECONDS
