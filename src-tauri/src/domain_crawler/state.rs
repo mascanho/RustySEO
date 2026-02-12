@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use url::Url;
 
@@ -52,6 +52,10 @@ pub struct CrawlerState {
     pub active_tasks: usize,           // Track number of currently processing tasks
     pub link_checker: Option<Arc<SharedLinkChecker>>,
     pub last_progress_emit: Instant,   // Track time of last progress emission
+    /// Global URL → HTTP status code registry shared between the crawler and link checker.
+    /// Populated by the crawler after fetching each page; read by the link checker to skip
+    /// redundant HTTP requests for URLs whose status is already known.
+    pub url_status_registry: Arc<RwLock<HashMap<String, u16>>>,
 }
 
 impl CrawlerState {
@@ -69,11 +73,17 @@ impl CrawlerState {
             active_tasks: 0,
             link_checker: None,
             last_progress_emit: Instant::now(),
+            url_status_registry: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     pub fn with_link_checker(mut self, link_checker: Arc<SharedLinkChecker>) -> Self {
         self.link_checker = Some(link_checker);
+        self
+    }
+
+    pub fn with_url_status_registry(mut self, registry: Arc<RwLock<HashMap<String, u16>>>) -> Self {
+        self.url_status_registry = registry;
         self
     }
 

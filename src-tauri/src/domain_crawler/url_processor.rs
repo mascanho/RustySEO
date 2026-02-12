@@ -57,6 +57,13 @@ pub async fn process_url(
     settings: &Settings,
     js_semaphore: Arc<Semaphore>,
 ) -> Result<DomainCrawlResults, String> {
+    // Grab the global URL status registry early so we can record our results later.
+    // This brief lock just clones the Arc, then drops the state lock immediately.
+    let url_status_registry = {
+        let state_guard = state.lock().await;
+        state_guard.url_status_registry.clone()
+    };
+
     let mut current_url = url.clone();
     let mut redirect_chain = Vec::new();
     let mut redirect_count = 0;
@@ -238,6 +245,17 @@ pub async fn process_url(
             "Blocked/Rate Limited (1015) by server for {}. Try lowering concurrency.",
             url
         ));
+    }
+
+    // Register all URL status codes from this crawl into the global registry.
+    // This includes every redirect hop and the final URL, so the link checker
+    // can resolve these instantly without any HTTP requests.
+    // Note: blocked/fake-200 pages are NOT registered (we returned Err above),
+    // so the link checker will re-check them normally.
+    if let Ok(mut reg) = url_status_registry.write() {
+        for hop in &redirect_chain {
+            reg.insert(hop.url.clone(), hop.status_code);
+        }
     }
 
     // If Javascript Rendering is enabled and content is HTML, re-fetch via Headless Chrome

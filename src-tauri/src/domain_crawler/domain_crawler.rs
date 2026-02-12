@@ -7,8 +7,9 @@
 use rand::seq::IndexedRandom;
 use rand::Rng;
 use reqwest::Client;
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
@@ -167,9 +168,20 @@ pub async fn crawl_domain(
         None
     };
 
-    let link_checker = Arc::new(SharedLinkChecker::new(&settings, Some(selected_user_agent.clone())));
+    // Create the global URL status registry — shared between the crawler and the link checker
+    // so that URLs already crawled are never re-requested during link checking.
+    let url_status_registry: Arc<RwLock<HashMap<String, u16>>> =
+        Arc::new(RwLock::new(HashMap::new()));
+
+    let link_checker = Arc::new(SharedLinkChecker::new(
+        &settings,
+        Some(selected_user_agent.clone()),
+        url_status_registry.clone(),
+    ));
     let state = Arc::new(Mutex::new(
-        CrawlerState::new(None).with_link_checker(link_checker.clone()),
+        CrawlerState::new(None)
+            .with_link_checker(link_checker.clone())
+            .with_url_status_registry(url_status_registry),
     )); // DB is handled separately
     {
         let mut state_guard = state.lock().await;
