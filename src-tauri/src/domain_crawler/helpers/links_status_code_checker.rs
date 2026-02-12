@@ -12,7 +12,7 @@ use reqwest::{
     Client, Url,
 };
 use serde::{Deserialize, Serialize};
-use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::{Mutex, Notify, Semaphore};
 use tokio::task::{JoinError, JoinHandle};
 use tokio::time::{sleep, timeout};
 
@@ -67,6 +67,9 @@ pub struct SharedLinkChecker {
     pub config: LinkCheckConfig,
     /// Global cache of link statuses: URL -> (StatusCode, Error)
     status_cache: Arc<Mutex<HashMap<String, (Option<u16>, Option<String>)>>>,
+    /// Tracks URLs that are currently being fetched, so other tasks can wait
+    /// instead of firing duplicate HTTP requests
+    in_flight: Arc<Mutex<HashMap<String, Arc<Notify>>>>,
 }
 
 impl SharedLinkChecker {
@@ -79,6 +82,7 @@ impl SharedLinkChecker {
             semaphore: Arc::new(Semaphore::new(config.concurrent_requests)),
             config,
             status_cache: Arc::new(Mutex::new(HashMap::new())),
+            in_flight: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -109,6 +113,7 @@ impl SharedLinkChecker {
                     let domain_tracker = self.domain_tracker.clone();
                     let config = self.config.clone();
                     let status_cache = self.status_cache.clone();
+                    let in_flight = self.in_flight.clone();
 
                     async move {
                         process_single_link(
@@ -126,6 +131,7 @@ impl SharedLinkChecker {
                             is_internal,
                             config,
                             status_cache,
+                            in_flight,
                         )
                         .await
                     }
@@ -325,6 +331,7 @@ async fn process_single_link(
     is_internal: bool,
     config: LinkCheckConfig,
     status_cache: Arc<Mutex<HashMap<String, (Option<u16>, Option<String>)>>>,
+    in_flight: Arc<Mutex<HashMap<String, Arc<Notify>>>>,
 ) -> Option<(LinkStatus, bool)> {
     let full_url = match if is_internal {
         base_url.join(&link)
@@ -374,8 +381,65 @@ async fn process_single_link(
         ));
     }
 
+    // Check if another task is already fetching this URL (in-flight deduplication)
+    // If so, wait for it to finish and use the cached result instead of making a duplicate request
+    let maybe_notify = {
+        let mut flight_map = in_flight.lock().await;
+        if let Some(notify) = flight_map.get(&full_url_str) {
+            // Another task is already fetching this URL — grab its Notify handle
+            Some(notify.clone())
+        } else {
+            // We're the first — mark this URL as in-flight
+            flight_map.insert(full_url_str.clone(), Arc::new(Notify::new()));
+            None
+        }
+    };
+
+    // If another task is fetching, wait for it and return the cached result
+    if let Some(notify) = maybe_notify {
+        // Wait for the fetching task to signal completion (with a timeout to avoid deadlocks)
+        tokio::select! {
+            _ = notify.notified() => {},
+            _ = sleep(Duration::from_secs(config.request_timeout_secs + 5)) => {
+                tracing::warn!("Timed out waiting for in-flight fetch of {}", full_url_str);
+            },
+        }
+
+        // Re-check cache — the other task should have populated it
+        let cached_result = {
+            let cache = status_cache.lock().await;
+            cache.get(&full_url_str).cloned()
+        };
+
+        if let Some((status, error)) = cached_result {
+            return Some((
+                LinkStatus {
+                    base_url: (*base_url).clone(),
+                    url: full_url_str,
+                    relative_path,
+                    status,
+                    error,
+                    anchor_text,
+                    rel,
+                    title,
+                    target,
+                },
+                is_internal,
+            ));
+        }
+        // If somehow cache is still empty (shouldn't happen), fall through to fetch
+    }
+
     // Check if we should throttle this domain
     if domain_tracker.should_throttle(&domain) {
+        // Clean up in-flight entry and notify waiters
+        let notify = {
+            let mut flight_map = in_flight.lock().await;
+            flight_map.remove(&full_url_str)
+        };
+        if let Some(n) = notify {
+            n.notify_waiters();
+        }
         return Some((
             LinkStatus {
                 base_url: (*base_url).clone(),
@@ -415,6 +479,15 @@ async fn process_single_link(
     {
         let mut cache = status_cache.lock().await;
         cache.insert(full_url_str.clone(), (result.status, result.error.clone()));
+    }
+
+    // Remove from in-flight and notify all waiting tasks
+    let notify = {
+        let mut flight_map = in_flight.lock().await;
+        flight_map.remove(&full_url_str)
+    };
+    if let Some(n) = notify {
+        n.notify_waiters();
     }
 
     domain_tracker.record_request(&domain);
