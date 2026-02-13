@@ -59,25 +59,33 @@ export function CompressionStats({ images }: CompressionStatsProps) {
       value: formatSize(totalSaved),
       sub: "Storage Saved",
       icon: Zap,
-      color: "text-sky-500",
-      bg: "bg-sky-500/10",
+      color: "text-brand-bright",
+      bg: "bg-brand-bright/10",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 gap-3 ">
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-4 group hover:border-sky-500 transition-all duration-300"
+          className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-4 group hover:border-brand-bright transition-all duration-300"
         >
-          <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}>
+          <div
+            className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}
+          >
             <stat.icon className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{stat.label}</p>
-            <h4 className="text-base font-black dark:text-white leading-none mb-1">{stat.value}</h4>
-            <p className="text-[9px] font-bold text-slate-400 italic">{stat.sub}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+              {stat.label}
+            </p>
+            <h4 className="text-base font-black dark:text-white leading-none mb-1">
+              {stat.value}
+            </h4>
+            <p className="text-[9px] font-bold text-slate-400 italic">
+              {stat.sub}
+            </p>
           </div>
         </div>
       ))}

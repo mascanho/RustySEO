@@ -71,7 +71,6 @@ export function SettingsPanel({
   onProcessImages,
   isEmbedded = false,
 }: SettingsPanelProps) {
-
   const applyPreset = (presetKey: keyof typeof PRESETS) => {
     const preset = PRESETS[presetKey];
     setResizeSettings((prev) => ({
@@ -117,7 +116,7 @@ export function SettingsPanel({
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black dark:text-white flex items-center gap-2 uppercase tracking-tight">
               <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5">
-                <Settings className="w-4 h-4 text-sky-500" />
+                <Settings className="w-4 h-4 text-brand-bright" />
               </div>
               Engine Config
             </h2>
@@ -126,7 +125,6 @@ export function SettingsPanel({
       )}
 
       <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-brand-darker">
-
         <div
           className={`flex-1 ${isEmbedded ? "" : ""} overflow-y-auto min-h-0 p-3 pt-4 space-y-4 custom-scrollbar`}
         >
@@ -134,7 +132,7 @@ export function SettingsPanel({
           <div className="space-y-3">
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-bright" />
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Global Presets
                 </label>
@@ -142,29 +140,27 @@ export function SettingsPanel({
               <div className="grid grid-cols-1 gap-1.5">
                 {Object.entries(PRESETS).map(([key, preset]) => {
                   const IconComponent = preset.icon;
-                  const isActive = isPresetActive(
-                    key as keyof typeof PRESETS,
-                  );
+                  const isActive = isPresetActive(key as keyof typeof PRESETS);
                   return (
                     <button
                       key={key}
                       onClick={() => applyPreset(key as keyof typeof PRESETS)}
                       disabled={processing}
                       className={`group relative flex items-center gap-3 p-2 rounded-xl transition-all duration-300 border text-left ${isActive
-                        ? "bg-sky-500 border-sky-600 shadow-lg shadow-sky-500/20"
-                        : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/5 hover:border-sky-300"
+                          ? "bg-brand-bright border-brand-bright shadow-lg shadow-brand-bright/20"
+                          : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/5 hover:border-brand-bright/80"
                         }`}
                     >
                       <div
                         className={`p-1.5 rounded-lg transition-colors ${isActive
-                          ? "bg-white/20"
-                          : "bg-white dark:bg-brand-dark group-hover:bg-sky-50 border border-slate-100 dark:border-white/5"
+                            ? "bg-white/20"
+                            : "bg-white dark:bg-brand-dark group-hover:bg-brand-bright/10 border border-slate-100 dark:border-white/5"
                           }`}
                       >
                         <IconComponent
                           className={`w-3.5 h-3.5 ${isActive
-                            ? "text-white"
-                            : "text-slate-400 group-hover:text-sky-500"
+                              ? "text-white"
+                              : "text-slate-400 group-hover:text-brand-bright"
                             }`}
                         />
                       </div>
@@ -203,14 +199,12 @@ export function SettingsPanel({
                     <button
                       key={key}
                       onClick={() =>
-                        applyQualityPreset(
-                          key as keyof typeof QUALITY_PRESETS,
-                        )
+                        applyQualityPreset(key as keyof typeof QUALITY_PRESETS)
                       }
                       disabled={processing}
                       className={`px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${isActive
-                        ? "bg-brand-bright border-sky-600 text-white shadow-md font-black"
-                        : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 hover:border-sky-300 dark:text-slate-400"
+                          ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
+                          : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 hover:border-brand-bright/80 dark:text-slate-400"
                         }`}
                     >
                       {preset.name}
@@ -224,7 +218,7 @@ export function SettingsPanel({
           {/* CUSTOM SETTINGS SECTION */}
           <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-white/5">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-3.5 h-3.5 text-sky-500" />
+              <Zap className="w-3.5 h-3.5 text-brand-bright" />
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Custom Parameters
               </label>
@@ -245,7 +239,7 @@ export function SettingsPanel({
                     }))
                   }
                   disabled={processing}
-                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-brand-bright outline-none text-xs dark:text-white transition-all shadow-inner"
                 />
               </div>
               <div className="space-y-1">
@@ -262,7 +256,38 @@ export function SettingsPanel({
                     }))
                   }
                   disabled={processing}
-                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-brand-bright outline-none text-xs dark:text-white transition-all shadow-inner"
+                />
+              </div>
+            </div>
+
+            <div
+              onClick={() =>
+                !processing &&
+                setResizeSettings((prev) => ({
+                  ...prev,
+                  maintainAspectRatio: !prev.maintainAspectRatio,
+                }))
+              }
+              className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 cursor-pointer hover:border-brand-bright transition-all group shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Smartphone
+                  className={`w-3.5 h-3.5 ${resizeSettings.maintainAspectRatio ? "text-brand-bright" : "text-slate-400"}`}
+                />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Lock Aspect
+                </span>
+              </div>
+              <div
+                className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${resizeSettings.maintainAspectRatio
+                    ? "bg-brand-bright"
+                    : "bg-slate-300 dark:bg-white/20"
+                  }`}
+              >
+                <div
+                  className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${resizeSettings.maintainAspectRatio ? "left-4.5" : "left-0.5"
+                    }`}
                 />
               </div>
             </div>
@@ -272,7 +297,7 @@ export function SettingsPanel({
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Quality
                 </label>
-                <span className="text-xs font-black text-sky-500">
+                <span className="text-xs font-black text-brand-bright">
                   {resizeSettings.quality}%
                 </span>
               </div>
@@ -288,7 +313,7 @@ export function SettingsPanel({
                   }))
                 }
                 disabled={processing}
-                className="w-full accent-sky-500 h-2 bg-slate-200 dark:bg-white/10 rounded-full appearance-none cursor-pointer"
+                className="w-full accent-brand-bright h-2 bg-slate-200 dark:bg-white/10 rounded-full appearance-none cursor-pointer"
               />
             </div>
 
@@ -305,8 +330,8 @@ export function SettingsPanel({
                     }
                     disabled={processing}
                     className={`py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${resizeSettings.format === fmt
-                      ? "bg-white dark:bg-brand-dark text-sky-500 shadow-md border border-slate-100 dark:border-white/5"
-                      : "text-slate-400 hover:text-white"
+                        ? "bg-white dark:bg-brand-dark text-brand-bright shadow-md border border-slate-100 dark:border-white/5"
+                        : "text-slate-400 hover:text-white"
                       }`}
                   >
                     {fmt}
@@ -314,41 +339,7 @@ export function SettingsPanel({
                 ))}
               </div>
             </div>
-
-            <div
-              onClick={() =>
-                !processing &&
-                setResizeSettings((prev) => ({
-                  ...prev,
-                  maintainAspectRatio: !prev.maintainAspectRatio,
-                }))
-              }
-              className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 cursor-pointer hover:border-sky-500 transition-all group shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <Smartphone
-                  className={`w-3.5 h-3.5 ${resizeSettings.maintainAspectRatio ? "text-sky-500" : "text-slate-400"}`}
-                />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Lock Aspect
-                </span>
-              </div>
-              <div
-                className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${resizeSettings.maintainAspectRatio
-                  ? "bg-sky-500"
-                  : "bg-slate-300 dark:bg-white/20"
-                  }`}
-              >
-                <div
-                  className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${resizeSettings.maintainAspectRatio
-                    ? "left-4.5"
-                    : "left-0.5"
-                    }`}
-                />
-              </div>
-            </div>
           </div>
-
         </div>
 
         <div className="p-4 pt-2 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
@@ -356,8 +347,8 @@ export function SettingsPanel({
             onClick={onProcessImages}
             disabled={images.length === 0 || processing}
             className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${images.length === 0 || processing
-              ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
-              : "bg-sky-500 text-white hover:bg-sky-600 hover:shadow-sky-500/40 active:scale-[0.98] border border-sky-600"
+                ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
+                : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border border-brand-bright"
               }`}
           >
             {processing ? (

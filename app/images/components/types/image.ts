@@ -1,6 +1,7 @@
 export interface ImageFile {
   id: string;
   file: File;
+  path?: string;
   preview: string;
   originalSize: number;
   processedSize?: number;

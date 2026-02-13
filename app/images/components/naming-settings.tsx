@@ -50,7 +50,7 @@ export function NamingSettings({
                     }
                     disabled={processing}
                     placeholder="resized_{name}"
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 shadow-inner"
+                    className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright shadow-inner"
                 />
             </div>
 
@@ -65,8 +65,8 @@ export function NamingSettings({
                             }))
                         }
                         className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${resizeSettings.addPrefix
-                                ? "bg-sky-500 border-sky-600 text-white shadow-md font-black"
-                                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                            ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
+                            : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
                             }`}
                     >
                         Prefix
@@ -85,7 +85,7 @@ export function NamingSettings({
                             }
                             disabled={processing}
                             placeholder="prefix"
-                            className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 font-bold"
+                            className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright font-bold"
                         />
                     )}
                 </div>
@@ -99,8 +99,8 @@ export function NamingSettings({
                             }))
                         }
                         className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${resizeSettings.addSuffix
-                                ? "bg-sky-500 border-sky-600 text-white shadow-md font-black"
-                                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                            ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
+                            : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
                             }`}
                     >
                         Suffix
@@ -119,14 +119,14 @@ export function NamingSettings({
                             }
                             disabled={processing}
                             placeholder="suffix"
-                            className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-sky-500 font-bold"
+                            className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright font-bold"
                         />
                     )}
                 </div>
             </div>
 
-            <div className="p-4 bg-sky-500/10 rounded-xl border border-sky-500/20">
-                <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">
+            <div className="p-4 bg-brand-bright/10 rounded-xl border border-brand-bright/20">
+                <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">
                     Preview
                 </p>
                 <p className="text-[11px] font-bold dark:text-white truncate">

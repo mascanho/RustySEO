@@ -6,12 +6,13 @@ import { ImageIcon } from "lucide-react";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+import { invoke } from "@tauri-apps/api/core";
 import { FileUpload } from "./components/file-upload";
 import { SettingsPanel } from "./components/settings-panel";
 import { CompressionStats } from "./components/compression-stats";
 import { BatchDownload } from "./components/batch-download";
 import { PreviewModal } from "./components/preview-modal";
-import { ThemeToggle } from "./components/theme-toggle";
+import { ThemeToggle } from "./components/theme-toggle"; // Keeping import but unused in render
 import { NamingSettings } from "./components/naming-settings";
 import type { ImageFile, ResizeSettings } from "./components/types/image";
 
@@ -79,36 +80,26 @@ export default function ImageResizerApp() {
       setImages([...updatedImages]);
 
       try {
-        const response = await fetch(img.preview);
-        const blob = await response.blob();
-        const bitmap = await createImageBitmap(blob);
-
-        let targetWidth = resizeSettings.width;
-        let targetHeight = resizeSettings.height;
-
-        if (resizeSettings.maintainAspectRatio) {
-          const ratio = Math.min(
-            resizeSettings.width / bitmap.width,
-            resizeSettings.height / bitmap.height,
-          );
-          targetWidth = Math.round(bitmap.width * ratio);
-          targetHeight = Math.round(bitmap.height * ratio);
+        let imageData: number[] | undefined;
+        if (!img.path) {
+          const arrayBuffer = await img.file.arrayBuffer();
+          imageData = Array.from(new Uint8Array(arrayBuffer));
         }
 
-        const canvas = document.createElement("canvas");
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas context failed");
-
-        ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-
-        const quality = resizeSettings.quality / 100;
-        const mimeType = `image/${resizeSettings.format === "jpeg" ? "jpeg" : resizeSettings.format}`;
-
-        const processedBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), mimeType, quality);
+        const resultBytes = await invoke<number[]>("process_single_image", {
+          imageData,
+          path: img.path,
+          width: resizeSettings.width,
+          height: resizeSettings.height,
+          quality: resizeSettings.quality,
+          format: resizeSettings.format,
+          maintainAspectRatio: resizeSettings.maintainAspectRatio,
         });
+
+        const u8Array = new Uint8Array(resultBytes);
+        const mimeType = `image/${resizeSettings.format === "jpeg" ? "jpeg" : resizeSettings.format}`;
+        const processedBlob = new Blob([u8Array], { type: mimeType });
+        const bitmap = await createImageBitmap(processedBlob);
 
         updatedImages[i] = {
           ...img,
@@ -116,7 +107,7 @@ export default function ImageResizerApp() {
           progress: 100,
           processedSize: processedBlob.size,
           processedBlob: processedBlob,
-          processedDimensions: { width: targetWidth, height: targetHeight },
+          processedDimensions: { width: bitmap.width, height: bitmap.height },
         };
       } catch (error) {
         console.error("Processing failed for", img.file.name, error);
@@ -124,7 +115,7 @@ export default function ImageResizerApp() {
           ...img,
           status: "error",
           progress: 0,
-          errorMessage: error.message,
+          errorMessage: String(error),
         };
       }
 
@@ -155,8 +146,6 @@ export default function ImageResizerApp() {
 
       {/* LEFT SIDEBAR: CONFIGURATION */}
       <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-
-
         <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50 dark:bg-brand-dark">
           <SettingsPanel
             resizeSettings={resizeSettings}
@@ -199,21 +188,21 @@ export default function ImageResizerApp() {
       {/* RIGHT SIDEBAR: EXECUTION & STATUS */}
       <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
         <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center gap-3 bg-white dark:bg-brand-darker">
-          <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+          <div className="w-1.5 h-1.5 rounded-full bg-brand-bright" />
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
             Global Output Channel
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-slate-50 dark:bg-brand-dark">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-slate-50 dark:bg-brand-darker">
           {/* Progress Monitor */}
           {processing && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
+                <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
                 <div className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest italic">
+                    <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
                       Live Processing
                     </p>
                     <span className="text-xs font-black dark:text-white">
@@ -222,7 +211,7 @@ export default function ImageResizerApp() {
                   </div>
                   <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                     <div
-                      className="absolute top-0 left-0 h-full bg-sky-500 transition-all duration-500 ease-out"
+                      className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-500 ease-out"
                       style={{ width: `${overallProgress}%` }}
                     >
                       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
@@ -234,7 +223,7 @@ export default function ImageResizerApp() {
           )}
 
           {/* Metrics Section */}
-          <div className="space-y-3">
+          <div className="space-y-3 dark:bg-brand-darke">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
               Optimization Metrics
             </h3>

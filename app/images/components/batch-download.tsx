@@ -155,8 +155,8 @@ export function BatchDownload({
             onClick={toggleAllSelection}
             disabled={downloadingZip}
             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${completedImages.every((img) => img.selected)
-                ? "bg-sky-500 border-sky-600 text-white shadow-lg shadow-sky-500/20"
-                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
+              ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
+              : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
               }`}
           >
             {completedImages.every((img) => img.selected) ? (
@@ -177,13 +177,13 @@ export function BatchDownload({
       {/* Compile Progress */}
       {downloadingZip && (
         <div className="space-y-2 animate-in fade-in zoom-in duration-300 p-2">
-          <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-sky-500 italic">
+          <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-brand-bright italic">
             <span>Compiling Bundle</span>
             <span>{Math.round(zipProgress)}%</span>
           </div>
           <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden border border-slate-300 dark:border-white/10">
             <div
-              className="h-full bg-sky-500 transition-all duration-300"
+              className="h-full bg-brand-bright transition-all duration-300"
               style={{ width: `${zipProgress}%` }}
             />
           </div>
@@ -195,8 +195,8 @@ export function BatchDownload({
         onClick={downloadSelectedImages}
         disabled={selectedImages.length === 0 || downloadingZip}
         className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest text-xs relative overflow-hidden group shadow-xl ${selectedImages.length === 0 || downloadingZip
-            ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
-            : "bg-sky-500 text-white hover:bg-sky-600 hover:scale-[1.02] active:scale-[0.98] shadow-sky-500/40 border border-sky-600"
+          ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
+          : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:scale-[1.02] active:scale-[0.98] shadow-brand-bright/40 border border-brand-bright"
           }`}
       >
         {downloadingZip ? (

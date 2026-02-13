@@ -44,7 +44,7 @@ export function PreviewModal({
         {/* Modal Header */}
         <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-black/60">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-sky-500">
+            <div className="p-2 rounded-lg bg-brand-bright">
               <ArrowLeftRight className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-black dark:text-white truncate max-w-md uppercase tracking-tight">
@@ -75,8 +75,8 @@ export function PreviewModal({
                       key={tab.id}
                       onClick={() => setPreviewMode(tab.id)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl border ${previewMode === tab.id
-                          ? "bg-white dark:bg-brand-dark text-sky-500 shadow-xl border-slate-100 dark:border-white/10"
-                          : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
+                        ? "bg-white dark:bg-brand-dark text-brand-bright shadow-xl border-slate-100 dark:border-white/10"
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
                         }`}
                     >
                       {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
@@ -109,21 +109,21 @@ export function PreviewModal({
                     </div>
 
                     <div className="space-y-4">
-                      <p className="text-[10px] font-black text-sky-500 uppercase tracking-[0.2em] text-center italic">Optimized Target</p>
-                      <div className="aspect-video bg-sky-500/5 dark:bg-sky-500/10 rounded-3xl overflow-hidden border border-sky-200 dark:border-sky-500/20 flex items-center justify-center p-6 shadow-inner">
+                      <p className="text-[10px] font-black text-brand-bright uppercase tracking-[0.2em] text-center italic">Optimized Target</p>
+                      <div className="aspect-video bg-brand-bright/5 dark:bg-brand-bright/10 rounded-3xl overflow-hidden border border-brand-bright/20 dark:border-brand-bright/20 flex items-center justify-center p-6 shadow-inner">
                         <img
                           src={processedUrl}
                           alt="Processed"
                           className="max-w-full max-h-full object-contain shadow-2xl rounded-xl border border-white/10"
                         />
                       </div>
-                      <div className="p-5 bg-sky-500/10 rounded-2xl flex justify-around border border-sky-500/20 shadow-sm shadow-sky-500/5">
+                      <div className="p-5 bg-brand-bright/10 rounded-2xl flex justify-around border border-brand-bright/20 shadow-sm shadow-brand-bright/5">
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">New Mass</p>
+                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">New Mass</p>
                           <p className="text-sm font-black dark:text-white">{formatFileSize(previewImage.processedSize || 0)}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Resolution</p>
+                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">Resolution</p>
                           <p className="text-sm font-black dark:text-white">{previewImage.processedDimensions?.width}×{previewImage.processedDimensions?.height}</p>
                         </div>
                       </div>
@@ -193,7 +193,7 @@ export function PreviewModal({
           <div className="p-6 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/60 flex justify-end">
             <button
               onClick={() => onDownload(previewImage)}
-              className="h-14 px-10 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-3 transition-all shadow-xl shadow-sky-500/40 active:scale-[0.98] border border-sky-600"
+              className="h-14 px-10 bg-brand-bright hover:bg-brand-bright/90 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-3 transition-all shadow-xl shadow-brand-bright/40 active:scale-[0.98] border border-brand-bright"
             >
               <Download className="w-5 h-5" />
               Export Optimised Asset
