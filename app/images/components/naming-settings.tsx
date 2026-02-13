@@ -1,4 +1,5 @@
 import React from "react";
+import { Type, FileText, Hash, Percent, Image } from "lucide-react";
 import type { ResizeSettings } from "./types/image";
 
 interface NamingSettingsProps {
@@ -6,6 +7,34 @@ interface NamingSettingsProps {
   setResizeSettings: React.Dispatch<React.SetStateAction<ResizeSettings>>;
   processing: boolean;
 }
+
+const TOKEN_TOKENS = [
+  {
+    token: "{name}",
+    label: "Name",
+    icon: FileText,
+    description: "Original filename",
+  },
+  { token: "{width}", label: "Width", icon: Hash, description: "Target width" },
+  {
+    token: "{height}",
+    label: "Height",
+    icon: Hash,
+    description: "Target height",
+  },
+  {
+    token: "{quality}",
+    label: "Quality",
+    icon: Percent,
+    description: "Quality setting",
+  },
+  {
+    token: "{format}",
+    label: "Format",
+    icon: Image,
+    description: "Output format",
+  },
+];
 
 export function NamingSettings({
   resizeSettings,
@@ -35,27 +64,74 @@ export function NamingSettings({
     return `${fileName}.${settings.format}`;
   };
 
+  const insertToken = (token: string) => {
+    setResizeSettings((prev) => ({
+      ...prev,
+      fileNamePattern: prev.fileNamePattern + token,
+    }));
+  };
+
+  const clearPattern = () => {
+    setResizeSettings((prev) => ({
+      ...prev,
+      fileNamePattern: "{name}",
+    }));
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="space-y-3">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-          Pattern
-        </label>
-        <input
-          value={resizeSettings.fileNamePattern}
-          onChange={(e) =>
-            setResizeSettings((prev) => ({
-              ...prev,
-              fileNamePattern: e.target.value,
-            }))
-          }
-          disabled={processing}
-          placeholder="resized_{name}"
-          className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright shadow-inner"
-        />
+    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Pattern
+          </label>
+          <button
+            onClick={clearPattern}
+            disabled={processing}
+            className="text-[9px] font-bold text-slate-400 hover:text-rose-500 transition-colors uppercase tracking-wider"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <Type className="w-4 h-4" />
+          </div>
+          <input
+            value={resizeSettings.fileNamePattern}
+            onChange={(e) =>
+              setResizeSettings((prev) => ({
+                ...prev,
+                fileNamePattern: e.target.value,
+              }))
+            }
+            disabled={processing}
+            placeholder="{name}"
+            className="w-full h-10 pl-10 pr-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-mono text-xs dark:text-white outline-none focus:ring-2 focus:ring-brand-bright focus:border-transparent shadow-inner transition-all"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+          Insert Token
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {TOKEN_TOKENS.map(({ token, label, icon: Icon }) => (
+            <button
+              key={token}
+              onClick={() => insertToken(token)}
+              disabled={processing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-brand-bright/10 hover:border-brand-bright/30 hover:text-brand-bright transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Icon className="w-3 h-3" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <button
             onClick={() =>
@@ -67,13 +143,17 @@ export function NamingSettings({
             }
             className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${
               resizeSettings.addPrefix
-                ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
-                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                ? "bg-brand-bright border-brand-bright text-white shadow-md"
+                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400 hover:border-brand-bright/50"
             }`}
           >
-            Prefix
+            <span>Prefix</span>
             <div
-              className={`w-2.5 h-2.5 rounded-sm border ${resizeSettings.addPrefix ? "bg-white border-white" : "border-slate-300"}`}
+              className={`w-2.5 h-2.5 rounded-sm border transition-all ${
+                resizeSettings.addPrefix
+                  ? "bg-white border-white"
+                  : "border-slate-300 dark:border-slate-600"
+              }`}
             />
           </button>
           {resizeSettings.addPrefix && (
@@ -86,8 +166,8 @@ export function NamingSettings({
                 }))
               }
               disabled={processing}
-              placeholder="prefix"
-              className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright font-bold"
+              placeholder="myprefix"
+              className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-2 focus:ring-brand-bright focus:border-transparent font-mono"
             />
           )}
         </div>
@@ -102,13 +182,17 @@ export function NamingSettings({
             }
             className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${
               resizeSettings.addSuffix
-                ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
-                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400"
+                ? "bg-brand-bright border-brand-bright text-white shadow-md"
+                : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 text-slate-400 hover:border-brand-bright/50"
             }`}
           >
-            Suffix
+            <span>Suffix</span>
             <div
-              className={`w-2.5 h-2.5 rounded-sm border ${resizeSettings.addSuffix ? "bg-white border-white" : "border-slate-300"}`}
+              className={`w-2.5 h-2.5 rounded-sm border transition-all ${
+                resizeSettings.addSuffix
+                  ? "bg-white border-white"
+                  : "border-slate-300 dark:border-slate-600"
+              }`}
             />
           </button>
           {resizeSettings.addSuffix && (
@@ -121,19 +205,22 @@ export function NamingSettings({
                 }))
               }
               disabled={processing}
-              placeholder="suffix"
-              className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-1 focus:ring-brand-bright font-bold"
+              placeholder="resized"
+              className="w-full h-9 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-lg text-xs dark:text-white outline-none focus:ring-2 focus:ring-brand-bright focus:border-transparent font-mono"
             />
           )}
         </div>
       </div>
 
-      <div className="p-4 bg-brand-bright/10 rounded-xl border border-brand-bright/20">
-        <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">
-          Preview
-        </p>
-        <p className="text-[11px] font-bold dark:text-white truncate">
-          {generateFileName("asset.jpg", resizeSettings)}
+      <div className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-brand-bright animate-pulse" />
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            Preview
+          </p>
+        </div>
+        <p className="text-[11px] font-mono dark:text-white break-all leading-relaxed">
+          {generateFileName("photo.jpg", resizeSettings)}
         </p>
       </div>
     </div>

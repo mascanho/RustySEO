@@ -246,7 +246,7 @@ export function FileUpload({
 
       <div className="space-y-6 mx-4 ">
         <div
-          className={`relative ${images.length > 0 ? "h-32" : "h-64"} border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 group ${
+          className={`relative ${images.length > 0 ? "h-32" : "h-[calc(100vh-280px)]"} border-2 border-dashed rounded-2xl p-4 text-center transition-all max-h-[calc(100vh-280px)] mr-2 duration-300 group ${
             dragActive
               ? "border-brand-bright bg-brand-bright/10 dark:bg-brand-bright/5 scale-[0.99]"
               : "border-slate-200 dark:border-white/10 hover:border-brand-bright dark:hover:border-brand-bright/50 hover:bg-slate-50 dark:hover:bg-white/5"

@@ -224,14 +224,24 @@ interface BatchDownloadButtonProps {
   selectedImages: ImageFile[];
   downloadingZip: boolean;
   downloadSelectedImages: () => void;
+  processing: boolean;
 }
 
 export function BatchDownloadButton({
   selectedImages,
   downloadingZip,
   downloadSelectedImages,
+  processing,
 }: BatchDownloadButtonProps) {
-  const isDisabled = selectedImages.length === 0 || downloadingZip;
+  const isDisabled =
+    selectedImages.length === 0 || downloadingZip || processing;
+
+  const buttonText = () => {
+    if (processing) return "Processing...";
+    if (downloadingZip) return "Building ZIP...";
+    if (selectedImages.length === 0) return "No Selection";
+    return selectedImages.length > 1 ? "Download Bundle" : "Download Asset";
+  };
 
   return (
     <button
@@ -243,19 +253,17 @@ export function BatchDownloadButton({
           : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border-brand-bright"
       }`}
     >
-      {downloadingZip ? (
+      {processing || downloadingZip ? (
         <>
           <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          <span>Building ZIP...</span>
+          <span>{buttonText()}</span>
         </>
       ) : (
         <>
           <Download
             className={`w-3.5 h-3.5 ${!isDisabled ? "group-hover:animate-bounce" : ""}`}
           />
-          <span>
-            {selectedImages.length > 1 ? "Download Bundle" : "Download Asset"}
-          </span>
+          <span>{buttonText()}</span>
         </>
       )}
     </button>
@@ -286,6 +294,7 @@ export function BatchDownload(props: any) {
         selectedImages={selectedImages}
         downloadingZip={downloadingZip}
         downloadSelectedImages={downloadSelectedImages}
+        processing={false}
       />
     </div>
   );

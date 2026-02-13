@@ -138,7 +138,7 @@ export default function ImageResizerApp() {
     }
 
     setProcessing(false);
-    toast.success("Batch processing complete!");
+    toast.success("Processing complete!");
   };
 
   const handlePreview = (image: ImageFile) => {
@@ -264,6 +264,7 @@ export default function ImageResizerApp() {
               selectedImages={selectedImages}
               downloadingZip={downloadingZip}
               downloadSelectedImages={downloadSelectedImages}
+              processing={processing}
             />
           </div>
         </div>
