@@ -153,6 +153,17 @@ export default function ImageResizerApp() {
     );
   };
 
+  const handleTerminate = () => {
+    setImages((prevImages) => {
+      prevImages.forEach((img) => {
+        if (img.preview) URL.revokeObjectURL(img.preview);
+      });
+      return [];
+    });
+    setProcessing(false);
+    setOverallProgress(0);
+  };
+
   return (
     <div className="flex h-[calc(100vh-5.8rem)] bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden rounded-xl border border-slate-200 dark:border-white/5 shadow-2xl">
       {/* Background Decorative Elements Removed for solid look */}
@@ -167,6 +178,7 @@ export default function ImageResizerApp() {
             processing={processing}
             onProcessImages={processImages}
             isEmbedded={true}
+            onTerminate={handleTerminate}
           />
         </div>
       </aside>
@@ -181,6 +193,7 @@ export default function ImageResizerApp() {
             onPreview={handlePreview}
             onDownload={handleDownload}
             onToggleSelection={handleToggleSelection}
+            onTerminate={handleTerminate}
           />
         </div>
 

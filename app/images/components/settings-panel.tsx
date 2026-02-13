@@ -78,6 +78,7 @@ interface SettingsPanelProps {
   processing: boolean;
   onProcessImages: () => void;
   isEmbedded?: boolean;
+  onTerminate?: () => void;
 }
 
 export function SettingsPanel({
@@ -87,6 +88,7 @@ export function SettingsPanel({
   processing,
   onProcessImages,
   isEmbedded = false,
+  onTerminate,
 }: SettingsPanelProps) {
   const applyPreset = (presetKey: keyof typeof PRESETS) => {
     const preset = PRESETS[presetKey];

@@ -15,6 +15,7 @@ interface FileUploadProps {
   onPreview: (image: ImageFile) => void;
   onDownload: (image: ImageFile) => void;
   onToggleSelection: (id: string) => void;
+  onTerminate?: () => void;
 }
 
 export function FileUpload({
@@ -24,16 +25,17 @@ export function FileUpload({
   onPreview,
   onDownload,
   onToggleSelection,
+  onTerminate,
 }: FileUploadProps) {
   const [dragActive, setDragActive] = React.useState(false);
 
   const addImages = useCallback(
     (items: { file: File; path?: string }[]) => {
       const newImages: ImageFile[] = items.map(({ file, path }) => ({
-        id: Math.random().toString(36).substr(2, 9),
+        id: `${file.name}-${file.size}-${Math.random().toString(36).substr(2, 9)}`,
         file,
         path,
-        preview: URL.createObjectURL(file), // Works for memory-backed Files too
+        preview: URL.createObjectURL(file),
         originalSize: file.size,
         status: "pending",
         progress: 0,
@@ -168,6 +170,7 @@ export function FileUpload({
     if (e.target.files) {
       const files = Array.from(e.target.files);
       addImages(files.map((file) => ({ file })));
+      e.target.value = "";
     }
   };
 
@@ -309,7 +312,7 @@ export function FileUpload({
               <div className="flex gap-2">
                 <button
                   className="h-7 text-[9px] font-black uppercase tracking-wider text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg px-3 transition-all border border-rose-500/20"
-                  onClick={() => setImages([])}
+                  onClick={() => (onTerminate ? onTerminate() : setImages([]))}
                   disabled={processing}
                 >
                   Terminate Sequence
