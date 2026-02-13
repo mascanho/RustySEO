@@ -300,7 +300,7 @@ export function FileUpload({
 
         {images.length > 0 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex items-center justify-between pl-2">
+            <div className="flex items-center justify-between pr-1">
               <div className="flex items-center gap-3">
                 <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
                   Active Pipeline
@@ -315,7 +315,7 @@ export function FileUpload({
                   onClick={() => (onTerminate ? onTerminate() : setImages([]))}
                   disabled={processing}
                 >
-                  Terminate Sequence
+                  Clear Queue
                 </button>
               </div>
             </div>
