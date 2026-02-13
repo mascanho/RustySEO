@@ -9,17 +9,11 @@ import { writeFile } from "@tauri-apps/plugin-fs";
 import { Download, CheckSquare, Square } from "lucide-react";
 import type { ImageFile, ResizeSettings } from "./types/image";
 
-interface BatchDownloadProps {
-  images: ImageFile[];
-  setImages: React.Dispatch<React.SetStateAction<ImageFile[]>>;
-  resizeSettings: ResizeSettings;
-}
-
-export function BatchDownload({
-  images,
-  setImages,
-  resizeSettings,
-}: BatchDownloadProps) {
+export function useBatchDownload(
+  images: ImageFile[],
+  setImages: React.Dispatch<React.SetStateAction<ImageFile[]>>,
+  resizeSettings: ResizeSettings,
+) {
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
 
@@ -27,8 +21,6 @@ export function BatchDownload({
   const selectedImages = images.filter(
     (img) => img.selected && img.status === "completed",
   );
-
-  if (completedImages.length === 0) return null;
 
   const generateFileName = (originalName: string, settings: ResizeSettings) => {
     const nameWithoutExt = originalName.split(".")[0];
@@ -146,19 +138,44 @@ export function BatchDownload({
     }
   };
 
+  return {
+    downloadingZip,
+    zipProgress,
+    downloadSelectedImages,
+    toggleAllSelection,
+    completedImages,
+    selectedImages,
+  };
+}
+
+interface BatchSelectionProps {
+  completedImages: ImageFile[];
+  selectedImages: ImageFile[];
+  toggleAllSelection: () => void;
+  downloadingZip: boolean;
+  zipProgress: number;
+}
+
+export function BatchSelection({
+  completedImages,
+  selectedImages,
+  toggleAllSelection,
+  downloadingZip,
+  zipProgress,
+}: BatchSelectionProps) {
+  if (completedImages.length === 0) return null;
+
   return (
-    <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-right-4 duration-500">
-      {/* Selection Control Card */}
+    <>
       <div className="bg-white dark:bg-brand-darker p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleAllSelection}
             disabled={downloadingZip}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${
-              completedImages.every((img) => img.selected)
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${completedImages.every((img) => img.selected)
                 ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
                 : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
-            }`}
+              }`}
           >
             {completedImages.every((img) => img.selected) ? (
               <CheckSquare className="w-4 h-4" />
@@ -181,8 +198,7 @@ export function BatchDownload({
         </div>
       </div>
 
-      {/* Compile Progress */}
-      {!downloadingZip && (
+      {downloadingZip && (
         <div className="space-y-2 animate-in fade-in zoom-in duration-300 p-2">
           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-brand-bright italic">
             <span>Compiling Bundle</span>
@@ -196,31 +212,74 @@ export function BatchDownload({
           </div>
         </div>
       )}
+    </>
+  );
+}
 
-      {/* Export Action */}
-      <button
-        onClick={downloadSelectedImages}
-        disabled={selectedImages.length === 0 || downloadingZip}
-        className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest text-xs relative overflow-hidden group shadow-xl ${
-          selectedImages.length === 0 || downloadingZip
-            ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
-            : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:scale-[1.02] active:scale-[0.98] shadow-brand-bright/40 border border-brand-bright"
+interface BatchDownloadButtonProps {
+  selectedImages: ImageFile[];
+  downloadingZip: boolean;
+  downloadSelectedImages: () => void;
+}
+
+export function BatchDownloadButton({
+  selectedImages,
+  downloadingZip,
+  downloadSelectedImages,
+}: BatchDownloadButtonProps) {
+  const isDisabled = selectedImages.length === 0 || downloadingZip;
+
+  return (
+    <button
+      onClick={downloadSelectedImages}
+      disabled={isDisabled}
+      className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg border ${isDisabled
+          ? "bg-slate-100 dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10 cursor-not-allowed opacity-60"
+          : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border-brand-bright"
         }`}
-      >
-        {downloadingZip ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>Building ZIP...</span>
-          </>
-        ) : (
-          <>
-            <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-            <span>
-              {selectedImages.length > 1 ? "Download Bundle" : "Download Asset"}
-            </span>
-          </>
-        )}
-      </button>
+    >
+      {downloadingZip ? (
+        <>
+          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span>Building ZIP...</span>
+        </>
+      ) : (
+        <>
+          <Download className={`w-3.5 h-3.5 ${!isDisabled ? "group-hover:animate-bounce" : ""}`} />
+          <span>
+            {selectedImages.length > 1 ? "Download Bundle" : "Download Asset"}
+          </span>
+        </>
+      )}
+    </button>
+  );
+}
+
+// Keep the original component for backward compatibility if needed, but composed
+export function BatchDownload(props: any) {
+  const {
+    downloadingZip,
+    zipProgress,
+    downloadSelectedImages,
+    toggleAllSelection,
+    completedImages,
+    selectedImages,
+  } = useBatchDownload(props.images, props.setImages, props.resizeSettings);
+
+  return (
+    <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-right-4 duration-500">
+      <BatchSelection
+        completedImages={completedImages}
+        selectedImages={selectedImages}
+        toggleAllSelection={toggleAllSelection}
+        downloadingZip={downloadingZip}
+        zipProgress={zipProgress}
+      />
+      <BatchDownloadButton
+        selectedImages={selectedImages}
+        downloadingZip={downloadingZip}
+        downloadSelectedImages={downloadSelectedImages}
+      />
     </div>
   );
 }

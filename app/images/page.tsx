@@ -10,7 +10,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { FileUpload } from "./components/file-upload";
 import { SettingsPanel } from "./components/settings-panel";
 import { CompressionStats } from "./components/compression-stats";
-import { BatchDownload } from "./components/batch-download";
+import {
+  useBatchDownload,
+  BatchSelection,
+  BatchDownloadButton,
+} from "./components/batch-download";
 import { PreviewModal } from "./components/preview-modal";
 import { ThemeToggle } from "./components/theme-toggle"; // Keeping import but unused in render
 import { NamingSettings } from "./components/naming-settings";
@@ -33,6 +37,15 @@ export default function ImageResizerApp() {
     prefix: "",
     suffix: "resized",
   });
+
+  const {
+    downloadingZip,
+    zipProgress,
+    downloadSelectedImages,
+    toggleAllSelection,
+    completedImages,
+    selectedImages,
+  } = useBatchDownload(images, setImages, resizeSettings);
 
   const handleDownload = async (image: ImageFile) => {
     if (!image.processedBlob) return;
@@ -141,12 +154,12 @@ export default function ImageResizerApp() {
   };
 
   return (
-    <div className="flex h-full bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden">
+    <div className="flex h-[calc(100vh-5.8rem)] bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden rounded-xl border border-slate-200 dark:border-white/5 shadow-2xl">
       {/* Background Decorative Elements Removed for solid look */}
 
       {/* LEFT SIDEBAR: CONFIGURATION */}
-      <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50 dark:bg-brand-dark">
+      <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20">
+        <div className="flex-1 overflow-hidden">
           <SettingsPanel
             resizeSettings={resizeSettings}
             setResizeSettings={setResizeSettings}
@@ -156,17 +169,11 @@ export default function ImageResizerApp() {
             isEmbedded={true}
           />
         </div>
-
-        <div className="p-4 border-t border-slate-200 dark:border-white/10 text-center bg-white dark:bg-brand-darker">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            v2.4 Core
-          </p>
-        </div>
       </aside>
 
       {/* CENTER: ASSET WORKSPACE */}
-      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-8 bg-slate-100 dark:bg-brand-dark">
-        <div className="max-w-5xl mx-auto">
+      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-8 bg-slate-100 dark:bg-brand-dark h-full">
+        <div className="max-w-7xl mx-auto h-full">
           <FileUpload
             images={images}
             setImages={setImages}
@@ -187,71 +194,78 @@ export default function ImageResizerApp() {
 
       {/* RIGHT SIDEBAR: EXECUTION & STATUS */}
       <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-slate-50 dark:bg-brand-darker">
-          {/* Progress Monitor */}
-          {processing && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
-                <div className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
-                      Live Processing
-                    </p>
-                    <span className="text-xs font-black dark:text-white">
-                      {Math.round(overallProgress)}%
-                    </span>
-                  </div>
-                  <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-500 ease-out"
-                      style={{ width: `${overallProgress}%` }}
-                    >
-                      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
+        <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-brand-darker">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+            {/* Progress Monitor */}
+            {processing && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
+                        Live Processing
+                      </p>
+                      <span className="text-xs font-black dark:text-white">
+                        {Math.round(overallProgress)}%
+                      </span>
+                    </div>
+                    <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-500 ease-out"
+                        style={{ width: `${overallProgress}%` }}
+                      >
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Metrics Section */}
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                Optimization Metrics
+              </h3>
+              <CompressionStats images={images} />
             </div>
-          )}
 
-          {/* Metrics Section */}
-          <div className="space-y-3 dark:bg-brand-darke">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-              Optimization Metrics
-            </h3>
-            <CompressionStats images={images} />
+            {/* Naming Configuration */}
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                File Naming Schema
+              </h3>
+              <NamingSettings
+                resizeSettings={resizeSettings}
+                setResizeSettings={setResizeSettings}
+                processing={processing}
+              />
+            </div>
+
+            {/* Export Bundle Selection */}
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                Export Bundle
+              </h3>
+              <BatchSelection
+                completedImages={completedImages}
+                selectedImages={selectedImages}
+                toggleAllSelection={toggleAllSelection}
+                downloadingZip={downloadingZip}
+                zipProgress={zipProgress}
+              />
+            </div>
           </div>
 
-          {/* Naming Configuration */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-              File Naming Schema
-            </h3>
-            <NamingSettings
-              resizeSettings={resizeSettings}
-              setResizeSettings={setResizeSettings}
-              processing={processing}
+          {/* Action Button: Footer */}
+          <div className="p-4 pt-2 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
+            <BatchDownloadButton
+              selectedImages={selectedImages}
+              downloadingZip={downloadingZip}
+              downloadSelectedImages={downloadSelectedImages}
             />
           </div>
-
-          {/* Export Pipeline */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-              Export Bundle
-            </h3>
-            <BatchDownload
-              images={images}
-              setImages={setImages}
-              resizeSettings={resizeSettings}
-            />
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-slate-200 dark:border-white/10 text-center bg-white dark:bg-brand-darker">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            Ready for Batch
-          </p>
         </div>
       </aside>
     </div>

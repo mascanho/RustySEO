@@ -27,40 +27,43 @@ export function FileUpload({
 }: FileUploadProps) {
   const [dragActive, setDragActive] = React.useState(false);
 
-  const addImages = useCallback((items: { file: File; path?: string }[]) => {
-    const newImages: ImageFile[] = items.map(({ file, path }) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      path,
-      preview: URL.createObjectURL(file), // Works for memory-backed Files too
-      originalSize: file.size,
-      status: "pending",
-      progress: 0,
-      selected: true,
-    }));
+  const addImages = useCallback(
+    (items: { file: File; path?: string }[]) => {
+      const newImages: ImageFile[] = items.map(({ file, path }) => ({
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        path,
+        preview: URL.createObjectURL(file), // Works for memory-backed Files too
+        originalSize: file.size,
+        status: "pending",
+        progress: 0,
+        selected: true,
+      }));
 
-    setImages((prev) => [...prev, ...newImages]);
+      setImages((prev) => [...prev, ...newImages]);
 
-    newImages.forEach((imageFile) => {
-      const imgElement = new Image();
-      imgElement.onload = () => {
-        setImages((prev) =>
-          prev.map((item) =>
-            item.id === imageFile.id
-              ? {
-                ...item,
-                originalDimensions: {
-                  width: imgElement.naturalWidth,
-                  height: imgElement.naturalHeight,
-                },
-              }
-              : item,
-          ),
-        );
-      };
-      imgElement.src = imageFile.preview;
-    });
-  }, [setImages]);
+      newImages.forEach((imageFile) => {
+        const imgElement = new Image();
+        imgElement.onload = () => {
+          setImages((prev) =>
+            prev.map((item) =>
+              item.id === imageFile.id
+                ? {
+                    ...item,
+                    originalDimensions: {
+                      width: imgElement.naturalWidth,
+                      height: imgElement.naturalHeight,
+                    },
+                  }
+                : item,
+            ),
+          );
+        };
+        imgElement.src = imageFile.preview;
+      });
+    },
+    [setImages],
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -72,18 +75,21 @@ export function FileUpload({
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/"),
-    );
-    if (files.length > 0) {
-      addImages(files.map(file => ({ file })));
-    }
-  }, [addImages]);
+      const files = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+      if (files.length > 0) {
+        addImages(files.map((file) => ({ file })));
+      }
+    },
+    [addImages],
+  );
 
   // Listen for Tauri file drop
   React.useEffect(() => {
@@ -137,15 +143,18 @@ export function FileUpload({
       });
       unlisteners.push(unlistenHover);
 
-      const unlistenCancelled = await listen("tauri://file-drop-cancelled", () => {
-        setDragActive(false);
-      });
+      const unlistenCancelled = await listen(
+        "tauri://file-drop-cancelled",
+        () => {
+          setDragActive(false);
+        },
+      );
       unlisteners.push(unlistenCancelled);
 
       toast.info("Drag & drop initialized");
     }
 
-    setupListeners().catch(err => {
+    setupListeners().catch((err) => {
       console.error("Failed to setup drag listeners", err);
       toast.error("Failed to initialize drag & drop system");
     });
@@ -155,15 +164,12 @@ export function FileUpload({
     };
   }, [addImages]);
 
-
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      addImages(files.map(file => ({ file })));
+      addImages(files.map((file) => ({ file })));
     }
   };
-
-
 
   const removeImage = (id: string) => {
     setImages((prev) => {
@@ -201,43 +207,50 @@ export function FileUpload({
     };
   }, []);
 
-  const handleManualDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleManualDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    // Handle standard generic drop (for when dragDropEnabled is false or web fallback)
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const files = Array.from(e.dataTransfer.files).filter((file) =>
-        file.type.startsWith("image/"),
-      );
-      if (files.length > 0) {
-        addImages(files.map(file => ({ file })));
-        toast.success(`Dropped ${files.length} images`);
+      // Handle standard generic drop (for when dragDropEnabled is false or web fallback)
+      if (
+        e.dataTransfer &&
+        e.dataTransfer.files &&
+        e.dataTransfer.files.length > 0
+      ) {
+        const files = Array.from(e.dataTransfer.files).filter((file) =>
+          file.type.startsWith("image/"),
+        );
+        if (files.length > 0) {
+          addImages(files.map((file) => ({ file })));
+          toast.success(`Dropped ${files.length} images`);
+        }
       }
-    }
-  }, [addImages]);
+    },
+    [addImages],
+  );
 
   return (
-    <div className="shadow-xl bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">Assets Studio</h2>
+    <div className="shadow-xl bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 pl-2  pt-4 pb-2  h-full">
+      <div className="flex items-center justify-between mb-4 pr-5">
+        <div className="mx-4">
+          <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">
+            Assets Studio
+          </h2>
           <p className="text-slate-400 dark:text-slate-500 font-bold text-xs mt-1">
             Media optimization pipeline
           </p>
         </div>
-        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
-          <Upload className="w-6 h-6 text-brand-bright" />
-        </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 mx-4 ">
         <div
-          className={`relative ${images.length > 0 ? 'h-32' : 'h-64'} border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 group ${dragActive
-            ? "border-brand-bright bg-brand-bright/10 dark:bg-brand-bright/5 scale-[0.99]"
-            : "border-slate-200 dark:border-white/10 hover:border-brand-bright dark:hover:border-brand-bright/50 hover:bg-slate-50 dark:hover:bg-white/5"
-            }`}
+          className={`relative ${images.length > 0 ? "h-32" : "h-64"} border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 group ${
+            dragActive
+              ? "border-brand-bright bg-brand-bright/10 dark:bg-brand-bright/5 scale-[0.99]"
+              : "border-slate-200 dark:border-white/10 hover:border-brand-bright dark:hover:border-brand-bright/50 hover:bg-slate-50 dark:hover:bg-white/5"
+          }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -251,7 +264,7 @@ export function FileUpload({
             onDrop={handleManualDrop} // Explicitly handle drops on the input
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none ">
             {images.length === 0 ? (
               <div className="space-y-4 flex flex-col items-center">
                 <div className="p-4 rounded-full bg-white dark:bg-brand-dark group-hover:bg-brand-bright/10 dark:group-hover:bg-brand-bright/10 transition-all duration-300 shadow-sm border border-slate-100 dark:border-white/10">
@@ -262,7 +275,10 @@ export function FileUpload({
                     {dragActive ? "DROP ASSETS NOW" : "IMPORT ASSETS"}
                   </h3>
                   <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">
-                    Drag & Drop or <span className="text-brand-bright">Source local files</span>
+                    Drag & Drop or{" "}
+                    <span className="text-brand-bright">
+                      Source local files
+                    </span>
                   </p>
                 </div>
               </div>
@@ -281,9 +297,11 @@ export function FileUpload({
 
         {images.length > 0 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between pl-2">
               <div className="flex items-center gap-3">
-                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Active Pipeline</h4>
+                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                  Active Pipeline
+                </h4>
                 <span className="px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-black text-[9px] uppercase tracking-widest">
                   {images.length} Units
                 </span>
@@ -299,32 +317,41 @@ export function FileUpload({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
+            <div className="grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
               {images.map((image) => (
                 <div
                   key={image.id}
-                  className={`group relative flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 border ${image.selected && image.status === "completed"
-                    ? "bg-slate-50 dark:bg-white/5 border-brand-bright/50 shadow-md"
-                    : "bg-white dark:bg-brand-dark border-slate-100 dark:border-white/10 hover:border-brand-bright"
-                    }`}
+                  className={`group relative flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 border ${
+                    image.selected && image.status === "completed"
+                      ? "bg-slate-50 dark:bg-white/5 border-brand-bright/50 shadow-md"
+                      : "bg-white dark:bg-brand-dark border-slate-100 dark:border-white/10 hover:border-brand-bright"
+                  }`}
                 >
                   <div className="relative flex-shrink-0">
                     <img
                       src={image.preview || "/placeholder.svg"}
                       alt="Preview"
-                      className={`w-14 h-14 object-cover rounded-xl shadow-lg transition-all duration-500 group-hover:scale-105 cursor-pointer ${image.selected && image.status === "completed" ? "ring-2 ring-brand-bright" : ""
-                        }`}
+                      className={`w-14 h-14 object-cover rounded-xl shadow-lg transition-all duration-500 group-hover:scale-105 cursor-pointer ${
+                        image.selected && image.status === "completed"
+                          ? "ring-2 ring-brand-bright"
+                          : ""
+                      }`}
                       onClick={() => onPreview(image)}
                     />
                     {image.status === "completed" && (
                       <button
                         onClick={() => onToggleSelection(image.id)}
-                        className={`absolute -top-1.5 -left-1.5 w-6 h-6 rounded-lg flex items-center justify-center shadow-xl transition-all border ${image.selected
-                          ? "bg-brand-bright border-brand-bright text-white"
-                          : "bg-white dark:bg-brand-darker border-slate-200 dark:border-white/20 text-slate-400"
-                          }`}
+                        className={`absolute -top-1.5 -left-1.5 w-6 h-6 rounded-lg flex items-center justify-center shadow-xl transition-all border ${
+                          image.selected
+                            ? "bg-brand-bright border-brand-bright text-white"
+                            : "bg-white dark:bg-brand-darker border-slate-200 dark:border-white/20 text-slate-400"
+                        }`}
                       >
-                        {image.selected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                        {image.selected ? (
+                          <CheckSquare className="w-4 h-4" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
                       </button>
                     )}
                   </div>
@@ -335,14 +362,15 @@ export function FileUpload({
                         {image.file.name}
                       </p>
                       <span
-                        className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border ${image.status === "completed"
-                          ? "bg-emerald-500 border-emerald-600 text-white"
-                          : image.status === "processing"
-                            ? "bg-brand-bright border-brand-bright text-white animate-pulse"
-                            : image.status === "error"
-                              ? "bg-rose-500 border-rose-600 text-white"
-                              : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"
-                          }`}
+                        className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border ${
+                          image.status === "completed"
+                            ? "bg-emerald-500 border-emerald-600 text-white"
+                            : image.status === "processing"
+                              ? "bg-brand-bright border-brand-bright text-white animate-pulse"
+                              : image.status === "error"
+                                ? "bg-rose-500 border-rose-600 text-white"
+                                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"
+                        }`}
                       >
                         {image.status}
                       </span>
@@ -350,7 +378,9 @@ export function FileUpload({
 
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Mass</span>
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                          Mass
+                        </span>
                         <span className="text-[9px] font-black dark:text-white">
                           {formatFileSize(image.originalSize)}
                           {image.processedSize && (
@@ -363,12 +393,16 @@ export function FileUpload({
 
                       {image.originalDimensions && (
                         <div className="flex items-center gap-1">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Res</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                            Res
+                          </span>
                           <span className="text-[9px] font-black dark:text-white">
-                            {image.originalDimensions.width}×{image.originalDimensions.height}
+                            {image.originalDimensions.width}×
+                            {image.originalDimensions.height}
                             {image.processedDimensions && (
                               <span className="text-brand-bright ml-1">
-                                → {image.processedDimensions.width}×{image.processedDimensions.height}
+                                → {image.processedDimensions.width}×
+                                {image.processedDimensions.height}
                               </span>
                             )}
                           </span>
@@ -376,14 +410,15 @@ export function FileUpload({
                       )}
                     </div>
 
-                    {image.status === "processing" && image.progress !== undefined && (
-                      <div className="mt-2 relative h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
-                        <div
-                          className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-300"
-                          style={{ width: `${image.progress}%` }}
-                        />
-                      </div>
-                    )}
+                    {image.status === "processing" &&
+                      image.progress !== undefined && (
+                        <div className="mt-2 relative h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
+                          <div
+                            className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-300"
+                            style={{ width: `${image.progress}%` }}
+                          />
+                        </div>
+                      )}
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">

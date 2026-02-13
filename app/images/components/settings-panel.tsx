@@ -45,6 +45,23 @@ const PRESETS = {
     name: "Print (3000×2000)",
     icon: Camera,
   },
+
+  full: {
+    width: 0,
+    height: 0,
+    quality: 100,
+    format: "jpeg",
+    name: "Full (Original)",
+    icon: Zap,
+  },
+  optimal: {
+    with: 0,
+    height: 0,
+    quality: 100,
+    format: "webp",
+    name: "Optimal (Original Webp)",
+    icon: Settings,
+  },
 };
 
 const QUALITY_PRESETS = {
@@ -146,22 +163,25 @@ export function SettingsPanel({
                       key={key}
                       onClick={() => applyPreset(key as keyof typeof PRESETS)}
                       disabled={processing}
-                      className={`group relative flex items-center gap-3 p-2 rounded-xl transition-all duration-300 border text-left ${isActive
+                      className={`group relative flex items-center gap-3 p-2 rounded-xl transition-all duration-300 border text-left ${
+                        isActive
                           ? "bg-brand-bright border-brand-bright shadow-lg shadow-brand-bright/20"
                           : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/5 hover:border-brand-bright/80"
-                        }`}
+                      }`}
                     >
                       <div
-                        className={`p-1.5 rounded-lg transition-colors ${isActive
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isActive
                             ? "bg-white/20"
                             : "bg-white dark:bg-brand-dark group-hover:bg-brand-bright/10 border border-slate-100 dark:border-white/5"
-                          }`}
+                        }`}
                       >
                         <IconComponent
-                          className={`w-3.5 h-3.5 ${isActive
+                          className={`w-3.5 h-3.5 ${
+                            isActive
                               ? "text-white"
                               : "text-slate-400 group-hover:text-brand-bright"
-                            }`}
+                          }`}
                         />
                       </div>
                       <div className="flex-1">
@@ -202,10 +222,11 @@ export function SettingsPanel({
                         applyQualityPreset(key as keyof typeof QUALITY_PRESETS)
                       }
                       disabled={processing}
-                      className={`px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${isActive
+                      className={`px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${
+                        isActive
                           ? "bg-brand-bright border-brand-bright text-white shadow-md font-black"
                           : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 hover:border-brand-bright/80 dark:text-slate-400"
-                        }`}
+                      }`}
                     >
                       {preset.name}
                     </button>
@@ -280,14 +301,16 @@ export function SettingsPanel({
                 </span>
               </div>
               <div
-                className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${resizeSettings.maintainAspectRatio
+                className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${
+                  resizeSettings.maintainAspectRatio
                     ? "bg-brand-bright"
                     : "bg-slate-300 dark:bg-white/20"
-                  }`}
+                }`}
               >
                 <div
-                  className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${resizeSettings.maintainAspectRatio ? "left-4.5" : "left-0.5"
-                    }`}
+                  className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${
+                    resizeSettings.maintainAspectRatio ? "left-4.5" : "left-0.5"
+                  }`}
                 />
               </div>
             </div>
@@ -329,10 +352,11 @@ export function SettingsPanel({
                       setResizeSettings((prev) => ({ ...prev, format: fmt }))
                     }
                     disabled={processing}
-                    className={`py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${resizeSettings.format === fmt
+                    className={`py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                      resizeSettings.format === fmt
                         ? "bg-white dark:bg-brand-dark text-brand-bright shadow-md border border-slate-100 dark:border-white/5"
                         : "text-slate-400 hover:text-white"
-                      }`}
+                    }`}
                   >
                     {fmt}
                   </button>
@@ -346,10 +370,11 @@ export function SettingsPanel({
           <button
             onClick={onProcessImages}
             disabled={images.length === 0 || processing}
-            className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${images.length === 0 || processing
+            className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${
+              images.length === 0 || processing
                 ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
                 : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border border-brand-bright"
-              }`}
+            }`}
           >
             {processing ? (
               <>
