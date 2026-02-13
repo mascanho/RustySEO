@@ -413,15 +413,11 @@ export function FileUpload({
                       )}
                     </div>
 
-                    {image.status === "processing" &&
-                      image.progress !== undefined && (
-                        <div className="mt-2 relative h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
-                          <div
-                            className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-300"
-                            style={{ width: `${image.progress}%` }}
-                          />
-                        </div>
-                      )}
+                    {image.status === "processing" && (
+                      <div className="mt-2 relative h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
+                        <div className="absolute top-0 left-0 h-full w-[30%] bg-brand-bright rounded-full animate-[processing-bar-slide_1s_ease-in-out_infinite]" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">

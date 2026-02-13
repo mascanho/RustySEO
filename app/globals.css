@@ -136,7 +136,10 @@ td {
 }
 
 table:not(.issues),
-tbody:not(.issues)>tr:not(.issues):nth-child(odd) tbody:not(.issues)>tr:not(.issues):nth-child(odd) {
+tbody:not(.issues)
+  > tr:not(.issues):nth-child(odd)
+  tbody:not(.issues)
+  > tr:not(.issues):nth-child(odd) {
   background: #0001;
   @apply dark:bg-brand-dark/20;
 }
@@ -345,11 +348,11 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   @apply border w-full sm:w-[13rem] xl:w-full dark:bg-brand-darker dark:border-brand-darker h-[7.8em] !important;
 }
 
-.widget>div>h2:first-of-type {
+.widget > div > h2:first-of-type {
   @apply text-sky-dark !important;
 }
 
-.widget>div>h2:last-of-type {
+.widget > div > h2:last-of-type {
   @apply dark:text-brand-background/50 text-gray-500 font-semibold;
 }
 
@@ -375,7 +378,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   @apply text-brand-highlight;
 }
 
-.widget div>svg {
+.widget div > svg {
   @apply text-brand-highlight;
 }
 
@@ -915,7 +918,6 @@ dialog::backdrop {
 
 /* BLINKING TEXT */
 @keyframes blink {
-
   0%,
   100% {
     opacity: 1;
@@ -976,4 +978,14 @@ code {
 /* TABLE ROW ALIGN AT THE TOP */
 .align-middle {
   vertical-align: start !important;
+}
+
+/* PROCESSING BAR ANIMATION */
+@keyframes processing-bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }
