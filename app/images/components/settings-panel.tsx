@@ -310,8 +310,10 @@ export function SettingsPanel({
                 }`}
               >
                 <div
-                  className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300 ${
-                    resizeSettings.maintainAspectRatio ? "left-4.5" : "left-0.5"
+                  className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-300 ${
+                    resizeSettings.maintainAspectRatio
+                      ? "translate-x-4"
+                      : "translate-x-0"
                   }`}
                 />
               </div>
