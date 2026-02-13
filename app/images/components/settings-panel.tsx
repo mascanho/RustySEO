@@ -128,18 +128,18 @@ export function SettingsPanel({
       <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-brand-darker">
 
         <div
-          className={`flex-1 ${isEmbedded ? "" : ""} overflow-y-auto min-h-0 p-5 pt-4 space-y-8 custom-scrollbar`}
+          className={`flex-1 ${isEmbedded ? "" : ""} overflow-y-auto min-h-0 p-3 pt-4 space-y-4 custom-scrollbar`}
         >
           {/* PRESETS SECTION */}
-          <div className="space-y-6">
-            <div className="space-y-3">
+          <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Global Presets
                 </label>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-1.5">
                 {Object.entries(PRESETS).map(([key, preset]) => {
                   const IconComponent = preset.icon;
                   const isActive = isPresetActive(
@@ -150,19 +150,19 @@ export function SettingsPanel({
                       key={key}
                       onClick={() => applyPreset(key as keyof typeof PRESETS)}
                       disabled={processing}
-                      className={`group relative flex items-center gap-3 p-3 rounded-xl transition-all duration-300 border text-left ${isActive
+                      className={`group relative flex items-center gap-3 p-2 rounded-xl transition-all duration-300 border text-left ${isActive
                         ? "bg-sky-500 border-sky-600 shadow-lg shadow-sky-500/20"
                         : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/5 hover:border-sky-300"
                         }`}
                     >
                       <div
-                        className={`p-2 rounded-lg transition-colors ${isActive
+                        className={`p-1.5 rounded-lg transition-colors ${isActive
                           ? "bg-white/20"
                           : "bg-white dark:bg-brand-dark group-hover:bg-sky-50 border border-slate-100 dark:border-white/5"
                           }`}
                       >
                         <IconComponent
-                          className={`w-4 h-4 ${isActive
+                          className={`w-3.5 h-3.5 ${isActive
                             ? "text-white"
                             : "text-slate-400 group-hover:text-sky-500"
                             }`}
@@ -187,14 +187,14 @@ export function SettingsPanel({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-bright" />
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Directives
                 </label>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {Object.entries(QUALITY_PRESETS).map(([key, preset]) => {
                   const isActive = isQualityPresetActive(
                     key as keyof typeof QUALITY_PRESETS,
@@ -208,7 +208,7 @@ export function SettingsPanel({
                         )
                       }
                       disabled={processing}
-                      className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${isActive
+                      className={`px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${isActive
                         ? "bg-brand-bright border-sky-600 text-white shadow-md font-black"
                         : "bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-white/10 hover:border-sky-300 dark:text-slate-400"
                         }`}
@@ -222,7 +222,7 @@ export function SettingsPanel({
           </div>
 
           {/* CUSTOM SETTINGS SECTION */}
-          <div className="space-y-6 pt-4 border-t border-slate-100 dark:border-white/5">
+          <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-white/5">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-3.5 h-3.5 text-sky-500" />
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -230,8 +230,8 @@ export function SettingsPanel({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Width
                 </label>
@@ -245,10 +245,10 @@ export function SettingsPanel({
                     }))
                   }
                   disabled={processing}
-                  className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Height
                 </label>
@@ -262,12 +262,12 @@ export function SettingsPanel({
                     }))
                   }
                   disabled={processing}
-                  className="w-full h-10 px-3 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
+                  className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-sky-500 outline-none text-xs dark:text-white transition-all shadow-inner"
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between items-end">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Quality
@@ -292,7 +292,7 @@ export function SettingsPanel({
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                 Format
               </label>
@@ -304,7 +304,7 @@ export function SettingsPanel({
                       setResizeSettings((prev) => ({ ...prev, format: fmt }))
                     }
                     disabled={processing}
-                    className={`py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${resizeSettings.format === fmt
+                    className={`py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${resizeSettings.format === fmt
                       ? "bg-white dark:bg-brand-dark text-sky-500 shadow-md border border-slate-100 dark:border-white/5"
                       : "text-slate-400 hover:text-white"
                       }`}
@@ -323,7 +323,7 @@ export function SettingsPanel({
                   maintainAspectRatio: !prev.maintainAspectRatio,
                 }))
               }
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 cursor-pointer hover:border-sky-500 transition-all group shadow-sm"
+              className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 cursor-pointer hover:border-sky-500 transition-all group shadow-sm"
             >
               <div className="flex items-center gap-2">
                 <Smartphone
@@ -355,7 +355,7 @@ export function SettingsPanel({
           <button
             onClick={onProcessImages}
             disabled={images.length === 0 || processing}
-            className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${images.length === 0 || processing
+            className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg ${images.length === 0 || processing
               ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
               : "bg-sky-500 text-white hover:bg-sky-600 hover:shadow-sky-500/40 active:scale-[0.98] border border-sky-600"
               }`}
@@ -363,7 +363,7 @@ export function SettingsPanel({
             {processing ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Processing Streaming...
+                Processing...
               </>
             ) : (
               <>
