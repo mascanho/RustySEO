@@ -253,12 +253,13 @@ export function SettingsPanel({
                 <input
                   type="number"
                   value={resizeSettings.width}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,
-                      width: parseInt(e.target.value) || 0,
-                    }))
-                  }
+                      width: isNaN(val) || val < 1 ? 1920 : val,
+                    }));
+                  }}
                   disabled={processing}
                   className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-brand-bright outline-none text-xs dark:text-white transition-all shadow-inner"
                 />
@@ -270,12 +271,13 @@ export function SettingsPanel({
                 <input
                   type="number"
                   value={resizeSettings.height}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,
-                      height: parseInt(e.target.value) || 0,
-                    }))
-                  }
+                      height: isNaN(val) || val < 1 ? 1080 : val,
+                    }));
+                  }}
                   disabled={processing}
                   className="w-full h-8 px-2 bg-slate-50 dark:bg-brand-darker border border-slate-200 dark:border-white/10 rounded-xl font-black focus:ring-1 focus:ring-brand-bright outline-none text-xs dark:text-white transition-all shadow-inner"
                 />
@@ -329,12 +331,13 @@ export function SettingsPanel({
                 min="1"
                 max="100"
                 value={resizeSettings.quality}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
                   setResizeSettings((prev) => ({
                     ...prev,
-                    quality: parseInt(e.target.value) || 80,
-                  }))
-                }
+                    quality: isNaN(val) || val < 1 ? 80 : Math.min(100, val),
+                  }));
+                }}
                 disabled={processing}
                 className="w-full accent-brand-bright h-2 bg-slate-200 dark:bg-white/10 rounded-full appearance-none cursor-pointer"
               />

@@ -317,7 +317,7 @@ export function FileUpload({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
+            <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-29rem)] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
               {images.map((image) => (
                 <div
                   key={image.id}
@@ -357,12 +357,12 @@ export function FileUpload({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[11px] font-black dark:text-white truncate pr-4 uppercase tracking-tight">
+                    <div className="flex gap-2 mb-1">
+                      <p className="text-[11px] font-black dark:text-white truncate uppercase tracking-tight">
                         {image.file.name}
                       </p>
                       <span
-                        className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border ${
+                        className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm border shrink-0 ${
                           image.status === "completed"
                             ? "bg-emerald-500 border-emerald-600 text-white"
                             : image.status === "processing"

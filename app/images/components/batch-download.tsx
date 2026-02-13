@@ -24,11 +24,14 @@ export function useBatchDownload(
 
   const generateFileName = (originalName: string, settings: ResizeSettings) => {
     const nameWithoutExt = originalName.split(".")[0];
+    const width = settings.width ?? 1920;
+    const height = settings.height ?? 1080;
+    const quality = settings.quality ?? 80;
     let fileName = settings.fileNamePattern
       .replace("{name}", nameWithoutExt)
-      .replace("{width}", settings.width.toString())
-      .replace("{height}", settings.height.toString())
-      .replace("{quality}", settings.quality.toString())
+      .replace("{width}", width.toString())
+      .replace("{height}", height.toString())
+      .replace("{quality}", quality.toString())
       .replace("{format}", settings.format);
 
     if (settings.addPrefix && settings.prefix) {
@@ -172,10 +175,11 @@ export function BatchSelection({
           <button
             onClick={toggleAllSelection}
             disabled={downloadingZip}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${completedImages.every((img) => img.selected)
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${
+              completedImages.every((img) => img.selected)
                 ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
                 : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
-              }`}
+            }`}
           >
             {completedImages.every((img) => img.selected) ? (
               <CheckSquare className="w-4 h-4" />
@@ -233,10 +237,11 @@ export function BatchDownloadButton({
     <button
       onClick={downloadSelectedImages}
       disabled={isDisabled}
-      className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg border ${isDisabled
+      className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg border ${
+        isDisabled
           ? "bg-slate-100 dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10 cursor-not-allowed opacity-60"
           : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border-brand-bright"
-        }`}
+      }`}
     >
       {downloadingZip ? (
         <>
@@ -245,7 +250,9 @@ export function BatchDownloadButton({
         </>
       ) : (
         <>
-          <Download className={`w-3.5 h-3.5 ${!isDisabled ? "group-hover:animate-bounce" : ""}`} />
+          <Download
+            className={`w-3.5 h-3.5 ${!isDisabled ? "group-hover:animate-bounce" : ""}`}
+          />
           <span>
             {selectedImages.length > 1 ? "Download Bundle" : "Download Asset"}
           </span>

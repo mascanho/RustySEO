@@ -14,9 +14,9 @@ export function NamingSettings({
 }: NamingSettingsProps) {
   const generateFileName = (originalName: string, settings: ResizeSettings) => {
     const nameWithoutExt = originalName.split(".")[0];
-    const width = settings.width ?? 0;
-    const height = settings.height ?? 0;
-    const quality = settings.quality ?? 0;
+    const width = settings.width ?? 1920;
+    const height = settings.height ?? 1080;
+    const quality = settings.quality ?? 80;
     let fileName = settings.fileNamePattern
       .replace("{name}", nameWithoutExt)
       .replace("{width}", width.toString())

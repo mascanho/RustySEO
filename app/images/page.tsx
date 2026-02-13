@@ -102,9 +102,9 @@ export default function ImageResizerApp() {
         const resultBytes = await invoke<number[]>("process_single_image", {
           imageData,
           path: img.path,
-          width: resizeSettings.width,
-          height: resizeSettings.height,
-          quality: resizeSettings.quality,
+          width: Math.max(1, resizeSettings.width || 1920),
+          height: Math.max(1, resizeSettings.height || 1080),
+          quality: Math.min(100, Math.max(1, resizeSettings.quality || 80)),
           format: resizeSettings.format,
           maintainAspectRatio: resizeSettings.maintainAspectRatio,
         });
