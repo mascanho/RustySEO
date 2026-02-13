@@ -256,6 +256,12 @@ export function SettingsPanel({
                   type="number"
                   value={resizeSettings.width}
                   onChange={(e) => {
+                    setResizeSettings((prev) => ({
+                      ...prev,
+                      width: parseInt(e.target.value) || 0,
+                    }));
+                  }}
+                  onBlur={(e) => {
                     const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,
@@ -274,6 +280,12 @@ export function SettingsPanel({
                   type="number"
                   value={resizeSettings.height}
                   onChange={(e) => {
+                    setResizeSettings((prev) => ({
+                      ...prev,
+                      height: parseInt(e.target.value) || 0,
+                    }));
+                  }}
+                  onBlur={(e) => {
                     const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,

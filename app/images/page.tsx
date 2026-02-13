@@ -79,18 +79,20 @@ export default function ImageResizerApp() {
     setProcessing(true);
     setOverallProgress(0);
 
-    const updatedImages = [...images];
+    const updatedImages = images.map((img) => ({
+      ...img,
+      status: "processing" as const,
+      progress: 0,
+      processedBlob: undefined,
+      processedSize: undefined,
+      processedDimensions: undefined,
+    }));
+    setImages(updatedImages);
+
     let completedCount = 0;
 
     for (let i = 0; i < updatedImages.length; i++) {
       const img = updatedImages[i];
-      if (img.status === "completed") {
-        completedCount++;
-        continue;
-      }
-
-      updatedImages[i] = { ...img, status: "processing", progress: 0 };
-      setImages([...updatedImages]);
 
       try {
         let imageData: number[] | undefined;
