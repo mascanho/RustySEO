@@ -39,8 +39,8 @@ export function PreviewModal({
     : null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4  animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-brand-darker w-full max-w-6xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-white/10">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center   animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-brand-darker  max-w-7xl w-[65vw] h-[88vh] mt-8 rounded-md  shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-white/10">
         {/* Modal Header */}
         <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-black/60">
           <div className="flex items-center gap-3">
