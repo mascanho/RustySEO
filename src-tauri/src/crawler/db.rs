@@ -64,7 +64,7 @@ pub fn open_db_connection(db_name: &str) -> Result<Connection> {
     let db_dir = project_dirs.data_dir().join("db"); // Append /db to data dir
     let db_path = db_dir.join(db_name);
 
-    println!("DB path: {:?}", db_path);
+    // println!("DB path: {:?}", db_path);
 
     // Ensure the directory exists
     if !db_dir.exists() {
@@ -190,15 +190,43 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
     // Extract response values
     let audits = parsed_data.lighthouse_result.audits;
     let score = parsed_data.lighthouse_result.categories.performance.score;
-    let fcp = audits.first_contentful_paint.as_ref().map(|a| a.score).unwrap_or(0.0);
-    let lcp = audits.largest_contentful_paint.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let fcp = audits
+        .first_contentful_paint
+        .as_ref()
+        .map(|a| a.score)
+        .unwrap_or(0.0);
+    let lcp = audits
+        .largest_contentful_paint
+        .as_ref()
+        .map(|a| a.score)
+        .unwrap_or(0.0);
     let tti = audits.interactive.as_ref().map(|a| a.score).unwrap_or(0.0);
-    let tbt = audits.total_blocking_time.as_ref().map(|a| a.score).unwrap_or(0.0);
-    let cls = audits.cumulative_layout_shift.as_ref().map(|a| a.score).unwrap_or(0.0);
-    let dom_size = audits.dom_size.as_ref().and_then(|a| a.numeric_value).unwrap_or(0.0);
+    let tbt = audits
+        .total_blocking_time
+        .as_ref()
+        .map(|a| a.score)
+        .unwrap_or(0.0);
+    let cls = audits
+        .cumulative_layout_shift
+        .as_ref()
+        .map(|a| a.score)
+        .unwrap_or(0.0);
+    let dom_size = audits
+        .dom_size
+        .as_ref()
+        .and_then(|a| a.numeric_value)
+        .unwrap_or(0.0);
     let speed_index = audits.speed_index.as_ref().map(|a| a.score).unwrap_or(0.0);
-    let server_response_time = audits.server_response_time.as_ref().and_then(|a| a.numeric_value).unwrap_or(0.0);
-    let total_byte_weight = audits.total_byte_weight.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let server_response_time = audits
+        .server_response_time
+        .as_ref()
+        .and_then(|a| a.numeric_value)
+        .unwrap_or(0.0);
+    let total_byte_weight = audits
+        .total_byte_weight
+        .as_ref()
+        .map(|a| a.score)
+        .unwrap_or(0.0);
     let performance = format!("{}", score);
     let date = Utc::now().naive_utc().to_string();
 
@@ -380,7 +408,8 @@ pub struct GscDataFromDB {
 
 pub fn read_gsc_data_from_db() -> Result<Vec<GscDataFromDB>> {
     let conn = open_db_connection("crawl_results.db")?;
-    let mut stmt = conn.prepare("SELECT id, date, url, query, impressions, clicks, ctr, position FROM gsc_data")?;
+    let mut stmt = conn
+        .prepare("SELECT id, date, url, query, impressions, clicks, ctr, position FROM gsc_data")?;
 
     let gsc_data = stmt.query_map([], |row| {
         Ok(GscDataFromDB {
@@ -693,9 +722,9 @@ pub fn delete_keyword_from_db(id: &str) -> Result<()> {
 
     // Fetch url and query before deleting to match in summarized_data
     let mut stmt = conn.prepare("SELECT url, query FROM keywords WHERE id = ?")?;
-    let keyword_info: Option<(String, String)> = stmt.query_row(params![id], |row| {
-        Ok((row.get(0)?, row.get(1)?))
-    }).ok();
+    let keyword_info: Option<(String, String)> = stmt
+        .query_row(params![id], |row| Ok((row.get(0)?, row.get(1)?)))
+        .ok();
 
     if let Some((url, query)) = keyword_info {
         // Delete from both tables to ensure consistency

@@ -153,7 +153,7 @@ export function FileUpload({
       );
       unlisteners.push(unlistenCancelled);
 
-      toast.info("Drag & drop initialized");
+      // toast.info("Drag & drop initialized");
     }
 
     setupListeners().catch((err) => {
@@ -235,11 +235,11 @@ export function FileUpload({
   );
 
   return (
-    <div className="shadow-xl bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 pl-2  pt-4 pb-2  h-full">
+    <div className=" bg-white dark:bg-brand-darker rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 pl-2  pt-4 pb-2  h-full">
       <div className="flex items-center justify-between mb-4 pr-5">
         <div className="mx-4">
           <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">
-            Assets Studio
+            Image Studio
           </h2>
           <p className="text-slate-400 dark:text-slate-500 font-bold text-xs mt-1">
             Media optimization pipeline
@@ -249,7 +249,7 @@ export function FileUpload({
 
       <div className="space-y-6 mx-4 ">
         <div
-          className={`relative ${images.length > 0 ? "h-32" : "h-[calc(100vh-280px)]"} border-2 border-dashed rounded-2xl p-4 text-center transition-all max-h-[calc(100vh-280px)] mr-2 duration-300 group ${
+          className={`relative ${images.length > 0 ? "h-32" : "h-[calc(100vh-240px)]"} border-2 border-dashed rounded-2xl p-4 text-center transition-all max-h-[calc(100vh-240px)] mr-2 duration-300 group ${
             dragActive
               ? "border-brand-bright bg-brand-bright/10 dark:bg-brand-bright/5 scale-[0.99]"
               : "border-slate-200 dark:border-white/10 hover:border-brand-bright dark:hover:border-brand-bright/50 hover:bg-slate-50 dark:hover:bg-white/5"
@@ -320,7 +320,7 @@ export function FileUpload({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-29rem)] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
+            <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-26.5rem)] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
               {images.map((image) => (
                 <div
                   key={image.id}

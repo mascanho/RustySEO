@@ -260,9 +260,6 @@ export function BatchDownloadButton({
         </>
       ) : (
         <>
-          <Download
-            className={`w-3.5 h-3.5 ${!isDisabled ? "group-hover:animate-bounce" : ""}`}
-          />
           <span>{buttonText()}</span>
         </>
       )}

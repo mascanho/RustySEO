@@ -401,10 +401,7 @@ export function SettingsPanel({
                 Processing...
               </>
             ) : (
-              <>
-                <Zap className="w-3.5 h-3.5 group-hover:animate-bounce" />
-                Initialize Engine ({images.length})
-              </>
+              <>Start Optimisation ({images.length})</>
             )}
           </button>
         </div>

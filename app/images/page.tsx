@@ -186,7 +186,7 @@ export default function ImageResizerApp() {
       </aside>
 
       {/* CENTER: ASSET WORKSPACE */}
-      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-8 bg-slate-100 dark:bg-brand-dark h-full">
+      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-4 bg-slate-100 dark:bg-brand-dark h-full">
         <div className="max-w-7xl mx-auto h-full">
           <FileUpload
             images={images}
@@ -212,7 +212,7 @@ export default function ImageResizerApp() {
         <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-brand-darker">
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
             {/* Progress Monitor */}
-            {processing && (
+            {!processing && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
@@ -227,7 +227,7 @@ export default function ImageResizerApp() {
                     </div>
                     <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                       <div
-                        className="absolute top-0 left-0 h-full bg-brand-bright transition-all duration-500 ease-out"
+                        className="absolute top-0 left-0 h-full bg-brand-bright animate-pulse  transition-all duration-500 ease-out"
                         style={{ width: `${overallProgress}%` }}
                       >
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
