@@ -155,22 +155,7 @@ export default function ImageResizerApp() {
 
       {/* LEFT SIDEBAR: CONFIGURATION */}
       <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white dark:bg-brand-darker">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-sky-500 shadow-lg shadow-sky-500/20">
-              <ImageIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black tracking-tight dark:text-white leading-none">
-                Media Studio
-              </h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                Setup Engine
-              </p>
-            </div>
-          </div>
-          <ThemeToggle />
-        </div>
+
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50 dark:bg-brand-dark">
           <SettingsPanel
