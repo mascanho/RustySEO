@@ -96,14 +96,14 @@ export function PreviewModal({
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">
                         Source Asset
                       </p>
-                      <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 shadow-inner">
+                      <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 shadow-inner">
                         <img
                           src={previewImage.preview}
                           alt="Original"
-                          className="max-w-full max-h-full object-contain shadow-2xl rounded-xl border border-white/10"
+                          className="max-w-full max-h-full object-contain shadow-2xl rounded-m border border-white/10"
                         />
                       </div>
-                      <div className="p-5 bg-slate-50 dark:bg-black/40 rounded-2xl flex justify-around border border-slate-100 dark:border-white/5 shadow-sm">
+                      <div className="p-5 bg-slate-50 dark:bg-black/40 rounded-md flex justify-around border border-slate-100 dark:border-white/5 shadow-sm">
                         <div className="text-center">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                             Mass
@@ -128,14 +128,14 @@ export function PreviewModal({
                       <p className="text-[10px] font-black text-brand-bright uppercase tracking-[0.2em] text-center italic">
                         Optimized Target
                       </p>
-                      <div className="aspect-video bg-brand-bright/5 dark:bg-brand-bright/10 rounded-3xl overflow-hidden border border-brand-bright/20 dark:border-brand-bright/20 flex items-center justify-center p-6 shadow-inner">
+                      <div className="aspect-video bg-brand-bright/5 dark:bg-brand-bright/10 rounded-md overflow-hidden border border-brand-bright/20 dark:border-brand-bright/20 flex items-center justify-center p-6 shadow-inner">
                         <img
                           src={processedUrl}
                           alt="Processed"
-                          className="max-w-full max-h-full object-contain shadow-2xl rounded-xl border border-white/10"
+                          className="max-w-full max-h-full object-contain shadow-2xl rounded-md border border-white/10"
                         />
                       </div>
-                      <div className="p-5 bg-brand-bright/10 rounded-2xl flex justify-around border border-brand-bright/20 shadow-sm shadow-brand-bright/5">
+                      <div className="p-5 bg-brand-bright/10 rounded-md flex justify-around border border-brand-bright/20 shadow-sm shadow-brand-bright/5">
                         <div className="text-center">
                           <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">
                             New Mass
@@ -160,7 +160,7 @@ export function PreviewModal({
 
                 {(previewMode === "before" || previewMode === "after") && (
                   <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
-                    <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
+                    <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
                       <img
                         src={
                           previewMode === "before"
@@ -171,7 +171,7 @@ export function PreviewModal({
                         className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
                       />
                     </div>
-                    <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                    <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
                       <div className="text-center">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                           Total Mass
@@ -205,14 +205,14 @@ export function PreviewModal({
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">
                   Source Preview
                 </p>
-                <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
+                <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
                   <img
                     src={previewImage.preview}
                     alt="Original"
-                    className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
+                    className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-md border border-white/5"
                   />
                 </div>
-                <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                       Current Mass
@@ -238,13 +238,12 @@ export function PreviewModal({
 
         {/* Modal Footer */}
         {previewImage.status === "completed" && (
-          <div className="p-6 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/60 flex justify-end">
+          <div className="p-3 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/60 flex justify-end">
             <button
               onClick={() => onDownload(previewImage)}
-              className="h-14 px-10 bg-brand-bright hover:bg-brand-bright/90 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-3 transition-all shadow-xl shadow-brand-bright/40 active:scale-[0.98] border border-brand-bright"
+              className="h-8 px-5 bg-brand-bright hover:bg-brand-bright/90 text-white rounded-md font-black uppercase tracking-widest text-[11px] flex items-center gap-3 transition-all  shadow-brand-bright/40 active:scale-[0.98] border border-brand-bright"
             >
-              <Download className="w-5 h-5" />
-              Export Optimised Asset
+              Export Asset
             </button>
           </div>
         )}

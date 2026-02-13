@@ -167,7 +167,7 @@ export default function ImageResizerApp() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5.8rem)] bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden rounded-xl border border-slate-200 dark:border-white/5 shadow-2xl">
+    <div className="flex h-[calc(100vh-5.8rem)] bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden  border border-slate-200 dark:border-white/5 shadow-2xl">
       {/* Background Decorative Elements Removed for solid look */}
 
       {/* LEFT SIDEBAR: CONFIGURATION */}
@@ -212,31 +212,29 @@ export default function ImageResizerApp() {
         <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-brand-darker">
           <div className="flex-1 overflow-hidden custom-scrollbar p-4 space-y-4">
             {/* Progress Monitor */}
-            {overallProgress > 0 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-end">
-                      <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
-                        Global Progress
-                      </p>
-                      <span className="text-xs font-black dark:text-white">
-                        {Math.round(overallProgress)}%
-                      </span>
-                    </div>
-                    <div className="relative h-2.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
-                      <div
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright to-brand-bright/80 rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${overallProgress}%` }}
-                      >
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/20" />
-                      </div>
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
+                      Global Progress
+                    </p>
+                    <span className="text-xs font-black dark:text-white">
+                      {Math.round(overallProgress)}%
+                    </span>
+                  </div>
+                  <div className="relative h-2.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright to-brand-bright/80 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${overallProgress}%` }}
+                    >
+                      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/20" />
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Metrics Section */}
             <div className="space-y-2">
