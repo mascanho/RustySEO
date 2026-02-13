@@ -343,6 +343,7 @@ const FilesTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
     getItemKey: useCallback(
       (index) => filteredRows[index]?.url || index,

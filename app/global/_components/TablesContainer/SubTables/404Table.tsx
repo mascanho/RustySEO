@@ -353,6 +353,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
   });
 
@@ -479,7 +480,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
                 <>
                   <tr
                     style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
+                      height: `${virtualRows[0]?.start || 0}px`,
                     }}
                   />
                   {virtualRows.map((virtualRow) => (

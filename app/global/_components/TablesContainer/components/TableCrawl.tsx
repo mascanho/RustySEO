@@ -243,7 +243,9 @@ const TableRow = memo(
         row?.schema === true || row?.schema === "Yes" ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
         row?.opengraph &&
-          (typeof row.opengraph === 'boolean' ? row.opengraph : Object.keys(row.opengraph).length > 0)
+        (typeof row.opengraph === "boolean"
+          ? row.opengraph
+          : Object.keys(row.opengraph).length > 0)
           ? "Yes"
           : "No", // OpenGraph
         typeof row?.cookies_count === "number"
@@ -308,12 +310,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             <ContextTableMenu data={item.cell}>
               <TruncatedCell text={item.cell?.toString()} width="100%" />
@@ -484,6 +487,7 @@ const TableCrawl = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
     getItemKey: useCallback(
       (index: number) => filteredRows[index]?.url || index,

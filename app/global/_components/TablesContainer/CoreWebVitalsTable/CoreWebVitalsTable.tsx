@@ -181,7 +181,10 @@ const TableRow = ({
       return Math.round(score * 100).toString();
     };
 
-    const getAuditValue = (audit: any, options?: { isTime?: boolean; isBytes?: boolean }) => {
+    const getAuditValue = (
+      audit: any,
+      options?: { isTime?: boolean; isBytes?: boolean },
+    ) => {
       if (!audit) return "n/a";
       if (audit.numericValue !== undefined) {
         if (options?.isTime) {
@@ -198,7 +201,9 @@ const TableRow = ({
         // If it's a small decimal (like CLS), keep decimals, otherwise round
         return audit.numericValue < 1 && audit.numericValue > 0
           ? audit.numericValue.toFixed(3)
-          : (audit.numericValue > 100 ? Math.round(audit.numericValue).toString() : audit.numericValue.toFixed(2));
+          : audit.numericValue > 100
+            ? Math.round(audit.numericValue).toString()
+            : audit.numericValue.toFixed(2);
       }
       return audit.displayValue || "n/a";
     };
@@ -228,8 +233,12 @@ const TableRow = ({
       getAuditValue(desktop?.audits?.["total-blocking-time"]),
       formatScore(mobile?.audits?.["redirects"]?.score),
       getAuditValue(mobile?.audits?.["server-response-time"], { isTime: true }),
-      getAuditValue(desktop?.audits?.["server-response-time"], { isTime: true }),
-      getAuditValue(mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"]),
+      getAuditValue(desktop?.audits?.["server-response-time"], {
+        isTime: true,
+      }),
+      getAuditValue(
+        mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"],
+      ),
       getAuditValue(mobile?.audits?.["total-byte-weight"], { isBytes: true }),
       getAuditValue(desktop?.audits?.["total-byte-weight"], { isBytes: true }),
     ];
@@ -425,11 +434,11 @@ const CoreWebVitalsTable = ({
 
     return searchTerm
       ? rows.filter((row) => {
-        if (!row || typeof row !== "object") return false;
-        return Object.values(row).some((value) =>
-          normalizeText(value?.toString()).includes(searchTermNormalized),
-        );
-      })
+          if (!row || typeof row !== "object") return false;
+          return Object.values(row).some((value) =>
+            normalizeText(value?.toString()).includes(searchTermNormalized),
+          );
+        })
       : rows;
   }, [rows, searchTerm]);
 
@@ -437,6 +446,7 @@ const CoreWebVitalsTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => 25, []), // Fixed 25px height
+    initialRect: { width: 1000, height: 25 },
     overscan: 5, // Reduced overscan for better performance
     getItemKey: useCallback((index) => `row-${index}`, []),
   });

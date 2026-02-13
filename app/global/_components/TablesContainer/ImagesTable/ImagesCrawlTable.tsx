@@ -172,16 +172,14 @@ const TableHeader = ({
             className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark bg-white shadow dark:border"
           >
             {item.header}
-            <ResizableDivider onMouseDown={(e) => onResize(item.originalIndex, e)} />
+            <ResizableDivider
+              onMouseDown={(e) => onResize(item.originalIndex, e)}
+            />
           </div>
         ))}
       </div>
     ),
-    [
-      visibleItems,
-      onResize,
-      onAlignToggle,
-    ],
+    [visibleItems, onResize, onAlignToggle],
   );
 };
 
@@ -239,7 +237,11 @@ const TableRow = ({
             key={`cell-${index}-${item.originalIndex}`}
             onClick={(e) => {
               e.stopPropagation();
-              handleCellClick(index, item.originalIndex, item.cell?.toString() || "");
+              handleCellClick(
+                index,
+                item.originalIndex,
+                item.cell?.toString() || "",
+              );
             }}
             style={{
               padding: "8px",
@@ -255,29 +257,21 @@ const TableRow = ({
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${clickedCell.row === index && clickedCell.cell === item.originalIndex
-              ? "bg-blue-600 text-white"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              clickedCell.row === index &&
+              clickedCell.cell === item.originalIndex
+                ? "bg-blue-600 text-white"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
-            <TruncatedCell
-              text={item.cell?.toString()}
-              width="100%"
-            />
+            <TruncatedCell text={item.cell?.toString()} width="100%" />
           </div>
         ))}
       </div>
     ),
-    [
-      visibleItems,
-      index,
-      clickedCell,
-      handleCellClick,
-      isOdd,
-      rowData,
-    ],
+    [visibleItems, index, clickedCell, handleCellClick, isOdd, rowData],
   );
 };
 
@@ -430,11 +424,11 @@ const ImagesCrawlTable = ({
 
     return searchTerm
       ? rows.filter((row) => {
-        if (!row || typeof row !== "object") return false;
-        return Object.values(row).some((value) =>
-          normalizeText(value?.toString()).includes(searchTermNormalized),
-        );
-      })
+          if (!row || typeof row !== "object") return false;
+          return Object.values(row).some((value) =>
+            normalizeText(value?.toString()).includes(searchTermNormalized),
+          );
+        })
       : rows;
   }, [rows, searchTerm]);
 
@@ -443,10 +437,11 @@ const ImagesCrawlTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
     measureElement:
       typeof window !== "undefined" &&
-        navigator.userAgent.indexOf("Firefox") === -1
+      navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
   });
@@ -566,10 +561,7 @@ const ImagesCrawlTable = ({
           }}
         >
           {/* Sticky Header */}
-          <div
-            className="sticky top-0 z-10"
-            style={{ width: "100%" }}
-          >
+          <div className="sticky top-0 z-10" style={{ width: "100%" }}>
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}

@@ -1,7 +1,14 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -10,7 +17,11 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { initialColumnWidths, initialColumnAlignments, headerTitles } from "./tableLayout";
+import {
+  initialColumnWidths,
+  initialColumnAlignments,
+  headerTitles,
+} from "./tableLayout";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
@@ -69,26 +80,28 @@ interface ColumnPickerProps {
   headerTitles: string[];
 }
 
-const TruncatedCell = memo(({ text, maxLength = 100, width = "100%" }: TruncatedCellProps) => {
-  const truncatedText = useMemo(() => {
-    if (!text) return "";
-    if (typeof text !== "string") return text;
-    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-  }, [text, maxLength]);
+const TruncatedCell = memo(
+  ({ text, maxLength = 100, width = "100%" }: TruncatedCellProps) => {
+    const truncatedText = useMemo(() => {
+      if (!text) return "";
+      if (typeof text !== "string") return text;
+      return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+    }, [text, maxLength]);
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {truncatedText}
-    </div>
-  );
-});
+    return (
+      <div
+        style={{
+          width: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {truncatedText}
+      </div>
+    );
+  },
+);
 
 TruncatedCell.displayName = "TruncatedCell";
 
@@ -173,20 +186,49 @@ const TableHeader = memo(
               <FilterDropdown>
                 <FilterTrigger asChild>
                   <button
-                    className={`ml-1 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${statusFilter !== "all" ? "text-blue-500" : ""
-                      }`}
+                    className={`ml-1 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                      statusFilter !== "all" ? "text-blue-500" : ""
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <FiFilter size={10} />
                   </button>
                 </FilterTrigger>
                 <FilterContent className="bg-white dark:bg-brand-darker border dark:border-brand-dark">
-                  <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                    <DropdownMenuRadioItem value="all" className="text-xs dark:text-white">All</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="200" className="text-xs dark:text-white">200 OK</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="300" className="text-xs dark:text-white">3xx Redirect</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="400" className="text-xs dark:text-white">4xx Error</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="500" className="text-xs dark:text-white">5xx Error</DropdownMenuRadioItem>
+                  <DropdownMenuRadioGroup
+                    value={statusFilter}
+                    onValueChange={setStatusFilter}
+                  >
+                    <DropdownMenuRadioItem
+                      value="all"
+                      className="text-xs dark:text-white"
+                    >
+                      All
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="200"
+                      className="text-xs dark:text-white"
+                    >
+                      200 OK
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="300"
+                      className="text-xs dark:text-white"
+                    >
+                      3xx Redirect
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="400"
+                      className="text-xs dark:text-white"
+                    >
+                      4xx Error
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="500"
+                      className="text-xs dark:text-white"
+                    >
+                      5xx Error
+                    </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
                 </FilterContent>
               </FilterDropdown>
@@ -215,16 +257,19 @@ const TableRow = memo(
   }: TableRowProps) => {
     const isRowClicked = clickedRow === index;
 
-    const rowData = useMemo(() => [
-      index + 1,
-      row?.anchor || "",
-      row?.rel || "",
-      row?.link || "",
-      row?.title || "",
-      row?.target || "",
-      row?.status || "",
-      row?.page || "",
-    ], [row, index]);
+    const rowData = useMemo(
+      () => [
+        index + 1,
+        row?.anchor || "",
+        row?.rel || "",
+        row?.link || "",
+        row?.title || "",
+        row?.target || "",
+        row?.status || "",
+        row?.page || "",
+      ],
+      [row, index],
+    );
 
     const visibleItems = useMemo(() => {
       return rowData
@@ -267,12 +312,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             <TruncatedCell text={item.cell?.toString()} width="100%" />
           </div>
@@ -284,44 +330,46 @@ const TableRow = memo(
 
 TableRow.displayName = "TableRow";
 
-const ColumnPicker = memo(({
-  columnVisibility,
-  setColumnVisibility,
-  headerTitles,
-}: ColumnPickerProps) => {
-  const handleToggle = useCallback(
-    (index: number) => {
-      setColumnVisibility((prev: boolean[]) => {
-        const newVisibility = [...prev];
-        newVisibility[index] = !newVisibility[index];
-        return newVisibility;
-      });
-    },
-    [setColumnVisibility],
-  );
+const ColumnPicker = memo(
+  ({
+    columnVisibility,
+    setColumnVisibility,
+    headerTitles,
+  }: ColumnPickerProps) => {
+    const handleToggle = useCallback(
+      (index: number) => {
+        setColumnVisibility((prev: boolean[]) => {
+          const newVisibility = [...prev];
+          newVisibility[index] = !newVisibility[index];
+          return newVisibility;
+        });
+      },
+      [setColumnVisibility],
+    );
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
-          <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
-        {headerTitles.map((header, index) => (
-          <DropdownMenuCheckboxItem
-            key={header}
-            checked={columnVisibility[index] ?? true}
-            onCheckedChange={() => handleToggle(index)}
-            className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
-          >
-            <span className="ml-5 dark:text-brand-bright">{header}</span>
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-});
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+          {headerTitles.map((header, index) => (
+            <DropdownMenuCheckboxItem
+              key={header}
+              checked={columnVisibility[index] ?? true}
+              onCheckedChange={() => handleToggle(index)}
+              className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+            >
+              <span className="ml-5 dark:text-brand-bright">{header}</span>
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  },
+);
 
 ColumnPicker.displayName = "ColumnPicker";
 
@@ -331,20 +379,28 @@ const LinksTable = ({
   overscan = 5,
   tabName,
 }: TableCrawlProps) => {
-  const [columnWidths, setColumnWidths] = useState<string[]>(initialColumnWidths);
-  const [columnAlignments, setColumnAlignments] = useState<string[]>(initialColumnAlignments);
+  const [columnWidths, setColumnWidths] =
+    useState<string[]>(initialColumnWidths);
+  const [columnAlignments, setColumnAlignments] = useState<string[]>(
+    initialColumnAlignments,
+  );
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState<boolean[]>(headerTitles.map(() => true));
+  const [columnVisibility, setColumnVisibility] = useState<boolean[]>(
+    headerTitles.map(() => true),
+  );
   const [statusFilter, setStatusFilter] = useState("all");
   const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
   const startXRef = useRef(0);
 
-  const handleMouseDown = useCallback((index: number, event: React.MouseEvent) => {
-    setIsResizing(index);
-    startXRef.current = event.clientX;
-    event.preventDefault();
-  }, []);
+  const handleMouseDown = useCallback(
+    (index: number, event: React.MouseEvent) => {
+      setIsResizing(index);
+      startXRef.current = event.clientX;
+      event.preventDefault();
+    },
+    [],
+  );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
@@ -384,7 +440,8 @@ const LinksTable = ({
   const toggleColumnAlignment = useCallback((index: number) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
-      newAlignments[index] = newAlignments[index] === "center" ? "left" : "center";
+      newAlignments[index] =
+        newAlignments[index] === "center" ? "left" : "center";
       return newAlignments;
     });
   }, []);
@@ -401,7 +458,7 @@ const LinksTable = ({
     let result = rows;
 
     if (statusFilter !== "all") {
-      result = result.filter(row => {
+      result = result.filter((row) => {
         const status = parseInt(row.status);
         if (statusFilter === "200") return status === 200;
         if (statusFilter === "300") return status >= 300 && status < 400;
@@ -415,7 +472,7 @@ const LinksTable = ({
       const s = searchTerm.toLowerCase();
       result = result.filter((row) => {
         return Object.values(row).some((val) =>
-          val?.toString().toLowerCase().includes(s)
+          val?.toString().toLowerCase().includes(s),
         );
       });
     }
@@ -429,6 +486,7 @@ const LinksTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
   });
 
