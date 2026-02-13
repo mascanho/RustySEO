@@ -4,6 +4,9 @@
 import React, { useCallback } from "react";
 import { Upload, X, Eye, Download, CheckSquare, Square } from "lucide-react";
 import type { ImageFile } from "./types/image";
+import { listen } from "@tauri-apps/api/event";
+import { readFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 
 interface FileUploadProps {
   images: ImageFile[];
@@ -24,39 +27,11 @@ export function FileUpload({
 }: FileUploadProps) {
   const [dragActive, setDragActive] = React.useState(false);
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/"),
-    );
-    addImages(files);
-  }, []);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      addImages(files);
-    }
-  };
-
-  const addImages = (files: File[]) => {
+  const addImages = useCallback((files: File[]) => {
     const newImages: ImageFile[] = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
-      preview: URL.createObjectURL(file),
+      preview: URL.createObjectURL(file), // Works for memory-backed Files too
       originalSize: file.size,
       status: "pending",
       progress: 0,
@@ -84,7 +59,110 @@ export function FileUpload({
       };
       imgElement.src = imageFile.preview;
     });
+  }, [setImages]);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (files.length > 0) {
+      addImages(files);
+    }
+  }, [addImages]);
+
+  // Listen for Tauri file drop
+  React.useEffect(() => {
+    const unlisteners: (() => void)[] = [];
+
+    async function setupListeners() {
+      const unlistenDrop = await listen("tauri://file-drop", async (event) => {
+        setDragActive(false);
+        const paths = event.payload as string[];
+
+        if (paths && paths.length > 0) {
+          toast.info(`Processing ${paths.length} file(s)...`);
+          const files: File[] = [];
+
+          for (const path of paths) {
+            try {
+              const contents = await readFile(path);
+              const name = path.split(/[/\\]/).pop() || "unknown";
+              const ext = name.split(".").pop()?.toLowerCase() || "";
+
+              let type = "image/jpeg"; // Default to jpeg to be permissive
+
+              if (["jpg", "jpeg"].includes(ext)) type = "image/jpeg";
+              else if (ext === "png") type = "image/png";
+              else if (ext === "webp") type = "image/webp";
+              else if (ext === "gif") type = "image/gif";
+              else if (ext === "svg") type = "image/svg+xml";
+              else if (ext === "bmp") type = "image/bmp";
+              else if (ext === "ico") type = "image/x-icon";
+              else if (["tif", "tiff"].includes(ext)) type = "image/tiff";
+              else if (["heic", "heif"].includes(ext)) type = "image/heic";
+
+              const file = new File([contents], name, { type });
+              files.push(file);
+            } catch (err) {
+              console.error(`Failed to read dropped file: ${path}`, err);
+              toast.error(`Could not read file: ${path}`);
+            }
+          }
+
+          if (files.length > 0) {
+            addImages(files);
+            toast.success(`Successfully imported ${files.length} image(s)`);
+          }
+        }
+      });
+      unlisteners.push(unlistenDrop);
+
+      const unlistenHover = await listen("tauri://file-drop-hover", () => {
+        setDragActive(true);
+      });
+      unlisteners.push(unlistenHover);
+
+      const unlistenCancelled = await listen("tauri://file-drop-cancelled", () => {
+        setDragActive(false);
+      });
+      unlisteners.push(unlistenCancelled);
+
+      toast.info("Drag & drop initialized");
+    }
+
+    setupListeners().catch(err => {
+      console.error("Failed to setup drag listeners", err);
+      toast.error("Failed to initialize drag & drop system");
+    });
+
+    return () => {
+      unlisteners.forEach((fn) => fn());
+    };
+  }, [addImages]);
+
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      addImages(files);
+    }
   };
+
+
 
   const removeImage = (id: string) => {
     setImages((prev) => {
@@ -105,6 +183,39 @@ export function FileUpload({
       Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
     );
   };
+
+  // Prevent default drag behavior globally to ensure drops works
+  React.useEffect(() => {
+    const handleGlobalDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    const handleGlobalDrop = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", handleGlobalDragOver);
+    window.addEventListener("drop", handleGlobalDrop);
+    return () => {
+      window.removeEventListener("dragover", handleGlobalDragOver);
+      window.removeEventListener("drop", handleGlobalDrop);
+    };
+  }, []);
+
+  const handleManualDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    // Handle standard generic drop (for when dragDropEnabled is false or web fallback)
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+      if (files.length > 0) {
+        addImages(files);
+        toast.success(`Dropped ${files.length} images`);
+      }
+    }
+  }, [addImages]);
 
   return (
     <div className="shadow-xl bg-white dark:bg-brand-darker rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 p-6">
@@ -136,6 +247,7 @@ export function FileUpload({
             multiple
             accept="image/*"
             onChange={handleFileInput}
+            onDrop={handleManualDrop} // Explicitly handle drops on the input
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
