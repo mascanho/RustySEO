@@ -13,9 +13,9 @@ export function CompressionStats({ images }: CompressionStatsProps) {
 
   if (completedImages.length === 0) {
     return (
-      <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 flex items-center justify-center gap-3 shadow-md">
-        <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/5">
-          <Info className="w-4 h-4 text-slate-400" />
+      <div className="bg-white dark:bg-brand-darker rounded-xl p-3 border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2 shadow-md">
+        <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5">
+          <Info className="w-3.5 h-3.5 text-slate-400" />
         </div>
         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic text-center">
           Metrics pending processing
@@ -68,22 +68,22 @@ export function CompressionStats({ images }: CompressionStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 ">
+    <div className="grid grid-cols-1 gap-2">
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-4 group hover:border-brand-bright transition-all duration-300"
+          className="bg-white dark:bg-brand-darker rounded-xl p-3 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-3 group hover:border-brand-bright transition-all duration-300"
         >
           <div
-            className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}
+            className={`p-2 rounded-lg ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}
           >
-            <stat.icon className="w-5 h-5" />
+            <stat.icon className="w-4 h-4" />
           </div>
           <div className="min-w-0">
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
               {stat.label}
             </p>
-            <h4 className="text-base font-black dark:text-white leading-none mb-1">
+            <h4 className="text-sm font-black dark:text-white leading-none mb-0.5">
               {stat.value}
             </h4>
             <p className="text-[9px] font-bold text-slate-400 italic">

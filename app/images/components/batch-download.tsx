@@ -170,21 +170,21 @@ export function BatchSelection({
 
   return (
     <>
-      <div className="bg-white dark:bg-brand-darker p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="bg-white dark:bg-brand-darker p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={toggleAllSelection}
             disabled={downloadingZip}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 border ${
               completedImages.every((img) => img.selected)
                 ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
                 : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
             }`}
           >
             {completedImages.every((img) => img.selected) ? (
-              <CheckSquare className="w-4 h-4" />
+              <CheckSquare className="w-3.5 h-3.5" />
             ) : (
-              <Square className="w-4 h-4" />
+              <Square className="w-3.5 h-3.5" />
             )}
           </button>
           <div className="space-y-0.5">
@@ -203,14 +203,14 @@ export function BatchSelection({
       </div>
 
       {downloadingZip && (
-        <div className="space-y-2 animate-in fade-in zoom-in duration-300 p-2">
+        <div className="space-y-1.5 animate-in fade-in zoom-in duration-300 p-1.5">
           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-brand-bright italic">
             <span>Compiling Bundle</span>
             <span>{Math.round(zipProgress)}%</span>
           </div>
           <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden border border-slate-300 dark:border-white/10">
             <div
-              className="h-full bg-brand-bright transition-all duration-300"
+              className="h-full bg-gradient-to-r from-brand-bright to-brand-bright/80 transition-all duration-300"
               style={{ width: `${zipProgress}%` }}
             />
           </div>
@@ -247,7 +247,7 @@ export function BatchDownloadButton({
     <button
       onClick={downloadSelectedImages}
       disabled={isDisabled}
-      className={`w-full h-10 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg border ${
+      className={`w-full h-9 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 font-black uppercase tracking-widest text-[10px] relative overflow-hidden group shadow-lg border ${
         isDisabled
           ? "bg-slate-100 dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10 cursor-not-allowed opacity-60"
           : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:shadow-brand-bright/40 active:scale-[0.98] border-brand-bright"

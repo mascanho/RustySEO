@@ -186,7 +186,7 @@ export default function ImageResizerApp() {
       </aside>
 
       {/* CENTER: ASSET WORKSPACE */}
-      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-4 bg-slate-100 dark:bg-brand-dark h-full">
+      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-4 bg-slate-100 dark:bg-brand-dark h-full -mt-1">
         <div className="max-w-7xl mx-auto h-full">
           <FileUpload
             images={images}
@@ -208,15 +208,15 @@ export default function ImageResizerApp() {
       </main>
 
       {/* RIGHT SIDEBAR: EXECUTION & STATUS */}
-      <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
+      <aside className="w-80 mb-1 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col  overflow-hidden relative z-20 shadow-xl">
         <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-brand-darker">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+          <div className="flex-1 overflow-hidden custom-scrollbar p-4 space-y-4">
             {/* Progress Monitor */}
-            {!processing && (
+            {overallProgress > 0 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex justify-between items-end">
                       <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
                         Global Progress
@@ -225,12 +225,12 @@ export default function ImageResizerApp() {
                         {Math.round(overallProgress)}%
                       </span>
                     </div>
-                    <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div className="relative h-2.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
                       <div
-                        className="absolute top-0 left-0 h-full bg-brand-bright animate-pulse  transition-all duration-500 ease-out"
+                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright to-brand-bright/80 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${overallProgress}%` }}
                       >
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
+                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/20" />
                       </div>
                     </div>
                   </div>
@@ -239,7 +239,7 @@ export default function ImageResizerApp() {
             )}
 
             {/* Metrics Section */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                 Optimization Metrics
               </h3>
@@ -247,7 +247,7 @@ export default function ImageResizerApp() {
             </div>
 
             {/* Naming Configuration */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                 File Naming Schema
               </h3>
@@ -259,7 +259,7 @@ export default function ImageResizerApp() {
             </div>
 
             {/* Export Bundle Selection */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                 Export Bundle
               </h3>
@@ -274,7 +274,7 @@ export default function ImageResizerApp() {
           </div>
 
           {/* Action Button: Footer */}
-          <div className="p-4 pt-2 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
+          <div className="p-3 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
             <BatchDownloadButton
               selectedImages={selectedImages}
               downloadingZip={downloadingZip}

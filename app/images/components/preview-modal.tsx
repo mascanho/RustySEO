@@ -39,7 +39,7 @@ export function PreviewModal({
     : null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4  animate-in fade-in duration-300">
       <div className="bg-white dark:bg-brand-darker w-full max-w-6xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-white/10">
         {/* Modal Header */}
         <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-black/60">
@@ -67,17 +67,22 @@ export function PreviewModal({
                 {/* Custom Tabs */}
                 <div className="flex p-1 bg-slate-100 dark:bg-black p-1.5 rounded-[1.25rem] w-full max-w-md mx-auto border border-slate-200 dark:border-white/10">
                   {[
-                    { id: "side-by-side", label: "Comparison", icon: ArrowLeftRight },
+                    {
+                      id: "side-by-side",
+                      label: "Comparison",
+                      icon: ArrowLeftRight,
+                    },
                     { id: "before", label: "Original" },
                     { id: "after", label: "Optimized" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setPreviewMode(tab.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl border ${previewMode === tab.id
-                        ? "bg-white dark:bg-brand-dark text-brand-bright shadow-xl border-slate-100 dark:border-white/10"
-                        : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
-                        }`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl border ${
+                        previewMode === tab.id
+                          ? "bg-white dark:bg-brand-dark text-brand-bright shadow-xl border-slate-100 dark:border-white/10"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
+                      }`}
                     >
                       {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
                       {tab.label}
@@ -88,7 +93,9 @@ export function PreviewModal({
                 {previewMode === "side-by-side" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-4">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Source Asset</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">
+                        Source Asset
+                      </p>
                       <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 shadow-inner">
                         <img
                           src={previewImage.preview}
@@ -98,18 +105,29 @@ export function PreviewModal({
                       </div>
                       <div className="p-5 bg-slate-50 dark:bg-black/40 rounded-2xl flex justify-around border border-slate-100 dark:border-white/5 shadow-sm">
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mass</p>
-                          <p className="text-sm font-black dark:text-white">{formatFileSize(previewImage.originalSize)}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                            Mass
+                          </p>
+                          <p className="text-sm font-black dark:text-white">
+                            {formatFileSize(previewImage.originalSize)}
+                          </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Canvas</p>
-                          <p className="text-sm font-black dark:text-white">{previewImage.originalDimensions?.width}×{previewImage.originalDimensions?.height}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                            Canvas
+                          </p>
+                          <p className="text-sm font-black dark:text-white">
+                            {previewImage.originalDimensions?.width}×
+                            {previewImage.originalDimensions?.height}
+                          </p>
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <p className="text-[10px] font-black text-brand-bright uppercase tracking-[0.2em] text-center italic">Optimized Target</p>
+                      <p className="text-[10px] font-black text-brand-bright uppercase tracking-[0.2em] text-center italic">
+                        Optimized Target
+                      </p>
                       <div className="aspect-video bg-brand-bright/5 dark:bg-brand-bright/10 rounded-3xl overflow-hidden border border-brand-bright/20 dark:border-brand-bright/20 flex items-center justify-center p-6 shadow-inner">
                         <img
                           src={processedUrl}
@@ -119,12 +137,21 @@ export function PreviewModal({
                       </div>
                       <div className="p-5 bg-brand-bright/10 rounded-2xl flex justify-around border border-brand-bright/20 shadow-sm shadow-brand-bright/5">
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">New Mass</p>
-                          <p className="text-sm font-black dark:text-white">{formatFileSize(previewImage.processedSize || 0)}</p>
+                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">
+                            New Mass
+                          </p>
+                          <p className="text-sm font-black dark:text-white">
+                            {formatFileSize(previewImage.processedSize || 0)}
+                          </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">Resolution</p>
-                          <p className="text-sm font-black dark:text-white">{previewImage.processedDimensions?.width}×{previewImage.processedDimensions?.height}</p>
+                          <p className="text-[9px] font-black text-brand-bright uppercase tracking-widest mb-1">
+                            Resolution
+                          </p>
+                          <p className="text-sm font-black dark:text-white">
+                            {previewImage.processedDimensions?.width}×
+                            {previewImage.processedDimensions?.height}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -135,20 +162,32 @@ export function PreviewModal({
                   <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-500">
                     <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
                       <img
-                        src={previewMode === "before" ? previewImage.preview : processedUrl}
+                        src={
+                          previewMode === "before"
+                            ? previewImage.preview
+                            : processedUrl
+                        }
                         alt="Preview"
                         className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
                       />
                     </div>
                     <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
                       <div className="text-center">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Mass</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                          Total Mass
+                        </p>
                         <p className="text-2xl font-black dark:text-white">
-                          {formatFileSize(previewMode === "before" ? previewImage.originalSize : (previewImage.processedSize || 0))}
+                          {formatFileSize(
+                            previewMode === "before"
+                              ? previewImage.originalSize
+                              : previewImage.processedSize || 0,
+                          )}
                         </p>
                       </div>
                       <div className="text-center border-l border-slate-200 dark:border-white/10 pl-16">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Canvas Resolution</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                          Canvas Resolution
+                        </p>
                         <p className="text-2xl font-black dark:text-white">
                           {previewMode === "before"
                             ? `${previewImage.originalDimensions?.width}×${previewImage.originalDimensions?.height}`
@@ -163,7 +202,9 @@ export function PreviewModal({
 
             {previewImage.status !== "completed" && (
               <div className="flex flex-col items-center gap-6">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Source Preview</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">
+                  Source Preview
+                </p>
                 <div className="w-full max-w-4xl bg-slate-50 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-10 shadow-inner">
                   <img
                     src={previewImage.preview}
@@ -173,13 +214,20 @@ export function PreviewModal({
                 </div>
                 <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
                   <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Mass</p>
-                    <p className="text-2xl font-black dark:text-white">{formatFileSize(previewImage.originalSize)}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                      Current Mass
+                    </p>
+                    <p className="text-2xl font-black dark:text-white">
+                      {formatFileSize(previewImage.originalSize)}
+                    </p>
                   </div>
                   <div className="text-center border-l border-slate-200 dark:border-white/10 pl-16">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                      Resolution
+                    </p>
                     <p className="text-2xl font-black dark:text-white">
-                      {previewImage.originalDimensions?.width}×{previewImage.originalDimensions?.height}
+                      {previewImage.originalDimensions?.width}×
+                      {previewImage.originalDimensions?.height}
                     </p>
                   </div>
                 </div>
