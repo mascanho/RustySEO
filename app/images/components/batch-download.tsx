@@ -170,7 +170,7 @@ export function BatchSelection({
 
   return (
     <>
-      <div className="bg-white dark:bg-brand-darker p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-between">
+      <div className="bg-white dark:bg-brand-darker p-3 rounded-xl border border-slate-200 dark:border-white/10  flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <button
             onClick={toggleAllSelection}

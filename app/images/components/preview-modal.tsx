@@ -80,7 +80,7 @@ export function PreviewModal({
                       onClick={() => setPreviewMode(tab.id)}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl border ${
                         previewMode === tab.id
-                          ? "bg-white dark:bg-brand-dark text-brand-bright shadow-xl border-slate-100 dark:border-white/10"
+                          ? "bg-white dark:bg-brand-bright text-brand-bright dark:text-white shadow-sm  border-slate-100 dark:border-white/10"
                           : "text-slate-400 hover:text-slate-600 dark:hover:text-white border-transparent"
                       }`}
                     >
@@ -96,7 +96,7 @@ export function PreviewModal({
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">
                         Source Asset
                       </p>
-                      <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 shadow-inner">
+                      <div className="aspect-video bg-slate-50 dark:bg-black/40 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 flex items-center justify-center p-6 ">
                         <img
                           src={previewImage.preview}
                           alt="Original"
@@ -171,7 +171,7 @@ export function PreviewModal({
                         className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-2xl border border-white/5"
                       />
                     </div>
-                    <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                    <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md border border-slate-200 dark:border-white/10 flex gap-16">
                       <div className="text-center">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                           Total Mass
@@ -212,7 +212,7 @@ export function PreviewModal({
                     className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-md border border-white/5"
                   />
                 </div>
-                <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md shadow-xl border border-slate-200 dark:border-white/10 flex gap-16">
+                <div className="px-10 py-5 bg-slate-50 dark:bg-black/60 rounded-md border border-slate-200 dark:border-white/10 flex gap-16">
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                       Current Mass

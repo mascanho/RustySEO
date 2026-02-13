@@ -72,7 +72,7 @@ export function CompressionStats({ images }: CompressionStatsProps) {
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-brand-darker rounded-xl p-3 border border-slate-200 dark:border-white/10 shadow-md flex items-center gap-3 group hover:border-brand-bright transition-all duration-300"
+          className="bg-white dark:bg-brand-darker rounded-xl p-3 border border-slate-200 dark:border-white/10  flex items-center gap-3 group hover:border-brand-bright transition-all duration-300"
         >
           <div
             className={`p-2 rounded-lg ${stat.bg} ${stat.color} transition-transform group-hover:rotate-12`}

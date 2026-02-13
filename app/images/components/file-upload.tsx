@@ -306,7 +306,7 @@ export function FileUpload({
                   Active Pipeline
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-black text-[9px] uppercase tracking-widest">
-                  {images.length} Units
+                  {images.length} {images.length > 1 ? "Images" : "Image"}
                 </span>
               </div>
               <div className="flex gap-2">
