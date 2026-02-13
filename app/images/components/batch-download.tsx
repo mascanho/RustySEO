@@ -154,10 +154,11 @@ export function BatchDownload({
           <button
             onClick={toggleAllSelection}
             disabled={downloadingZip}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${completedImages.every((img) => img.selected)
-              ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
-              : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
-              }`}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 border ${
+              completedImages.every((img) => img.selected)
+                ? "bg-brand-bright border-brand-bright text-white shadow-lg shadow-brand-bright/20"
+                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 font-bold"
+            }`}
           >
             {completedImages.every((img) => img.selected) ? (
               <CheckSquare className="w-4 h-4" />
@@ -166,16 +167,22 @@ export function BatchDownload({
             )}
           </button>
           <div className="space-y-0.5">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Status</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+              Status
+            </p>
             <p className="text-sm font-black dark:text-white leading-none">
-              {selectedImages.length} <span className="text-slate-400 font-bold">/ {completedImages.length}</span> Ready
+              {selectedImages.length}{" "}
+              <span className="text-slate-400 font-bold">
+                / {completedImages.length}
+              </span>{" "}
+              Ready
             </p>
           </div>
         </div>
       </div>
 
       {/* Compile Progress */}
-      {downloadingZip && (
+      {!downloadingZip && (
         <div className="space-y-2 animate-in fade-in zoom-in duration-300 p-2">
           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-brand-bright italic">
             <span>Compiling Bundle</span>
@@ -194,10 +201,11 @@ export function BatchDownload({
       <button
         onClick={downloadSelectedImages}
         disabled={selectedImages.length === 0 || downloadingZip}
-        className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest text-xs relative overflow-hidden group shadow-xl ${selectedImages.length === 0 || downloadingZip
-          ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
-          : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:scale-[1.02] active:scale-[0.98] shadow-brand-bright/40 border border-brand-bright"
-          }`}
+        className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest text-xs relative overflow-hidden group shadow-xl ${
+          selectedImages.length === 0 || downloadingZip
+            ? "bg-slate-200 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-300 dark:border-white/10"
+            : "bg-brand-bright text-white hover:bg-brand-bright/90 hover:scale-[1.02] active:scale-[0.98] shadow-brand-bright/40 border border-brand-bright"
+        }`}
       >
         {downloadingZip ? (
           <>

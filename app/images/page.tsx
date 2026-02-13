@@ -187,13 +187,6 @@ export default function ImageResizerApp() {
 
       {/* RIGHT SIDEBAR: EXECUTION & STATUS */}
       <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center gap-3 bg-white dark:bg-brand-darker">
-          <div className="w-1.5 h-1.5 rounded-full bg-brand-bright" />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Global Output Channel
-          </p>
-        </div>
-
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-slate-50 dark:bg-brand-darker">
           {/* Progress Monitor */}
           {processing && (
