@@ -217,7 +217,7 @@ export default function ImageResizerApp() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
                       <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
-                        Live Processing
+                        Global Progress
                       </p>
                       <span className="text-xs font-black dark:text-white">
                         {Math.round(overallProgress)}%
