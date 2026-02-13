@@ -14,13 +14,13 @@ const roboto = Roboto({
 
 export default function ImagesLayout({ children }: any) {
   return (
-    <main className={`-mt-20 h-full ${roboto.className}`}>
-      <div className="dark:bg-brand-darker w-full bg-white border-b dark:border-b-brand-dark h-11">
+    <main className={`-mt-20 h-screen flex flex-col ${roboto.className}`}>
+      <div className=" w-full bg-white border-b dark:border-b-brand-dark h-11 flex-none dark:bg-brand-darker">
         <div className="pt-2">
           <MenuDrawer />
         </div>
       </div>
-      {children}
+      <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
     </main>
   );
 }

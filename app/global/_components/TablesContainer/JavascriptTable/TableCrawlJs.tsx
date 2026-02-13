@@ -154,9 +154,7 @@ const TableHeader = ({
       style={{
         display: "grid",
         gridTemplateColumns: visibleItems
-          .map((item) =>
-            item.originalIndex === 1 ? "1fr" : item.width,
-          )
+          .map((item) => (item.originalIndex === 1 ? "1fr" : item.width))
           .join(" "),
         height: "30px",
         alignItems: "center",
@@ -226,9 +224,7 @@ const TableRow = ({
       style={{
         display: "grid",
         gridTemplateColumns: visibleItems
-          .map((item) =>
-            item.originalIndex === 1 ? "1fr" : item.width,
-          )
+          .map((item) => (item.originalIndex === 1 ? "1fr" : item.width))
           .join(" "),
         height: "100%",
         alignItems: "center",
@@ -257,12 +253,13 @@ const TableRow = ({
             display: "flex",
             alignItems: "center",
           }}
-          className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-            ? "bg-blue-600"
-            : index % 2 === 0
-              ? "bg-white dark:bg-brand-darker"
-              : "bg-gray-50 dark:bg-brand-dark/30"
-            }`}
+          className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+            isRowClicked
+              ? "bg-blue-600"
+              : index % 2 === 0
+                ? "bg-white dark:bg-brand-darker"
+                : "bg-gray-50 dark:bg-brand-dark/30"
+          }`}
         >
           <TruncatedCell text={item.cell?.toString()} width="100%" />
         </div>
@@ -402,6 +399,7 @@ const TableCrawlJs = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
   });
 
@@ -414,11 +412,14 @@ const TableCrawlJs = ({
     return () => debouncedSearch.cancel();
   }, [debouncedSearch]);
 
-  const handleMouseDown = useCallback((index: number, event: React.MouseEvent) => {
-    setIsResizing(index);
-    startXRef.current = event.clientX;
-    event.preventDefault();
-  }, []);
+  const handleMouseDown = useCallback(
+    (index: number, event: React.MouseEvent) => {
+      setIsResizing(index);
+      startXRef.current = event.clientX;
+      event.preventDefault();
+    },
+    [],
+  );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
@@ -451,8 +452,7 @@ const TableCrawlJs = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const totalWidth = useMemo(
-    () =>
-      columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
+    () => columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
     [columnWidths],
   );
 
@@ -498,7 +498,7 @@ const TableCrawlJs = ({
           style={{
             width: "100%",
             height: `${rowVirtualizer.getTotalSize() + 30}px`,
-            position: "relative"
+            position: "relative",
           }}
           className="domainCrawlParent"
         >

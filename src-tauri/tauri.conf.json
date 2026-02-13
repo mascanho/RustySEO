@@ -58,7 +58,7 @@
         "height": 800,
         "decorations": true,
         "useHttpsScheme": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": true
       }
     ],
     "security": {

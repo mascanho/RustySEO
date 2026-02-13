@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex as StdMutex};
+use std::sync::{Arc, Mutex as StdMutex, RwLock};
 use std::time::{Duration, Instant};
 
 use futures::{stream, StreamExt};
@@ -70,10 +70,18 @@ pub struct SharedLinkChecker {
     /// Tracks URLs that are currently being fetched, so other tasks can wait
     /// instead of firing duplicate HTTP requests
     in_flight: Arc<Mutex<HashMap<String, Arc<Notify>>>>,
+    /// Global URL → HTTP status code registry shared with the crawler.
+    /// URLs that the crawler has already visited are recorded here so the
+    /// link checker can return their status instantly without an HTTP request.
+    url_status_registry: Arc<RwLock<HashMap<String, u16>>>,
 }
 
 impl SharedLinkChecker {
-    pub fn new(settings: &Settings, user_agent: Option<String>) -> Self {
+    pub fn new(
+        settings: &Settings,
+        user_agent: Option<String>,
+        url_status_registry: Arc<RwLock<HashMap<String, u16>>>,
+    ) -> Self {
         let config = LinkCheckConfig::from_settings(settings);
         let client = build_client(&config, settings, user_agent);
         SharedLinkChecker {
@@ -83,6 +91,7 @@ impl SharedLinkChecker {
             config,
             status_cache: Arc::new(Mutex::new(HashMap::new())),
             in_flight: Arc::new(Mutex::new(HashMap::new())),
+            url_status_registry,
         }
     }
 
@@ -114,6 +123,7 @@ impl SharedLinkChecker {
                     let config = self.config.clone();
                     let status_cache = self.status_cache.clone();
                     let in_flight = self.in_flight.clone();
+                    let url_status_registry = self.url_status_registry.clone();
 
                     async move {
                         process_single_link(
@@ -132,6 +142,7 @@ impl SharedLinkChecker {
                             config,
                             status_cache,
                             in_flight,
+                            url_status_registry,
                         )
                         .await
                     }
@@ -234,7 +245,11 @@ pub async fn get_links_status_code(
     config: LinkCheckConfig,
 ) -> LinkCheckResults {
     let settings = Settings::default(); // Fallback
-    let checker = SharedLinkChecker::new(&settings, None);
+    let checker = SharedLinkChecker::new(
+        &settings,
+        None,
+        Arc::new(RwLock::new(HashMap::new())),
+    );
     checker.check_links(links, base_url, page).await
 }
 
@@ -244,7 +259,11 @@ pub async fn get_links_status_code_from_settings(
     page: String,
     settings: &Settings,
 ) -> LinkCheckResults {
-    let checker = SharedLinkChecker::new(settings, None);
+    let checker = SharedLinkChecker::new(
+        settings,
+        None,
+        Arc::new(RwLock::new(HashMap::new())),
+    );
     checker.check_links(links, base_url, page).await
 }
 
@@ -332,6 +351,7 @@ async fn process_single_link(
     config: LinkCheckConfig,
     status_cache: Arc<Mutex<HashMap<String, (Option<u16>, Option<String>)>>>,
     in_flight: Arc<Mutex<HashMap<String, Arc<Notify>>>>,
+    url_status_registry: Arc<RwLock<HashMap<String, u16>>>,
 ) -> Option<(LinkStatus, bool)> {
     let full_url = match if is_internal {
         base_url.join(&link)
@@ -358,7 +378,33 @@ async fn process_single_link(
     let relative_path = is_internal.then(|| link.clone());
     let anchor_text = Some(anchor.clone());
 
-    // Check Global Cache first
+    // 1) Check the global URL status registry first (populated by the crawler)
+    //    This is the cheapest lookup — a simple RwLock read that doesn't block other readers.
+    if let Ok(registry) = url_status_registry.read() {
+        if let Some(&status_code) = registry.get(&full_url_str) {
+            let error = if status_code >= 400 {
+                Some(format!("HTTP Error: {}", status_code))
+            } else {
+                None
+            };
+            return Some((
+                LinkStatus {
+                    base_url: (*base_url).clone(),
+                    url: full_url_str,
+                    relative_path,
+                    status: Some(status_code),
+                    error,
+                    anchor_text,
+                    rel,
+                    title,
+                    target,
+                },
+                is_internal,
+            ));
+        }
+    }
+
+    // 2) Check the link-checker's own status cache (populated by previous link checks)
     let cached_result = {
         let cache = status_cache.lock().await;
         cache.get(&full_url_str).cloned()

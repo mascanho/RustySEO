@@ -6,12 +6,18 @@ import { ImageIcon } from "lucide-react";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+import { invoke } from "@tauri-apps/api/core";
 import { FileUpload } from "./components/file-upload";
 import { SettingsPanel } from "./components/settings-panel";
 import { CompressionStats } from "./components/compression-stats";
-import { BatchDownload } from "./components/batch-download";
+import {
+  useBatchDownload,
+  BatchSelection,
+  BatchDownloadButton,
+} from "./components/batch-download";
 import { PreviewModal } from "./components/preview-modal";
-import { ThemeToggle } from "./components/theme-toggle";
+import { ThemeToggle } from "./components/theme-toggle"; // Keeping import but unused in render
+import { NamingSettings } from "./components/naming-settings";
 import type { ImageFile, ResizeSettings } from "./components/types/image";
 
 export default function ImageResizerApp() {
@@ -31,6 +37,15 @@ export default function ImageResizerApp() {
     prefix: "",
     suffix: "resized",
   });
+
+  const {
+    downloadingZip,
+    zipProgress,
+    downloadSelectedImages,
+    toggleAllSelection,
+    completedImages,
+    selectedImages,
+  } = useBatchDownload(images, setImages, resizeSettings);
 
   const handleDownload = async (image: ImageFile) => {
     if (!image.processedBlob) return;
@@ -64,50 +79,42 @@ export default function ImageResizerApp() {
     setProcessing(true);
     setOverallProgress(0);
 
-    const updatedImages = [...images];
+    const updatedImages = images.map((img) => ({
+      ...img,
+      status: "processing" as const,
+      progress: 0,
+      processedBlob: undefined,
+      processedSize: undefined,
+      processedDimensions: undefined,
+    }));
+    setImages(updatedImages);
+
     let completedCount = 0;
 
     for (let i = 0; i < updatedImages.length; i++) {
       const img = updatedImages[i];
-      if (img.status === "completed") {
-        completedCount++;
-        continue;
-      }
-
-      updatedImages[i] = { ...img, status: "processing", progress: 0 };
-      setImages([...updatedImages]);
 
       try {
-        const response = await fetch(img.preview);
-        const blob = await response.blob();
-        const bitmap = await createImageBitmap(blob);
-
-        let targetWidth = resizeSettings.width;
-        let targetHeight = resizeSettings.height;
-
-        if (resizeSettings.maintainAspectRatio) {
-          const ratio = Math.min(
-            resizeSettings.width / bitmap.width,
-            resizeSettings.height / bitmap.height,
-          );
-          targetWidth = Math.round(bitmap.width * ratio);
-          targetHeight = Math.round(bitmap.height * ratio);
+        let imageData: number[] | undefined;
+        if (!img.path) {
+          const arrayBuffer = await img.file.arrayBuffer();
+          imageData = Array.from(new Uint8Array(arrayBuffer));
         }
 
-        const canvas = document.createElement("canvas");
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas context failed");
-
-        ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-
-        const quality = resizeSettings.quality / 100;
-        const mimeType = `image/${resizeSettings.format === "jpeg" ? "jpeg" : resizeSettings.format}`;
-
-        const processedBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), mimeType, quality);
+        const resultBytes = await invoke<number[]>("process_single_image", {
+          imageData,
+          path: img.path,
+          width: Math.max(1, resizeSettings.width || 1920),
+          height: Math.max(1, resizeSettings.height || 1080),
+          quality: Math.min(100, Math.max(1, resizeSettings.quality || 80)),
+          format: resizeSettings.format,
+          maintainAspectRatio: resizeSettings.maintainAspectRatio,
         });
+
+        const u8Array = new Uint8Array(resultBytes);
+        const mimeType = `image/${resizeSettings.format === "jpeg" ? "jpeg" : resizeSettings.format}`;
+        const processedBlob = new Blob([u8Array], { type: mimeType });
+        const bitmap = await createImageBitmap(processedBlob);
 
         updatedImages[i] = {
           ...img,
@@ -115,7 +122,7 @@ export default function ImageResizerApp() {
           progress: 100,
           processedSize: processedBlob.size,
           processedBlob: processedBlob,
-          processedDimensions: { width: targetWidth, height: targetHeight },
+          processedDimensions: { width: bitmap.width, height: bitmap.height },
         };
       } catch (error) {
         console.error("Processing failed for", img.file.name, error);
@@ -123,7 +130,7 @@ export default function ImageResizerApp() {
           ...img,
           status: "error",
           progress: 0,
-          errorMessage: error.message,
+          errorMessage: String(error),
         };
       }
 
@@ -133,7 +140,7 @@ export default function ImageResizerApp() {
     }
 
     setProcessing(false);
-    toast.success("Batch processing complete!");
+    toast.success("Processing complete!");
   };
 
   const handlePreview = (image: ImageFile) => {
@@ -148,26 +155,24 @@ export default function ImageResizerApp() {
     );
   };
 
+  const handleTerminate = () => {
+    setImages((prevImages) => {
+      prevImages.forEach((img) => {
+        if (img.preview) URL.revokeObjectURL(img.preview);
+      });
+      return [];
+    });
+    setProcessing(false);
+    setOverallProgress(0);
+  };
+
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-brand-dark transition-colors duration-500 overflow-hidden">
+    <div className="flex h-[calc(100vh-5.8rem)] bg-slate-100 dark:bg-brand-darker transition-colors duration-500 overflow-hidden  border border-slate-200 dark:border-white/5 shadow-2xl">
       {/* Background Decorative Elements Removed for solid look */}
 
       {/* LEFT SIDEBAR: CONFIGURATION */}
-      <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white dark:bg-brand-darker">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-sky-500 shadow-lg shadow-sky-500/20">
-              <ImageIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black tracking-tight dark:text-white leading-none">Media Studio</h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Setup Engine</p>
-            </div>
-          </div>
-          <ThemeToggle />
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-0 bg-slate-50 dark:bg-brand-dark">
+      <aside className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20">
+        <div className="flex-1 overflow-hidden">
           <SettingsPanel
             resizeSettings={resizeSettings}
             setResizeSettings={setResizeSettings}
@@ -175,17 +180,14 @@ export default function ImageResizerApp() {
             processing={processing}
             onProcessImages={processImages}
             isEmbedded={true}
+            onTerminate={handleTerminate}
           />
-        </div>
-
-        <div className="p-4 border-t border-slate-200 dark:border-white/10 text-center bg-white dark:bg-brand-darker">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">v2.4 Core</p>
         </div>
       </aside>
 
       {/* CENTER: ASSET WORKSPACE */}
-      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-8 bg-slate-100 dark:bg-brand-dark">
-        <div className="max-w-5xl mx-auto">
+      <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-4 bg-slate-100 dark:bg-brand-dark h-full -mt-1">
+        <div className="max-w-8xl mx-auto h-full">
           <FileUpload
             images={images}
             setImages={setImages}
@@ -193,6 +195,7 @@ export default function ImageResizerApp() {
             onPreview={handlePreview}
             onDownload={handleDownload}
             onToggleSelection={handleToggleSelection}
+            onTerminate={handleTerminate}
           />
         </div>
 
@@ -205,55 +208,78 @@ export default function ImageResizerApp() {
       </main>
 
       {/* RIGHT SIDEBAR: EXECUTION & STATUS */}
-      <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col h-full overflow-hidden relative z-20 shadow-xl">
-        <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center gap-3 bg-white dark:bg-brand-darker">
-          <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Output Channel</p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-slate-50 dark:bg-brand-dark">
-          {/* Progress Monitor */}
-          {processing && (
+      <aside className="w-80 mb-1 flex-shrink-0 border-l border-slate-200 dark:border-white/5 bg-white dark:bg-brand-darker flex flex-col  overflow-hidden relative z-20 shadow-xl">
+        <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-brand-darker">
+          <div className="flex-1 overflow-hidden custom-scrollbar p-4 space-y-4">
+            {/* Progress Monitor */}
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="bg-white dark:bg-brand-darker rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
-                <div className="space-y-3">
+              <div className="bg-white dark:bg-brand-darker rounded-2xl p-4 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-brand-bright" />
+                <div className="space-y-2">
                   <div className="flex justify-between items-end">
-                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest italic">Live Processing</p>
-                    <span className="text-xs font-black dark:text-white">{Math.round(overallProgress)}%</span>
+                    <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest italic">
+                      Global Progress
+                    </p>
+                    <span className="text-xs font-black dark:text-white">
+                      {Math.round(overallProgress)}%
+                    </span>
                   </div>
-                  <div className="relative h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div className="relative h-2.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
                     <div
-                      className="absolute top-0 left-0 h-full bg-sky-500 transition-all duration-500 ease-out"
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-brand-bright to-brand-bright/80 rounded-full transition-all duration-500 ease-out"
                       style={{ width: `${overallProgress}%` }}
                     >
-                      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:15px_15px] animate-[progress-bar-stripes_1s_linear_infinite]" />
+                      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/20" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Metrics Section */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Optimization Metrics</h3>
-            <CompressionStats images={images} />
+            {/* Metrics Section */}
+            <div className="space-y-2">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                Optimization Metrics
+              </h3>
+              <CompressionStats images={images} />
+            </div>
+
+            {/* Naming Configuration */}
+            <div className="space-y-2">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                File Naming Schema
+              </h3>
+              <NamingSettings
+                resizeSettings={resizeSettings}
+                setResizeSettings={setResizeSettings}
+                processing={processing}
+              />
+            </div>
+
+            {/* Export Bundle Selection */}
+            <div className="space-y-2">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                Export Bundle
+              </h3>
+              <BatchSelection
+                completedImages={completedImages}
+                selectedImages={selectedImages}
+                toggleAllSelection={toggleAllSelection}
+                downloadingZip={downloadingZip}
+                zipProgress={zipProgress}
+              />
+            </div>
           </div>
 
-          {/* Export Pipeline */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Export Bundle</h3>
-            <BatchDownload
-              images={images}
-              setImages={setImages}
-              resizeSettings={resizeSettings}
+          {/* Action Button: Footer */}
+          <div className="p-3 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-brand-darker flex-shrink-0">
+            <BatchDownloadButton
+              selectedImages={selectedImages}
+              downloadingZip={downloadingZip}
+              downloadSelectedImages={downloadSelectedImages}
+              processing={processing}
             />
           </div>
-        </div>
-
-        <div className="p-4 border-t border-slate-200 dark:border-white/10 text-center bg-white dark:bg-brand-darker">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Ready for Batch</p>
         </div>
       </aside>
     </div>

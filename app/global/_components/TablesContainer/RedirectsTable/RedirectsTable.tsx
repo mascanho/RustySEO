@@ -153,12 +153,13 @@ const ChainCell = memo(({ chain }: { chain: any[] }) => {
           )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <span
-              className={`px-1 rounded text-[10px] font-mono border ${hop.status_code >= 300 && hop.status_code < 400
-                ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50"
-                : hop.status_code === 200
-                  ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50"
-                }`}
+              className={`px-1 rounded text-[10px] font-mono border ${
+                hop.status_code >= 300 && hop.status_code < 400
+                  ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50"
+                  : hop.status_code === 200
+                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50"
+                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50"
+              }`}
             >
               {hop.status_code}
             </span>
@@ -354,12 +355,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             {item.originalIndex === 7 ? (
               <ContextTableMenu data={item.cell ? "Yes" : "No"}>
@@ -512,7 +514,7 @@ const RedirectsTable = ({
         }
       });
 
-      // Logic for updating global state and fetching details has been disabled 
+      // Logic for updating global state and fetching details has been disabled
       // to prevent unwanted backend calls/performance issues.
     },
     [rows, setInlinks, setOutlinks, setSelectedTableURL],
@@ -542,6 +544,7 @@ const RedirectsTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
     getItemKey: useCallback(
       (index: number) => filteredRows[index]?.url || index,

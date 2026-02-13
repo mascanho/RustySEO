@@ -1,7 +1,14 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -64,26 +71,28 @@ interface ColumnPickerProps {
   headerTitles: string[];
 }
 
-const TruncatedCell = memo(({ text, maxLength = 100, width = "100%" }: TruncatedCellProps) => {
-  const truncatedText = useMemo(() => {
-    if (!text) return "";
-    if (typeof text !== "string") return text;
-    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-  }, [text, maxLength]);
+const TruncatedCell = memo(
+  ({ text, maxLength = 100, width = "100%" }: TruncatedCellProps) => {
+    const truncatedText = useMemo(() => {
+      if (!text) return "";
+      if (typeof text !== "string") return text;
+      return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+    }, [text, maxLength]);
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {truncatedText}
-    </div>
-  );
-});
+    return (
+      <div
+        style={{
+          width: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {truncatedText}
+      </div>
+    );
+  },
+);
 
 TruncatedCell.displayName = "TruncatedCell";
 
@@ -239,18 +248,22 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
                 ? "bg-blue-600"
                 : index % 2 === 0
                   ? "bg-white dark:bg-brand-darker"
                   : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            }`}
           >
             {typeof item.cell === "object" ? (
               <TruncatedCell
                 text={
                   <>
-                    {item.cell.kw} <span className="text-blue-900 ml-1">({item.cell.count})</span>
+                    {item.cell.kw}{" "}
+                    <span className="text-blue-900 ml-1">
+                      ({item.cell.count})
+                    </span>
                   </>
                 }
                 width="100%"
@@ -267,44 +280,46 @@ const TableRow = memo(
 
 TableRow.displayName = "TableRow";
 
-const ColumnPicker = memo(({
-  columnVisibility,
-  setColumnVisibility,
-  headerTitles,
-}: ColumnPickerProps) => {
-  const handleToggle = useCallback(
-    (index: number) => {
-      setColumnVisibility((prev: boolean[]) => {
-        const newVisibility = [...prev];
-        newVisibility[index] = !newVisibility[index];
-        return newVisibility;
-      });
-    },
-    [setColumnVisibility],
-  );
+const ColumnPicker = memo(
+  ({
+    columnVisibility,
+    setColumnVisibility,
+    headerTitles,
+  }: ColumnPickerProps) => {
+    const handleToggle = useCallback(
+      (index: number) => {
+        setColumnVisibility((prev: boolean[]) => {
+          const newVisibility = [...prev];
+          newVisibility[index] = !newVisibility[index];
+          return newVisibility;
+        });
+      },
+      [setColumnVisibility],
+    );
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
-          <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
-        {headerTitles.map((header, index) => (
-          <DropdownMenuCheckboxItem
-            key={header}
-            checked={columnVisibility[index] ?? true}
-            onCheckedChange={() => handleToggle(index)}
-            className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
-          >
-            <span className="ml-5 dark:text-brand-bright">{header}</span>
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-});
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+          {headerTitles.map((header, index) => (
+            <DropdownMenuCheckboxItem
+              key={header}
+              checked={columnVisibility[index] ?? true}
+              onCheckedChange={() => handleToggle(index)}
+              className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+            >
+              <span className="ml-5 dark:text-brand-bright">{header}</span>
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  },
+);
 
 ColumnPicker.displayName = "ColumnPicker";
 
@@ -330,11 +345,22 @@ const KeywordsTable = ({
     return Array.from({ length: maxKeywords }, (_, i) => `Top ${i + 1}`);
   }, [maxKeywords]);
 
-  const headerTitlesArr = useMemo(() => ["ID", "URL", ...keywordColumns], [keywordColumns]);
+  const headerTitlesArr = useMemo(
+    () => ["ID", "URL", ...keywordColumns],
+    [keywordColumns],
+  );
 
   useEffect(() => {
-    const initialWidths = ["60px", "300px", ...keywordColumns.map(() => "150px")];
-    const initialAlignments = ["center", "left", ...keywordColumns.map(() => "center")];
+    const initialWidths = [
+      "60px",
+      "300px",
+      ...keywordColumns.map(() => "150px"),
+    ];
+    const initialAlignments = [
+      "center",
+      "left",
+      ...keywordColumns.map(() => "center"),
+    ];
     const initialVisibility = headerTitlesArr.map(() => true);
 
     setColumnWidths(initialWidths);
@@ -342,11 +368,14 @@ const KeywordsTable = ({
     setColumnVisibility(initialVisibility);
   }, [keywordColumns, headerTitlesArr]);
 
-  const handleMouseDown = useCallback((index: number, event: React.MouseEvent) => {
-    setIsResizing(index);
-    startXRef.current = event.clientX;
-    event.preventDefault();
-  }, []);
+  const handleMouseDown = useCallback(
+    (index: number, event: React.MouseEvent) => {
+      setIsResizing(index);
+      startXRef.current = event.clientX;
+      event.preventDefault();
+    },
+    [],
+  );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
@@ -379,15 +408,15 @@ const KeywordsTable = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const totalWidth = useMemo(
-    () =>
-      columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
+    () => columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
     [columnWidths],
   );
 
   const toggleColumnAlignment = useCallback((index: number) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
-      newAlignments[index] = newAlignments[index] === "center" ? "left" : "center";
+      newAlignments[index] =
+        newAlignments[index] === "center" ? "left" : "center";
       return newAlignments;
     });
   }, []);
@@ -404,7 +433,7 @@ const KeywordsTable = ({
     const s = searchTerm.toLowerCase();
     return rows.filter((row) => {
       return Object.values(row).some((val) =>
-        val?.toString().toLowerCase().includes(s)
+        val?.toString().toLowerCase().includes(s),
       );
     });
   }, [rows, searchTerm]);
@@ -415,6 +444,7 @@ const KeywordsTable = ({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    initialRect: { width: 1000, height: rowHeight },
     overscan,
   });
 
@@ -434,7 +464,9 @@ const KeywordsTable = ({
     }
     setIsGeneratingExcel(true);
     try {
-      const fileBuffer = await invoke("create_keywords_excel_command", { data: rows });
+      const fileBuffer = await invoke("create_keywords_excel_command", {
+        data: rows,
+      });
       setIsGeneratingExcel(false);
       const filePath = await save({
         filters: [{ name: "Excel File", extensions: ["xlsx"] }],
