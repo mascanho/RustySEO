@@ -187,7 +187,7 @@ export default function ImageResizerApp() {
 
       {/* CENTER: ASSET WORKSPACE */}
       <main className="flex-1 overflow-y-auto relative z-10 custom-scrollbar p-4 bg-slate-100 dark:bg-brand-dark h-full -mt-1">
-        <div className="max-w-7xl mx-auto h-full">
+        <div className="max-w-8xl mx-auto h-full">
           <FileUpload
             images={images}
             setImages={setImages}
@@ -272,7 +272,7 @@ export default function ImageResizerApp() {
           </div>
 
           {/* Action Button: Footer */}
-          <div className="p-3 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/60 flex-shrink-0">
+          <div className="p-3 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-brand-darker flex-shrink-0">
             <BatchDownloadButton
               selectedImages={selectedImages}
               downloadingZip={downloadingZip}
