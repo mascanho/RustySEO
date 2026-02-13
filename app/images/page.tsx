@@ -12,6 +12,7 @@ import { CompressionStats } from "./components/compression-stats";
 import { BatchDownload } from "./components/batch-download";
 import { PreviewModal } from "./components/preview-modal";
 import { ThemeToggle } from "./components/theme-toggle";
+import { NamingSettings } from "./components/naming-settings";
 import type { ImageFile, ResizeSettings } from "./components/types/image";
 
 export default function ImageResizerApp() {
@@ -253,6 +254,18 @@ export default function ImageResizerApp() {
               Optimization Metrics
             </h3>
             <CompressionStats images={images} />
+          </div>
+
+          {/* Naming Configuration */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+              File Naming Schema
+            </h3>
+            <NamingSettings
+              resizeSettings={resizeSettings}
+              setResizeSettings={setResizeSettings}
+              processing={processing}
+            />
           </div>
 
           {/* Export Pipeline */}
