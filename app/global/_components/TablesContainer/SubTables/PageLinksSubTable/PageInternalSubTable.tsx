@@ -52,10 +52,10 @@ const PageInternalSubTable = forwardRef<
   };
 
   const exportCSV = async () => {
-    const internalLinks = data?.[0]?.anchor_links?.internal?.links || [];
-    const internalAnchors = data?.[0]?.anchor_links?.internal?.anchors || [];
+    const internalStatusCodes =
+      data?.[0]?.inoutlinks_status_codes?.internal || [];
 
-    if (!internalLinks.length) {
+    if (!internalStatusCodes.length) {
       await message("No data to export", {
         title: "Export Error",
         type: "error",
@@ -63,12 +63,13 @@ const PageInternalSubTable = forwardRef<
       return;
     }
 
-    const headers = ["ID", "Anchor Text", "Link"];
+    const headers = ["ID", "Anchor Text", "Link", "Status Code"];
 
-    const csvData = internalLinks.map((link: string, index: number) => [
+    const csvData = internalStatusCodes.map((item: any, index: number) => [
       index + 1,
-      `"${(internalAnchors[index] || "").replace(/"/g, '""')}"`,
-      `"${link.replace(/"/g, '""')}"`,
+      `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
+      `"${(item.url || "").replace(/"/g, '""')}"`,
+      item.status !== null ? item.status : item.error || "N/A",
     ]);
 
     const csvContent = [
@@ -102,10 +103,10 @@ const PageInternalSubTable = forwardRef<
     makeResizable(tableRef.current);
   }, []);
 
-  const internalLinks = data?.[0]?.anchor_links?.internal?.links || [];
-  const internalAnchors = data?.[0]?.anchor_links?.internal?.anchors || [];
+  const internalStatusCodes =
+    data?.[0]?.inoutlinks_status_codes?.internal || [];
 
-  if (!internalLinks.length) {
+  if (!internalStatusCodes.length) {
     return (
       <div
         style={{
@@ -160,19 +161,43 @@ const PageInternalSubTable = forwardRef<
             >
               Link
             </th>
+            <th
+              style={{
+                textAlign: "center",
+                position: "relative",
+                width: "80px",
+              }}
+              className="bg-gray-100 dark:bg-brand-dark"
+            >
+              Status
+            </th>
           </tr>
         </thead>
         <tbody>
-          {internalLinks.map((link: string, index: number) => (
+          {internalStatusCodes.map((item: any, index: number) => (
             <tr key={index}>
               <td style={{ textAlign: "left" }} className="pl-4 border">
                 {index + 1}
               </td>
               <td style={{ textAlign: "left" }} className="pl-3 border">
-                {internalAnchors[index] || ""}
+                {item.anchor_text || ""}
               </td>
               <td style={{ textAlign: "left" }} className="pl-3 border">
-                {link}
+                {item.url || ""}
+              </td>
+              <td
+                style={{
+                  textAlign: "center",
+                  color:
+                    item?.status === 200
+                      ? "green"
+                      : item?.status === 400
+                        ? "red"
+                        : "orange",
+                }}
+                className="pl-3 border font-semibold"
+              >
+                {item.status !== null ? item.status : item.error || "N/A"}
               </td>
             </tr>
           ))}
