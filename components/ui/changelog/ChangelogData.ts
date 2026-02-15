@@ -21,7 +21,7 @@ export const changelogData = [
       "Global: Loggging on the front end",
       "Deep Crawler: Better handling of concurrency errors",
       "Global: Better observability",
-      "Tool: Loog Analyser - Improved UI spacing on small screens",
+      "Tool: Log Analyser - Improved UI spacing on small screens",
       "Tool: Image Converter - Rust backend implementation",
     ],
   },

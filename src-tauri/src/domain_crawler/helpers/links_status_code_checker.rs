@@ -567,8 +567,9 @@ async fn fetch_with_retry(
 
         let permit = match Semaphore::acquire_owned(semaphore.clone()).await {
             Ok(p) => p,
-            Err(_) => {
-                last_error = Some("Semaphore acquire failed".to_string());
+            Err(e) => {
+                tracing::error!("Link checker: Semaphore acquire failed for {}: {}", url, e);
+                last_error = Some(format!("Semaphore acquire failed: {}", e));
                 break;
             }
         };
@@ -594,9 +595,16 @@ async fn fetch_with_retry(
                 );
             }
             Ok(Err(e)) => {
-                last_error = Some(e.to_string());
+                let err_msg = e.to_string();
+                if err_msg.contains("429") {
+                    tracing::warn!("Link checker: 429 Too Many Requests for {}", url);
+                } else {
+                    tracing::error!("Link checker: Request error for {}: {}", url, err_msg);
+                }
+                last_error = Some(err_msg);
             }
             Err(_) => {
+                tracing::warn!("Link checker: Timeout for {}", url);
                 last_error = Some("Request timeout".to_string());
             }
         }

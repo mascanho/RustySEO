@@ -34,6 +34,8 @@ import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTabl
 import RedirectsTable from "./RedirectsTable/RedirectsTable";
 import FilesTable from "./FilesTable/FilesTable";
 import OpenGraphPreview from "./SubTables/OpenGraphPreview/OpenGraphPreview";
+import PageInternalSubTable from "./SubTables/PageLinksSubTable/PageInternalSubTable";
+import PageExternalSubTable from "./SubTables/PageLinksSubTable/PageExternalSubTable";
 import { invoke } from "@tauri-apps/api/core";
 
 const BottomTableContent = ({ children, height }) => (
@@ -54,6 +56,8 @@ export default function Home() {
   const [bottomTableHeight, setBottomTableHeight] = useState(218);
   const inlinksTableRef = useRef(null);
   const outlinksTableRef = useRef(null);
+  const pageInternalTableRef = useRef(null);
+  const pageExternalTableRef = useRef(null);
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -484,7 +488,11 @@ export default function Home() {
             <TabsContent value="cwv" className="flex-grow overflow-hidden">
               <CoreWebVitalsTable
                 tabName={"AllData"}
-                rows={aggregatedData?.cwv?.length > 0 ? aggregatedData.cwv : crawlData}
+                rows={
+                  aggregatedData?.cwv?.length > 0
+                    ? aggregatedData.cwv
+                    : crawlData
+                }
               />
             </TabsContent>
 
@@ -555,6 +563,12 @@ export default function Home() {
                   OpenGraph
                 </TabsTrigger>
 
+                <TabsTrigger value="pageInternal" className="rounded-t-md">
+                  Page Internal
+                </TabsTrigger>
+                <TabsTrigger value="pageExternal" className="rounded-t-md">
+                  Page External
+                </TabsTrigger>
                 {/* Export button for Inlinks tab */}
                 {activeBottomTab === "inlinks" && (
                   <button
@@ -569,6 +583,26 @@ export default function Home() {
                 {activeBottomTab === "outlinks" && (
                   <button
                     onClick={() => outlinksTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+
+                {/* Export button for Page Internal tab */}
+                {activeBottomTab === "pageInternal" && (
+                  <button
+                    onClick={() => pageInternalTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+
+                {/* Export button for Page External tab */}
+                {activeBottomTab === "pageExternal" && (
+                  <button
+                    onClick={() => pageExternalTableRef.current?.exportCSV?.()}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
                   >
                     Export
@@ -634,6 +668,28 @@ export default function Home() {
               className="flex-1 min-h-0 mt-0 overflow-hidden"
             >
               <OpenGraphPreview height={bottomTableHeight} />
+            </TabsContent>
+
+            <TabsContent
+              value="pageInternal"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <PageInternalSubTable
+                ref={pageInternalTableRef}
+                data={selectedTableURL}
+                height={bottomTableHeight}
+              />
+            </TabsContent>
+
+            <TabsContent
+              value="pageExternal"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <PageExternalSubTable
+                ref={pageExternalTableRef}
+                data={selectedTableURL}
+                height={bottomTableHeight}
+              />
             </TabsContent>
 
             {/* <TabsContent */}

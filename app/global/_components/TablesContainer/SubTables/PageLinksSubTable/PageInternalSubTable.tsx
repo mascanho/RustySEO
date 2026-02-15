@@ -1,33 +1,19 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useCallback } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 
-interface InlinksSubTableProps {
-  data: {
-    anchor_links: {
-      internal: {
-        anchors: string[];
-        links: string[];
-      };
-    };
-    inoutlinks_status_codes: {
-      internal: {
-        anchor_text: string;
-        url: string;
-        relative_path: string | null;
-        status: number | null;
-        error: string | null;
-      }[];
-    };
-  }[];
-}
-
-const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
+const PageInternalSubTable = forwardRef<
+  { exportCSV: () => Promise<void> },
+  { data: any; height: number }
+>(({ data, height }, ref) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // Memoize the makeResizable function
-  const makeResizable = useCallback((tableRef: HTMLTableElement | null) => {
+  useImperativeHandle(ref, () => ({
+    exportCSV: () => exportCSV(),
+  }));
+
+  const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
 
     const cols = tableRef.querySelectorAll("th");
@@ -42,38 +28,29 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       resizer.style.cursor = "col-resize";
       resizer.style.userSelect = "none";
 
-      const onMouseMove = (e: MouseEvent) => {
-        const newWidth = col.offsetWidth + (e.pageX - startX);
-        col.style.width = `${newWidth}px`;
-      };
-
-      const onMouseUp = () => {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      };
-
-      let startX: number;
-
-      const onMouseDown = (e: MouseEvent) => {
+      resizer.addEventListener("mousedown", (e) => {
         e.preventDefault();
-        startX = e.pageX;
+        const startX = e.pageX;
+        const colWidth = col.offsetWidth;
+
+        const onMouseMove = (e: MouseEvent) => {
+          const newWidth = colWidth + (e.pageX - startX);
+          col.style.width = `${newWidth}px`;
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        };
+
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
-      };
-
-      resizer.addEventListener("mousedown", onMouseDown);
+      });
 
       col.appendChild(resizer);
-
-      // Cleanup function for each resizer
-      return () => {
-        resizer.removeEventListener("mousedown", onMouseDown);
-        col.removeChild(resizer);
-      };
     });
-  }, []);
+  };
 
-  // Expor data as CSV
   const exportCSV = async () => {
     const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
     const uniqueMap = new Map();
@@ -95,21 +72,11 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       return;
     }
 
-    const headers = [
-      "ID",
-      "Anchor Text",
-      "Relative Link",
-      "Absolute Link",
-      "Rel",
-      "Target",
-      "Title",
-      "Status Code",
-    ];
+    const headers = ["ID", "Anchor Text", "Link", "Status Code"];
 
     const csvData = uniqueStatusCodes.map((item: any, index: number) => [
       index + 1,
       `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
-      `"${(item.relative_path || "").replace(/"/g, '""')}"`,
       `"${(item.url || "").replace(/"/g, '""')}"`,
       item.status !== null ? item.status : item.error || "N/A",
     ]);
@@ -120,21 +87,13 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     ].join("\n");
 
     try {
-      // Ask user for save location
       const filePath = await save({
-        defaultPath: `RustySEO - Inlinks Export - ${new Date().toISOString().slice(0, 10)}.csv`,
-        filters: [
-          {
-            name: "CSV",
-            extensions: ["csv"],
-          },
-        ],
+        defaultPath: `RustySEO - Page Internal Links - ${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
       if (filePath) {
         await writeTextFile(filePath, csvContent);
-
-        // Show success message
         await message("CSV file saved successfully!", {
           title: "Export Complete",
           type: "info",
@@ -150,30 +109,17 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
   };
 
   useEffect(() => {
-    const table = tableRef.current;
-    if (table) {
-      const cleanupResizers = makeResizable(table);
-
-      // Cleanup function for the entire table
-      return () => {
-        if (cleanupResizers) {
-          cleanupResizers();
-        }
-      };
-    }
-  }, [makeResizable]);
-
-  // Move localStorage access into useEffect to avoid re-renders
-  useEffect(() => {
-    const isDark = localStorage.getItem("dark-mode");
-    console.log("Dark mode:", isDark); // Example usage
+    makeResizable(tableRef.current);
   }, []);
 
-  if (data?.length === 0) {
+  const internalStatusCodes =
+    data?.[0]?.inoutlinks_status_codes?.internal || [];
+
+  if (!internalStatusCodes.length) {
     return (
       <div
         style={{
-          height: "100%",
+          height: `${height - 15}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -190,17 +136,8 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
   return (
     <section
       className="overflow-auto h-full w-full"
-      style={{
-        height: `${height}px`,
-        minHeight: "100px",
-      }}
+      style={{ height: `${height}px`, minHeight: "100px" }}
     >
-      <button
-        onClick={exportCSV}
-        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
-      >
-        Export
-      </button>
       <table
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
@@ -208,7 +145,8 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
         <thead className="text-xs top-0 sticky">
           <tr className="shadow">
             <th
-              style={{ width: "20px", textAlign: "left", position: "relative" }}
+              style={{ width: "50px", textAlign: "left", position: "relative" }}
+              className="bg-gray-100 dark:bg-brand-dark"
             >
               ID
             </th>
@@ -216,8 +154,9 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               style={{
                 textAlign: "left",
                 position: "relative",
-                minWidth: "130px",
+                minWidth: "200px",
               }}
+              className="bg-gray-100 dark:bg-brand-dark"
             >
               Anchor Text
             </th>
@@ -225,46 +164,11 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               style={{
                 textAlign: "left",
                 position: "relative",
-                minWidth: "130px",
+                minWidth: "400px",
               }}
+              className="bg-gray-100 dark:bg-brand-dark"
             >
-              Relative Link
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "400px",
-              }}
-            >
-              Absolute Link
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "100px",
-              }}
-            >
-              Rel
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "100px",
-              }}
-            >
-              Target
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "100px",
-              }}
-            >
-              Title
+              Link
             </th>
             <th
               style={{
@@ -272,6 +176,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
                 position: "relative",
                 width: "80px",
               }}
+              className="bg-gray-100 dark:bg-brand-dark"
             >
               Status
             </th>
@@ -285,13 +190,11 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
               if (!key) return;
               const existing = uniqueMap.get(key);
-              // Prefer 200 status over others (like 429) if we have multiple results for the same link
               if (!existing || (item.status === 200 && existing.status !== 200)) {
                 uniqueMap.set(key, item);
               }
             });
             const uniqueStatusCodes = Array.from(uniqueMap.values());
-
             return uniqueStatusCodes.map((item: any, index: number) => (
               <tr key={index}>
                 <td style={{ textAlign: "left" }} className="pl-4 border">
@@ -301,19 +204,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
                   {item.anchor_text || ""}
                 </td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.relative_path || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
                   {item.url || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.rel || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.target || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.title || ""}
                 </td>
                 <td
                   style={{
@@ -321,13 +212,13 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
                     color:
                       item?.status === 200
                         ? "green"
-                        : item?.status === 429 || item?.status >= 400
+                        : item?.status === 400
                           ? "red"
                           : "orange",
                   }}
                   className="pl-3 border font-semibold"
                 >
-                  {item.status !== null ? item.status : item.error || "-"}
+                  {item.status !== null ? item.status : item.error || "N/A"}
                 </td>
               </tr>
             ));
@@ -336,6 +227,8 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       </table>
     </section>
   );
-};
+});
 
-export default React.memo(InlinksSubTable);
+PageInternalSubTable.displayName = "PageInternalSubTable";
+
+export default PageInternalSubTable;
