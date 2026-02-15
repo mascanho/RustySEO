@@ -52,10 +52,24 @@ const PageExternalSubTable = forwardRef<
   };
 
   const exportCSV = async () => {
-    const externalStatusCodes =
-      data?.[0]?.inoutlinks_status_codes?.external || [];
+    const statusCodes = data?.[0]?.inoutlinks_status_codes?.external || [];
+    const seen = new Map();
+    const uniqueStatusCodes = statusCodes.filter((item: any) => {
+      const key = item.url;
+      if (!key) return true;
+      if (!seen.has(key)) {
+        seen.set(key, item.status);
+        return true;
+      }
+      const existingStatus = seen.get(key);
+      if (item.status === 200 && existingStatus !== 200) {
+        seen.set(key, item.status);
+        return true;
+      }
+      return false;
+    });
 
-    if (!externalStatusCodes.length) {
+    if (!uniqueStatusCodes.length) {
       await message("No data to export", {
         title: "Export Error",
         type: "error",
@@ -65,7 +79,7 @@ const PageExternalSubTable = forwardRef<
 
     const headers = ["ID", "Anchor Text", "Link", "Status Code"];
 
-    const csvData = externalStatusCodes.map((item: any, index: number) => [
+    const csvData = uniqueStatusCodes.map((item: any, index: number) => [
       index + 1,
       `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
       `"${(item.url || "").replace(/"/g, '""')}"`,
@@ -174,26 +188,45 @@ const PageExternalSubTable = forwardRef<
           </tr>
         </thead>
         <tbody>
-          {externalStatusCodes.map((item: any, index: number) => (
-            <tr key={index}>
-              <td style={{ textAlign: "left" }} className="pl-4 border">
-                {index + 1}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.anchor_text || ""}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.url || ""}
-              </td>
-              <td
-                className={`border text-center font-semibold ${
-                  item.status === 200 ? "text-green-700" : "text-red-500"
-                }`}
-              >
-                {item.status || "N/A"}
-              </td>
-            </tr>
-          ))}
+          {(() => {
+            const statusCodes =
+              data?.[0]?.inoutlinks_status_codes?.external || [];
+            const seen = new Map();
+            const uniqueStatusCodes = statusCodes.filter((item: any) => {
+              const key = item.url;
+              if (!key) return true;
+              if (!seen.has(key)) {
+                seen.set(key, item.status);
+                return true;
+              }
+              const existingStatus = seen.get(key);
+              if (item.status === 200 && existingStatus !== 200) {
+                seen.set(key, item.status);
+                return true;
+              }
+              return false;
+            });
+            return uniqueStatusCodes.map((item: any, index: number) => (
+              <tr key={index}>
+                <td style={{ textAlign: "left" }} className="pl-4 border">
+                  {index + 1}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.anchor_text || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.url || ""}
+                </td>
+                <td
+                  className={`border text-center font-semibold ${
+                    item.status === 200 ? "text-green-700" : "text-red-500"
+                  }`}
+                >
+                  {item.status || "N/A"}
+                </td>
+              </tr>
+            ));
+          })()}
         </tbody>
       </table>
     </section>

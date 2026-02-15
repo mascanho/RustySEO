@@ -224,6 +224,8 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
       })
       .map((item) => item.status);
 
+    if (!rawStatuses || rawStatuses.length === 0) return <span className="text-gray-400">-</span>;
+
     const processedStatuses = new Set<number>();
 
     // Helper to process a single status value
@@ -235,7 +237,7 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
       }
 
       const str = String(val).trim();
-      // If it looks like a concatenated status string (e.g. "200200")
+      // If it looks like a concatenated status string (e.g. "200429")
       if (str.length > 3 && /^\d+$/.test(str) && str.length % 3 === 0) {
         for (let i = 0; i < str.length; i += 3) {
           const chunk = parseInt(str.substring(i, i + 3), 10);
@@ -247,33 +249,35 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
       }
     };
 
-    if (Array.isArray(rawStatuses)) {
-      rawStatuses.forEach(addStatus);
-    }
-
-    // Remove 429 as requested
-    processedStatuses.delete(429);
+    rawStatuses.forEach(addStatus);
 
     const uniqueStatusCodes = Array.from(processedStatuses);
 
     if (uniqueStatusCodes.length === 0) return <span className="text-gray-400">-</span>;
 
+    // Fix: If we have multiple statuses for the same link (e.g. 429 then 200), prefer 200 OK
+    // or just show the most significant one.
+    let code = uniqueStatusCodes[0];
+    if (uniqueStatusCodes.includes(200)) {
+      code = 200;
+    } else if (uniqueStatusCodes.includes(429)) {
+      code = 429;
+    } else if (uniqueStatusCodes.some(c => c >= 400 && c < 600)) {
+      // Find any error status
+      code = uniqueStatusCodes.find(c => c >= 400 && c < 600) || code;
+    }
+
     return (
-      <span className="font-semibold">
-        {uniqueStatusCodes.map((code, idx) => (
-          <React.Fragment key={code}>
-            <span
-              className={`
-                ${code === 200 ? "text-green-700" : ""}
-                ${code === 404 ? "text-red-700" : ""}
-                ${code === 403 ? "text-orange-700" : ""}
-              `}
-            >
-              {code}
-            </span>
-            {idx < uniqueStatusCodes.length - 1 && ", "}
-          </React.Fragment>
-        ))}
+      <span
+        className={`font-semibold
+          ${code === 200 ? "text-green-700" : ""}
+          ${code === 404 ? "text-red-700" : ""}
+          ${code === 403 ? "text-orange-700" : ""}
+          ${code === 429 ? "text-red-500 font-bold" : ""}
+          ${code >= 400 && code !== 429 && code !== 404 && code !== 403 ? "text-red-600" : ""}
+        `}
+      >
+        {code}
       </span>
     );
   }

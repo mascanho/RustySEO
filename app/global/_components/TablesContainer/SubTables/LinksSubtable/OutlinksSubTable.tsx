@@ -56,7 +56,19 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
 
   // Export data as CSV
   const exportCSV = async () => {
-    if (!data?.[0]?.inoutlinks_status_codes?.external?.length) {
+    const statusCodes = data?.[0]?.inoutlinks_status_codes?.external || [];
+    const uniqueMap = new Map();
+    statusCodes.forEach((item: any) => {
+      const key = (item.url || "") + (item.anchor_text || "");
+      if (!key) return;
+      const existing = uniqueMap.get(key);
+      if (!existing || (item.status === 200 && existing.status !== 200)) {
+        uniqueMap.set(key, item);
+      }
+    });
+    const uniqueStatusCodes = Array.from(uniqueMap.values());
+
+    if (!uniqueStatusCodes.length) {
       await message("No data to export", {
         title: "Export Error",
         type: "error",
@@ -74,17 +86,15 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
       "Title",
     ];
 
-    const csvData = data[0].inoutlinks_status_codes.external.map(
-      (item: any, index: number) => [
-        index + 1,
-        `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
-        item.url || "",
-        item.status || "",
-        item.rel || "",
-        item.target || "",
-        `"${(item.title || "").replace(/"/g, '""')}"`,
-      ],
-    );
+    const csvData = uniqueStatusCodes.map((item: any, index: number) => [
+      index + 1,
+      `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
+      item.url || "",
+      item.status || "",
+      item.rel || "",
+      item.target || "",
+      `"${(item.title || "").replace(/"/g, '""')}"`,
+    ]);
 
     const csvContent = [
       headers.join(","),
@@ -222,8 +232,19 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data[0].inoutlinks_status_codes.external.map(
-            (anchorItem: any, index: number) => {
+          {(() => {
+            const statusCodes = data[0]?.inoutlinks_status_codes?.external || [];
+            const uniqueMap = new Map();
+            statusCodes.forEach((item: any) => {
+              const key = (item.url || "") + (item.anchor_text || "");
+              if (!key) return;
+              const existing = uniqueMap.get(key);
+              if (!existing || (item.status === 200 && existing.status !== 200)) {
+                uniqueMap.set(key, item);
+              }
+            });
+            const uniqueStatusCodes = Array.from(uniqueMap.values());
+            return uniqueStatusCodes.map((anchorItem: any, index: number) => {
               return (
                 <TableRow key={index} style={{ height: "10px" }}>
                   <TableCell
@@ -263,18 +284,17 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
                     {anchorItem?.title}
                   </TableCell>
                   <TableCell
-                    className={`border text-center font-semibold ${
-                      anchorItem.status === 200
+                    className={`border text-center font-semibold ${anchorItem.status === 200
                         ? "text-green-700"
                         : "text-red-500"
-                    }`}
+                      }`}
                   >
                     {anchorItem.status}
                   </TableCell>
                 </TableRow>
               );
-            },
-          )}
+            });
+          })()}
         </TableBody>
       </Table>
     </section>

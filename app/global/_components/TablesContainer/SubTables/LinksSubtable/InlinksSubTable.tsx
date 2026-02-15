@@ -75,7 +75,19 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
 
   // Expor data as CSV
   const exportCSV = async () => {
-    if (!data?.[0]?.inoutlinks_status_codes?.internal?.length) {
+    const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
+    const uniqueMap = new Map();
+    statusCodes.forEach((item: any) => {
+      const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+      if (!key) return;
+      const existing = uniqueMap.get(key);
+      if (!existing || (item.status === 200 && existing.status !== 200)) {
+        uniqueMap.set(key, item);
+      }
+    });
+    const uniqueStatusCodes = Array.from(uniqueMap.values());
+
+    if (!uniqueStatusCodes.length) {
       await message("No data to export", {
         title: "Export Error",
         type: "error",
@@ -94,15 +106,13 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       "Status Code",
     ];
 
-    const csvData = data[0].inoutlinks_status_codes.internal.map(
-      (item: any, index: number) => [
-        index + 1,
-        `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
-        `"${(item.relative_path || "").replace(/"/g, '""')}"`,
-        `"${(item.url || "").replace(/"/g, '""')}"`,
-        item.status !== null ? item.status : item.error || "N/A",
-      ],
-    );
+    const csvData = uniqueStatusCodes.map((item: any, index: number) => [
+      index + 1,
+      `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
+      `"${(item.relative_path || "").replace(/"/g, '""')}"`,
+      `"${(item.url || "").replace(/"/g, '""')}"`,
+      item.status !== null ? item.status : item.error || "N/A",
+    ]);
 
     const csvContent = [
       headers.join(","),
@@ -268,8 +278,21 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
           </tr>
         </thead>
         <tbody>
-          {data?.[0]?.inoutlinks_status_codes?.internal?.map(
-            (item: any, index: number) => (
+          {(() => {
+            const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
+            const uniqueMap = new Map();
+            statusCodes.forEach((item: any) => {
+              const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+              if (!key) return;
+              const existing = uniqueMap.get(key);
+              // Prefer 200 status over others (like 429) if we have multiple results for the same link
+              if (!existing || (item.status === 200 && existing.status !== 200)) {
+                uniqueMap.set(key, item);
+              }
+            });
+            const uniqueStatusCodes = Array.from(uniqueMap.values());
+
+            return uniqueStatusCodes.map((item: any, index: number) => (
               <tr key={index}>
                 <td style={{ textAlign: "left" }} className="pl-4 border">
                   {index + 1}
@@ -298,17 +321,17 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
                     color:
                       item?.status === 200
                         ? "green"
-                        : item?.status === 400
+                        : item?.status === 429 || item?.status >= 400
                           ? "red"
                           : "orange",
                   }}
                   className="pl-3 border font-semibold"
                 >
-                  {item.status !== null ? item.status : item.error || "N/A"}
+                  {item.status !== null ? item.status : item.error || "-"}
                 </td>
               </tr>
-            ),
-          )}
+            ));
+          })()}
         </tbody>
       </table>
     </section>

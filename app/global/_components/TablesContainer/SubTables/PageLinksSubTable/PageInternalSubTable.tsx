@@ -52,10 +52,19 @@ const PageInternalSubTable = forwardRef<
   };
 
   const exportCSV = async () => {
-    const internalStatusCodes =
-      data?.[0]?.inoutlinks_status_codes?.internal || [];
+    const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
+    const uniqueMap = new Map();
+    statusCodes.forEach((item: any) => {
+      const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+      if (!key) return;
+      const existing = uniqueMap.get(key);
+      if (!existing || (item.status === 200 && existing.status !== 200)) {
+        uniqueMap.set(key, item);
+      }
+    });
+    const uniqueStatusCodes = Array.from(uniqueMap.values());
 
-    if (!internalStatusCodes.length) {
+    if (!uniqueStatusCodes.length) {
       await message("No data to export", {
         title: "Export Error",
         type: "error",
@@ -65,7 +74,7 @@ const PageInternalSubTable = forwardRef<
 
     const headers = ["ID", "Anchor Text", "Link", "Status Code"];
 
-    const csvData = internalStatusCodes.map((item: any, index: number) => [
+    const csvData = uniqueStatusCodes.map((item: any, index: number) => [
       index + 1,
       `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
       `"${(item.url || "").replace(/"/g, '""')}"`,
@@ -174,33 +183,46 @@ const PageInternalSubTable = forwardRef<
           </tr>
         </thead>
         <tbody>
-          {internalStatusCodes.map((item: any, index: number) => (
-            <tr key={index}>
-              <td style={{ textAlign: "left" }} className="pl-4 border">
-                {index + 1}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.anchor_text || ""}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.url || ""}
-              </td>
-              <td
-                style={{
-                  textAlign: "center",
-                  color:
-                    item?.status === 200
-                      ? "green"
-                      : item?.status === 400
-                        ? "red"
-                        : "orange",
-                }}
-                className="pl-3 border font-semibold"
-              >
-                {item.status !== null ? item.status : item.error || "N/A"}
-              </td>
-            </tr>
-          ))}
+          {(() => {
+            const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
+            const uniqueMap = new Map();
+            statusCodes.forEach((item: any) => {
+              const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+              if (!key) return;
+              const existing = uniqueMap.get(key);
+              if (!existing || (item.status === 200 && existing.status !== 200)) {
+                uniqueMap.set(key, item);
+              }
+            });
+            const uniqueStatusCodes = Array.from(uniqueMap.values());
+            return uniqueStatusCodes.map((item: any, index: number) => (
+              <tr key={index}>
+                <td style={{ textAlign: "left" }} className="pl-4 border">
+                  {index + 1}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.anchor_text || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.url || ""}
+                </td>
+                <td
+                  style={{
+                    textAlign: "center",
+                    color:
+                      item?.status === 200
+                        ? "green"
+                        : item?.status === 400
+                          ? "red"
+                          : "orange",
+                  }}
+                  className="pl-3 border font-semibold"
+                >
+                  {item.status !== null ? item.status : item.error || "N/A"}
+                </td>
+              </tr>
+            ));
+          })()}
         </tbody>
       </table>
     </section>
