@@ -493,7 +493,7 @@ const TableCrawl = ({
   });
 
   const debouncedSearch = useMemo(
-    () => debounce((value: string) => setSearchTerm(value), 300),
+    () => debounce((value: string) => setSearchTerm(value), 500),
     [],
   );
 
