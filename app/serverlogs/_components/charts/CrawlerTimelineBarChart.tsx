@@ -8,9 +8,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,14 +20,37 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCurrentLogs } from "@/store/logFilterStore";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 
-const COLORS = {
-  google: "#2B6CC4",
-  bing: "#00a1f1",
-  openai: "#10a37f",
-  claude: "#d97757",
-  other: "#94a3b8",
-};
+const chartConfig = {
+  google: {
+    label: "Google",
+    color: "#2B6CC4",
+  },
+  bing: {
+    label: "Bing",
+    color: "#00a1f1",
+  },
+  openai: {
+    label: "OpenAI",
+    color: "#10a37f",
+  },
+  claude: {
+    label: "Claude",
+    color: "#d97757",
+  },
+  other: {
+    label: "Other Bots",
+    color: "#94a3b8",
+  },
+} satisfies ChartConfig;
 
 export function CrawlerTimelineBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
@@ -145,64 +165,9 @@ export function CrawlerTimelineBarChart() {
     }
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const date = new Date(label);
-      const formattedDate =
-        viewMode === "daily"
-          ? date.toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : date.toLocaleTimeString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            });
-
-      return (
-        <div className="bg-white dark:bg-slate-900 p-3 border dark:border-brand-dark rounded-lg shadow-lg">
-          <p className="font-medium text-xs mb-2  ">{formattedDate}</p>
-          <div className="grid gap-1">
-            {payload.map((entry: any) => (
-              <div
-                key={entry.dataKey}
-                className="flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center">
-                  <div
-                    className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: entry.fill }}
-                  />
-                  <span className="text-xs capitalize">{entry.name}:</span>
-                </div>
-                <span className="text-xs font-bold">{entry.value}</span>
-              </div>
-            ))}
-            <div className="border-t border-gray-100 dark:border-gray-800 mt-1 pt-1 flex items-center justify-between gap-4">
-              <span className="text-xs font-medium">Total:</span>
-              <span className="text-xs font-bold">
-                {payload.reduce(
-                  (sum: number, entry: any) => sum + entry.value,
-                  0,
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <Card className="relative w-full h-64 rounded-none dark:border-brand-dark border-r-0 overflow-hidden">
-      <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
+    <Card className="relative w-full h-64 rounded-none dark:border-brand-dark border-r-0 bg-transparent shadow-none">
+      <div className="absolute top-2 right-4 flex items-center gap-2 z-10 transition-all duration-300">
         <ToggleGroup
           type="single"
           value={viewMode}
@@ -215,43 +180,43 @@ export function CrawlerTimelineBarChart() {
         >
           <ToggleGroupItem
             value="daily"
-            className="text-xs px-2 h-6 dark:bg-slate-950"
+            className="text-[9px] px-2 h-6 dark:bg-slate-950"
           >
             Day
           </ToggleGroupItem>
           <ToggleGroupItem
             value="hourly"
-            className="text-xs px-2 h-6 dark:bg-slate-950"
+            className="text-[9px] px-2 h-6 dark:bg-slate-950"
           >
             Hour
           </ToggleGroupItem>
         </ToggleGroup>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[100px] h-6 text-xs dark:bg-slate-950 dark:border-brand-dark">
+          <SelectTrigger className="w-[100px] h-6 text-[9px] dark:bg-slate-950 dark:border-brand-dark">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent className="dark:bg-slate-950 dark:border-brand-dark">
-            <SelectItem value="all" className="text-xs">
+            <SelectItem value="all" className="text-[9px]">
               All time
             </SelectItem>
-            <SelectItem value="7d" className="text-xs">
+            <SelectItem value="7d" className="text-[9px]">
               Last 7 days
             </SelectItem>
-            <SelectItem value="30d" className="text-xs">
+            <SelectItem value="30d" className="text-[9px]">
               Last 30 days
             </SelectItem>
-            <SelectItem value="90d" className="text-xs">
+            <SelectItem value="90d" className="text-[9px]">
               Last 90 days
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <CardContent className="mt-4 w-full h-[270px] ">
-        <ResponsiveContainer width="100%" height="100%">
+      <CardContent className="mt-8 w-full h-[215px] p-0">
+        <ChartContainer config={chartConfig} className="w-full h-full">
           <BarChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: 8, bottom: 0 }}
+            margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -274,75 +239,103 @@ export function CrawlerTimelineBarChart() {
               tick={{ fontSize: 8 }}
               stroke="hsl(var(--muted-foreground))"
             />
-            <Tooltip content={<CustomTooltip />} cursor={false} />
-            <Legend
-              iconType="circle"
-              iconSize={8}
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    const date = new Date(value);
+                    return viewMode === "daily"
+                      ? date.toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                      : date.toLocaleTimeString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      });
+                  }}
+                />
+              }
+              cursor={false}
+            />
+            <ChartLegend
+              content={<ChartLegendContent />}
+              verticalAlign="top"
               wrapperStyle={{
                 fontSize: "10px",
-                paddingTop: "10px",
+                position: "absolute",
+                top: 0,
+                left: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "20px",
+                border: "1px solid hsl(var(--border))",
+                width: "350px",
+                borderRadius: "20px",
+                backgroundColor: "hsl(var(--card))",
+                padding: "0 10px",
               }}
-              style={{ fontSize: "10px", position: "fixed", top: 0, right: 0 }}
-              className="absolute top-0 mt-20"
             />
             <Bar
               dataKey="google"
-              name="Google"
               stackId="a"
-              fill={COLORS.google}
+              fill="var(--color-google)"
               activeBar={{
                 fillOpacity: 0.8,
-                stroke: COLORS.google,
+                stroke: "var(--color-google)",
                 strokeWidth: 1,
               }}
             />
             <Bar
               dataKey="bing"
-              name="Bing"
               stackId="a"
-              fill={COLORS.bing}
+              fill="var(--color-bing)"
               activeBar={{
                 fillOpacity: 0.8,
-                stroke: COLORS.bing,
+                stroke: "var(--color-bing)",
                 strokeWidth: 1,
               }}
             />
             <Bar
               dataKey="openai"
-              name="OpenAI"
               stackId="a"
-              fill={COLORS.openai}
+              fill="var(--color-openai)"
               activeBar={{
                 fillOpacity: 0.8,
-                stroke: COLORS.openai,
+                stroke: "var(--color-openai)",
                 strokeWidth: 1,
               }}
             />
             <Bar
               dataKey="claude"
-              name="Claude"
               stackId="a"
-              fill={COLORS.claude}
+              fill="var(--color-claude)"
               activeBar={{
                 fillOpacity: 0.8,
-                stroke: COLORS.claude,
+                stroke: "var(--color-claude)",
                 strokeWidth: 1,
               }}
             />
             <Bar
               dataKey="other"
-              name="Other Bots"
               stackId="a"
-              fill={COLORS.other}
+              fill="var(--color-other)"
               radius={[2, 2, 0, 0]}
               activeBar={{
                 fillOpacity: 0.8,
-                stroke: COLORS.other,
+                stroke: "var(--color-other)",
                 strokeWidth: 1,
               }}
             />
           </BarChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

@@ -2,24 +2,9 @@
 "use client";
 
 import * as React from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -28,13 +13,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
 import { useCurrentLogs } from "@/store/logFilterStore";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 
-const COLORS = {
-  human: "hsl(var(--primary))",
-  crawler: "hsl(var(--destructive))",
-};
+const chartConfig = {
+  human: {
+    label: "Human",
+    color: "hsl(var(--primary))",
+  },
+  crawler: {
+    label: "Robots",
+    color: "hsl(var(--destructive))",
+  },
+} satisfies ChartConfig;
 
 export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
@@ -42,18 +40,12 @@ export function TimelineChart() {
   const { entries } = useLogAnalysis();
   const { currentLogs } = useCurrentLogs();
 
-  React.useEffect(() => {}, [currentLogs]);
-
-  // Process the log entries to create chart data
-  // Process the log entries to create chart data
   const processData = () => {
     if (entries.length === 0) return [];
 
     const dateMap = new Map<string, { human: number; crawler: number }>();
     const allDates: Date[] = [];
 
-    // First pass: collect all dates and count entries
-    // Use currentLogs instead of entries for filtered data
     const logsToProcess =
       currentLogs && currentLogs.length > 0 ? currentLogs : entries;
 
@@ -75,7 +67,6 @@ export function TimelineChart() {
 
       const counts = dateMap.get(key)!;
 
-      // FIX: Check crawler_type instead of is_crawler
       if (entry.crawler_type && entry.crawler_type !== "Human") {
         counts.crawler += 1;
       } else {
@@ -83,12 +74,12 @@ export function TimelineChart() {
       }
     });
 
-    // Sort all dates to find min and max
     allDates.sort((a, b) => a.getTime() - b.getTime());
+    if (allDates.length === 0) return [];
+
     const minDate = allDates[0];
     const maxDate = allDates[allDates.length - 1];
 
-    // Determine date range based on selection
     let startDate = new Date(minDate);
     const endDate = new Date(maxDate);
 
@@ -103,7 +94,6 @@ export function TimelineChart() {
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    // Convert to array and filter by date range
     return Array.from(dateMap.entries())
       .map(([date, counts]) => ({
         date,
@@ -118,51 +108,6 @@ export function TimelineChart() {
   };
 
   const chartData = processData();
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const date = new Date(label);
-      const formattedDate =
-        viewMode === "daily"
-          ? date.toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : date.toLocaleTimeString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            });
-
-      return (
-        <div className="bg-background dark:bg-gray-900 p-3 border rounded-lg shadow-lg">
-          <p className="font-medium text-sm">{formattedDate}</p>
-          <div className="grid gap-1 mt-1">
-            <div className="flex items-center">
-              <div
-                className="w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: COLORS.human }}
-              />
-              <span className="text-xs">Human: {payload[1].value}</span>
-            </div>
-            <div className="flex items-center">
-              <div
-                className="w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: COLORS.crawler }}
-              />
-              <span className="text-xs">Robots: {payload[0].value}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
@@ -180,9 +125,8 @@ export function TimelineChart() {
   };
 
   return (
-    <Card className="relative w-full h-64 rounded-none dark:border-brand-dark border-r-0">
-      {/* Absolute positioned controls */}
-      <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
+    <Card className="relative w-full ml-0 h-64 rounded-none dark:border-brand-dark border-r-0 bg-transparent shadow-none pr-2">
+      <div className="absolute top-2 right-4 flex items-center gap-2 z-10 transition-all duration-300">
         <ToggleGroup
           type="single"
           value={viewMode}
@@ -193,154 +137,160 @@ export function TimelineChart() {
         >
           <ToggleGroupItem
             value="daily"
-            className="text-xs px-2 h-6 dark:bg-slate-950"
+            className="text-[9px] px-2 h-6 dark:bg-slate-950"
           >
             Day
           </ToggleGroupItem>
           <ToggleGroupItem
             value="hourly"
-            className="text-xs px-2 h-6 dark:bg-slate-950"
+            className="text-[9px] px-2 h-6 dark:bg-slate-950"
           >
             Hour
           </ToggleGroupItem>
         </ToggleGroup>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[100px] h-6 text-xs">
+          <SelectTrigger className="w-[100px] h-6 text-[9px] dark:bg-slate-950 dark:border-brand-dark">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">
+          <SelectContent className="dark:bg-slate-950 dark:border-brand-dark">
+            <SelectItem value="all" className="text-[9px]">
               All time
             </SelectItem>
-            <SelectItem value="7d" className="text-xs">
+            <SelectItem value="7d" className="text-[9px]">
               Last 7 days
             </SelectItem>
-            <SelectItem value="30d" className="text-xs">
+            <SelectItem value="30d" className="text-[9px]">
               Last 30 days
             </SelectItem>
-            <SelectItem value="90d" className="text-xs">
+            <SelectItem value="90d" className="text-[9px]">
               Last 90 days
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <CardContent className="pt-4 w-full">
-        <div className="h-[258px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: 8, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor={COLORS.human}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor={COLORS.human}
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-                <linearGradient id="colorCrawler" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor={COLORS.crawler}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor={COLORS.crawler}
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="hsl(var(--border))"
-              />
-              <XAxis
-                dataKey="date"
-                tickFormatter={xAxisTickFormatter}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 9 }}
-                tickMargin={8}
-                minTickGap={viewMode === "hourly" ? 4 : 32}
-                stroke="hsl(var(--muted-foreground))"
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={26}
-                tick={{ fontSize: 8 }}
-                stroke="hsl(var(--muted-foreground))"
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{
-                  stroke: "hsl(var(--border))",
-                  strokeWidth: 1,
-                  strokeDasharray: "3 3",
-                }}
-                wrapperStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "4px",
-                }}
-              />
-              <Legend
-                formatter={(value) => (
-                  <div className="bg-white/50 inline-block dark:bg-transparent">
-                    <span className="text-xs flex">
-                      {value === "human" ? "Human" : "Robots"}
-                    </span>
-                  </div>
-                )}
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{
-                  fontSize: "10px",
-                  position: "absolute",
-                  top: 0,
-                  padding: "0 0 0 6px",
-                  left: 40,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "auto",
-                  height: "20px",
-                  border: "1px solid hsl(var(--border))",
-                  width: "140px",
-                  borderRadius: "20px",
-                  backgroundColor: "hsl(var(--card))",
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="crawler"
-                stackId="1"
-                stroke={COLORS.crawler}
-                strokeWidth={2}
-                fill="url(#colorCrawler)"
-                fillOpacity={0.8}
-              />
-              <Area
-                type="monotone"
-                dataKey="human"
-                stackId="2"
-                stroke={COLORS.human}
-                strokeWidth={2}
-                fill="url(#colorHuman)"
-                fillOpacity={0.8}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      <CardContent className="mt-0 w-full h-[255px] p-0">
+        <ChartContainer config={chartConfig} className="w-full h-full">
+          <AreaChart
+            data={chartData}
+            margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-human)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-human)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+              <linearGradient id="colorCrawler" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-crawler)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-crawler)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="hsl(var(--border))"
+            />
+            <XAxis
+              dataKey="date"
+              tickFormatter={xAxisTickFormatter}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 9 }}
+              tickMargin={8}
+              minTickGap={viewMode === "hourly" ? 4 : 32}
+              stroke="hsl(var(--muted-foreground))"
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={26}
+              tick={{ fontSize: 8 }}
+              stroke="hsl(var(--muted-foreground))"
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    const date = new Date(value);
+                    return viewMode === "daily"
+                      ? date.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : date.toLocaleTimeString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
+                        });
+                  }}
+                />
+              }
+              cursor={{
+                stroke: "hsl(var(--border))",
+                strokeWidth: 1,
+                strokeDasharray: "3 3",
+              }}
+            />
+            <ChartLegend
+              content={<ChartLegendContent />}
+              verticalAlign="top"
+              wrapperStyle={{
+                fontSize: "10px",
+                position: "absolute",
+                top: 14,
+                left: -3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "20px",
+                // border: "1px solid hsl(var(--border))",
+                width: "140px",
+                borderRadius: "20px",
+                backgroundColor: "hsl(var(--card))",
+                padding: "0 6px",
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="crawler"
+              stackId="1"
+              stroke="var(--color-crawler)"
+              strokeWidth={2}
+              fill="url(#colorCrawler)"
+              fillOpacity={0.8}
+            />
+            <Area
+              type="monotone"
+              dataKey="human"
+              stackId="2"
+              stroke="var(--color-human)"
+              strokeWidth={2}
+              fill="url(#colorHuman)"
+              fillOpacity={0.8}
+            />
+          </AreaChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

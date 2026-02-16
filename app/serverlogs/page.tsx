@@ -10,6 +10,7 @@ import {
 } from "./_components/charts/PieChartStatus";
 import { TimelineChart } from "./_components/charts/TimelineChart";
 import { CrawlerTimelineBarChart } from "./_components/charts/CrawlerTimelineBarChart";
+import { StatusCodeBarChart } from "./_components/charts/StatusCodeBarChart";
 import InputZone from "./_components/InputZone";
 import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
@@ -31,7 +32,9 @@ interface CrawlResult {
 export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
-  const [chartView, setChartView] = useState<"overall" | "crawlers">("overall");
+  const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
+    "overall",
+  );
   const { setLogData, logData } = useLogAnalysis();
   // const appWindow = getCurrentWindow();
 
@@ -226,8 +229,8 @@ export default function Page() {
       <InputZone handleDomainCrawl={""} />
       <main className="pb-[6.2rem] overflow-hidden h-[100%] relative">
         <div className="flex flex-1 h-full w-full ">
-          <div className="w-1/2 relative bg-white dark:bg-slate-950 border-r dark:border-brand-dark overflow-hidden">
-            <div className="absolute translate-x-96 mt-3.5 z-40 flex items-center bg-gray-100/80 dark:bg-slate-800/80  rounded-full border dark:border-brand-dark backdrop-blur-sm shadow-sm text-[8px]">
+          <div className="w-1/2 relative bg-white dark:bg-slate-950 border-r dark:border-brand-dark h-64">
+            <div className="absolute translate-x-[22rem] mt-3.5 z-40 flex items-center bg-gray-100/80 dark:bg-slate-800/80  rounded-full border dark:border-brand-dark backdrop-blur-sm shadow-sm text-[8px]">
               <button
                 onClick={() => setChartView("overall")}
                 className={`text-[9px] uppercase tracking-wider font-bold px-3 py-1 rounded-full transition-all ${
@@ -248,11 +251,23 @@ export default function Page() {
               >
                 AI Crawlers
               </button>
+              <button
+                onClick={() => setChartView("status")}
+                className={`text-[9px] uppercase tracking-wider font-bold px-3 py-1 rounded-full transition-all ${
+                  chartView === "status"
+                    ? "bg-brand-bright text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                HTTP Status
+              </button>
             </div>
             {chartView === "overall" ? (
               <TimelineChart />
-            ) : (
+            ) : chartView === "crawlers" ? (
               <CrawlerTimelineBarChart />
+            ) : (
+              <StatusCodeBarChart />
             )}
           </div>
           <WidgetLogs />
