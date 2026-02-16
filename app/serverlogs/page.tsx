@@ -166,7 +166,7 @@ export default function Page() {
           ({ payload }) => {
             console.log(
               `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-              `at ${new Date().toISOString()}`,
+                `at ${new Date().toISOString()}`,
             );
 
             // Add performance marker
@@ -230,7 +230,7 @@ export default function Page() {
   }, []);
 
   return (
-    <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
+    <section className="flex flex-col dark:bg-brand-darker  w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <UploadButton />
 
       <InputZone handleDomainCrawl={""} />
@@ -250,28 +250,31 @@ export default function Page() {
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "overall"
                         ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    }`}
                   >
                     Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "crawlers"
                         ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                      chartView === "status"
                         ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>

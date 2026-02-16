@@ -166,7 +166,7 @@ export function CrawlerTimelineBarChart() {
   };
 
   return (
-    <Card className="relative w-full h-64 rounded-none dark:border-brand-dark border-r-0 bg-transparent shadow-none">
+    <Card className="relative w-full ml-0 h-64 rounded-none dark:border-brand-dark border-r-0 bg-transparent shadow-none pr-2">
       <div className="absolute top-2 right-4 flex items-center gap-2 z-10 transition-all duration-300">
         <ToggleGroup
           type="single"
@@ -212,7 +212,7 @@ export function CrawlerTimelineBarChart() {
         </Select>
       </div>
 
-      <CardContent className="mt-8 w-full h-[215px] p-0">
+      <CardContent className="mt-0 w-full h-[255px] p-0">
         <ChartContainer config={chartConfig} className="w-full h-full">
           <BarChart
             data={chartData}
@@ -270,17 +270,17 @@ export function CrawlerTimelineBarChart() {
               wrapperStyle={{
                 fontSize: "10px",
                 position: "absolute",
-                top: 0,
-                left: 40,
+                top: 14,
+                left: -3,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
-                border: "1px solid hsl(var(--border))",
-                width: "350px",
+                // border: "1px solid hsl(var(--border))",
+                width: "280px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
-                padding: "0 10px",
+                padding: "0 6px",
               }}
             />
             <Bar
