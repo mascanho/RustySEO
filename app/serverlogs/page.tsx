@@ -166,7 +166,7 @@ export default function Page() {
           ({ payload }) => {
             console.log(
               `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-                `at ${new Date().toISOString()}`,
+              `at ${new Date().toISOString()}`,
             );
 
             // Add performance marker
@@ -246,35 +246,32 @@ export default function Page() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-32 bg-white dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-xl border-gray-200 hover:text-white"
+                  className="w-40 bg-white dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-2xl border border-gray-100 p-1.5"
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-bold cursor-pointer hover:bg-brand-bright/10 hover:text-white ${
-                      chartView === "overall"
-                        ? "text-white"
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
-                    Overall
+                    Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-bold cursor-pointer hover:bg-brand-bright/10 ${
-                      chartView === "crawlers"
-                        ? "text-white"
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-bold cursor-pointer hover:bg-brand-bright/10 ${
-                      chartView === "status"
-                        ? "text-white"
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>
