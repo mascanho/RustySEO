@@ -1248,7 +1248,7 @@ export function LogAnalyzer() {
             </div>
           </CardContent>
 
-          <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[22.9rem]  -z-1" />
+          <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[18.9rem]  -z-1" />
         </div>
 
         <PaginationControls

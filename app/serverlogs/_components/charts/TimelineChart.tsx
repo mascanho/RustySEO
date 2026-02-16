@@ -180,7 +180,7 @@ export function TimelineChart() {
   };
 
   return (
-    <Card className="relative w-1/2 h-64 rounded-none dark:border-brand-dark border-r-0">
+    <Card className="relative w-full h-64 rounded-none dark:border-brand-dark border-r-0">
       {/* Absolute positioned controls */}
       <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
         <ToggleGroup
@@ -308,7 +308,7 @@ export function TimelineChart() {
                   position: "absolute",
                   top: 0,
                   padding: "0 0 0 6px",
-                  left: 50,
+                  left: 40,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
