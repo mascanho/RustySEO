@@ -166,7 +166,7 @@ export function CrawlerTimelineBarChart() {
             });
 
       return (
-        <div className="bg-background dark:bg-slate-900 p-3 border dark:border-brand-dark rounded-lg shadow-lg">
+        <div className="bg-white dark:bg-slate-900 p-3 border dark:border-brand-dark rounded-lg shadow-lg">
           <p className="font-medium text-xs mb-2  ">{formattedDate}</p>
           <div className="grid gap-1">
             {payload.map((entry: any) => (
@@ -247,7 +247,7 @@ export function CrawlerTimelineBarChart() {
         </Select>
       </div>
 
-      <CardContent className="mt-4 w-full h-[180px] ">
+      <CardContent className="mt-4 w-full h-[270px] ">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
