@@ -245,16 +245,16 @@ export function StatusCodeBarChart() {
                 fontSize: "10px",
                 position: "absolute",
                 top: 14,
-                left: 0,
+                left: 8,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
-                // border: "1px solid hsl(var(--border))",
-                width: "360px",
+                width: "280px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
-                padding: "0 6px",
+                padding: "0 4px",
+                columnGap: "2px",
               }}
             />
             <Bar

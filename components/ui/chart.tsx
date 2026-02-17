@@ -280,7 +280,7 @@ const ChartLegendContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "flex items-center justify-center gap-4 w-full",
+          "flex items-center justify-center gap-0 w-full",
           verticalAlign === "top" ? "pb-3" : "pt-3",
           className,
         )}

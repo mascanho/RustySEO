@@ -262,19 +262,21 @@ export function CrawlerTimelineBarChart() {
               content={<ChartLegendContent />}
               verticalAlign="top"
               wrapperStyle={{
-                fontSize: "10px",
+                fontSize: "9px",
                 position: "absolute",
                 top: 14,
-                left: -30,
+                left: 6,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
                 // border: "1px solid hsl(var(--border))",
-                width: "380px",
+                width: "100%",
+                maxWidth: "340px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
                 padding: "0 6px",
+                columnGap: "6px",
               }}
             />
             <Bar
