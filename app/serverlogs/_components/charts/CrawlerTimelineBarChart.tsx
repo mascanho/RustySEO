@@ -2,13 +2,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -246,19 +240,19 @@ export function CrawlerTimelineBarChart() {
                     const date = new Date(value);
                     return viewMode === "daily"
                       ? date.toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                       : date.toLocaleTimeString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      });
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
+                        });
                   }}
                 />
               }
@@ -271,13 +265,13 @@ export function CrawlerTimelineBarChart() {
                 fontSize: "10px",
                 position: "absolute",
                 top: 14,
-                left: -3,
+                left: -30,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
                 // border: "1px solid hsl(var(--border))",
-                width: "280px",
+                width: "380px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
                 padding: "0 6px",
