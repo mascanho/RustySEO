@@ -440,7 +440,7 @@ export default function WidgetLogs() {
         </Popover>
       )}
 
-      {/* Tab Dropdown */}
+      {/* Tab Dropdown ON THE TOP RIGHT*/}
       <div className="absolute top-3 right-3 z-30">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -457,7 +457,7 @@ export default function WidgetLogs() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-48 dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-2xl border-gray-200 p-1"
+            className="w-48 dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-2xl border-gray-200 p-1 bg-white"
           >
             {tabs.map((tab) => (
               <DropdownMenuItem
@@ -466,15 +466,19 @@ export default function WidgetLogs() {
                 className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
                   activeTab === tab.label
                     ? "bg-brand-bright text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright/10"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
                 }`}
               >
                 <div
                   className={
-                    activeTab === tab.label ? "text-white" : "text-brand-bright"
+                    activeTab === tab.label
+                      ? "text-white"
+                      : "text-brand-bright dark:hover:text-white hover:text-white"
                   }
                 >
-                  {tab.icon}
+                  <span className="dark:text-red-500 hover:text-white text-red-500 ">
+                    {tab.icon}
+                  </span>
                 </div>
                 <span>{tab.label}</span>
               </DropdownMenuItem>
