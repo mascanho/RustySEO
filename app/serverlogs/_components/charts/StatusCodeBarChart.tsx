@@ -25,19 +25,19 @@ import {
 
 const chartConfig = {
   success: {
-    label: "Success (2xx)",
+    label: "2xx",
     color: "#22c55e",
   },
   redirect: {
-    label: "Redirect (3xx)",
+    label: "3xx",
     color: "#3b82f6",
   },
   clientError: {
-    label: "Client Error (4xx)",
+    label: "4xx",
     color: "#f59e0b",
   },
   serverError: {
-    label: "Server Error (5xx)",
+    label: "5xx",
     color: "#ef4444",
   },
 } satisfies ChartConfig;
