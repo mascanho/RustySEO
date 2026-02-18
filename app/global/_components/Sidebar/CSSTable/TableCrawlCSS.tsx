@@ -54,6 +54,7 @@ interface TableHeaderProps {
   onResize: (index: number, e: React.MouseEvent) => void;
   onAlignToggle: (index: number) => void;
   columnVisibility: boolean[];
+  calculatedIdWidth: string;
 }
 
 interface TableRowProps {
@@ -68,6 +69,7 @@ interface TableRowProps {
     cellIndex: number,
     content: string,
   ) => void;
+  calculatedIdWidth: string;
 }
 
 interface ColumnPickerProps {
@@ -128,18 +130,25 @@ const TableHeader = memo(
     onResize,
     onAlignToggle,
     columnVisibility,
+    calculatedIdWidth,
   }: TableHeaderProps) => {
     const visibleItems = useMemo(() => {
       return headers
         .map((header, index) => ({
           header,
-          width: columnWidths[index],
+          width: index === 0 ? calculatedIdWidth : columnWidths[index],
           alignment: columnAlignments[index],
           visible: columnVisibility[index],
           originalIndex: index,
         }))
         .filter((item) => item.visible);
-    }, [headers, columnWidths, columnAlignments, columnVisibility]);
+    }, [
+      headers,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      calculatedIdWidth,
+    ]);
 
     return (
       <div
@@ -199,6 +208,7 @@ const TableRow = memo(
     columnVisibility,
     clickedCell,
     handleCellClick,
+    calculatedIdWidth,
   }: TableRowProps) => {
     const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
 
@@ -206,13 +216,19 @@ const TableRow = memo(
       return rowData
         .map((cell, i) => ({
           cell,
-          width: columnWidths[i],
+          width: i === 0 ? calculatedIdWidth : columnWidths[i],
           alignment: columnAlignments[i],
           visible: columnVisibility[i],
           originalIndex: i,
         }))
         .filter((item) => item.visible);
-    }, [rowData, columnWidths, columnAlignments, columnVisibility]);
+    }, [
+      rowData,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      calculatedIdWidth,
+    ]);
 
     const isRowClicked = clickedCell.row === index;
 
@@ -321,7 +337,6 @@ const TableCrawlCSS = ({
   overscan = 5,
   tabName,
 }: TableCrawlProps) => {
-  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
   );
@@ -340,6 +355,15 @@ const TableCrawlCSS = ({
 
   const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
   const startXRef = useRef(0);
+
+  const calculatedIdWidth = useMemo(() => {
+    const maxId = rows.length;
+    const maxDigits = maxId.toString().length;
+    const charWidth = 8;
+    return `${Math.max(30, maxDigits * charWidth + 16)}px`;
+  }, [rows.length]);
+
+  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
 
   const handleDownload = useCallback(async () => {
     if (!rows.length) {
@@ -445,8 +469,12 @@ const TableCrawlCSS = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const totalWidth = useMemo(
-    () => columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
-    [columnWidths],
+    () =>
+      columnWidths.reduce((acc, width, index) => {
+        const w = index === 0 ? parseInt(calculatedIdWidth) : parseInt(width);
+        return acc + (isNaN(w) ? 0 : w);
+      }, 0),
+    [columnWidths, calculatedIdWidth],
   );
 
   const toggleColumnAlignment = useCallback((indexValue: number) => {
@@ -501,6 +529,7 @@ const TableCrawlCSS = ({
               onResize={handleMouseDown}
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
+              calculatedIdWidth={calculatedIdWidth}
             />
           </div>
 
@@ -532,6 +561,7 @@ const TableCrawlCSS = ({
                     columnVisibility={columnVisibility}
                     clickedCell={clickedCell}
                     handleCellClick={handleCellClick}
+                    calculatedIdWidth={calculatedIdWidth}
                   />
                 </div>
               ))
