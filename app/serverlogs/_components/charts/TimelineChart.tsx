@@ -259,7 +259,7 @@ export function TimelineChart() {
                 fontSize: "10px",
                 position: "absolute",
                 top: 14,
-                left: -3,
+                left: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
