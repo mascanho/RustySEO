@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,26 +24,34 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  human: {
-    label: "Human",
-    color: "hsl(var(--primary))",
+  success: {
+    label: "2xx",
+    color: "#22c55e",
   },
-  crawler: {
-    label: "Robots",
-    color: "hsl(var(--destructive))",
+  redirect: {
+    label: "3xx",
+    color: "#3b82f6",
+  },
+  clientError: {
+    label: "4xx",
+    color: "#f59e0b",
+  },
+  serverError: {
+    label: "5xx",
+    color: "#ef4444",
   },
 } satisfies ChartConfig;
 
-export function TimelineChart() {
+export function StatusCodeBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
   const { entries } = useLogAnalysis();
   const { currentLogs } = useCurrentLogs();
 
   const processData = () => {
-    if (entries.length === 0) return [];
+    if (!entries || entries.length === 0) return [];
 
-    const dateMap = new Map<string, { human: number; crawler: number }>();
+    const dateMap = new Map<string, any>();
     const allDates: Date[] = [];
 
     const logsToProcess =
@@ -62,21 +70,32 @@ export function TimelineChart() {
       }
 
       if (!dateMap.has(key)) {
-        dateMap.set(key, { human: 0, crawler: 0 });
+        dateMap.set(key, {
+          date: key,
+          success: 0,
+          redirect: 0,
+          clientError: 0,
+          serverError: 0,
+        });
       }
 
-      const counts = dateMap.get(key)!;
+      const counts = dateMap.get(key);
+      const status = entry.status;
 
-      if (entry.crawler_type && entry.crawler_type !== "Human") {
-        counts.crawler += 1;
-      } else {
-        counts.human += 1;
+      if (status >= 200 && status < 300) {
+        counts.success += 1;
+      } else if (status >= 300 && status < 400) {
+        counts.redirect += 1;
+      } else if (status >= 400 && status < 500) {
+        counts.clientError += 1;
+      } else if (status >= 500 && status < 600) {
+        counts.serverError += 1;
       }
     });
 
-    allDates.sort((a, b) => a.getTime() - b.getTime());
     if (allDates.length === 0) return [];
 
+    allDates.sort((a, b) => a.getTime() - b.getTime());
     const minDate = allDates[0];
     const maxDate = allDates[allDates.length - 1];
 
@@ -94,12 +113,7 @@ export function TimelineChart() {
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return Array.from(dateMap.entries())
-      .map(([date, counts]) => ({
-        date,
-        human: counts.human,
-        crawler: counts.crawler,
-      }))
+    return Array.from(dateMap.values())
       .filter((item) => {
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
@@ -130,7 +144,9 @@ export function TimelineChart() {
         <ToggleGroup
           type="single"
           value={viewMode}
-          onValueChange={(value) => setViewMode(value as "daily" | "hourly")}
+          onValueChange={(value) =>
+            value && setViewMode(value as "daily" | "hourly")
+          }
           variant="outline"
           size="sm"
           className="h-8 z-0"
@@ -171,36 +187,10 @@ export function TimelineChart() {
 
       <CardContent className="mt-0 w-full h-[255px] p-0">
         <ChartContainer config={chartConfig} className="w-full h-full">
-          <AreaChart
+          <BarChart
             data={chartData}
             margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
           >
-            <defs>
-              <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-human)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-human)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="colorCrawler" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-crawler)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-crawler)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
@@ -213,7 +203,6 @@ export function TimelineChart() {
               axisLine={false}
               tick={{ fontSize: 9 }}
               tickMargin={8}
-              minTickGap={viewMode === "hourly" ? 4 : 32}
               stroke="hsl(var(--muted-foreground))"
             />
             <YAxis
@@ -246,12 +235,9 @@ export function TimelineChart() {
                   }}
                 />
               }
-              cursor={{
-                stroke: "hsl(var(--border))",
-                strokeWidth: 1,
-                strokeDasharray: "3 3",
-              }}
+              cursor={false}
             />
+            {/* THE SUBTITLES WITH THE NAMES OF THE CHART */}
             <ChartLegend
               content={<ChartLegendContent />}
               verticalAlign="top"
@@ -259,37 +245,44 @@ export function TimelineChart() {
                 fontSize: "10px",
                 position: "absolute",
                 top: 14,
-                left: 0,
+                left: 8,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
-                // border: "1px solid hsl(var(--border))",
-                width: "140px",
+                width: "280px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
-                padding: "0 6px",
+                padding: "0 4px",
+                columnGap: "2px",
               }}
             />
-            <Area
-              type="monotone"
-              dataKey="crawler"
-              stackId="1"
-              stroke="var(--color-crawler)"
-              strokeWidth={2}
-              fill="url(#colorCrawler)"
-              fillOpacity={0.8}
+            <Bar
+              dataKey="success"
+              stackId="a"
+              fill="var(--color-success)"
+              activeBar={{ fillOpacity: 0.8 }}
             />
-            <Area
-              type="monotone"
-              dataKey="human"
-              stackId="2"
-              stroke="var(--color-human)"
-              strokeWidth={2}
-              fill="url(#colorHuman)"
-              fillOpacity={0.8}
+            <Bar
+              dataKey="redirect"
+              stackId="a"
+              fill="var(--color-redirect)"
+              activeBar={{ fillOpacity: 0.8 }}
             />
-          </AreaChart>
+            <Bar
+              dataKey="clientError"
+              stackId="a"
+              fill="var(--color-clientError)"
+              activeBar={{ fillOpacity: 0.8 }}
+            />
+            <Bar
+              dataKey="serverError"
+              stackId="a"
+              fill="var(--color-serverError)"
+              radius={[2, 2, 0, 0]}
+              activeBar={{ fillOpacity: 0.8 }}
+            />
+          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>

@@ -19,6 +19,8 @@ use url::Url;
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
+use crate::domain_crawler::helpers::sitemap;
+use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::AppState;
 
 use super::database::{self, Database, DatabaseError};
@@ -111,6 +113,46 @@ pub async fn crawl_domain(
         }
     });
 
+    // Create the global URL status registry — shared between the crawler and the link checker
+    // so that URLs already crawled are never re-requested during link checking.
+    let url_status_registry: Arc<RwLock<HashMap<String, u16>>> =
+        Arc::new(RwLock::new(HashMap::new()));
+
+    let link_checker = Arc::new(SharedLinkChecker::new(
+        &settings,
+        Some(selected_user_agent.clone()),
+        url_status_registry.clone(),
+    ));
+    let state = Arc::new(Mutex::new(
+        CrawlerState::new(None)
+            .with_link_checker(link_checker.clone())
+            .with_url_status_registry(url_status_registry),
+    )); // DB is handled separately
+    {
+        let normalized_base = normalize_url(base_url.as_str());
+        let normalized_url_obj = Url::parse(&normalized_base).unwrap_or_else(|_| base_url.clone());
+        
+        let mut state_guard = state.lock().await;
+        state_guard.queue.push_back((normalized_url_obj, 0)); // Start at depth 0
+        state_guard.total_urls = 1;
+        state_guard
+            .pending_urls
+            .insert(normalized_base, Instant::now());
+    }
+
+    // DISCOVER URLS FROM SITEMAPS
+    let sitemap_urls = sitemap::extract_urls_from_sitemaps(&domain, &client).await;
+    if !sitemap_urls.is_empty() {
+        tracing::info!("Found {} URLs in sitemaps", sitemap_urls.len());
+        let mut state_guard = state.lock().await;
+        state_guard.add_discovered_urls(
+            sitemap_urls,
+            &domain,
+            settings.max_depth,
+            settings.max_urls_per_domain,
+        );
+    }
+
     let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(db_batch_size);
 
     let db_handle = if let Ok(database) = db {
@@ -168,29 +210,6 @@ pub async fn crawl_domain(
         None
     };
 
-    // Create the global URL status registry — shared between the crawler and the link checker
-    // so that URLs already crawled are never re-requested during link checking.
-    let url_status_registry: Arc<RwLock<HashMap<String, u16>>> =
-        Arc::new(RwLock::new(HashMap::new()));
-
-    let link_checker = Arc::new(SharedLinkChecker::new(
-        &settings,
-        Some(selected_user_agent.clone()),
-        url_status_registry.clone(),
-    ));
-    let state = Arc::new(Mutex::new(
-        CrawlerState::new(None)
-            .with_link_checker(link_checker.clone())
-            .with_url_status_registry(url_status_registry),
-    )); // DB is handled separately
-    {
-        let mut state_guard = state.lock().await;
-        state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0
-        state_guard.total_urls = 1;
-        state_guard
-            .pending_urls
-            .insert(base_url.to_string(), Instant::now());
-    }
 
     let semaphore = Arc::new(Semaphore::new(concurrent_requests));
     let js_semaphore = Arc::new(Semaphore::new(js_concurrency));

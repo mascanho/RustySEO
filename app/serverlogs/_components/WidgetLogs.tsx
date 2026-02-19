@@ -1,7 +1,20 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { FileText, Server, Bot, PenBox, Loader2 } from "lucide-react";
+import {
+  FileText,
+  Server,
+  Bot,
+  PenBox,
+  Loader2,
+  MoreHorizontal,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
 import {
@@ -427,22 +440,51 @@ export default function WidgetLogs() {
         </Popover>
       )}
 
-      {/* Tabs */}
-      <div className="flex space-x-2 pt-1 pb-0 w-full ml-20 justify-center">
-        {tabs.map(({ label, icon }) => (
-          <button
-            key={label}
-            onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${
-              activeTab === label
-                ? "bg-brand-bright text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
-            }`}
+      {/* Tab Dropdown ON THE TOP RIGHT*/}
+      <div className="absolute top-3 right-3 z-30">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center space-x-2 px-3 py-1.5 bg-gray-100/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-full border dark:border-brand-dark transition-all hover:bg-gray-200 dark:hover:bg-slate-700 shadow-sm group">
+              <div className="flex items-center space-x-1.5">
+                {tabs.find((t) => t.label === activeTab)?.icon}
+                <span className="text-[9px] uppercase tracking-wider font-extrabold text-gray-700 dark:text-gray-200">
+                  {activeTab}
+                </span>
+              </div>
+              <div className="w-[1px] h-3 bg-gray-300 dark:bg-gray-600 mx-1" />
+              <MoreHorizontal className="w-3.5 h-3.5 text-gray-500 group-hover:text-brand-bright transition-colors" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-48 dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-2xl border-gray-200 p-1 bg-white"
           >
-            {icon}
-            <span>{label}</span>
-          </button>
-        ))}
+            {tabs.map((tab) => (
+              <DropdownMenuItem
+                key={tab.label}
+                onClick={() => setActiveTab(tab.label)}
+                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
+                  activeTab === tab.label
+                    ? "bg-brand-bright text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                }`}
+              >
+                <div
+                  className={
+                    activeTab === tab.label
+                      ? "text-white"
+                      : "text-brand-bright dark:hover:text-white hover:text-white"
+                  }
+                >
+                  <span className="dark:text-red-500 hover:text-white text-red-500 ">
+                    {tab.icon}
+                  </span>
+                </div>
+                <span>{tab.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Content Area */}
@@ -451,7 +493,7 @@ export default function WidgetLogs() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="h-[calc(100%-32px)]"
+        className="h-[calc(100%-32px)] mt-6"
       >
         <div className="flex flex-col md:flex-row items-center justify-center relative">
           <PieChart width={200} height={200} className="relative">

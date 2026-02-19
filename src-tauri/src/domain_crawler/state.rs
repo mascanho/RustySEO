@@ -10,6 +10,7 @@ use super::constants::{MAX_PENDING_TIME, MAX_URLS_PER_DOMAIN};
 use super::database::{Database, DatabaseResults};
 use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::models::DomainCrawlResults;
+use super::helpers::normalize_url::normalize_url;
 
 /// Track failed URLs and retries
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -102,6 +103,30 @@ impl CrawlerState {
     /// Check if crawl is truly complete (no pending work)
     pub fn is_truly_complete(&self) -> bool {
         self.queue.is_empty() && self.pending_urls.is_empty() && self.active_tasks == 0
+    }
+
+    /// Add multiple discovered URLs to the queue if they are new
+    pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, max_depth: usize, max_urls: usize) {
+        for url_str in urls {
+            // Normalize before any checks or queueing
+            let normalized_url = normalize_url(&url_str);
+
+            if let Ok(url) = Url::parse(&normalized_url) {
+                // Basic validation: same domain check
+                if url.domain() != base_url.domain() {
+                    continue;
+                }
+
+                if !self.visited.contains(&normalized_url) 
+                    && !self.pending_urls.contains_key(&normalized_url)
+                    && self.total_urls < max_urls 
+                {
+                    self.queue.push_back((url.clone(), 0)); // Sitemaps seed at depth 0
+                    self.total_urls += 1;
+                    self.pending_urls.insert(normalized_url.clone(), Instant::now());
+                }
+            }
+        }
     }
 }
 

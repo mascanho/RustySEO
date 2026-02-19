@@ -141,7 +141,11 @@ const PageExternalSubTable = forwardRef<
   return (
     <section
       className="overflow-auto h-full w-full"
-      style={{ height: `${height}px`, minHeight: "100px" }}
+      style={{
+        height: `${height}px`,
+        minHeight: "100px",
+        marginBottom: "30px",
+      }}
     >
       <table
         ref={tableRef}

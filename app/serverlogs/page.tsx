@@ -9,6 +9,8 @@ import {
   PieChartStatus,
 } from "./_components/charts/PieChartStatus";
 import { TimelineChart } from "./_components/charts/TimelineChart";
+import { CrawlerTimelineBarChart } from "./_components/charts/CrawlerTimelineBarChart";
+import { StatusCodeBarChart } from "./_components/charts/StatusCodeBarChart";
 import InputZone from "./_components/InputZone";
 import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
@@ -19,6 +21,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CrawlResult {
   url: string;
@@ -30,6 +39,9 @@ interface CrawlResult {
 export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
+  const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
+    "overall",
+  );
   const { setLogData, logData } = useLogAnalysis();
   // const appWindow = getCurrentWindow();
 
@@ -218,13 +230,65 @@ export default function Page() {
   }, []);
 
   return (
-    <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
+    <section className="flex flex-col dark:bg-brand-darker  w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <UploadButton />
 
       <InputZone handleDomainCrawl={""} />
-      <main className="pb-[6.2rem] overflow-hidden h-[100%]">
+      <main className="pb-[6.2rem] overflow-hidden h-[100%] relative">
         <div className="flex flex-1 h-full w-full ">
-          <TimelineChart />
+          <div className="w-1/2 relative bg-white dark:bg-slate-950 border-r dark:border-brand-dark h-64">
+            <div className="absolute right-52 mt-3 z-40">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex p-1.5 items-center justify-center bg-gray-100/80 dark:bg-slate-800/80 rounded-full border dark:border-brand-dark backdrop-blur-sm shadow-sm hover:bg-gray-200 dark:hover:bg-slate-700 transition-all">
+                    <MoreVertical className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-40 bg-white dark:bg-slate-900 dark:border-brand-dark rounded-xl shadow-2xl border border-gray-100 p-1.5"
+                >
+                  <DropdownMenuItem
+                    onClick={() => setChartView("overall")}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "overall"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
+                  >
+                    Overall Traffic
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setChartView("crawlers")}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "crawlers"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
+                  >
+                    AI Crawlers
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setChartView("status")}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                      chartView === "status"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
+                  >
+                    HTTP Status
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            {chartView === "overall" ? (
+              <TimelineChart />
+            ) : chartView === "crawlers" ? (
+              <CrawlerTimelineBarChart />
+            ) : (
+              <StatusCodeBarChart />
+            )}
+          </div>
           <WidgetLogs />
         </div>
         <LogAnalyzer />

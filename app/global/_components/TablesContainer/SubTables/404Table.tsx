@@ -359,7 +359,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
 
   // Debounced search handler
   const debouncedSearch = useMemo(
-    () => debounce((value: string) => setSearchTerm(value), 300),
+    () => debounce((value: string) => setSearchTerm(value), 500),
     [],
   );
 

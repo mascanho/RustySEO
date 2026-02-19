@@ -55,7 +55,8 @@ const PageInternalSubTable = forwardRef<
     const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
     const uniqueMap = new Map();
     statusCodes.forEach((item: any) => {
-      const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+      const key =
+        (item.url || item.relative_path || "") + (item.anchor_text || "");
       if (!key) return;
       const existing = uniqueMap.get(key);
       if (!existing || (item.status === 200 && existing.status !== 200)) {
@@ -140,7 +141,11 @@ const PageInternalSubTable = forwardRef<
     >
       <table
         ref={tableRef}
-        style={{ width: "100%", borderCollapse: "collapse" }}
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginBottom: "30px",
+        }}
       >
         <thead className="text-xs top-0 sticky">
           <tr className="shadow">
@@ -184,13 +189,19 @@ const PageInternalSubTable = forwardRef<
         </thead>
         <tbody>
           {(() => {
-            const statusCodes = data?.[0]?.inoutlinks_status_codes?.internal || [];
+            const statusCodes =
+              data?.[0]?.inoutlinks_status_codes?.internal || [];
             const uniqueMap = new Map();
             statusCodes.forEach((item: any) => {
-              const key = (item.url || item.relative_path || "") + (item.anchor_text || "");
+              const key =
+                (item.url || item.relative_path || "") +
+                (item.anchor_text || "");
               if (!key) return;
               const existing = uniqueMap.get(key);
-              if (!existing || (item.status === 200 && existing.status !== 200)) {
+              if (
+                !existing ||
+                (item.status === 200 && existing.status !== 200)
+              ) {
                 uniqueMap.set(key, item);
               }
             });

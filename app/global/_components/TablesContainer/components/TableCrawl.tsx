@@ -446,18 +446,15 @@ const TableCrawl = ({
   const handleCellClick = useCallback(
     (rowIndex: number, cellIndex: number, cellContent: string, row: any) => {
       setClickedCell((prevClickedCell) => {
-        if (
-          prevClickedCell.row === rowIndex &&
-          prevClickedCell.cell === cellIndex
-        ) {
+        if (prevClickedCell.row === rowIndex) {
           return { row: null, cell: null };
         } else {
           return { row: rowIndex, cell: cellIndex };
         }
       });
 
-      if (cellIndex === 1) {
-        selectURL(cellContent);
+      if (row?.url) {
+        selectURL(row.url);
       }
     },
     [selectURL],
@@ -496,7 +493,7 @@ const TableCrawl = ({
   });
 
   const debouncedSearch = useMemo(
-    () => debounce((value: string) => setSearchTerm(value), 300),
+    () => debounce((value: string) => setSearchTerm(value), 500),
     [],
   );
 

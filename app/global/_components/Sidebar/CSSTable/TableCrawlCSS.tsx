@@ -54,6 +54,7 @@ interface TableHeaderProps {
   onResize: (index: number, e: React.MouseEvent) => void;
   onAlignToggle: (index: number) => void;
   columnVisibility: boolean[];
+  calculatedIdWidth: string;
 }
 
 interface TableRowProps {
@@ -63,7 +64,12 @@ interface TableRowProps {
   columnAlignments: string[];
   columnVisibility: boolean[];
   clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number, content: string) => void;
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    content: string,
+  ) => void;
+  calculatedIdWidth: string;
 }
 
 interface ColumnPickerProps {
@@ -72,26 +78,28 @@ interface ColumnPickerProps {
   headerTitles: string[];
 }
 
-const TruncatedCell = memo(({ text, maxLength = 140, width = "100%" }: TruncatedCellProps) => {
-  const truncatedText = useMemo(() => {
-    if (!text) return "";
-    const s = text.toString();
-    return s.length > maxLength ? `${s.slice(0, maxLength)}...` : s;
-  }, [text, maxLength]);
+const TruncatedCell = memo(
+  ({ text, maxLength = 1400, width = "100%" }: TruncatedCellProps) => {
+    const truncatedText = useMemo(() => {
+      if (!text) return "";
+      const s = text.toString();
+      return s.length > maxLength ? `${s.slice(0, maxLength)}...` : s;
+    }, [text, maxLength]);
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {truncatedText}
-    </div>
-  );
-});
+    return (
+      <div
+        style={{
+          width: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {truncatedText}
+      </div>
+    );
+  },
+);
 
 TruncatedCell.displayName = "TruncatedCell";
 
@@ -122,18 +130,25 @@ const TableHeader = memo(
     onResize,
     onAlignToggle,
     columnVisibility,
+    calculatedIdWidth,
   }: TableHeaderProps) => {
     const visibleItems = useMemo(() => {
       return headers
         .map((header, index) => ({
           header,
-          width: columnWidths[index],
+          width: index === 0 ? calculatedIdWidth : columnWidths[index],
           alignment: columnAlignments[index],
           visible: columnVisibility[index],
           originalIndex: index,
         }))
         .filter((item) => item.visible);
-    }, [headers, columnWidths, columnAlignments, columnVisibility]);
+    }, [
+      headers,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      calculatedIdWidth,
+    ]);
 
     return (
       <div
@@ -141,9 +156,7 @@ const TableHeader = memo(
         style={{
           display: "grid",
           gridTemplateColumns: visibleItems
-            .map((item) =>
-              item.originalIndex === 1 ? "1fr" : item.width,
-            )
+            .map((item) => (item.originalIndex === 1 ? "1fr" : item.width))
             .join(" "),
           height: "30px",
           alignItems: "center",
@@ -195,6 +208,7 @@ const TableRow = memo(
     columnVisibility,
     clickedCell,
     handleCellClick,
+    calculatedIdWidth,
   }: TableRowProps) => {
     const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
 
@@ -202,13 +216,19 @@ const TableRow = memo(
       return rowData
         .map((cell, i) => ({
           cell,
-          width: columnWidths[i],
+          width: i === 0 ? calculatedIdWidth : columnWidths[i],
           alignment: columnAlignments[i],
           visible: columnVisibility[i],
           originalIndex: i,
         }))
         .filter((item) => item.visible);
-    }, [rowData, columnWidths, columnAlignments, columnVisibility]);
+    }, [
+      rowData,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      calculatedIdWidth,
+    ]);
 
     const isRowClicked = clickedCell.row === index;
 
@@ -217,9 +237,7 @@ const TableRow = memo(
         style={{
           display: "grid",
           gridTemplateColumns: visibleItems
-            .map((item) =>
-              item.originalIndex === 1 ? "1fr" : item.width,
-            )
+            .map((item) => (item.originalIndex === 1 ? "1fr" : item.width))
             .join(" "),
           height: "100%",
           alignItems: "center",
@@ -232,7 +250,11 @@ const TableRow = memo(
           <div
             key={`cell-${index}-${item.originalIndex}`}
             onClick={() =>
-              handleCellClick(index, item.originalIndex, item.cell?.toString() || "")
+              handleCellClick(
+                index,
+                item.originalIndex,
+                item.cell?.toString() || "",
+              )
             }
             style={{
               padding: "8px",
@@ -248,12 +270,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             <TruncatedCell text={item.cell?.toString()} width="100%" />
           </div>
@@ -265,44 +288,46 @@ const TableRow = memo(
 
 TableRow.displayName = "TableRow";
 
-const ColumnPicker = memo(({
-  columnVisibility,
-  setColumnVisibility,
-  headerTitles,
-}: ColumnPickerProps) => {
-  const handleToggle = useCallback(
-    (indexValue) => {
-      setColumnVisibility((prev) => {
-        const newVisibility = [...prev];
-        newVisibility[indexValue] = !newVisibility[indexValue];
-        return newVisibility;
-      });
-    },
-    [setColumnVisibility],
-  );
+const ColumnPicker = memo(
+  ({
+    columnVisibility,
+    setColumnVisibility,
+    headerTitles,
+  }: ColumnPickerProps) => {
+    const handleToggle = useCallback(
+      (indexValue) => {
+        setColumnVisibility((prev) => {
+          const newVisibility = [...prev];
+          newVisibility[indexValue] = !newVisibility[indexValue];
+          return newVisibility;
+        });
+      },
+      [setColumnVisibility],
+    );
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
-          <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
-        {headerTitles.map((header, index) => (
-          <DropdownMenuCheckboxItem
-            key={header}
-            checked={columnVisibility[index] ?? true}
-            onCheckedChange={() => handleToggle(index)}
-            className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
-          >
-            <span className="ml-5 dark:text-brand-bright">{header}</span>
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-});
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+          {headerTitles.map((header, index) => (
+            <DropdownMenuCheckboxItem
+              key={header}
+              checked={columnVisibility[index] ?? true}
+              onCheckedChange={() => handleToggle(index)}
+              className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+            >
+              <span className="ml-5 dark:text-brand-bright">{header}</span>
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  },
+);
 
 ColumnPicker.displayName = "ColumnPicker";
 
@@ -312,11 +337,14 @@ const TableCrawlCSS = ({
   overscan = 5,
   tabName,
 }: TableCrawlProps) => {
-  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
-  const [columnAlignments, setColumnAlignments] = useState(initialColumnAlignments);
+  const [columnAlignments, setColumnAlignments] = useState(
+    initialColumnAlignments,
+  );
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState(headerTitles.map(() => true));
+  const [columnVisibility, setColumnVisibility] = useState(
+    headerTitles.map(() => true),
+  );
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;
     cell: number | null;
@@ -327,6 +355,15 @@ const TableCrawlCSS = ({
 
   const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
   const startXRef = useRef(0);
+
+  const calculatedIdWidth = useMemo(() => {
+    const maxId = rows.length;
+    const maxDigits = maxId.toString().length;
+    const charWidth = 8;
+    return `${Math.max(30, maxDigits * charWidth + 16)}px`;
+  }, [rows.length]);
+
+  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
 
   const handleDownload = useCallback(async () => {
     if (!rows.length) {
@@ -352,12 +389,16 @@ const TableCrawlCSS = ({
     }
   }, [rows, tabName, setIsGeneratingExcel]);
 
-  const handleCellClick = useCallback((rowIndex: number, cellIndex: number, content: string) => {
-    setClickedCell((prev) => {
-      if (prev.row === rowIndex && prev.cell === cellIndex) return { row: null, cell: null };
-      return { row: rowIndex, cell: cellIndex };
-    });
-  }, []);
+  const handleCellClick = useCallback(
+    (rowIndex: number, cellIndex: number, content: string) => {
+      setClickedCell((prev) => {
+        if (prev.row === rowIndex && prev.cell === cellIndex)
+          return { row: null, cell: null };
+        return { row: rowIndex, cell: cellIndex };
+      });
+    },
+    [],
+  );
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -367,7 +408,7 @@ const TableCrawlCSS = ({
     const s = searchTerm.toLowerCase();
     return rows.filter((row) => {
       return Object.values(row).some((val) =>
-        val?.toString().toLowerCase().includes(s)
+        val?.toString().toLowerCase().includes(s),
       );
     });
   }, [rows, searchTerm]);
@@ -388,11 +429,14 @@ const TableCrawlCSS = ({
     return () => debouncedSearch.cancel();
   }, [debouncedSearch]);
 
-  const handleMouseDown = useCallback((indexValue: number, event: React.MouseEvent) => {
-    setIsResizing(indexValue);
-    startXRef.current = event.clientX;
-    event.preventDefault();
-  }, []);
+  const handleMouseDown = useCallback(
+    (indexValue: number, event: React.MouseEvent) => {
+      setIsResizing(indexValue);
+      startXRef.current = event.clientX;
+      event.preventDefault();
+    },
+    [],
+  );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
@@ -425,14 +469,19 @@ const TableCrawlCSS = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const totalWidth = useMemo(
-    () => columnWidths.reduce((acc, width) => acc + parseInt(width), 0),
-    [columnWidths],
+    () =>
+      columnWidths.reduce((acc, width, index) => {
+        const w = index === 0 ? parseInt(calculatedIdWidth) : parseInt(width);
+        return acc + (isNaN(w) ? 0 : w);
+      }, 0),
+    [columnWidths, calculatedIdWidth],
   );
 
   const toggleColumnAlignment = useCallback((indexValue: number) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
-      newAlignments[indexValue] = newAlignments[indexValue] === "center" ? "left" : "center";
+      newAlignments[indexValue] =
+        newAlignments[indexValue] === "center" ? "left" : "center";
       return newAlignments;
     });
   }, []);
@@ -472,10 +521,7 @@ const TableCrawlCSS = ({
             position: "relative",
           }}
         >
-          <div
-            className="sticky top-0 z-10"
-            style={{ width: "100%" }}
-          >
+          <div className="sticky top-0 z-10" style={{ width: "100%" }}>
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -483,6 +529,7 @@ const TableCrawlCSS = ({
               onResize={handleMouseDown}
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
+              calculatedIdWidth={calculatedIdWidth}
             />
           </div>
 
@@ -514,6 +561,7 @@ const TableCrawlCSS = ({
                     columnVisibility={columnVisibility}
                     clickedCell={clickedCell}
                     handleCellClick={handleCellClick}
+                    calculatedIdWidth={calculatedIdWidth}
                   />
                 </div>
               ))

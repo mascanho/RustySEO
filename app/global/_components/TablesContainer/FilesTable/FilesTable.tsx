@@ -352,7 +352,7 @@ const FilesTable = ({
   });
 
   const debouncedSearch = useMemo(
-    () => debounce((value) => setSearchTerm(value), 300),
+    () => debounce((value) => setSearchTerm(value), 500),
     [],
   );
 

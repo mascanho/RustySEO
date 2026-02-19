@@ -366,7 +366,6 @@ async fn process_single_link(
     };
 
     let full_url_str = full_url.to_string();
-    let domain = full_url.domain().unwrap_or("").to_string();
 
     {
         let mut seen = seen_urls.lock().unwrap();
@@ -374,6 +373,27 @@ async fn process_single_link(
             return None;
         }
     }
+
+    // Skip non-HTTP(S) schemes but still report them as seen on this page
+    let scheme = full_url.scheme();
+    if scheme != "http" && scheme != "https" {
+        return Some((
+            LinkStatus {
+                base_url: (*base_url).clone(),
+                url: full_url_str,
+                relative_path: is_internal.then(|| link),
+                status: None,
+                error: None,
+                anchor_text: Some(anchor),
+                rel,
+                title,
+                target,
+            },
+            is_internal,
+        ));
+    }
+
+    let domain = full_url.domain().unwrap_or("").to_string();
 
     let relative_path = is_internal.then(|| link.clone());
     let anchor_text = Some(anchor.clone());
