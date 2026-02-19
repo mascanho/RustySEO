@@ -103,6 +103,27 @@ impl CrawlerState {
     pub fn is_truly_complete(&self) -> bool {
         self.queue.is_empty() && self.pending_urls.is_empty() && self.active_tasks == 0
     }
+
+    /// Add multiple discovered URLs to the queue if they are new
+    pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, max_depth: usize, max_urls: usize) {
+        for url_str in urls {
+            if let Ok(url) = Url::parse(&url_str) {
+                // Basic validation: same domain check might be needed if not already filtered
+                if url.domain() != base_url.domain() {
+                    continue;
+                }
+
+                if !self.visited.contains(&url_str) 
+                    && !self.pending_urls.contains_key(&url_str)
+                    && self.total_urls < max_urls 
+                {
+                    self.queue.push_back((url.clone(), 0)); // Sitemaps seed at depth 0
+                    self.total_urls += 1;
+                    self.pending_urls.insert(url_str.clone(), Instant::now());
+                }
+            }
+        }
+    }
 }
 
 /// Convert DomainCrawlResults to DatabaseResults

@@ -16,7 +16,6 @@ use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
 use settings::settings::toggle_javascript_rendering;
 use settings::settings::Settings;
-use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::State;
