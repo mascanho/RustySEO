@@ -533,8 +533,9 @@ async fn update_state_and_emit_progress(
 ) {
     let mut state = state.lock().await;
     state.crawled_urls += 1;
-    state.visited.insert(url.to_string());
-    state.pending_urls.remove(url.as_str());
+    let normalized_current_url = normalize_url(url.as_str());
+    state.visited.insert(normalized_current_url.clone());
+    state.pending_urls.remove(&normalized_current_url);
     state.last_activity = Instant::now();
 
     // Only process links if we haven't reached limits and depth allows
@@ -552,7 +553,7 @@ async fn update_state_and_emit_progress(
                 continue;
             }
 
-            // Normalize URL to avoid duplicates
+            // Normalize URL to avoid duplicates (handles trailing slashes, tracking params, etc.)
             let normalized_url = normalize_url(link_str);
             let url_pattern = extract_url_pattern(&normalized_url);
 
@@ -573,23 +574,28 @@ async fn update_state_and_emit_progress(
                 continue;
             }
 
-            if !state.visited.contains(link_str)
-                && !state.pending_urls.contains_key(link_str)
+            // Use the NORMALIZED url for deduplication checks
+            if !state.visited.contains(&normalized_url)
+                && !state.pending_urls.contains_key(&normalized_url)
                 && state.total_urls < settings.max_urls_per_domain
             {
                 // Only increment total_urls when we actually add a new URL
                 let queue_length_before = state.queue.len();
-                state.queue.push_back((link.clone(), depth + 1));
+                
+                // Parse the normalized URL back to a Url object for the queue
+                if let Ok(normalized_url_obj) = Url::parse(&normalized_url) {
+                    state.queue.push_back((normalized_url_obj, depth + 1));
 
-                // Only increment if we successfully added to queue
-                if state.queue.len() > queue_length_before {
-                    state.total_urls += 1;
-                    state
-                        .pending_urls
-                        .insert(link_str.to_string(), Instant::now());
+                    // Only increment if we successfully added to queue
+                    if state.queue.len() > queue_length_before {
+                        state.total_urls += 1;
+                        state
+                            .pending_urls
+                            .insert(normalized_url.clone(), Instant::now());
 
-                    // Increment the pattern count
-                    *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
+                        // Increment the pattern count
+                        *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
+                    }
                 }
             }
         }

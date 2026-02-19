@@ -20,6 +20,7 @@ use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::domain_crawler::helpers::sitemap;
+use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::AppState;
 
 use super::database::{self, Database, DatabaseError};
@@ -128,12 +129,15 @@ pub async fn crawl_domain(
             .with_url_status_registry(url_status_registry),
     )); // DB is handled separately
     {
+        let normalized_base = normalize_url(base_url.as_str());
+        let normalized_url_obj = Url::parse(&normalized_base).unwrap_or_else(|_| base_url.clone());
+        
         let mut state_guard = state.lock().await;
-        state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0
+        state_guard.queue.push_back((normalized_url_obj, 0)); // Start at depth 0
         state_guard.total_urls = 1;
         state_guard
             .pending_urls
-            .insert(base_url.to_string(), Instant::now());
+            .insert(normalized_base, Instant::now());
     }
 
     // DISCOVER URLS FROM SITEMAPS
