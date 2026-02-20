@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ActionIcon, Text, Box, Group, ScrollArea, Loader } from "@mantine/core";
+import { ActionIcon, Text, Box, ScrollArea, Loader } from "@mantine/core";
 import { Settings, X, Bug, Globe, Link2, FileText, ScrollText, Plug } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettings } from "./useSettings";
@@ -148,9 +148,10 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
                 </ActionIcon>
             </header>
 
-            {/* Tab Navigation */}
-            <div className="px-5 pt-4 flex flex-col">
-                <div className="flex p-1 bg-gray-100/80 dark:bg-white/[0.03] rounded-xl border border-gray-100 dark:border-white/5 space-x-0.5">
+            {/* Body: Sidebar + Content */}
+            <div className="flex flex-1 min-h-0">
+                {/* Vertical Sidebar Navigation */}
+                <nav className="w-[180px] shrink-0 border-r border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/[0.015] py-3 px-2 flex flex-col gap-0.5">
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
                         const Icon = tab.icon;
@@ -159,7 +160,7 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`relative flex items-center justify-center flex-1 py-2 px-2 rounded-lg text-[11px] font-bold transition-all duration-150 ${isActive
+                                className={`relative flex items-center gap-2.5 w-full py-2 px-3 rounded-lg text-[12px] font-semibold transition-all duration-150 text-left ${isActive
                                     ? "text-white"
                                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-white/5"
                                     }`}
@@ -167,33 +168,31 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
                                 {isActive && (
                                     <div className="absolute inset-0 bg-brand-bright rounded-lg z-0" />
                                 )}
-                                <Group gap={4} wrap="nowrap" className="relative z-10">
-                                    <Icon
-                                        className={`w-3.5 h-3.5 ${isActive ? "text-white" : "opacity-70"}`}
-                                    />
-                                    <span className="hidden sm:inline">{tab.label}</span>
-                                </Group>
+                                <Icon
+                                    className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-white" : "opacity-70"}`}
+                                />
+                                <span className="relative z-10">{tab.label}</span>
                             </button>
                         );
                     })}
-                </div>
+                </nav>
+
+                {/* Content Area */}
+                <Box className="relative flex-1 min-w-0">
+                    <ScrollArea
+                        h={520}
+                        offsetScrollbars
+                        scrollbarSize={5}
+                        type="hover"
+                        className="px-5 pb-4"
+                    >
+                        <div className="w-full pt-2">{renderContent()}</div>
+                    </ScrollArea>
+                </Box>
             </div>
 
-            {/* Content Area */}
-            <Box className="relative">
-                <ScrollArea
-                    h={420}
-                    offsetScrollbars
-                    scrollbarSize={5}
-                    type="hover"
-                    className="px-5 pb-4"
-                >
-                    <div className="w-full pt-2">{renderContent()}</div>
-                </ScrollArea>
-            </Box>
-
             {/* Footer */}
-            <div className="px-5 pb-4 pt-1 flex justify-between items-center">
+            <div className="px-5 pb-4 pt-1 flex justify-between items-center border-t border-gray-100 dark:border-white/5">
                 <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mr-4 opacity-40" />
                 <Text
                     size="xs"
