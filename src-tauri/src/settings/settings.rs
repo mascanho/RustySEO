@@ -852,6 +852,21 @@ pub async fn get_settings_command() -> Result<Settings, String> {
 }
 
 #[tauri::command]
+pub async fn update_settings_command(
+    updates: String,
+    settings_state: tauri::State<'_, crate::AppState>,
+) -> Result<Settings, String> {
+    let updated_settings = override_settings(&updates).await?;
+
+    let mut settings_lock = settings_state.settings.write().await;
+    *settings_lock = updated_settings.clone();
+
+    println!("Settings updated via GUI");
+
+    Ok(updated_settings)
+}
+
+#[tauri::command]
 pub async fn toggle_javascript_rendering(
     value: bool,
     app_handle: tauri::AppHandle,
