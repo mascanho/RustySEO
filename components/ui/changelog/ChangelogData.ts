@@ -3,7 +3,11 @@ export const changelogData = [
     version: "0.3.8",
     date: "2025-03-21",
     type: "feature",
-    changes: ["Global: Bug fixes and improvements", "Global: Settings UI"],
+    changes: [
+      "Global: Bug fixes and improvements",
+      "Global: Settings UI",
+      "Deep Crawler: Sitemap Parsing",
+    ],
   },
   {
     version: "0.3.7",
