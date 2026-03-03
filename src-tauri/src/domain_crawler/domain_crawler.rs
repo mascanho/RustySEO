@@ -453,6 +453,19 @@ pub async fn crawl_domain(
         println!("  Final completion: {:.2}%", final_percentage);
     }
 
+    // Flush any remaining buffered crawl results before completing
+    {
+        let mut state_guard = state.lock().await;
+        if !state_guard.pending_results.is_empty() {
+            let result_data = super::state::CrawlResultData {
+                results: state_guard.pending_results.drain(..).collect(),
+            };
+            if let Err(err) = app_handle.emit("crawl_result", result_data) {
+                eprintln!("Failed to emit final crawl result batch: {}", err);
+            }
+        }
+    }
+
     drop(db_tx);
     if let Some(handle) = db_handle {
         handle.await.unwrap_or_default();

@@ -676,11 +676,25 @@ async fn update_state_and_emit_progress(
         }
     }
 
-    let result_data = CrawlResultData {
-        result: super::models::LightCrawlResult::from_full(result),
-    };
-    if let Err(err) = app_handle.emit("crawl_result", result_data) {
-        eprintln!("Failed to emit crawl result: {}", err);
+    // Buffer results and emit in batches to avoid flooding the IPC bridge.
+    // At 40K+ URLs, emitting per-URL would cause ~40K state updates and re-renders.
+    // Batching reduces this to ~800 emissions (batch of 50 every 500ms).
+    state
+        .pending_results
+        .push(super::models::LightCrawlResult::from_full(result));
+
+    let should_emit_results = state.last_result_emit.elapsed() > Duration::from_millis(500)
+        || state.pending_results.len() >= 50
+        || active_pending == 0; // Flush on completion
+
+    if should_emit_results && !state.pending_results.is_empty() {
+        let result_data = CrawlResultData {
+            results: state.pending_results.drain(..).collect(),
+        };
+        if let Err(err) = app_handle.emit("crawl_result", result_data) {
+            eprintln!("Failed to emit crawl result batch: {}", err);
+        }
+        state.last_result_emit = now;
     }
 
     // progress info already logged above
