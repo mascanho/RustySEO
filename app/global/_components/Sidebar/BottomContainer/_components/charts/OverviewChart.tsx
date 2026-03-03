@@ -81,61 +81,38 @@ function OverviewChart() {
     [setStreamedCrawledPages, setStreamedTotalPages],
   );
 
-  // Update the crawled pages in real-time with debounce
+  // Listen only for crawl_complete to calculate final error breakdown.
+  // progress_update is handled centrally by FooterLoader — no duplicate listener here.
   useEffect(() => {
-    const progressUnlisten = listen("progress_update", (event) => {
-      const progressData = event.payload as {
-        crawled_urls: number;
-        percentage: number;
-        total_urls: number;
-        failed_urls_count: number;
-      };
-
-      // Validate and sanitize the received data to prevent NaN
-      const safeCrawledUrls = Math.max(0, progressData.crawled_urls || 0);
-      const safeTotalUrls = Math.max(1, progressData.total_urls || 1);
-      const safeFailedUrls = Math.max(0, progressData.failed_urls_count || 0);
-
-      debouncedUpdate(safeCrawledUrls, safeTotalUrls, safeFailedUrls);
-    });
-
     const completeUnlisten = listen("crawl_complete", () => {
-      // Ensure chart shows completion state and sync with actual data
-      setStreamedCrawledPages(crawlData.length);
-      setStreamedTotalPages(crawlData.length);
+      // Read latest state at event time to avoid stale closure
+      const currentData = useGlobalCrawlStore.getState().crawlData;
+      setStreamedCrawledPages(currentData.length);
+      setStreamedTotalPages(currentData.length);
 
       // Calculate 4XX and 5XX separately from crawlData
       const count4xx =
-        crawlData?.filter((page) => {
+        currentData?.filter((page) => {
           const status = page?.status_code || 0;
           return status >= 400 && status < 500;
         }).length || 0;
 
       const count5xx =
-        crawlData?.filter((page) => {
+        currentData?.filter((page) => {
           const status = page?.status_code || 0;
           return status >= 500;
         }).length || 0;
 
       setFailed4xxCount(count4xx);
       setFailed5xxCount(count5xx);
-
-      console.log(
-        "Crawl completed - overview chart synchronized with actual data",
-      );
     });
 
     return () => {
-      progressUnlisten.then((f) => f());
       completeUnlisten.then((f) => f());
     };
-  }, [
-    debouncedUpdate,
-    crawlData.length,
-    setStreamedCrawledPages,
-    setStreamedTotalPages,
-    crawlData,
-  ]);
+    // Empty deps — register once, use getState() for fresh data
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Memoized chart data
   const chartData = useMemo(() => {

@@ -633,8 +633,8 @@ async fn update_state_and_emit_progress(
 
     // Debug logging for troubleshooting NaN issues
     if total_discovered == 0 || percentage.is_nan() {
-        println!(
-            "WARNING: Potential invalid progress data - total_discovered: {}, completed_urls: {}, percentage: {}",
+        tracing::warn!(
+            "Potential invalid progress data - total_discovered: {}, completed_urls: {}, percentage: {}",
             total_discovered, completed_urls, percentage
         );
     }
@@ -653,12 +653,19 @@ async fn update_state_and_emit_progress(
         );
     }
 
-    // Only emit progress update if we have valid data
-    // Throttle updates to prevent UI freezing and ensure frontend debounce has time to fire.
-    // Frontend uses a 300ms debounce, so we emit every 400ms to ensure updates go through during active crawling.
     let now = Instant::now();
+
+    // Adaptive progress throttle based on crawl scale
+    let progress_interval_ms = if total_discovered > 20000 {
+        2000  // Very large crawls: emit every 2s
+    } else if total_discovered > 10000 {
+        1000  // Large crawls: emit every 1s
+    } else {
+        400   // Small crawls: emit every 400ms
+    };
+
     let should_emit_progress =
-        state.last_progress_emit.elapsed() > Duration::from_millis(400) || active_pending == 0;
+        state.last_progress_emit.elapsed() > Duration::from_millis(progress_interval_ms) || active_pending == 0;
 
     if should_emit_progress && safe_total_discovered > 0 && !percentage.is_nan() {
         if let Err(err) = app_handle.emit("progress_update", progress) {
@@ -669,7 +676,7 @@ async fn update_state_and_emit_progress(
         // Only log this debug message if we're not emitting due to invalid data,
         // not just because of throttling.
         if should_emit_progress && (safe_total_discovered == 0 || percentage.is_nan()) {
-            println!(
+            tracing::warn!(
                 "Skipping invalid progress update: total_discovered={}, percentage={}",
                 safe_total_discovered, percentage
             );
@@ -678,13 +685,23 @@ async fn update_state_and_emit_progress(
 
     // Buffer results and emit in batches to avoid flooding the IPC bridge.
     // At 40K+ URLs, emitting per-URL would cause ~40K state updates and re-renders.
-    // Batching reduces this to ~800 emissions (batch of 50 every 500ms).
+    // Adaptive thresholds: larger batches at scale to reduce IPC pressure.
     state
         .pending_results
         .push(super::models::LightCrawlResult::from_full(result));
 
-    let should_emit_results = state.last_result_emit.elapsed() > Duration::from_millis(500)
-        || state.pending_results.len() >= 50
+    let (batch_interval_ms, batch_size_threshold) = if total_discovered > 20000 {
+        (2000, 400)  // Very large crawls: emit every 2s or 400 items
+    } else if total_discovered > 10000 {
+        (1500, 200)  // Large crawls: emit every 1.5s or 200 items
+    } else if total_discovered > 5000 {
+        (1000, 100)  // Medium crawls: emit every 1s or 100 items
+    } else {
+        (500, 50)    // Small crawls: emit every 500ms or 50 items
+    };
+
+    let should_emit_results = state.last_result_emit.elapsed() > Duration::from_millis(batch_interval_ms)
+        || state.pending_results.len() >= batch_size_threshold
         || active_pending == 0; // Flush on completion
 
     if should_emit_results && !state.pending_results.is_empty() {

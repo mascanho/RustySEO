@@ -423,7 +423,7 @@ pub async fn crawl_domain(
         }
 
         if crawl_start_time.elapsed() > Duration::from_secs(crawl_timeout) {
-            println!("Crawl timeout reached, terminating...");
+            tracing::info!("Crawl timeout reached, terminating...");
             app_handle.emit("crawl_interrupted", ()).unwrap_or_default();
             break;
         }
@@ -435,13 +435,13 @@ pub async fn crawl_domain(
     // Final cleanup and status report
     {
         let state_guard = state.lock().await;
-        println!("\nCrawl completed - Final stats:");
-        println!("  Total URLs discovered: {}", state_guard.total_urls);
-        println!("  URLs successfully crawled: {}", state_guard.crawled_urls);
-        println!("  URLs failed: {}", state_guard.failed_urls.len());
-        println!("  URLs still pending: {}", state_guard.pending_urls.len());
-        println!("  Active tasks remaining: {}", state_guard.active_tasks);
-        println!("  Unique URL patterns: {}", state_guard.url_patterns.len());
+        tracing::info!("Crawl completed - Final stats:");
+        tracing::info!("  Total URLs discovered: {}", state_guard.total_urls);
+        tracing::info!("  URLs successfully crawled: {}", state_guard.crawled_urls);
+        tracing::info!("  URLs failed: {}", state_guard.failed_urls.len());
+        tracing::info!("  URLs still pending: {}", state_guard.pending_urls.len());
+        tracing::info!("  Active tasks remaining: {}", state_guard.active_tasks);
+        tracing::info!("  Unique URL patterns: {}", state_guard.url_patterns.len());
 
         // Calculate final completion percentage
         let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
@@ -450,7 +450,7 @@ pub async fn crawl_domain(
         } else {
             0.0
         };
-        println!("  Final completion: {:.2}%", final_percentage);
+        tracing::info!("  Final completion: {:.2}%", final_percentage);
     }
 
     // Flush any remaining buffered crawl results before completing

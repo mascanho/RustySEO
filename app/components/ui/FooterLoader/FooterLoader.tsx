@@ -34,7 +34,7 @@ const FooterLoader = () => {
   );
 
   useEffect(() => {
-    // Progress listener
+    // Progress listener — this is the ONE canonical listener for progress_update
     const progressUnlistenPromise = listen("progress_update", (event: any) => {
       const { crawled_urls, percentage, total_urls, failed_urls_count } =
         event.payload;
@@ -44,22 +44,13 @@ const FooterLoader = () => {
       const safeFailedUrls = Math.max(0, failed_urls_count || 0);
 
       debouncedUpdate(safeCrawledUrls, safeTotalUrls, safeFailedUrls);
-
-      // Reset internal completion state if a real progress update comes through with < 100%
-      if (percentage < 100 && showComplete) {
-        setShowComplete(false);
-      }
     });
 
     // Completion listener
     const completeUnlistenPromise = listen("crawl_complete", (event: any) => {
-      console.log(
-        "🏁 Crawl complete event received in FooterLoader",
-        event.payload,
-      );
-
-      // Ensure we show the final data from the event or fallback to crawlData
-      const finalCount = event.payload?.crawled_urls || crawlData?.length || 0;
+      // Use getState() to avoid stale closure over crawlData
+      const currentData = useCrawlStore.getState().crawlData;
+      const finalCount = event.payload?.crawled_urls || currentData?.length || 0;
       setStreamedCrawledPages(finalCount);
       setStreamedTotalPages(event.payload?.total_urls || finalCount);
       setShowComplete(true);
@@ -70,14 +61,9 @@ const FooterLoader = () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [
-    debouncedUpdate,
-    crawlData,
-    setStreamedCrawledPages,
-    setStreamedTotalPages,
-    setFinishedDeepCrawl,
-    showComplete,
-  ]);
+    // Register once — use getState() for fresh data instead of adding crawlData to deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedUpdate, setStreamedCrawledPages, setStreamedTotalPages, setFinishedDeepCrawl]);
 
   // Sync showComplete with store state
   useEffect(() => {
@@ -166,14 +152,14 @@ const FooterLoader = () => {
           (percentage >= 99.9 &&
             !domainCrawlLoading &&
             crawlData.length > 0)) && (
-          <Badge
-            variant="filled"
-            size="xs"
-            className="animate-in fade-in zoom-in duration-300 h-4.5 py-0 px-1.5 text-[9px] bg-brand-bright"
-          >
-            Crawl Complete
-          </Badge>
-        )}
+            <Badge
+              variant="filled"
+              size="xs"
+              className="animate-in fade-in zoom-in duration-300 h-4.5 py-0 px-1.5 text-[9px] bg-brand-bright"
+            >
+              Crawl Complete
+            </Badge>
+          )}
       </div>
     </div>
   );

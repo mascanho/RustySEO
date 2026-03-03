@@ -59,19 +59,13 @@ export default function Page() {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
 
-  const allData = useMemo(() => crawlData, [crawlData]);
+
 
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
   const [error, setError] = useState("");
 
-  // Load data from sessionStorage on mount
-  useEffect(() => {
-    const sessionData = sessionStorage.getItem("GlobalCrawldata");
-    if (sessionData && JSON.parse(sessionData) !== data) {
-      setData(JSON.parse(sessionData));
-    }
-  }, [crawlData]);
+
 
   // Debounced search handler
   const handleSearchChange = useCallback(
@@ -169,10 +163,7 @@ export default function Page() {
       }
     });
 
-    // Also listen to progress updates
-    listen("progress_update", (event) => {
-      // console.log("📈 Progress:", event.payload);
-    }).catch(console.error);
+
 
     listen("crawl_complete", (event) => {
       console.log("🏁 Crawl complete event received!");
