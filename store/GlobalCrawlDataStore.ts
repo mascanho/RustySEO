@@ -63,7 +63,7 @@ interface CrawlStore {
   setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
 
   setDomainCrawlData: (data: PageDetails[]) => void;
-  addDomainCrawlResult: (result: PageDetails) => void;
+  addDomainCrawlResult: (result: PageDetails | PageDetails[]) => void;
   clearDomainCrawlData: () => void;
   setDomainCrawlLoading: (loading: boolean) => void;
   setCrawlerType: (type: string) => void;
@@ -104,7 +104,7 @@ interface CrawlStore {
   actions: {
     data: {
       setDomainCrawlData: (data: PageDetails[]) => void;
-      addDomainCrawlResult: (result: PageDetails) => void;
+      addDomainCrawlResult: (result: PageDetails | PageDetails[]) => void;
       clearDomainCrawlData: () => void;
       setIssues: (issues: string[]) => void;
       setStatusCodes: (codes: string[]) => void;
@@ -163,23 +163,27 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       set((state) => ({
         aggregatedData: { ...state.aggregatedData, ...data }
       })),
-    addDomainCrawlResult: (result: PageDetails) =>
+    addDomainCrawlResult: (resultOrBatch: PageDetails | PageDetails[]) =>
       set((state) => {
-        // Use a private set for deduplication if we want to be super fast, 
-        // but for now let's at least optimize the logic.
-        // We can't easily add a Set to the store state without changing too much, 
-        // but we can at least avoid the check if the length is large and we trust the backend.
-        // Actually, let's keep a Set of visited URLs in the store.
+        const results = Array.isArray(resultOrBatch) ? resultOrBatch : [resultOrBatch];
+        if (results.length === 0) return state;
+
         if (!state.visitedUrls) {
           state.visitedUrls = new Set(state.crawlData.map(item => item.url));
         }
 
-        if (state.visitedUrls.has(result.url)) {
-          return state;
+        // Filter to only new URLs
+        const newResults = results.filter(r => !state.visitedUrls.has(r.url));
+        if (newResults.length === 0) return state;
+
+        // Mark all new URLs as visited
+        for (const r of newResults) {
+          state.visitedUrls.add(r.url);
         }
 
-        state.visitedUrls.add(result.url);
-        return { crawlData: [...state.crawlData, result] };
+        // Use concat instead of spread to avoid O(n) copy per item
+        // concat creates one new array instead of n intermediate arrays
+        return { crawlData: state.crawlData.concat(newResults) };
       }),
     clearDomainCrawlData: () => set({
       crawlData: [],
@@ -231,13 +235,25 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       crawledPages: number,
       totalPages: number,
     ) =>
-      set((state) => ({
-        crawlData: state.crawlData.some((item) => item.url === result.url)
-          ? state.crawlData
-          : [...state.crawlData, result],
-        streamedCrawledPages: crawledPages,
-        streamedTotalPages: totalPages,
-      })),
+      set((state) => {
+        const isDuplicate = state.visitedUrls
+          ? state.visitedUrls.has(result.url)
+          : state.crawlData.some((item) => item.url === result.url);
+
+        if (isDuplicate) {
+          return {
+            streamedCrawledPages: crawledPages,
+            streamedTotalPages: totalPages,
+          };
+        }
+
+        if (state.visitedUrls) state.visitedUrls.add(result.url);
+        return {
+          crawlData: state.crawlData.concat([result]),
+          streamedCrawledPages: crawledPages,
+          streamedTotalPages: totalPages,
+        };
+      }),
   };
 
   return {
@@ -444,17 +460,25 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setStreamedCrawledPages: setters.setStreamedCrawledPages,
         setStreamedTotalPages: setters.setStreamedTotalPages,
         updateStreaming: (update: StreamingUpdate) =>
-          set((state) => ({
-            crawlData:
-              update.result &&
-                !state.crawlData.some((item) => item.url === update.result.url)
-                ? [...state.crawlData, update.result]
-                : state.crawlData,
-            streamedCrawledPages:
-              update.progress?.crawled ?? state.streamedCrawledPages,
-            streamedTotalPages:
-              update.progress?.total ?? state.streamedTotalPages,
-          })),
+          set((state) => {
+            let newCrawlData = state.crawlData;
+            if (update.result) {
+              const isDuplicate = state.visitedUrls
+                ? state.visitedUrls.has(update.result.url)
+                : state.crawlData.some((item) => item.url === update.result.url);
+              if (!isDuplicate) {
+                if (state.visitedUrls) state.visitedUrls.add(update.result.url);
+                newCrawlData = state.crawlData.concat([update.result]);
+              }
+            }
+            return {
+              crawlData: newCrawlData,
+              streamedCrawledPages:
+                update.progress?.crawled ?? state.streamedCrawledPages,
+              streamedTotalPages:
+                update.progress?.total ?? state.streamedTotalPages,
+            };
+          }),
       },
       robots: {
         setRobotsBlocked: setters.setRobotsBlocked,

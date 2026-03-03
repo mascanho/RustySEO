@@ -58,6 +58,7 @@ import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
+import SettingsModal from "./SettingsModal/SettingsModal";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import CustomSearchSelector from "./Extractors/CustomSearchSelector";
 import { PiGitDiff } from "react-icons/pi";
@@ -134,6 +135,9 @@ const TopMenuBar = () => {
   ] = useDisclosure(false);
 
   const [openedConfs, { open: openConfs, close: closeConfs }] =
+    useDisclosure(false);
+
+  const [openedSettings, { open: openSettings, close: closeSettings }] =
     useDisclosure(false);
 
   // Diff Crawl Checker
@@ -497,6 +501,22 @@ const TopMenuBar = () => {
         <Configurations close={closeConfs} />
       </Modal>
 
+      {/* Settings (GUI) Modal */}
+      <Modal
+        size={"1050px"}
+        opened={openedSettings}
+        onClose={closeSettings}
+        centered
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: "transparent" },
+        }}
+      >
+        <SettingsModal close={closeSettings} />
+      </Modal>
+
       {/* Native-like Diff Checker Modal */}
       <Modal
         opened={openedDiffChecker}
@@ -570,13 +590,13 @@ const TopMenuBar = () => {
                 />
                 Crawler settings (TOML)
               </MenubarItem>
-              {/* <MenubarItem onClick={handleOpenConfigFile}> */}
-              {/*   <CiSettings */}
-              {/*     className=" text-sm mr-1.5 " */}
-              {/*     style={{ marginLeft: "-1px" }} */}
-              {/*   /> */}
-              {/*   Crawler settings (GUI) */}
-              {/* </MenubarItem> */}
+              <MenubarItem onClick={openSettings}>
+                <CiSettings
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
+                Settings (GUI)
+              </MenubarItem>
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
                 Exit

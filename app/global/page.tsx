@@ -154,20 +154,18 @@ export default function Page() {
     console.log("Initializing crawl event listeners...");
 
     const unlistenPromise = listen("crawl_result", (event) => {
-      // The payload structure is { result: DomainCrawlResults }
+      // The payload structure is now { results: LightCrawlResult[] } (batched)
       const payload = event.payload;
-      // console.log("Payload:", payload);
 
       if (payload && typeof payload === "object") {
-        const result = payload.result;
+        const results = payload.results;
 
-        if (result && typeof result === "object") {
-          addDomainCrawlResult(result);
-        } else {
-          console.warn("⚠️ Result is not an object:", result);
+        if (Array.isArray(results) && results.length > 0) {
+          addDomainCrawlResult(results);
+        } else if (payload.result && typeof payload.result === "object") {
+          // Backward compatibility: handle single result
+          addDomainCrawlResult(payload.result);
         }
-      } else {
-        console.error("❌ Invalid payload:", payload);
       }
     });
 
@@ -251,7 +249,7 @@ export default function Page() {
     check_psi_status();
   }, []);
 
-  console.log(crawlData, "CRAWL DATA");
+
 
   return (
     <main className="flex h-full w-full">

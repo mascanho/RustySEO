@@ -33,10 +33,10 @@ pub struct ProgressData {
     pub robots_blocked: Option<Vec<String>>,
 }
 
-/// Crawl result structure for emitting events
+/// Crawl result structure for emitting events (batched)
 #[derive(Clone, Serialize)]
 pub struct CrawlResultData {
-    pub result: super::models::LightCrawlResult,
+    pub results: Vec<super::models::LightCrawlResult>,
 }
 
 /// Structure to track crawler state
@@ -53,6 +53,8 @@ pub struct CrawlerState {
     pub active_tasks: usize,           // Track number of currently processing tasks
     pub link_checker: Option<Arc<SharedLinkChecker>>,
     pub last_progress_emit: Instant,   // Track time of last progress emission
+    pub last_result_emit: Instant,     // Track time of last crawl_result batch emission
+    pub pending_results: Vec<super::models::LightCrawlResult>, // Buffer for batching crawl_result events
     /// Global URL → HTTP status code registry shared between the crawler and link checker.
     /// Populated by the crawler after fetching each page; read by the link checker to skip
     /// redundant HTTP requests for URLs whose status is already known.
@@ -74,6 +76,8 @@ impl CrawlerState {
             active_tasks: 0,
             link_checker: None,
             last_progress_emit: Instant::now(),
+            last_result_emit: Instant::now(),
+            pending_results: Vec::with_capacity(64),
             url_status_registry: Arc::new(RwLock::new(HashMap::new())),
         }
     }
