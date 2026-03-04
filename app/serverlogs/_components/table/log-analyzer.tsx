@@ -105,6 +105,10 @@ export function LogAnalyzer() {
     setLogData,
     setFilter,
     resetAll,
+    fetchLogsFromDb,
+    fetchAllFilteredLogs,
+    setActiveFilters,
+    totalCount,
   } = useLogAnalysis();
 
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
@@ -378,9 +382,27 @@ export function LogAnalyzer() {
     }
   };
 
-  // Apply filters when activeSearchTerm changes OR when other filters change
+  // Fetch logs from DB when filters or page change
+  const currentFilters = {
+    search_term: activeSearchTerm,
+    status_filter: statusFilter,
+    method_filter: methodFilter,
+    file_type_filter: fileTypeFilter,
+    bot_filter: botFilter === "all" ? null : botFilter,
+    bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+    verified_filter: verifiedFilter,
+    sort_key: sortConfig?.key || "timestamp",
+    sort_dir:
+      sortConfig?.direction === "descending" ? "descending" : "ascending",
+  };
+
   useEffect(() => {
-    applyFilters();
+    // Only fetch if we have data (analysis has been run)
+    if (totalCount > 0 || entries.length > 0) {
+      fetchLogsFromDb(currentPage, itemsPerPage, currentFilters);
+      setActiveFilters(currentFilters);
+      fetchAllFilteredLogs(currentFilters);
+    }
   }, [
     activeSearchTerm,
     statusFilter,
@@ -390,15 +412,20 @@ export function LogAnalyzer() {
     verifiedFilter,
     botTypeFilter,
     sortConfig,
-    applyFilters,
+    currentPage,
+    itemsPerPage,
+    totalCount,
+    fetchLogsFromDb,
+    fetchAllFilteredLogs,
+    setActiveFilters,
   ]);
 
   // Initial filter application when entries load
   useEffect(() => {
     if (entries.length > 0) {
-      applyFilters();
+      setFilteredLogs(entries);
     }
-  }, [entries.length, applyFilters]);
+  }, [entries]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -420,11 +447,9 @@ export function LogAnalyzer() {
     useCurrentLogs.getState().setCurrentLogs(filteredLogs);
   }, [filteredLogs]);
 
-  // Get current logs for pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Get current logs for pagination (now from DB)
+  const currentLogs = entries;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Handle sorting
   const requestSort = useCallback((key: string) => {
@@ -1196,13 +1221,13 @@ export function LogAnalyzer() {
                   </TableHeader>
 
                   <TableBody className="relative">
-                    {filteredLogs.length > 0 ? (
+                    {entries.length > 0 ? (
                       currentLogs.map((log, index) => (
                         <LogRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
                           log={log}
                           index={index}
-                          indexOfFirstItem={indexOfFirstItem}
+                          indexOfFirstItem={(currentPage - 1) * itemsPerPage}
                           expandedRow={expandedRow}
                           setExpandedRow={setExpandedRow}
                           handleIP={handleIP}
@@ -1257,9 +1282,7 @@ export function LogAnalyzer() {
           setCurrentPage={setCurrentPage}
           itemsPerPage={itemsPerPage}
           setItemsPerPage={setItemsPerPage}
-          indexOfFirstItem={indexOfFirstItem}
-          indexOfLastItem={indexOfLastItem}
-          filteredLogs={filteredLogs}
+          totalCount={totalCount}
           entries={entries}
           formatedNumber={formatedNumber}
         />
@@ -1593,12 +1616,13 @@ function PaginationControls({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
-  indexOfFirstItem,
-  indexOfLastItem,
-  filteredLogs,
+  totalCount,
   entries,
   formatedNumber,
 }) {
+  const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+  const indexOfLastItem = Math.min(currentPage * itemsPerPage, totalCount);
+
   return (
     <div
       className="flex items-center justify-between w-full"
@@ -1689,16 +1713,8 @@ function PaginationControls({
       </Pagination>
       <div>
         <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
-          {indexOfFirstItem + 1}-
-          {Math.min(
-            indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
-          )}{" "}
-          of{" "}
-          {filteredLogs.length > 0
-            ? formatedNumber(filteredLogs.length)
-            : entries.length}{" "}
-          logs
+          {totalCount > 0 ? indexOfFirstItem + 1 : 0}-{indexOfLastItem} of{" "}
+          {formatedNumber(totalCount)} logs
         </span>
       </div>
     </div>

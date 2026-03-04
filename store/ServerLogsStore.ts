@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { shallow } from "zustand/shallow";
+import { invoke } from "@tauri-apps/api/core";
 
 // New interfaces for enhanced backend
 interface StatusCodeCounts {
@@ -138,10 +139,31 @@ interface Filters {
 
 interface LogAnalysisState {
   entries: LogEntry[];
+  allFilteredLogs: LogEntry[];
   overview: LogAnalysisOverview;
   isLoading: boolean;
   error: string | null;
   filters: Filters;
+  activeFilters: ActiveFilters;
+  totalCount: number;
+  currentPage: number;
+}
+
+interface ActiveFilters {
+  search_term: string;
+  status_filter: number[];
+  method_filter: string[];
+  file_type_filter: string[];
+  bot_filter: string | null;
+  bot_type_filter: string | null;
+  verified_filter: boolean | null;
+  sort_key: string | null;
+  sort_dir: string | null;
+}
+
+interface FilteredLogsPage {
+  entries: LogEntry[];
+  total_count: number;
 }
 
 interface LogAnalysisActions {
@@ -149,12 +171,20 @@ interface LogAnalysisActions {
     entries: LogEntry[];
     overview: Partial<LogAnalysisOverview>;
   }) => void;
+  fetchLogsFromDb: (
+    page: number,
+    limit: number,
+    filters: ActiveFilters,
+  ) => Promise<void>;
+  fetchAllFilteredLogs: (filters: ActiveFilters) => Promise<void>;
+  setActiveFilters: (filters: ActiveFilters) => void;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   resetFilters: () => void;
   resetAll: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   clearEntries: () => void;
+  setTotalCount: (count: number) => void;
 }
 
 // Default values for new structures
@@ -215,6 +245,7 @@ const defaultTotals: CrawlerTotals = {
 
 const initialState: LogAnalysisState = {
   entries: [],
+  allFilteredLogs: [],
   overview: {
     message: "",
     line_count: 0,
@@ -238,6 +269,19 @@ const initialState: LogAnalysisState = {
     search_term: "",
     segment: null,
   },
+  activeFilters: {
+    search_term: "",
+    status_filter: [],
+    method_filter: [],
+    file_type_filter: [],
+    bot_filter: null,
+    bot_type_filter: null,
+    verified_filter: null,
+    sort_key: null,
+    sort_dir: null,
+  },
+  totalCount: 0,
+  currentPage: 1,
 };
 
 // Helper functions for merging complex objects
@@ -415,7 +459,9 @@ export const useLogAnalysisStore = create<
     setLogData: (data) =>
       set((state) => {
         // Append entries
-        if (data.entries?.length) { state.entries.push(...data.entries); }
+        if (data.entries?.length) {
+          state.entries.push(...data.entries);
+        }
 
         // Merge overview
         const existingOverview = state.overview;
@@ -597,6 +643,93 @@ export const useLogAnalysisStore = create<
           log_finish_time: state.overview.log_finish_time,
         };
       }),
+
+    fetchLogsFromDb: async (page, limit, filters) => {
+      set((state) => {
+        state.isLoading = true;
+      });
+      try {
+        const activeFilters = {
+          search_term: filters.search_term || "",
+          status_filter: filters.status_filter || [],
+          method_filter: filters.method_filter || [],
+          file_type_filter: filters.file_type_filter || [],
+          bot_filter: filters.bot_filter,
+          bot_type_filter: filters.bot_type_filter,
+          verified_filter: filters.verified_filter,
+          sort_key: filters.sort_key,
+          sort_dir: filters.sort_dir,
+        };
+
+        const result = await invoke<FilteredLogsPage>("get_active_logs_page", {
+          page,
+          limit,
+          filters: activeFilters,
+        });
+
+        set((state) => {
+          state.entries = result.entries || [];
+          state.totalCount = result.total_count || 0;
+          state.currentPage = page;
+          state.isLoading = false;
+          state.error = null;
+        });
+      } catch (error) {
+        console.error("Failed to fetch logs from DB:", error);
+        set((state) => {
+          state.isLoading = false;
+          state.error = String(error);
+        });
+      }
+    },
+
+    fetchAllFilteredLogs: async (filters) => {
+      set((state) => {
+        state.isLoading = true;
+      });
+      try {
+        const activeFilters = {
+          search_term: filters.search_term || "",
+          status_filter: filters.status_filter || [],
+          method_filter: filters.method_filter || [],
+          file_type_filter: filters.file_type_filter || [],
+          bot_filter: filters.bot_filter,
+          bot_type_filter: filters.bot_type_filter,
+          verified_filter: filters.verified_filter,
+          sort_key: filters.sort_key,
+          sort_dir: filters.sort_dir,
+        };
+
+        const result = await invoke<FilteredLogsPage>(
+          "get_all_logs_with_filters",
+          {
+            filters: activeFilters,
+          },
+        );
+
+        set((state) => {
+          state.allFilteredLogs = result.entries || [];
+          state.isLoading = false;
+          state.error = null;
+        });
+      } catch (error) {
+        console.error("Failed to fetch all filtered logs:", error);
+        set((state) => {
+          state.isLoading = false;
+          state.error = String(error);
+        });
+      }
+    },
+
+    setActiveFilters: (filters) =>
+      set((state) => {
+        state.activeFilters = filters;
+      }),
+
+    setTotalCount: (count) =>
+      set((state) => {
+        state.totalCount = count;
+      }),
   })),
 );
 
@@ -604,16 +737,24 @@ export const useLogAnalysis = () =>
   useLogAnalysisStore(
     (state) => ({
       entries: state.entries,
+      allFilteredLogs: state.allFilteredLogs,
       overview: state.overview,
       isLoading: state.isLoading,
       error: state.error,
       filters: state.filters,
+      activeFilters: state.activeFilters,
+      totalCount: state.totalCount,
+      currentPage: state.currentPage,
       setLogData: state.setLogData,
+      fetchLogsFromDb: state.fetchLogsFromDb,
+      fetchAllFilteredLogs: state.fetchAllFilteredLogs,
+      setActiveFilters: state.setActiveFilters,
       setFilter: state.setFilter,
       resetFilters: state.resetFilters,
       resetAll: state.resetAll,
       setLoading: state.setLoading,
       setError: state.setError,
+      setTotalCount: state.setTotalCount,
     }),
     shallow,
   );

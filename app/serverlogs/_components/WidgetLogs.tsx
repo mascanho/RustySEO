@@ -73,7 +73,6 @@ const WidgetStatusCodesTable = lazy(() =>
 
 import { Tabs } from "@mantine/core";
 
-import { useCurrentLogs } from "@/store/logFilterStore";
 import { FaInfoCircle } from "react-icons/fa";
 
 import {
@@ -132,9 +131,8 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, entries } = useLogAnalysis();
+  const { overview, allFilteredLogs } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
-  const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
@@ -196,18 +194,18 @@ export default function WidgetLogs() {
   // Prepare filetype data from actual entries
   const fileTypeData = useMemo(
     () =>
-      currentLogs?.reduce((acc, entry) => {
+      allFilteredLogs?.reduce((acc, entry) => {
         const type = entry.file_type || "Other";
         acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {}),
-    [currentLogs],
+    [allFilteredLogs],
   );
 
   // Prepare content data from actual entries
   const contentData = useMemo(
     () =>
-      currentLogs?.reduce((acc, entry) => {
+      allFilteredLogs?.reduce((acc, entry) => {
         const taxonomy = entry.taxonomy;
         if (taxonomy && taxonomy !== "other") {
           acc[taxonomy] = (acc[taxonomy] || 0) + 1;
@@ -216,18 +214,18 @@ export default function WidgetLogs() {
         }
         return acc;
       }, {}) || {},
-    [currentLogs],
+    [allFilteredLogs],
   );
 
   // Prepare status code data from actual entries
   const statusCodeData = useMemo(
     () =>
-      currentLogs?.reduce((acc, entry) => {
+      allFilteredLogs?.reduce((acc, entry) => {
         const code = entry.status;
         acc[code] = (acc[code] || 0) + 1;
         return acc;
       }, {}),
-    [currentLogs],
+    [allFilteredLogs],
   );
 
   // Prepare crawler data
@@ -248,7 +246,7 @@ export default function WidgetLogs() {
   // Prepare User Agents Data
   const userAgentData = useMemo(
     () =>
-      currentLogs?.reduce((acc, entry) => {
+      allFilteredLogs?.reduce((acc, entry) => {
         const userAgent = entry.user_agent || "Unknown";
 
         // Categorize user agents to make the data more manageable
@@ -270,13 +268,13 @@ export default function WidgetLogs() {
 
         return acc;
       }, {}),
-    [currentLogs],
+    [allFilteredLogs],
   );
 
   // Prepare Referrers Data
   const referrerData = useMemo(
     () =>
-      currentLogs?.reduce((acc, entry) => {
+      allFilteredLogs?.reduce((acc, entry) => {
         const referrer = entry.referer || "Direct/None";
 
         // Categorize referrers to make the data more manageable
@@ -298,7 +296,7 @@ export default function WidgetLogs() {
 
         return acc;
       }, {}),
-    [currentLogs],
+    [allFilteredLogs],
   );
 
   // Get chart data for active tab
@@ -410,7 +408,7 @@ export default function WidgetLogs() {
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span className="hover:text-brand-bright">
-              {formatNumber(currentLogs?.length)} entries
+              {formatNumber(allFilteredLogs?.length)} entries
             </span>
           </div>
         </PopoverTrigger>
@@ -581,20 +579,20 @@ export default function WidgetLogs() {
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
-                      entries={currentLogs}
+                      entries={allFilteredLogs}
                       chartData={chartData}
                       selectedFileType={entry?.name}
                     />
                   ) : activeTab === "Status Codes" ? (
                     <WidgetStatusCodesTable
                       data={overview}
-                      entries={currentLogs}
+                      entries={allFilteredLogs}
                       segment={entry?.name}
                     />
                   ) : activeTab === "Referrers" ? (
                     <WidgetReferrersTable
                       data={overview}
-                      entries={currentLogs}
+                      entries={allFilteredLogs}
                       segment={entry?.name === "Other" ? "all" : entry?.name}
                     />
                   ) : activeTab === "Content" ? (
@@ -651,7 +649,7 @@ export default function WidgetLogs() {
                       <Tabs.Panel value="logs" className="h-full">
                         <WidgetContentTable
                           data={overview}
-                          entries={currentLogs}
+                          entries={allFilteredLogs}
                           segment={entry?.name}
                         />
                       </Tabs.Panel>
@@ -659,7 +657,7 @@ export default function WidgetLogs() {
                   ) : activeTab === "User Agents" ? (
                     <WidgetUserAgentsTable
                       data={overview}
-                      entries={currentLogs}
+                      entries={allFilteredLogs}
                       segment={entry?.name === "Other" ? "all" : entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
@@ -671,24 +669,27 @@ export default function WidgetLogs() {
                       </Tabs.List>
                       <Tabs.Panel value="overview" className="h-full">
                         {entry?.name === "Google" && (
-                          <WidgetTable data={overview} entries={currentLogs} />
+                          <WidgetTable
+                            data={overview}
+                            entries={allFilteredLogs}
+                          />
                         )}
                         {entry?.name === "Bing" && (
                           <WidgetTableBing
                             data={overview}
-                            entries={currentLogs}
+                            entries={allFilteredLogs}
                           />
                         )}
                         {entry?.name === "Openai" && (
                           <WidgetTableOpenAi
                             data={overview}
-                            entries={currentLogs}
+                            entries={allFilteredLogs}
                           />
                         )}
                         {entry?.name === "Claude" && (
                           <WidgetTableClaude
                             data={overview}
-                            entries={currentLogs}
+                            entries={allFilteredLogs}
                           />
                         )}
                       </Tabs.Panel>

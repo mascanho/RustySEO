@@ -11,6 +11,7 @@ use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::parse_log_entries;
+use crate::loganalyser::active_db::{init_active_db, insert_active_logs_batch};
 use crate::settings::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -286,6 +287,12 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
     });
 
+    // Wait for the initialize to succeed before creating threads
+    if let Err(e) = init_active_db() {
+        println!("Failed to init active db: {}", e);
+        return Err(e);
+    }
+
     // Entry streaming thread
     let app_handle_stream = app_handle.clone();
     thread::spawn(move || {
@@ -305,11 +312,15 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     entries_buffer.push(e);
 
                     if entries_buffer.len() >= settings.log_chunk_size {
+                        if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                            println!("Failed to insert active logs chunk: {}", e);
+                        }
                         let chunk = LogResult {
                             overview: overview.clone().unwrap_or_default(),
-                            entries: entries_buffer.drain(..).collect(),
+                            entries: Vec::new(), // Stop sending chunks of entries to UI
                         };
                         let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+                        entries_buffer.clear(); // Clear the buffer since it was successfully processed
                         thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
                 }
@@ -325,9 +336,12 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             settings.log_chunk_size
         );
         if !entries_buffer.is_empty() {
+            if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                println!("Failed to insert final active logs chunk: {}", e);
+            }
             let chunk = LogResult {
                 overview: overview.clone().unwrap_or_default(),
-                entries: entries_buffer,
+                entries: Vec::new(),
             };
             let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
         }

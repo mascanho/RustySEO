@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useCurrentLogs } from "@/store/logFilterStore";
 import {
   ChartConfig,
   ChartContainer,
@@ -37,17 +36,15 @@ const chartConfig = {
 export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { entries } = useLogAnalysis();
-  const { currentLogs } = useCurrentLogs();
+  const { allFilteredLogs } = useLogAnalysis();
 
   const processData = () => {
-    if (entries.length === 0) return [];
+    if (allFilteredLogs.length === 0) return [];
 
     const dateMap = new Map<string, { human: number; crawler: number }>();
     const allDates: Date[] = [];
 
-    const logsToProcess =
-      currentLogs && currentLogs.length > 0 ? currentLogs : entries;
+    const logsToProcess = allFilteredLogs;
 
     logsToProcess.forEach((entry) => {
       const date = new Date(entry.timestamp);

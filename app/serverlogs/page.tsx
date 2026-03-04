@@ -43,6 +43,8 @@ export default function Page() {
 
   // Select only the method we need to prevent Page from re-rendering on every log chunk
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
+  const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
+  const setTotalCount = useLogAnalysisStore((state) => state.setTotalCount);
   // const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
@@ -152,11 +154,24 @@ export default function Page() {
 
         const unlistenComplete = await listen<LogResult>(
           "log-analysis-complete",
-          ({ payload }) => {
+          async ({ payload }) => {
             if (!isMounted) return;
             console.log("Analysis complete", payload);
             if (payload.overview) {
               setLogData({ overview: payload });
+              setTotalCount(payload.overview.line_count || 0);
+              // Fetch first page of logs from DB
+              await fetchLogsFromDb(1, 100, {
+                search_term: "",
+                status_filter: [],
+                method_filter: [],
+                file_type_filter: [],
+                bot_filter: null,
+                bot_type_filter: null,
+                verified_filter: null,
+                sort_key: "timestamp",
+                sort_dir: "ascending",
+              });
             }
           },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
@@ -177,7 +192,7 @@ export default function Page() {
     return () => {
       isMounted = false;
     };
-  }, [setLogData]);
+  }, [setLogData, fetchLogsFromDb, setTotalCount]);
 
   // useEffect(() => {
   //   if (window) {
@@ -217,28 +232,31 @@ export default function Page() {
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "overall"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "crawlers"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                      chartView === "status"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>
