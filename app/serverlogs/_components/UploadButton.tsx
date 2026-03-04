@@ -38,11 +38,17 @@ function UploadButton() {
     useServerLogsStore();
 
   const handleClearStoreLogs = async () => {
-    resetAll();
-    setLogsFromDB([]);
-    setStoredLogsFromDBStore([]);
-    reset();
-    toast.success("All previous logs have been removed from cache");
+    try {
+      await invoke("clear_active_db_command");
+      resetAll();
+      setLogsFromDB([]);
+      setStoredLogsFromDBStore([]);
+      reset();
+      toast.success("All previous logs have been removed from cache and database");
+    } catch (error) {
+      console.error("Failed to clear database:", error);
+      toast.error("Failed to clear database logs");
+    }
   };
 
   return (

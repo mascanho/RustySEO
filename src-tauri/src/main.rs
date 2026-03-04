@@ -19,7 +19,6 @@ use settings::settings::update_settings_command;
 use settings::settings::Settings;
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::State;
 use tauri::{Emitter, Manager, Window, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
@@ -306,6 +305,8 @@ async fn main() {
             loganalyser::active_db::get_timeline_aggregations,
             loganalyser::active_db::get_status_aggregations,
             loganalyser::active_db::get_crawler_aggregations,
+            loganalyser::active_db::get_active_logs_stats,
+            loganalyser::active_db::clear_active_db_command,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

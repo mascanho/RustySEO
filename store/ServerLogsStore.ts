@@ -167,10 +167,13 @@ interface FilteredLogsPage {
 }
 
 interface LogAnalysisActions {
-  setLogData: (data: {
-    entries: LogEntry[];
-    overview: Partial<LogAnalysisOverview>;
-  }) => void;
+  setLogData: (
+    data: {
+      entries?: LogEntry[];
+      overview?: Partial<LogAnalysisOverview>;
+    },
+    mode?: "append" | "replace",
+  ) => void;
   fetchLogsFromDb: (
     page: number,
     limit: number,
@@ -456,7 +459,7 @@ export const useLogAnalysisStore = create<
   immer((set) => ({
     ...initialState,
 
-    setLogData: (data) =>
+    setLogData: (data, mode = "append") =>
       set((state) => {
         // Append entries
         if (data.entries?.length) {
@@ -466,6 +469,26 @@ export const useLogAnalysisStore = create<
         // Merge overview
         const existingOverview = state.overview;
         const incomingOverview = data.overview || {};
+
+        if (mode === "replace") {
+          state.overview = {
+            ...existingOverview,
+            ...incomingOverview,
+            totals: incomingOverview.totals
+              ? {
+                ...existingOverview.totals,
+                ...incomingOverview.totals,
+                bot_stats:
+                  incomingOverview.totals.bot_stats ||
+                  existingOverview.totals.bot_stats,
+                status_codes:
+                  incomingOverview.totals.status_codes ||
+                  existingOverview.totals.status_codes,
+              }
+              : existingOverview.totals,
+          };
+          return;
+        }
 
         state.overview = {
           ...existingOverview,
@@ -520,17 +543,17 @@ export const useLogAnalysisStore = create<
             // Merge bot stats
             bot_stats: incomingOverview.totals?.bot_stats
               ? mergeBotStatsMap(
-                  existingOverview.totals.bot_stats,
-                  incomingOverview.totals.bot_stats,
-                )
+                existingOverview.totals.bot_stats,
+                incomingOverview.totals.bot_stats,
+              )
               : existingOverview.totals.bot_stats,
 
             // Merge status codes
             status_codes: incomingOverview.totals?.status_codes
               ? mergeStatusCodeCounts(
-                  existingOverview.totals.status_codes,
-                  incomingOverview.totals.status_codes,
-                )
+                existingOverview.totals.status_codes,
+                incomingOverview.totals.status_codes,
+              )
               : existingOverview.totals.status_codes,
 
             // Merge page arrays
@@ -581,27 +604,27 @@ export const useLogAnalysisStore = create<
           // Merge segmentations
           segmentations: incomingOverview.segmentations
             ? mergeSegmentations(
-                existingOverview.segmentations,
-                incomingOverview.segmentations,
-              )
+              existingOverview.segmentations,
+              incomingOverview.segmentations,
+            )
             : existingOverview.segmentations,
 
           // Merge segment summary
           segment_summary: incomingOverview.segment_summary
             ? {
-                total_segments: Math.max(
-                  existingOverview.segment_summary.total_segments,
-                  incomingOverview.segment_summary.total_segments,
-                ),
-                total_segment_requests:
-                  existingOverview.segment_summary.total_segment_requests +
-                  (incomingOverview.segment_summary.total_segment_requests ||
-                    0),
-                average_requests_per_segment:
-                  incomingOverview.segment_summary
-                    .average_requests_per_segment ||
-                  existingOverview.segment_summary.average_requests_per_segment,
-              }
+              total_segments: Math.max(
+                existingOverview.segment_summary.total_segments,
+                incomingOverview.segment_summary.total_segments,
+              ),
+              total_segment_requests:
+                existingOverview.segment_summary.total_segment_requests +
+                (incomingOverview.segment_summary.total_segment_requests ||
+                  0),
+              average_requests_per_segment:
+                incomingOverview.segment_summary
+                  .average_requests_per_segment ||
+                existingOverview.segment_summary.average_requests_per_segment,
+            }
             : existingOverview.segment_summary,
         };
 

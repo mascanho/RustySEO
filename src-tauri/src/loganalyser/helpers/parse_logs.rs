@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest;
 use serde::{Deserialize, Serialize};
-use std::io::{self, Write};
+use std::io::{self};
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -524,7 +524,10 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     Some("Human".to_string())
 }
 
-pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
+pub fn parse_log_entries<F>(log: &str, mut f: F)
+where
+    F: FnMut(LogEntry),
+{
     let re = Regex::new(r#"(?x)
         ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
         "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path
@@ -535,7 +538,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 
     println!("Log contains {} lines", log.lines().count());
 
-    let mut entries = Vec::new();
     for (i, line) in log.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() {
@@ -576,7 +578,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             let gsc_url = gsc_log::get_matching_url(path);
             let ctr = gsc_log::gsc_ctr_match(path);
 
-            entries.push(LogEntry {
+            f(LogEntry {
                 ip,
                 timestamp,
                 method: caps[3].to_string(),
@@ -601,9 +603,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             });
         }
     }
-
-    println!("Parsed {} valid log entries", entries.len());
-    entries
 }
 
 // Tauri command to fetch all bot IP ranges at once
