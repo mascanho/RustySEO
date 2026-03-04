@@ -496,7 +496,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                       </TooltipTrigger>
                                       <TooltipContent
                                         side="bottom"
-                                        className="text-xs z-[99999] mr-10 p-1"
+                                        className="text-xs z-[99999] mr-10 py-1 px-2"
                                       >
                                         {action === "append"
                                           ? "Append logs"
