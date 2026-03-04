@@ -51,12 +51,12 @@ const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   return (
@@ -120,12 +120,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   // Optimized project fetching
@@ -449,10 +449,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   className="h-5 w-5 p-0 pt-[2px] hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
-                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${openDropdowns.has(projectName)
-                                      ? "rotate-180"
-                                      : ""
-                                      }`}
+                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
+                                      openDropdowns.has(projectName)
+                                        ? "rotate-180"
+                                        : ""
+                                    }`}
                                   />
                                 </Button>
                               </div>
@@ -475,7 +476,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                           }
                                           disabled={
                                             loadingProjects[
-                                            `${projectName}-${action}`
+                                              `${projectName}-${action}`
                                             ]
                                           }
                                         >
@@ -493,8 +494,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                           )}
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent side="bottom" className="text-xs">
-                                        {action === "append" ? "Append logs" : "Replace logs"}
+                                      <TooltipContent
+                                        side="bottom"
+                                        className="text-xs z-[99999] mr-10 p-1"
+                                      >
+                                        {action === "append"
+                                          ? "Append logs"
+                                          : "Replace logs"}
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>

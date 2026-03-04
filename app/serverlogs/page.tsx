@@ -19,7 +19,7 @@ import { toast, Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { MoreVertical } from "lucide-react";
 import {
@@ -37,12 +37,12 @@ interface CrawlResult {
 }
 
 export default function Page() {
-  const [keysPressed, setKeysPressed] = useState(new Set());
-  const [shortcutActivated, setShortcutActivated] = useState(false);
   const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
     "overall",
   );
-  const { setLogData, logData } = useLogAnalysis();
+
+  // Select only the method we need to prevent Page from re-rendering on every log chunk
+  const setLogData = useLogAnalysisStore((state) => state.setLogData);
   // const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
@@ -93,43 +93,18 @@ export default function Page() {
 
   // SHORTCUT TO CLEAR ALL THE LOGS
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const newKeysPressed = new Set(keysPressed);
-      newKeysPressed.add(e.key.toLowerCase());
-      setKeysPressed(newKeysPressed);
-
-      // Check for Ctrl+L+C sequence
-      if (
-        newKeysPressed.has("control") &&
-        newKeysPressed.has("shift") &&
-        newKeysPressed.has("c")
-      ) {
-        setShortcutActivated(true);
-        // Your action here
-        // Perform your specific action
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "c") {
         performCustomAction();
       }
     };
 
-    const handleKeyUp = (e) => {
-      const newKeysPressed = new Set(keysPressed);
-      newKeysPressed.delete(e.key.toLowerCase());
-      setKeysPressed(newKeysPressed);
-
-      // Reset activation state when keys are released
-      if (e.key.toLowerCase() === "c") {
-        setShortcutActivated(false);
-      }
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [keysPressed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const performCustomAction = () => {
     // REMOVE ALL THE LOGS FROM DB
@@ -164,21 +139,13 @@ export default function Page() {
         const unlistenChunk = await listen<LogResult>(
           "log-analysis-chunk",
           ({ payload }) => {
-            console.log(
-              `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-                `at ${new Date().toISOString()}`,
-            );
-
-            // Add performance marker
-            performance.mark(`chunk-received-${Date.now()}`);
-
             if (!isMounted) return;
-            // console.log("Received chunk", payload);
-            if (payload.entries?.length) {
-              setLogData({ entries: payload.entries });
-            }
-            if (payload.overview) {
-              setLogData({ overview: payload.overview });
+            // Single setLogData call per chunk — avoids 2x state updates + re-renders
+            if (payload.entries?.length || payload.overview) {
+              setLogData({
+                entries: payload.entries || [],
+                overview: payload.overview || {},
+              });
             }
           },
         );
@@ -250,31 +217,28 @@ export default function Page() {
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
-                      chartView === "overall"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
-                      chartView === "crawlers"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
-                      chartView === "status"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>

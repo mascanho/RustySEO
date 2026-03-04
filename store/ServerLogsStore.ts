@@ -415,7 +415,7 @@ export const useLogAnalysisStore = create<
     setLogData: (data) =>
       set((state) => {
         // Append entries
-        state.entries = [...state.entries, ...(data.entries || [])];
+        if (data.entries?.length) { state.entries.push(...data.entries); }
 
         // Merge overview
         const existingOverview = state.overview;
