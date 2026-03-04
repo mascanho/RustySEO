@@ -2,6 +2,8 @@ use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -10,7 +12,7 @@ use tauri::{AppHandle, Emitter};
 use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
-use crate::loganalyser::helpers::parse_logs::parse_log_entries;
+use crate::loganalyser::helpers::parse_logs::{parse_log_entries, parse_log_line};
 use crate::loganalyser::active_db::{get_active_logs_stats, init_active_db, insert_active_logs_batch};
 use crate::settings::settings;
 
@@ -53,6 +55,11 @@ impl Segmentation {
             let crawler_type = entry.crawler_type.to_lowercase();
             *self.bot_breakdown.entry(crawler_type).or_insert(0) += 1;
         }
+    }
+
+    /// Strip heavyweight data that shouldn't be serialized over IPC events.
+    pub fn strip_heavy_data(&mut self) {
+        self.urls.clear();
     }
 }
 
@@ -259,7 +266,8 @@ impl BotStats {
     fn add_entry(&mut self, entry: &LogEntry) {
         self.count += 1;
         self.status_codes.add_status(entry.status);
-        self.pages.push(entry.path.clone());
+        // We don't push to self.pages because it causes OOM on large logs
+        // unique pages are already tracked in other fields
 
         // Update page-specific status codes
         let page_status = self
@@ -268,12 +276,35 @@ impl BotStats {
             .or_insert_with(StatusCodeCounts::new);
         page_status.add_status(entry.status);
     }
+
+    /// Strip heavyweight data that shouldn't be serialized over IPC events.
+    /// The detailed per-page data is already in the SQLite DB.
+    fn strip_heavy_data(&mut self) {
+        self.pages.clear();
+        self.page_frequencies.clear();
+        self.page_status_codes.clear();
+    }
+}
+
+impl BotStatsMap {
+    /// Strip all heavyweight per-page data from every bot's stats.
+    /// Call this before emitting the overview event to prevent UI freeze.
+    fn strip_heavy_data(&mut self) {
+        self.google.strip_heavy_data();
+        self.bing.strip_heavy_data();
+        self.semrush.strip_heavy_data();
+        self.hrefs.strip_heavy_data();
+        self.moz.strip_heavy_data();
+        self.uptime.strip_heavy_data();
+        self.openai.strip_heavy_data();
+        self.claude.strip_heavy_data();
+    }
 }
 
 pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> {
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
-    let (entry_tx, entry_rx) = mpsc::channel();
+    let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
 
     // Progress reporting thread
     let app_handle_clone = app_handle.clone();
@@ -532,7 +563,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     }
 
     // Convert segments HashMap to Vec for the result
-    let segmentations: Vec<Segmentation> = segments.into_values().collect();
+    let mut segmentations: Vec<Segmentation> = segments.into_values().collect();
 
     // Calculate segment summary
     let total_segment_requests: usize = segmentations.iter().map(|s| s.count).sum();
@@ -546,17 +577,21 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         },
     };
 
+    // Strip out heavy segment lists
+    for segment in &mut segmentations {
+        segment.strip_heavy_data();
+    }
+
     // Helper to finalize frequency maps
     let google_bot_page_frequencies = finalize_frequency(google_freq);
     let bing_bot_page_frequencies = finalize_frequency(bing_freq);
     let openai_bot_page_frequencies = finalize_frequency(openai_freq);
     let claude_bot_page_frequencies = finalize_frequency(claude_freq);
 
-    // Update bot stats with page frequencies
-    bot_stats.google.page_frequencies = google_bot_page_frequencies.clone();
-    bot_stats.bing.page_frequencies = bing_bot_page_frequencies.clone();
-    bot_stats.openai.page_frequencies = openai_bot_page_frequencies.clone();
-    bot_stats.claude.page_frequencies = claude_bot_page_frequencies.clone();
+    // Strip heavyweight per-page data from bot_stats before emitting.
+    // This data is already persisted in the SQLite DB and can be queried on demand.
+    // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
+    bot_stats.strip_heavy_data();
 
     // GET CUMULATIVE STATS FROM DB TO PROVIDE A TRUE "APPEND" EXPERIENCE
     // We'll merge our current segmentation/frequency data with the global stats from DB
@@ -635,8 +670,18 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
     };
 
-    // Send the overview
-    let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
+    // Send the overview (with lightweight page data — frequencies already stripped from bot_stats)
+    // Also clear bot_page_frequencies in Totals to avoid serializing huge maps over IPC
+    let mut final_overview = cumulative_overview;
+    final_overview.totals.google_bot_page_frequencies.clear();
+    final_overview.totals.bing_bot_page_frequencies.clear();
+    final_overview.totals.openai_bot_page_frequencies.clear();
+    final_overview.totals.claude_bot_page_frequencies.clear();
+    final_overview.totals.google_bot_pages.clear();
+    final_overview.totals.bing_bot_pages.clear();
+    final_overview.totals.openai_bot_pages.clear();
+    final_overview.totals.claude_bot_pages.clear();
+    let _ = entry_tx.send(StreamEntry::Overview(final_overview));
 
     Ok(())
 }
@@ -679,6 +724,394 @@ fn finalize_frequency(freq_map: HashMap<String, (u64, usize, String, String, Str
         }])
     }).collect()
 }
+/// Analyse logs from file paths - reads files line-by-line via BufReader to avoid loading
+/// entire file contents into memory. This prevents OOM crashes on large log files.
+pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) -> Result<(), String> {
+    let file_count = file_paths.len();
+    let (progress_tx, progress_rx) = mpsc::channel();
+    let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
+
+    // Progress reporting thread
+    let app_handle_clone = app_handle.clone();
+    thread::spawn(move || {
+        let mut last_emitted = std::time::Instant::now();
+        for update in progress_rx {
+            if last_emitted.elapsed() >= Duration::from_millis(100) {
+                let _ = app_handle_clone.emit("progress-update", update);
+                last_emitted = std::time::Instant::now();
+            }
+        }
+    });
+
+    // Wait for the initialize to succeed before creating threads
+    if let Err(e) = init_active_db() {
+        println!("Failed to init active db: {}", e);
+        return Err(e);
+    }
+
+    // Entry streaming thread
+    let app_handle_stream = app_handle.clone();
+    thread::spawn(move || {
+        let settings = match tokio::task::block_in_place(|| {
+            tauri::async_runtime::block_on(settings::load_settings())
+        }) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+
+        let mut entries_buffer = Vec::new();
+        let mut overview: Option<LogAnalysisResult> = None;
+
+        for entry in entry_rx {
+            match entry {
+                StreamEntry::LogEntry(e) => {
+                    entries_buffer.push(e);
+
+                    if entries_buffer.len() >= settings.log_chunk_size {
+                        if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                            println!("Failed to insert active logs chunk: {}", e);
+                        }
+                        let chunk = LogResult {
+                            overview: LogAnalysisResult::default(),
+                            entries: Vec::new(),
+                        };
+                        let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+                        entries_buffer.clear();
+                        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
+                    }
+                }
+                StreamEntry::Overview(o) => {
+                    overview = Some(o);
+                }
+            }
+        }
+
+        if !entries_buffer.is_empty() {
+            if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                println!("Failed to insert final active logs chunk: {}", e);
+            }
+            let chunk = LogResult {
+                overview: LogAnalysisResult::default(),
+                entries: Vec::new(),
+            };
+            let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+        }
+
+        if let Some(overview) = overview {
+            let _ = app_handle_stream.emit(
+                "log-analysis-complete",
+                LogResult {
+                    overview,
+                    entries: Vec::new(),
+                },
+            );
+        }
+    });
+
+    // Main processing
+    let mut total_requests = 0;
+    let mut unique_ips = HashSet::new();
+    let mut unique_user_agents = HashSet::new();
+    let mut crawler_count = 0;
+    let mut success_count = 0;
+    let mut status_code_counts = StatusCodeCounts::new();
+
+    let mut log_start_time = String::new();
+    let mut log_finish_time = String::new();
+
+    // Initialize bot stats
+    let mut bot_stats = BotStatsMap::default();
+    let mut bot_counts = [0; 8];
+
+    // Page frequencies tracking
+    let mut google_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
+    let mut bing_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
+    let mut openai_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
+    let mut claude_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
+
+    let mut google_bot_pages = HashSet::new();
+    let mut bing_bot_pages = HashSet::new();
+    let mut openai_bot_pages = HashSet::new();
+    let mut claude_bot_pages = HashSet::new();
+
+    // SEGMENTATION
+    let mut segments: HashMap<String, Segmentation> = HashMap::new();
+    let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for (index, file_path) in file_paths.iter().enumerate() {
+        let filename = std::path::Path::new(file_path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(file_path)
+            .to_string();
+
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: (index as f32 / file_count as f32) * 100.0,
+            filename: filename.clone(),
+            phase: "started".to_string(),
+        });
+
+        // Open the file and read line-by-line with BufReader — no full file in memory
+        let file = match File::open(file_path) {
+            Ok(f) => f,
+            Err(e) => {
+                println!("Failed to open file {}: {}", file_path, e);
+                continue;
+            }
+        };
+        let reader = BufReader::with_capacity(8 * 1024 * 1024, file); // 8MB buffer
+
+        for line_result in reader.lines() {
+            let line = match line_result {
+                Ok(l) => l,
+                Err(_) => continue,
+            };
+            let line = line.trim().to_string();
+            if line.is_empty() {
+                continue;
+            }
+
+            if let Some(e) = parse_log_line(&line) {
+                let is_crawler_flag = is_crawler(&e.user_agent);
+                let entry = LogEntry {
+                    ip: e.ip.clone(),
+                    timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                    method: e.method,
+                    path: e.path,
+                    position: e.position,
+                    impressions: e.impressions,
+                    clicks: e.clicks,
+                    ctr: e.ctr,
+                    gsc_url: e.gsc_url,
+                    status: e.status,
+                    user_agent: e.user_agent,
+                    referer: e.referer,
+                    response_size: e.response_size,
+                    country: extract_country(&e.ip),
+                    crawler_type: e.crawler_type,
+                    is_crawler: is_crawler_flag,
+                    file_type: e.file_type,
+                    browser: browser_trim_name::trim_browser_name(&e.browser),
+                    verified: e.verified,
+                    segment: e.segment.clone(),
+                    segment_match: e.segment_match.clone(),
+                    taxonomy: Some(e.taxonomy),
+                    filename: filename.clone(),
+                };
+
+                // Track start/finish times
+                if log_start_time.is_empty() {
+                    log_start_time = entry.timestamp.clone();
+                }
+                log_finish_time = entry.timestamp.clone();
+
+                // Update segment statistics
+                if !entry.segment.is_empty() {
+                    let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
+                        let mut seg = Segmentation::new();
+                        seg.name = entry.segment.clone();
+                        seg.match_type = entry.segment_match.clone().unwrap_or_default();
+                        seg
+                    });
+                    segment.add_entry(&entry);
+                    let segment_ip_set = segment_ips
+                        .entry(entry.segment.clone())
+                        .or_insert_with(HashSet::new);
+                    segment_ip_set.insert(entry.ip.clone());
+                    segment.add_url(entry.path.clone());
+                }
+
+                // Update statistics
+                total_requests += 1;
+                unique_ips.insert(entry.ip.clone());
+                unique_user_agents.insert(entry.user_agent.clone());
+                if entry.is_crawler {
+                    crawler_count += 1;
+                }
+                if entry.status >= 200 && entry.status < 300 {
+                    success_count += 1;
+                }
+                status_code_counts.add_status(entry.status);
+
+                let crawler_type = entry.crawler_type.to_lowercase();
+                if crawler_type.contains("google") {
+                    bot_counts[0] += 1;
+                    bot_stats.google.add_entry(&entry);
+                    google_bot_pages.insert(entry.path.clone());
+                    update_frequency(&mut google_freq, &entry);
+                } else if crawler_type.contains("bing") {
+                    bot_counts[1] += 1;
+                    bot_stats.bing.add_entry(&entry);
+                    bing_bot_pages.insert(entry.path.clone());
+                    update_frequency(&mut bing_freq, &entry);
+                } else if crawler_type.contains("semrush") {
+                    bot_counts[2] += 1;
+                    bot_stats.semrush.add_entry(&entry);
+                } else if crawler_type.contains("hrefs") {
+                    bot_counts[3] += 1;
+                    bot_stats.hrefs.add_entry(&entry);
+                } else if crawler_type.contains("moz") {
+                    bot_counts[4] += 1;
+                    bot_stats.moz.add_entry(&entry);
+                } else if crawler_type.contains("uptime") {
+                    bot_counts[5] += 1;
+                    bot_stats.uptime.add_entry(&entry);
+                } else if crawler_type.contains("open")
+                    || crawler_type.contains("openai")
+                    || crawler_type.contains("gpt")
+                    || entry.user_agent.contains("OAI-SearchBot")
+                    || entry.user_agent.contains("ChatGPT-User")
+                    || entry.user_agent.contains("GPTBot")
+                    || entry.user_agent.contains("openai.com/searchbot")
+                    || entry.user_agent.contains("openai.com/bot")
+                    || entry.user_agent.contains("openai.com/gptbot")
+                {
+                    bot_counts[6] += 1;
+                    bot_stats.openai.add_entry(&entry);
+                    openai_bot_pages.insert(entry.path.clone());
+                    update_frequency(&mut openai_freq, &entry);
+                } else if crawler_type.contains("claude") {
+                    bot_counts[7] += 1;
+                    bot_stats.claude.add_entry(&entry);
+                    claude_bot_pages.insert(entry.path.clone());
+                    update_frequency(&mut claude_freq, &entry);
+                }
+
+                // Stream the entry
+                let _ = entry_tx.send(StreamEntry::LogEntry(entry));
+            }
+        }
+
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
+            filename,
+            phase: "completed".to_string(),
+        });
+    }
+
+    if total_requests == 0 {
+        return Err("No logs found".to_string());
+    }
+
+    // Update segment counts with unique IPs
+    for (segment_name, ip_set) in segment_ips {
+        if let Some(segment) = segments.get_mut(&segment_name) {
+            segment.unique_ips = ip_set.len();
+        }
+    }
+
+    let mut segmentations: Vec<Segmentation> = segments.into_values().collect();
+    let total_segment_requests: usize = segmentations.iter().map(|s| s.count).sum();
+    let segment_summary = SegmentSummary {
+        total_segments: segmentations.len(),
+        total_segment_requests,
+        average_requests_per_segment: if !segmentations.is_empty() {
+            total_segment_requests as f32 / segmentations.len() as f32
+        } else {
+            0.0
+        },
+    };
+
+    // Strip out heavy segment lists
+    for segment in &mut segmentations {
+        segment.strip_heavy_data();
+    }
+
+    let google_bot_page_frequencies = finalize_frequency(google_freq);
+    let bing_bot_page_frequencies = finalize_frequency(bing_freq);
+    let openai_bot_page_frequencies = finalize_frequency(openai_freq);
+    let claude_bot_page_frequencies = finalize_frequency(claude_freq);
+
+    // Strip heavyweight per-page data from bot_stats before emitting.
+    // This data is already persisted in the SQLite DB and can be queried on demand.
+    // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
+    bot_stats.strip_heavy_data();
+
+    let cumulative_overview = if let Ok(stats) = get_active_logs_stats() {
+        LogAnalysisResult {
+            message: "Log analysis completed (cumulative)".to_string(),
+            line_count: stats.line_count,
+            unique_ips: stats.unique_ips,
+            unique_user_agents: stats.unique_user_agents,
+            crawler_count: stats.crawler_count,
+            success_rate: stats.success_rate,
+            totals: Totals {
+                google: stats.totals.google,
+                bing: stats.totals.bing,
+                semrush: stats.totals.semrush,
+                hrefs: stats.totals.hrefs,
+                moz: stats.totals.moz,
+                uptime: stats.totals.uptime,
+                openai: stats.totals.openai,
+                claude: stats.totals.claude,
+                bot_stats,
+                status_codes: stats.totals.status_codes,
+                // Send empty page lists — data is in DB, query on demand
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time: stats.log_start_time,
+            log_finish_time: stats.log_finish_time,
+            file_count: stats.file_count,
+            segmentations,
+            segment_summary,
+        }
+    } else {
+        LogAnalysisResult {
+            message: "Log analysis completed".to_string(),
+            line_count: total_requests,
+            unique_ips: unique_ips.len(),
+            unique_user_agents: unique_user_agents.len(),
+            crawler_count,
+            success_rate: if total_requests > 0 {
+                (success_count as f32 / total_requests as f32) * 100.0
+            } else {
+                0.0
+            },
+            totals: Totals {
+                google: bot_counts[0],
+                bing: bot_counts[1],
+                semrush: bot_counts[2],
+                hrefs: bot_counts[3],
+                moz: bot_counts[4],
+                uptime: bot_counts[5],
+                openai: bot_counts[6],
+                claude: bot_counts[7],
+                bot_stats,
+                status_codes: status_code_counts,
+                // Send empty page lists — data is in DB, query on demand
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time,
+            log_finish_time,
+            file_count,
+            segmentations,
+            segment_summary,
+        }
+    };
+
+    let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
+
+    Ok(())
+}
+
 // Enhanced segment_log function for detailed segment analysis
 pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
     let mut segments: HashMap<String, Segmentation> = HashMap::new();

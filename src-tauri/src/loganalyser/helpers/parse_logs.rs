@@ -524,6 +524,76 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     Some("Human".to_string())
 }
 
+// Static compiled regex so it's not recompiled on every call
+static LOG_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?x)
+        ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
+        "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path
+        (\d{3})\s+(\d+)\s+                                                # Status and response size
+        "([^"]*)"\s+                                                      # Referer
+        "([^"]*)"                                                         # User agent
+    "#).expect("Invalid regex pattern")
+});
+
+/// Parse a single log line and return a LogEntry if it matches.
+/// This avoids loading entire files into memory — used by analyse_log_from_paths.
+pub fn parse_log_line(line: &str) -> Option<LogEntry> {
+    let line = line.trim();
+    if line.is_empty() {
+        return None;
+    }
+
+    let caps = LOG_REGEX.captures(line)?;
+
+    let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
+        Ok(t) => t,
+        Err(_) => return None,
+    };
+
+    let referer = match caps[7].trim() {
+        "-" => None,
+        ref r => Some(r.to_string()),
+    };
+
+    let user_agent = caps[8].to_string();
+    let crawler_type = detect_bot(&user_agent).unwrap_or_default();
+    let browser = detect_browser(&user_agent).unwrap_or_default();
+    let ip = caps[1].to_string();
+    let path = &caps[4];
+
+    let verified = is_verified_crawler(&ip, &crawler_type);
+
+    let position = gsc_log::gsc_position_match(path);
+    let clicks = gsc_log::gsc_clicks_match(path);
+    let impressions = gsc_log::gsc_impressions_match(path);
+    let gsc_url = gsc_log::get_matching_url(path);
+    let ctr = gsc_log::gsc_ctr_match(path);
+
+    Some(LogEntry {
+        ip,
+        timestamp,
+        method: caps[3].to_string(),
+        path: caps[4].to_string(),
+        position,
+        impressions,
+        clicks,
+        ctr,
+        status: caps[5].parse().unwrap_or(0),
+        user_agent,
+        country: None,
+        gsc_url,
+        referer,
+        response_size: caps[6].parse().unwrap_or(0),
+        crawler_type,
+        browser,
+        file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
+        verified,
+        segment: classify_segment_name(path),
+        segment_match: classify_segment_match(path),
+        taxonomy: classify_taxonomy(path),
+    })
+}
+
 pub fn parse_log_entries<F>(log: &str, mut f: F)
 where
     F: FnMut(LogEntry),

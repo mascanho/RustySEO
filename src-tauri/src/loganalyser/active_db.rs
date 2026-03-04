@@ -317,7 +317,7 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
     }
 
     let query = format!(
-        "SELECT * FROM active_parsed_logs WHERE {} {}",
+        "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT 50000",
         where_sql, order_sql
     );
 
@@ -606,6 +606,60 @@ pub fn get_crawler_aggregations(
     }
     Ok(result)
 }
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct WidgetAggregations {
+    pub file_types: std::collections::HashMap<String, usize>,
+    pub content: std::collections::HashMap<String, usize>,
+    pub status_codes: std::collections::HashMap<u16, usize>,
+    pub user_agents: std::collections::HashMap<String, usize>,
+    pub referrers: std::collections::HashMap<String, usize>,
+}
+
+#[tauri::command]
+pub fn get_widget_aggregations(
+    filters: ActiveFilters,
+) -> Result<WidgetAggregations, String> {
+    let mut lock = DB_CONN.lock().unwrap();
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    let query = format!(
+        "SELECT file_type, taxonomy, status, user_agent, referer FROM active_parsed_logs WHERE {}",
+        where_sql
+    );
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    
+    let mut aggs = WidgetAggregations::default();
+
+    let mut rows = stmt
+        .query(rusqlite::params_from_iter(params_vec.iter()))
+        .map_err(|e| e.to_string())?;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let ft: Option<String> = row.get(0).unwrap_or(None);
+        let tax: Option<String> = row.get(1).unwrap_or(None);
+        let st: Option<u16> = row.get(2).unwrap_or(None);
+        let ua: Option<String> = row.get(3).unwrap_or(None);
+        let ref_str: Option<String> = row.get(4).unwrap_or(None);
+
+        *aggs.file_types.entry(ft.unwrap_or_else(|| "Other".to_string())).or_insert(0) += 1;
+        *aggs.content.entry(tax.unwrap_or_else(|| "other".to_string())).or_insert(0) += 1;
+        
+        if let Some(s) = st {
+            if s > 0 {
+                *aggs.status_codes.entry(s).or_insert(0) += 1;
+            }
+        }
+
+        *aggs.user_agents.entry(ua.unwrap_or_else(|| "Unknown".to_string())).or_insert(0) += 1;
+        *aggs.referrers.entry(ref_str.unwrap_or_else(|| "Direct/None".to_string())).or_insert(0) += 1;
+    }
+
+    Ok(aggs)
+}
+
 #[tauri::command]
 pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let mut lock = DB_CONN.lock().unwrap();

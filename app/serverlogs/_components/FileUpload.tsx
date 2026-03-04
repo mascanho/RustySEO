@@ -14,6 +14,7 @@ import { listen } from "@tauri-apps/api/event";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { FaDatabase } from "react-icons/fa";
 import { useSelectedProject } from "@/store/logFilterStore";
+import { open } from "@tauri-apps/plugin-dialog";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -22,8 +23,10 @@ interface FileUploadProps {
   closeDialog: () => void;
 }
 
-interface FileWithProgress {
-  file: File;
+interface SelectedFilePath {
+  name: string;
+  path: string;
+  size?: number;
   success: boolean;
   error: string | null;
 }
@@ -37,17 +40,14 @@ interface ProgressUpdate {
 }
 
 export function FileUpload({
-  // maxSizeMB = 75,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
 }: FileUploadProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [files, setFiles] = useState<FileWithProgress[]>([]);
+  const [files, setFiles] = useState<SelectedFilePath[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { setLogData } = useLogAnalysis();
   const [progress, setProgress] = useState({
     current: 0,
@@ -58,28 +58,11 @@ export function FileUpload({
   });
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
   const { selectedProject } = useSelectedProject();
-  // local storing logs
   const [storingLogs, setStoringLogs] = useState(false);
-  const [maxSizeMB, setMaxSizeMB] = useState(0);
-
-  async function getFileUploadLimit() {
-    const result = await invoke("get_log_file_upload_size_command");
-    console.log("result for the filesize", result);
-
-    if (result) {
-      setMaxSizeMB(result);
-    }
-  }
-
-  useEffect(() => {
-    // GET THE FILE UPOLOAD LIMIE FROM THE FILE IN THE SETTINGS
-    getFileUploadLimit();
-  }, []);
 
   // Get the initial state of storing logs from the localStorage
   useEffect(() => {
     const storedValue = localStorage.getItem("logsStorage");
-    console.log("storedValue", storedValue);
     if (
       !storedValue ||
       storedValue === "false" ||
@@ -115,131 +98,43 @@ export function FileUpload({
     };
   }, []);
 
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  const maxVisibleFiles = 5;
+  // Use Tauri's dialog to select files — returns file paths, never loading content into JS memory
+  const handleSelectFiles = async () => {
+    try {
+      const selected = await open({
+        multiple: true,
+        filters: [
+          {
+            name: "Log Files",
+            extensions: ["log", "txt"],
+          },
+        ],
+      });
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+      if (!selected) return;
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
+      // open() returns string | string[] | null
+      const paths = Array.isArray(selected) ? selected : [selected];
 
-  // FILE SIZE VALIDATION
-  const validateFile = (file: File) => {
-    const fileSizeMB = file.size / 1024 / 1024;
-    if (fileSizeMB > maxSizeMB) {
-      setError(`File size exceeds the maximum limit of ${maxSizeMB}MB.`);
-      return false;
-    }
+      const newFiles: SelectedFilePath[] = paths.map((filePath) => {
+        const name =
+          filePath.split("/").pop()?.split("\\").pop() || filePath;
+        return {
+          name,
+          path: filePath,
+          success: false,
+          error: null,
+        };
+      });
 
-    const fileType = file.type || "";
-    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
-
-    if (
-      acceptedFileTypes.includes(fileType) ||
-      acceptedFileTypes.includes(`text/${fileExtension}`) ||
-      (fileExtension === "log" && acceptedFileTypes.includes("text/plain"))
-    ) {
-      setError(null);
-      return true;
-    }
-
-    setError(
-      `Unsupported file type. Supported types: ${acceptedFileTypes.join(", ")}`,
-    );
-    return false;
-  };
-
-  // const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-  //   e.preventDefault();
-  //   setIsDragging(false);
-  //
-  //   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-  //     const droppedFiles = Array.from(e.dataTransfer.files);
-  //     const validFiles = droppedFiles.filter((file) => validateFile(file));
-  //
-  //     if (validFiles.length > 0) {
-  //       setFiles((prev) => [
-  //         ...prev,
-  //         ...validFiles.map((file) => ({
-  //           file,
-  //           success: false,
-  //           error: null,
-  //         })),
-  //       ]);
-  //     }
-  //   }
-  // };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles = selectedFiles.filter((file) => validateFile(file));
-
-      if (validFiles.length > 0) {
-        setFiles((prev) => [
-          ...prev,
-          ...validFiles.map((file) => ({
-            file,
-            success: false,
-            error: null,
-          })),
-        ]);
+      if (newFiles.length > 0) {
+        setFiles((prev) => [...prev, ...newFiles]);
+        setError(null);
       }
+    } catch (err) {
+      console.error("File selection error:", err);
+      setError("Failed to open file dialog");
     }
-  };
-
-  const readFileInChunks = (
-    file: File,
-    onProgress?: (progress: number) => void,
-    chunkSize = 1024 * 1024 * 5, // 5MB chunks
-  ): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const fileSize = file.size;
-      let offset = 0;
-      let result = "";
-      let chunksProcessed = 0;
-      const totalChunks = Math.ceil(fileSize / chunkSize);
-
-      const readNextChunk = () => {
-        if (offset >= fileSize) {
-          resolve(result);
-          return;
-        }
-
-        const reader = new FileReader();
-        const chunk = file.slice(offset, offset + chunkSize);
-
-        reader.onload = (event) => {
-          try {
-            result += event.target?.result as string;
-            offset += chunkSize;
-            chunksProcessed++;
-
-            if (onProgress) {
-              onProgress((chunksProcessed / totalChunks) * 100);
-            }
-
-            // Yield to main thread periodically
-            setTimeout(readNextChunk, 0);
-          } catch (err) {
-            reject(err);
-          }
-        };
-
-        reader.onerror = (error) => {
-          reject(error);
-        };
-
-        reader.readAsText(chunk);
-      };
-
-      readNextChunk();
-    });
   };
 
   const delay = (ms: number) =>
@@ -269,145 +164,51 @@ export function FileUpload({
     }
 
     try {
-      setOverallProgress(10);
-      const fileContents: Array<{ filename: string; content: string }> = [];
+      setOverallProgress(5);
 
-      const batchSize = 2;
-      for (let i = 0; i < files.length; i += batchSize) {
-        const batch = files.slice(i, i + batchSize);
-
-        const batchResults = await Promise.allSettled(
-          batch.map(async (fileWithProgress, batchIndex) => {
-            const originalIndex = i + batchIndex;
-            try {
-              const content = await readFileInChunks(
-                files[originalIndex].file,
-                (chunkProgress) => {
-                  // Update progress for this file
-                  setProgress((prev) => ({
-                    ...prev,
-                    percent: Math.round(
-                      ((i + batchIndex) / files.length) * 100 * 0.5 +
-                        chunkProgress * 0.5,
-                    ),
-                  }));
-                },
-              );
-
-              return {
-                index: originalIndex,
-                update: {
-                  ...files[originalIndex],
-                  success: true,
-                },
-                content: {
-                  filename: files[originalIndex].file.name,
-                  content,
-                },
-              };
-            } catch (err) {
-              return {
-                index: originalIndex,
-                update: {
-                  ...files[originalIndex],
-                  error: err instanceof Error ? err.message : "Upload failed",
-                },
-                error: err,
-              };
-            }
-          }),
-        );
-
-        batchResults.forEach((result) => {
-          if (result.status === "fulfilled") {
-            if (result.value.content) {
-              fileContents.push(result.value.content);
-            }
-          } else {
-            console.error("Error processing file:", result.reason);
-            setFiles((prevFiles) => {
-              const newFiles = [...prevFiles];
-              newFiles[result.value.index] = result.value.update;
-              return newFiles;
-            });
-          }
-        });
-
-        const progress = 10 + ((i + batch.length) / files.length) * 50;
-        setOverallProgress(progress);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-
-      setOverallProgress(60);
-
-      const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
-
-      const filesUploaded = files.map((file) => file.file.name);
+      const filesUploaded = files.map((f) => f.name);
       const timeUploaded = new Date().toISOString();
-      const fileSizes = files.map((file) => file.file.size);
-      const totalSizeInBytes = fileSizes.reduce((acc, size) => acc + size, 0);
-      const totalBatchSizeInMB = totalSizeInBytes / (1024 * 1024); // Convert bytes to MB
 
       const logEntry = {
         names: filesUploaded,
         time: timeUploaded,
-        individualSizes: fileSizes,
-        totalSize: totalSizeInBytes,
-        totalBatchSize: totalBatchSizeInMB,
+        individualSizes: [],
+        totalSize: 0,
+        totalBatchSize: 0,
       };
 
       // Set the state for the popup modal
       setUploadedLogFiles(logEntry);
-
       const project = selectedProject;
 
-      // SEND THE DATA TO THE BE
-      await invoke("check_logs_command", {
-        data: { log_contents: logContents },
+      // Collect all file paths
+      const allPaths = files.map((f) => f.path);
+
+      // Send ALL file paths to the backend in one call — Rust reads them with BufReader
+      // No file content in JS memory, no IPC serialization of file content
+      setProgress((prev) => ({
+        ...prev,
+        filename: `${files.length} file(s)`,
+        percent: 0,
+      }));
+
+      await invoke("check_logs_from_paths_command", {
+        filePaths: allPaths,
         storingLogs,
-        project,
+        project: project || "",
       });
 
-      // NOTE: MIGHT BE NEEDED LATER
-      // setLogData({
-      //   entries: result?.entries || [],
-      //   overview: result.overview || {
-      //     message: "",
-      //     line_count: 0,
-      //     unique_ips: 0,
-      //     unique_user_agents: 0,
-      //     crawler_count: 0,
-      //     success_rate: 0,
-      //     totals: {
-      //       google: 0,
-      //       bing: 0,
-      //       semrush: 0,
-      //       hrefs: 0,
-      //       moz: 0,
-      //       uptime: 0,
-      //       openai: 0,
-      //       claude: 0,
-      //       google_bot_pages: [],
-      //       google_bot_pages_frequency: {},
-      //     },
-      //     log_start_time: "",
-      //     log_finish_time: "",
-      //   },
-      // });
-
-      setOverallProgress(95);
-      await delay(300);
-
+      // Mark all files as success
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
-      setOverallProgress(100);
-      await delay(500);
 
-      closeDialog();
+      setOverallProgress(100);
+      await delay(300);
       toast.success("Log analysis complete!");
+      closeDialog();
     } catch (err) {
       console.error("Error during upload:", err);
-      setError(err instanceof Error ? err.message : "Upload failed");
-      toast.error("Upload failed");
+      setError(err instanceof Error ? err.message : String(err));
+      toast.error("Upload failed: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUploading(false);
     }
@@ -423,16 +224,7 @@ export function FileUpload({
   const handleRemoveAllFiles = () => {
     setFiles([]);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
-
-  // total size in MB of all files
-  const totalSize = files.reduce(
-    (acc, file) => acc + file.file.size / 1024 / 1024,
-    0,
-  );
 
   return (
     <div className={cn("w-full", className)}>
@@ -440,30 +232,15 @@ export function FileUpload({
         <div
           className={cn(
             "border-2 border-dashed  border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/20 hover:border-primary/50",
             error && "border-destructive/50 bg-destructive/5",
           )}
-          // onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          // onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={handleSelectFiles}
         >
           <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
           <p className="text-sm font-medium mb-1">Click to browse your files</p>
           <p className="text-xs mb-4 text-center text-black/50 dark:text-white/50">
-            Supported formats: {acceptedFileTypes.join(", ")} (Max size:{" "}
-            {maxSizeMB}MB)
+            Supported formats: .log, .txt
           </p>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept={acceptedFileTypes.join(",")}
-            className="hidden"
-            multiple
-          />
           {error && (
             <div className="flex items-center text-destructive mt-2 text-sm">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -478,23 +255,31 @@ export function FileUpload({
               <h3 className="text-sm font-medium">
                 {files.length} file{files.length !== 1 ? "s" : ""} selected
               </h3>
-              <span className="ml-2 text-xs font-medium text-black/40 dark:text-white/40 ">
-                ( {totalSize.toFixed(2)} MB )
-              </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRemoveAllFiles}
-              disabled={uploading}
-              className="text-red-500 hover:text-red-700"
-            >
-              Remove all
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSelectFiles}
+                disabled={uploading}
+                className="text-brand-bright hover:text-brand-bright/80 text-xs"
+              >
+                Add more
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveAllFiles}
+                disabled={uploading}
+                className="text-red-500 hover:text-red-700"
+              >
+                Remove all
+              </Button>
+            </div>
           </div>
 
           <div className="max-h-60 overflow-y-auto mb-2 px-2 rounded-md border dark:border-brand-dark">
-            {files.map((fileWithProgress, index) => (
+            {files.map((fileInfo, index) => (
               <div
                 key={index}
                 className={cn(
@@ -504,7 +289,7 @@ export function FileUpload({
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded border-none border-r bg-muted flex items-center justify-center mr-3">
                     <span className="text-xs font-medium">
-                      {fileWithProgress.file.name
+                      {fileInfo.name
                         .split(".")
                         .pop()
                         ?.toUpperCase()}
@@ -512,10 +297,10 @@ export function FileUpload({
                   </div>
                   <div className="overflow-hidden dark:text-white">
                     <p className="text-sm font-medium truncate text-brand-bright">
-                      {fileWithProgress.file.name}
+                      {fileInfo.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(fileWithProgress.file.size / 1024 / 1024).toFixed(2)} MB
+                    <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                      {fileInfo.path}
                     </p>
                   </div>
                 </div>
@@ -543,9 +328,6 @@ export function FileUpload({
                   value={progress.percent}
                   className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
                 />
-                <div className="text-xs mt-1">
-                  {/* File {progress.current} of {progress.total} */}
-                </div>
               </div>
             </div>
           )}

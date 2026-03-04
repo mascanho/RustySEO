@@ -141,6 +141,7 @@ interface LogAnalysisState {
   entries: LogEntry[];
   allFilteredLogs: LogEntry[];
   overview: LogAnalysisOverview;
+  widgetAggs: WidgetAggregations | null;
   isLoading: boolean;
   error: string | null;
   filters: Filters;
@@ -166,6 +167,14 @@ interface FilteredLogsPage {
   total_count: number;
 }
 
+export interface WidgetAggregations {
+  file_types: Record<string, number>;
+  content: Record<string, number>;
+  status_codes: Record<number, number>;
+  user_agents: Record<string, number>;
+  referrers: Record<string, number>;
+}
+
 interface LogAnalysisActions {
   setLogData: (
     data: {
@@ -180,6 +189,7 @@ interface LogAnalysisActions {
     filters: ActiveFilters,
   ) => Promise<void>;
   fetchAllFilteredLogs: (filters: ActiveFilters) => Promise<void>;
+  fetchWidgetAggregations: (filters: ActiveFilters) => Promise<void>;
   setActiveFilters: (filters: ActiveFilters) => void;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   resetFilters: () => void;
@@ -262,6 +272,13 @@ const initialState: LogAnalysisState = {
     file_count: 0,
     segmentations: [],
     segment_summary: defaultSegmentSummary,
+  },
+  widgetAggs: {
+    file_types: {},
+    content: {},
+    status_codes: {},
+    user_agents: {},
+    referrers: {},
   },
   isLoading: false,
   error: null,
@@ -456,7 +473,7 @@ const mergeSegmentations = (
 export const useLogAnalysisStore = create<
   LogAnalysisState & LogAnalysisActions
 >()(
-  immer((set) => ({
+  immer((set, get) => ({
     ...initialState,
 
     setLogData: (data, mode = "append") =>
@@ -707,40 +724,59 @@ export const useLogAnalysisStore = create<
     },
 
     fetchAllFilteredLogs: async (filters) => {
-      set((state) => {
-        state.isLoading = true;
-      });
+      try {
+        set({ isLoading: true, error: null });
+
+        const activeFilters = {
+          search_term: filters.search_term || "",
+          status_filter: filters.status_filter || [],
+          method_filter: filters.method_filter || [],
+          file_type_filter: filters.file_type_filter || [],
+          bot_filter: filters.bot_filter ?? null,
+          bot_type_filter: filters.bot_type_filter ?? null,
+          verified_filter: filters.verified_filter ?? null,
+          sort_key: filters.sort_key || "timestamp",
+          sort_dir: filters.sort_dir || "ascending",
+        };
+
+        const result = await invoke<FilteredLogsPage>(
+          "get_all_logs_with_filters",
+          { filters: activeFilters }
+        );
+
+        set({
+          allFilteredLogs: result.entries || [],
+          totalCount: result.total_count || 0,
+          isLoading: false,
+        });
+
+        // Trigger widget aggregations
+        get().fetchWidgetAggregations(activeFilters);
+      } catch (error) {
+        console.error("Failed to fetch all filtered logs:", error);
+        set({ error: String(error), isLoading: false });
+      }
+    },
+
+    fetchWidgetAggregations: async (filters) => {
       try {
         const activeFilters = {
           search_term: filters.search_term || "",
           status_filter: filters.status_filter || [],
           method_filter: filters.method_filter || [],
           file_type_filter: filters.file_type_filter || [],
-          bot_filter: filters.bot_filter,
-          bot_type_filter: filters.bot_type_filter,
-          verified_filter: filters.verified_filter,
-          sort_key: filters.sort_key,
-          sort_dir: filters.sort_dir,
+          bot_filter: filters.bot_filter ?? null,
+          bot_type_filter: filters.bot_type_filter ?? null,
+          verified_filter: filters.verified_filter ?? null,
+          sort_key: filters.sort_key || "timestamp",
+          sort_dir: filters.sort_dir || "ascending",
         };
-
-        const result = await invoke<FilteredLogsPage>(
-          "get_all_logs_with_filters",
-          {
-            filters: activeFilters,
-          },
-        );
-
-        set((state) => {
-          state.allFilteredLogs = result.entries || [];
-          state.isLoading = false;
-          state.error = null;
+        const widgetAggs = await invoke<WidgetAggregations>("get_widget_aggregations", {
+          filters: activeFilters,
         });
+        set({ widgetAggs });
       } catch (error) {
-        console.error("Failed to fetch all filtered logs:", error);
-        set((state) => {
-          state.isLoading = false;
-          state.error = String(error);
-        });
+        console.error("Failed to fetch widget aggregations:", error);
       }
     },
 
@@ -762,6 +798,7 @@ export const useLogAnalysis = () =>
       entries: state.entries,
       allFilteredLogs: state.allFilteredLogs,
       overview: state.overview,
+      widgetAggs: state.widgetAggs,
       isLoading: state.isLoading,
       error: state.error,
       filters: state.filters,
@@ -771,12 +808,14 @@ export const useLogAnalysis = () =>
       setLogData: state.setLogData,
       fetchLogsFromDb: state.fetchLogsFromDb,
       fetchAllFilteredLogs: state.fetchAllFilteredLogs,
+      fetchWidgetAggregations: state.fetchWidgetAggregations,
       setActiveFilters: state.setActiveFilters,
       setFilter: state.setFilter,
       resetFilters: state.resetFilters,
       resetAll: state.resetAll,
       setLoading: state.setLoading,
       setError: state.setError,
+      clearEntries: state.clearEntries,
       setTotalCount: state.setTotalCount,
     }),
     shallow,

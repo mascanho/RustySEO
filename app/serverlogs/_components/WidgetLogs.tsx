@@ -131,7 +131,7 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, allFilteredLogs } = useLogAnalysis();
+  const { overview, allFilteredLogs, totalCount, widgetAggs } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
@@ -193,39 +193,20 @@ export default function WidgetLogs() {
 
   // Prepare filetype data from actual entries
   const fileTypeData = useMemo(
-    () =>
-      allFilteredLogs?.reduce((acc, entry) => {
-        const type = entry.file_type || "Other";
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {}),
-    [allFilteredLogs],
+    () => widgetAggs?.file_types || {},
+    [widgetAggs],
   );
 
   // Prepare content data from actual entries
   const contentData = useMemo(
-    () =>
-      allFilteredLogs?.reduce((acc, entry) => {
-        const taxonomy = entry.taxonomy;
-        if (taxonomy && taxonomy !== "other") {
-          acc[taxonomy] = (acc[taxonomy] || 0) + 1;
-        } else {
-          acc["other"] = (acc["other"] || 0) + 1;
-        }
-        return acc;
-      }, {}) || {},
-    [allFilteredLogs],
+    () => widgetAggs?.content || {},
+    [widgetAggs],
   );
 
   // Prepare status code data from actual entries
   const statusCodeData = useMemo(
-    () =>
-      allFilteredLogs?.reduce((acc, entry) => {
-        const code = entry.status;
-        acc[code] = (acc[code] || 0) + 1;
-        return acc;
-      }, {}),
-    [allFilteredLogs],
+    () => widgetAggs?.status_codes || {},
+    [widgetAggs],
   );
 
   // Prepare crawler data
@@ -233,32 +214,30 @@ export default function WidgetLogs() {
     () =>
       overview?.totals
         ? Object.entries(overview.totals)
-            .filter(([_, value]) => value > 0)
-            .map(([name, value]) => ({
-              name: name.charAt(0).toUpperCase() + name.slice(1),
-              value,
-            }))
-            .sort((a, b) => b.value - a.value)
+          .filter(([_, value]) => value > 0)
+          .map(([name, value]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            value,
+          }))
+          .sort((a, b) => b.value - a.value)
         : [],
     [overview],
   );
 
   // Prepare User Agents Data
   const userAgentData = useMemo(
-    () =>
-      allFilteredLogs?.reduce((acc, entry) => {
-        const userAgent = entry.user_agent || "Unknown";
+    () => {
+      if (!widgetAggs?.user_agents) return {};
 
-        // Categorize user agents to make the data more manageable
+      return Object.entries(widgetAggs.user_agents).reduce((acc, [userAgent, count]) => {
         const categorizedAgent = categorizeUserAgent(userAgent);
 
         if (!acc[categorizedAgent]) {
           acc[categorizedAgent] = { count: 0, examples: [] };
         }
 
-        acc[categorizedAgent].count += 1;
+        acc[categorizedAgent].count += count;
 
-        // Keep a few examples of user agents in this category (max 5)
         if (
           acc[categorizedAgent].examples.length < 5 &&
           !acc[categorizedAgent].examples.includes(userAgent)
@@ -267,26 +246,25 @@ export default function WidgetLogs() {
         }
 
         return acc;
-      }, {}),
-    [allFilteredLogs],
+      }, {});
+    },
+    [widgetAggs],
   );
 
   // Prepare Referrers Data
   const referrerData = useMemo(
-    () =>
-      allFilteredLogs?.reduce((acc, entry) => {
-        const referrer = entry.referer || "Direct/None";
+    () => {
+      if (!widgetAggs?.referrers) return {};
 
-        // Categorize referrers to make the data more manageable
+      return Object.entries(widgetAggs.referrers).reduce((acc, [referrer, count]) => {
         const categorizedReferrer = categorizeReferrer(referrer);
 
         if (!acc[categorizedReferrer]) {
           acc[categorizedReferrer] = { count: 0, referrers: [] };
         }
 
-        acc[categorizedReferrer].count += 1;
+        acc[categorizedReferrer].count += count;
 
-        // Keep a few examples of referrers in this category (max 5)
         if (
           acc[categorizedReferrer].referrers.length < 5 &&
           !acc[categorizedReferrer].referrers.includes(referrer)
@@ -295,8 +273,9 @@ export default function WidgetLogs() {
         }
 
         return acc;
-      }, {}),
-    [allFilteredLogs],
+      }, {});
+    },
+    [widgetAggs],
   );
 
   // Get chart data for active tab
@@ -408,7 +387,7 @@ export default function WidgetLogs() {
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span className="hover:text-brand-bright">
-              {formatNumber(allFilteredLogs?.length)} entries
+              {formatNumber(totalCount)} entries
             </span>
           </div>
         </PopoverTrigger>
@@ -461,11 +440,10 @@ export default function WidgetLogs() {
               <DropdownMenuItem
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
-                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
-                  activeTab === tab.label
-                    ? "bg-brand-bright text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
-                }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
+                  ? "bg-brand-bright text-white"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                  }`}
               >
                 <div
                   className={
@@ -539,13 +517,12 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4  ${
-              activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-5 max-w-2xl mr-6"
-                : activeTab === "Status Codes"
-                  ? "grid-cols-4 mr-6"
-                  : "grid-cols-4 mr-6"
-            }`}
+            className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
+              ? "grid-cols-5 max-w-2xl mr-6"
+              : activeTab === "Status Codes"
+                ? "grid-cols-4 mr-6"
+                : "grid-cols-4 mr-6"
+              }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -661,8 +638,8 @@ export default function WidgetLogs() {
                       segment={entry?.name === "Other" ? "all" : entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                      entry?.name,
-                    ) ? (
+                    entry?.name,
+                  ) ? (
                     <Tabs defaultValue="overview" className="h-full">
                       <Tabs.List>
                         <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
@@ -715,7 +692,7 @@ export default function WidgetLogs() {
                                   (sum, item) => sum + item.value,
                                   0,
                                 )) *
-                                100,
+                              100,
                             )}
                             %
                           </span>

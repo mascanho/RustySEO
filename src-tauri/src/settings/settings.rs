@@ -174,7 +174,7 @@ impl Settings {
 
             // --- Logs & File System ---
             log_batchsize: 2,
-            log_chunk_size: 500000,
+            log_chunk_size: 10000,
             log_sleep_stream_duration: 1,
             log_capacity: 1,
             log_project_chunk_size: 1,

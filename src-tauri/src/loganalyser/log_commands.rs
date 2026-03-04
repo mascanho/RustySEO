@@ -3,11 +3,33 @@ use super::{
     database::{add_data_to_serverlog_db, create_serverlog_db},
 };
 use crate::loganalyser::{
-    analyser::{analyse_log, LogAnalysisResult, LogInput},
+    analyser::{analyse_log, analyse_log_from_paths, LogAnalysisResult, LogInput},
     helpers::gsc_query_match::{self, match_gsc_query, GscDataItem, GscQueryMatch},
 };
 use crate::uploads::storage;
 use anyhow::Error;
+
+#[tauri::command]
+pub fn check_logs_from_paths_command(
+    file_paths: Vec<String>,
+    storing_logs: bool,
+    project: String,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let app = app.clone();
+
+    // Note: When using file paths, we don't store raw content to serverlog.db
+    // because we don't hold file content in memory. The active_db will have the parsed entries.
+    if storing_logs {
+        println!("Note: Path-based upload stores parsed entries to active_db only");
+    }
+
+    match analyse_log_from_paths(file_paths, app) {
+        Ok(()) => Ok(()),
+        Err(e) => Err(e),
+    }
+}
+
 
 #[tauri::command]
 pub fn check_logs_command(
