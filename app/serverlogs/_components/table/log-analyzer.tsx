@@ -137,15 +137,38 @@ export function LogAnalyzer() {
   );
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  const uniqueCrawlerTypes = useMemo(() => {
+  const [allCrawlerTypes, setAllCrawlerTypes] = useState<string[]>([]);
+  const crawlerTypesInitialized = useRef(false);
+
+  useEffect(() => {
+    if (crawlerTypesInitialized.current || entries.length === 0) return;
+
     const types = new Set<string>();
     entries.forEach((entry) => {
       if (entry?.crawler_type && entry.crawler_type !== "Human") {
         types.add(entry.crawler_type);
       }
     });
-    return Array.from(types).sort();
+    const sortedTypes = Array.from(types).sort();
+
+    if (sortedTypes.length > 0) {
+      setAllCrawlerTypes(sortedTypes);
+      crawlerTypesInitialized.current = true;
+    }
   }, [entries]);
+
+  const uniqueCrawlerTypes =
+    allCrawlerTypes.length > 0
+      ? allCrawlerTypes
+      : (() => {
+          const types = new Set<string>();
+          entries.forEach((entry) => {
+            if (entry?.crawler_type && entry.crawler_type !== "Human") {
+              types.add(entry.crawler_type);
+            }
+          });
+          return Array.from(types).sort();
+        })();
 
   const allStatusCodes = useMemo(() => {
     const codes = new Set<number>();
@@ -1062,34 +1085,38 @@ export function LogAnalyzer() {
 
               <DropdownMenuContent
                 align="center"
-                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-64 overflow-y-auto"
+                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-80"
               >
-                <DropdownMenuLabel>Filter by Crawler Type</DropdownMenuLabel>
+                <div className="sticky top-0 bg-white dark:bg-brand-darker z-10 py-1.5 px-2 border-b dark:border-brand-dark">
+                  <DropdownMenuLabel className="text-sm font-semibold py-0">
+                    Filter by Crawler Type
+                  </DropdownMenuLabel>
+                </div>
 
-                <DropdownMenuSeparator />
-
-                <DropdownMenuCheckboxItem
-                  className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
-                  checked={crawlerTypeFilter === null}
-                  onCheckedChange={() => {
-                    setCrawlerTypeFilter(null);
-                  }}
-                >
-                  All Crawlers
-                </DropdownMenuCheckboxItem>
-
-                {uniqueCrawlerTypes.map((crawlerType) => (
+                <div className="max-h-64 overflow-y-auto py-1">
                   <DropdownMenuCheckboxItem
                     className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
-                    key={crawlerType}
-                    checked={crawlerTypeFilter === crawlerType}
+                    checked={crawlerTypeFilter === null}
                     onCheckedChange={() => {
-                      setCrawlerTypeFilter(crawlerType);
+                      setCrawlerTypeFilter(null);
                     }}
                   >
-                    {crawlerType}
+                    All Crawlers
                   </DropdownMenuCheckboxItem>
-                ))}
+
+                  {uniqueCrawlerTypes.map((crawlerType) => (
+                    <DropdownMenuCheckboxItem
+                      className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
+                      key={crawlerType}
+                      checked={crawlerTypeFilter === crawlerType}
+                      onCheckedChange={() => {
+                        setCrawlerTypeFilter(crawlerType);
+                      }}
+                    >
+                      {crawlerType}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
