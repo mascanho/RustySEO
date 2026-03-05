@@ -333,7 +333,7 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
     }
 
     let query = format!(
-        "SELECT * FROM active_parsed_logs WHERE {} {}",
+        "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT 100000",
         where_sql, order_sql
     );
 

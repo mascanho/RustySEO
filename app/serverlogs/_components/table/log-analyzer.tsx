@@ -114,27 +114,37 @@ export function LogAnalyzer() {
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
-  const [statusFilter, setStatusFilter] = useState<number[]>([]);
-  const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>({
-    key: "timestamp",
-    direction: "ascending",
+
+  const [localFilters, setLocalFilters] = useState({
+    statusFilter: [] as number[],
+    methodFilter: [] as string[],
+    fileTypeFilter: [] as string[],
+    botFilter: "all" as string | null,
+    verifiedFilter: null as boolean | null,
+    botTypeFilter: "all" as string | null,
+    crawlerTypeFilter: null as string | null,
+    sortConfig: {
+      key: "timestamp",
+      direction: "ascending" as "ascending" | "descending",
+    } as { key: string; direction: "ascending" | "descending" } | null,
   });
+
+  const {
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    crawlerTypeFilter,
+    sortConfig,
+  } = localFilters;
+
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [ipModal, setIpModal] = useState(false);
   const [ip, setIP] = useState("");
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
-  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
-  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-  const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string | null>(
-    null,
-  );
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   const [allCrawlerTypes, setAllCrawlerTypes] = useState<string[]>([]);
@@ -161,14 +171,14 @@ export function LogAnalyzer() {
     allCrawlerTypes.length > 0
       ? allCrawlerTypes
       : (() => {
-          const types = new Set<string>();
-          entries.forEach((entry) => {
-            if (entry?.crawler_type && entry.crawler_type !== "Human") {
-              types.add(entry.crawler_type);
-            }
-          });
-          return Array.from(types).sort();
-        })();
+        const types = new Set<string>();
+        entries.forEach((entry) => {
+          if (entry?.crawler_type && entry.crawler_type !== "Human") {
+            types.add(entry.crawler_type);
+          }
+        });
+        return Array.from(types).sort();
+      })();
 
   const allStatusCodes = useMemo(() => {
     const codes = new Set<number>();
@@ -441,21 +451,18 @@ export function LogAnalyzer() {
 
   useEffect(() => {
     // Only fetch if we have data (analysis has been run)
-    if (totalCount > 0 || entries.length > 0) {
-      fetchLogsFromDb(currentPage, itemsPerPage, currentFilters);
-      setActiveFilters(currentFilters);
-      fetchAllFilteredLogs(currentFilters);
-    }
+    const timeoutId = setTimeout(() => {
+      if (totalCount > 0 || entries.length > 0) {
+        fetchLogsFromDb(currentPage, itemsPerPage, currentFilters);
+        setActiveFilters(currentFilters);
+        fetchAllFilteredLogs(currentFilters);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [
     activeSearchTerm,
-    statusFilter,
-    methodFilter,
-    fileTypeFilter,
-    botFilter,
-    verifiedFilter,
-    botTypeFilter,
-    crawlerTypeFilter,
-    sortConfig,
+    localFilters,
     currentPage,
     itemsPerPage,
     totalCount,
@@ -507,31 +514,35 @@ export function LogAnalyzer() {
 
   // Handle sorting
   const requestSort = useCallback((key: string) => {
-    setSortConfig((prev) => {
-      if (prev?.key === key) {
-        return {
-          key,
-          direction:
-            prev.direction === "ascending" ? "descending" : "ascending",
-        };
-      }
-      return { key, direction: "ascending" };
-    });
+    setLocalFilters((prev) => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction:
+          prev.sortConfig?.key === key &&
+            prev.sortConfig.direction === "ascending"
+            ? ("descending" as const)
+            : ("ascending" as const),
+      },
+    }));
   }, []);
 
   // Reset all filters
   const resetFilters = useCallback(() => {
     setSearchInput("");
     setActiveSearchTerm("");
-    setStatusFilter([]);
-    setMethodFilter([]);
-    setBotFilter("all");
-    setSortConfig(null);
+    setCurrentPage(1); // Crucial for performance
+    setLocalFilters({
+      statusFilter: [],
+      methodFilter: [],
+      botFilter: "all",
+      sortConfig: null,
+      fileTypeFilter: [],
+      verifiedFilter: null,
+      botTypeFilter: "all",
+      crawlerTypeFilter: null,
+    });
     setExpandedRow(null);
-    setFileTypeFilter([]);
-    setVerifiedFilter(null);
-    setBotTypeFilter(null);
-    setCrawlerTypeFilter(null);
     setShowAgent(false);
     setUrlAgentFilter("url");
   }, []);
@@ -823,11 +834,12 @@ export function LogAnalyzer() {
                     key={code}
                     checked={statusFilter.includes(code)}
                     onCheckedChange={(checked) => {
-                      setStatusFilter((prev) =>
-                        checked
-                          ? [...prev, code]
-                          : prev.filter((c) => c !== code),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        statusFilter: checked
+                          ? [...prev.statusFilter, code]
+                          : prev.statusFilter.filter((c) => c !== code),
+                      }));
                     }}
                   >
                     <Badge
@@ -881,11 +893,12 @@ export function LogAnalyzer() {
                     key={method}
                     checked={methodFilter.includes(method)}
                     onCheckedChange={(checked) => {
-                      setMethodFilter((prev) =>
-                        checked
-                          ? [...prev, method]
-                          : prev.filter((m) => m !== method),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        methodFilter: checked
+                          ? [...prev.methodFilter, method]
+                          : prev.methodFilter.filter((m) => m !== method),
+                      }));
                     }}
                   >
                     {method}
@@ -948,11 +961,12 @@ export function LogAnalyzer() {
                     key={fileType}
                     checked={fileTypeFilter.includes(fileType)}
                     onCheckedChange={(checked) => {
-                      setFileTypeFilter((prev) =>
-                        checked
-                          ? [...prev, fileType]
-                          : prev.filter((m) => m !== fileType),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        fileTypeFilter: checked
+                          ? [...prev.fileTypeFilter, fileType]
+                          : prev.fileTypeFilter.filter((m) => m !== fileType),
+                      }));
                     }}
                   >
                     {fileType}
@@ -966,7 +980,10 @@ export function LogAnalyzer() {
             <Select
               value={botFilter || "all"}
               onValueChange={(value) =>
-                setBotFilter(value === "all" ? null : value)
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  botFilter: value === "all" ? null : value,
+                }))
               }
             >
               <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
@@ -1008,7 +1025,10 @@ export function LogAnalyzer() {
             <Select
               value={botTypeFilter === null ? "all" : botTypeFilter}
               onValueChange={(value) =>
-                setBotTypeFilter(value === "all" ? null : value)
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  botTypeFilter: value === "all" ? null : value,
+                }))
               }
             >
               <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
@@ -1035,8 +1055,10 @@ export function LogAnalyzer() {
                     : "unverified"
               }
               onValueChange={(value) => {
-                if (value === "all") setVerifiedFilter(null);
-                else setVerifiedFilter(value === "verified");
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  verifiedFilter: value === "all" ? null : value === "verified",
+                }));
               }}
             >
               <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
@@ -1098,7 +1120,10 @@ export function LogAnalyzer() {
                     className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
                     checked={crawlerTypeFilter === null}
                     onCheckedChange={() => {
-                      setCrawlerTypeFilter(null);
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        crawlerTypeFilter: null,
+                      }));
                     }}
                   >
                     All Crawlers
@@ -1110,7 +1135,11 @@ export function LogAnalyzer() {
                       key={crawlerType}
                       checked={crawlerTypeFilter === crawlerType}
                       onCheckedChange={() => {
-                        setCrawlerTypeFilter(crawlerType);
+                        setLocalFilters((prev) => ({
+                          ...prev,
+                          crawlerTypeFilter: crawlerType,
+                        }));
+
                       }}
                     >
                       {crawlerType}
@@ -1172,11 +1201,10 @@ export function LogAnalyzer() {
 
                           {sortConfig?.key === "ip" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${
-                                sortConfig.direction === "descending"
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
+                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                                }`}
                             />
                           )}
 
@@ -1194,11 +1222,10 @@ export function LogAnalyzer() {
                         Method
                         {sortConfig?.key === "method" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1210,11 +1237,10 @@ export function LogAnalyzer() {
                         Browser
                         {sortConfig?.key === "browser" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1226,11 +1252,10 @@ export function LogAnalyzer() {
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1242,11 +1267,10 @@ export function LogAnalyzer() {
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1259,11 +1283,10 @@ export function LogAnalyzer() {
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1296,11 +1319,10 @@ export function LogAnalyzer() {
                         File Type
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1313,11 +1335,10 @@ export function LogAnalyzer() {
                           Size
                           {sortConfig?.key === "responseSize" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${
-                                sortConfig.direction === "descending"
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
+                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                                }`}
                             />
                           )}
                         </TableHead>
@@ -1531,11 +1552,10 @@ function LogRow({
                     )}
                     <KeyRound
                       size={14}
-                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${
-                        isFetchingGSC
-                          ? "opacity-30"
-                          : "text-yellow-500 hover:text-yellow-400"
-                      }`}
+                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${isFetchingGSC
+                        ? "opacity-30"
+                        : "text-yellow-500 hover:text-yellow-400"
+                        }`}
                       onClick={async (e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -1580,11 +1600,10 @@ function LogRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${
-                    posColumn === "position"
-                      ? getPositionBadgeColor(log?.position)
-                      : "border-brand-bright/50"
-                  }`}
+                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${posColumn === "position"
+                    ? getPositionBadgeColor(log?.position)
+                    : "border-brand-bright/50"
+                    }`}
                 >
                   {posColumn === "position"
                     ? log?.position || "-"
