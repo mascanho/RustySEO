@@ -18,10 +18,31 @@ pub fn check_logs_from_paths_command(
 ) -> Result<(), String> {
     let app = app.clone();
 
-    // Note: When using file paths, we don't store raw content to serverlog.db
-    // because we don't hold file content in memory. The active_db will have the parsed entries.
+    // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
     if storing_logs {
-        println!("Note: Path-based upload stores parsed entries to active_db only");
+        // Create the DB
+        let _ = create_serverlog_db("serverlog.db");
+        
+        // Read file contents to store in persistent DB
+        let mut log_contents = Vec::new();
+        for path in &file_paths {
+            let filename = std::path::Path::new(path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(path)
+                .to_string();
+            
+            match std::fs::read_to_string(path) {
+                Ok(content) => log_contents.push((filename, content)),
+                Err(e) => println!("Warning: Failed to read {} for storage: {}", path, e),
+            }
+        }
+
+        if !log_contents.is_empty() {
+            let data = LogInput { log_contents };
+            add_data_to_serverlog_db("serverlog.db", &data, &project);
+            println!("Stored logs in serverlog.db from paths for project: {}", project);
+        }
     }
 
     match analyse_log_from_paths(file_paths, app) {

@@ -21,7 +21,7 @@ pub struct DatabaseResults {
 }
 
 pub struct Database {
-    conn: Connection,
+    pub conn: Connection,
     db_name: String,
 }
 

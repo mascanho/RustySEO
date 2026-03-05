@@ -209,6 +209,19 @@ async fn main() {
     tauri::Builder::default()
         .setup(move |app| {
             let handle = app.handle().clone();
+
+            // Handle app close event to clear active DB
+            if let Some(window) = app.get_webview_window("main") {
+                window.on_window_event(move |event| {
+                    if let WindowEvent::CloseRequested { .. } = event {
+                        println!("App closing, clearing active DB...");
+                        if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                            eprintln!("Error clearing active DB on close: {}", e);
+                        }
+                    }
+                });
+            }
+
             std::thread::spawn(move || {
                 while let Ok(log) = rx.recv() {
                     let _ = handle.emit("tui-log", log);
@@ -309,6 +322,7 @@ async fn main() {
             loganalyser::active_db::get_widget_aggregations,
             loganalyser::active_db::get_active_logs_stats,
             loganalyser::active_db::clear_active_db_command,
+            loganalyser::active_db::clear_all_log_data_command,
             loganalyser::active_db::get_distinct_bot_types,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,

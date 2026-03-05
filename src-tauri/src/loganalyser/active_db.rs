@@ -828,10 +828,20 @@ pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
 #[tauri::command]
 pub fn clear_active_db_command() -> Result<(), String> {
     let mut lock = DB_CONN.lock().unwrap();
-    let conn = lock.as_mut().ok_or("DB not initialized")?;
+    let conn = match lock.as_mut() {
+        Some(c) => c,
+        None => return Ok(()),
+    };
 
     conn.execute("DELETE FROM active_parsed_logs", [])
         .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn clear_all_log_data_command() -> Result<(), String> {
+    // Only clear the active session logs
+    clear_active_db_command()?;
     Ok(())
 }
 

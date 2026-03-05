@@ -372,7 +372,25 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
         }
 
-        if let Some(overview) = overview {
+        if let Some(mut overview) = overview {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+                overview.line_count = stats.line_count;
+                overview.unique_ips = stats.unique_ips;
+                overview.unique_user_agents = stats.unique_user_agents;
+                overview.crawler_count = stats.crawler_count;
+                overview.success_rate = stats.success_rate;
+                overview.log_start_time = stats.log_start_time.clone();
+                overview.log_finish_time = stats.log_finish_time.clone();
+                overview.totals.google = stats.totals.google;
+                overview.totals.bing = stats.totals.bing;
+                overview.totals.semrush = stats.totals.semrush;
+                overview.totals.hrefs = stats.totals.hrefs;
+                overview.totals.moz = stats.totals.moz;
+                overview.totals.uptime = stats.totals.uptime;
+                overview.totals.openai = stats.totals.openai;
+                overview.totals.claude = stats.totals.claude;
+                overview.totals.status_codes = stats.totals.status_codes;
+            }
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -797,7 +815,25 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
         }
 
-        if let Some(overview) = overview {
+        if let Some(mut overview) = overview {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+                overview.line_count = stats.line_count;
+                overview.unique_ips = stats.unique_ips;
+                overview.unique_user_agents = stats.unique_user_agents;
+                overview.crawler_count = stats.crawler_count;
+                overview.success_rate = stats.success_rate;
+                overview.log_start_time = stats.log_start_time.clone();
+                overview.log_finish_time = stats.log_finish_time.clone();
+                overview.totals.google = stats.totals.google;
+                overview.totals.bing = stats.totals.bing;
+                overview.totals.semrush = stats.totals.semrush;
+                overview.totals.hrefs = stats.totals.hrefs;
+                overview.totals.moz = stats.totals.moz;
+                overview.totals.uptime = stats.totals.uptime;
+                overview.totals.openai = stats.totals.openai;
+                overview.totals.claude = stats.totals.claude;
+                overview.totals.status_codes = stats.totals.status_codes;
+            }
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
