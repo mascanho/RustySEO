@@ -121,6 +121,7 @@ pub struct ActiveFilters {
     pub file_type_filter: Vec<String>,
     pub bot_filter: Option<String>,
     pub bot_type_filter: Option<String>,
+    pub crawler_type_filter: Option<String>,
     pub verified_filter: Option<bool>,
     pub sort_key: Option<String>,
     pub sort_dir: Option<String>,
@@ -187,6 +188,12 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
             params.push(bot_pattern.clone().into());
             params.push(bot_pattern.into());
         }
+    }
+
+    if let Some(ref crawler_type) = filters.crawler_type_filter {
+        let ct_pattern = format!("%{}%", crawler_type.to_lowercase());
+        clauses.push("LOWER(crawler_type) LIKE ?".to_string());
+        params.push(ct_pattern.into());
     }
 
     if let Some(verified) = filters.verified_filter {

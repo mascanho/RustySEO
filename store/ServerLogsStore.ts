@@ -157,6 +157,7 @@ interface ActiveFilters {
   file_type_filter: string[];
   bot_filter: string | null;
   bot_type_filter: string | null;
+  crawler_type_filter: string | null;
   verified_filter: boolean | null;
   sort_key: string | null;
   sort_dir: string | null;
@@ -696,6 +697,7 @@ export const useLogAnalysisStore = create<
           file_type_filter: filters.file_type_filter || [],
           bot_filter: filters.bot_filter,
           bot_type_filter: filters.bot_type_filter,
+          crawler_type_filter: filters.crawler_type_filter,
           verified_filter: filters.verified_filter,
           sort_key: filters.sort_key,
           sort_dir: filters.sort_dir,
@@ -734,6 +736,7 @@ export const useLogAnalysisStore = create<
           file_type_filter: filters.file_type_filter || [],
           bot_filter: filters.bot_filter ?? null,
           bot_type_filter: filters.bot_type_filter ?? null,
+          crawler_type_filter: filters.crawler_type_filter ?? null,
           verified_filter: filters.verified_filter ?? null,
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",
@@ -767,6 +770,7 @@ export const useLogAnalysisStore = create<
           file_type_filter: filters.file_type_filter || [],
           bot_filter: filters.bot_filter ?? null,
           bot_type_filter: filters.bot_type_filter ?? null,
+          crawler_type_filter: filters.crawler_type_filter ?? null,
           verified_filter: filters.verified_filter ?? null,
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",

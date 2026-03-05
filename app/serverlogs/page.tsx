@@ -211,6 +211,19 @@ export default function Page() {
     }
   }, []);
 
+  // CLEAR THE TABLE FROM THE LOGS IN THE DB
+  useEffect(() => {
+    async function clearDB() {
+      try {
+        await invoke("clear_active_db_command");
+      } catch (error) {
+        console.error("Failed to clear database:", error);
+      }
+    }
+
+    clearDB();
+  }, []);
+
   return (
     <section className="flex flex-col dark:bg-brand-darker  w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <UploadButton />
@@ -232,28 +245,31 @@ export default function Page() {
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "overall"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "crawlers"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
-                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                      }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                      chartView === "status"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>
