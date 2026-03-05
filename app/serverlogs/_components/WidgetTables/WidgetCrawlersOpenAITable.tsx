@@ -114,6 +114,7 @@ interface LogEntry {
 
 interface WidgetTableProps {
   data: any;
+  entries: LogEntry[];
 }
 
 const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
@@ -137,7 +138,7 @@ const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
   return Array.from(urlMap.values());
 };
 
-const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
+const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data, entries }) => {
   const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -178,24 +179,21 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
   }, [data.length]);
 
   useEffect(() => {
-    if (!data?.totals?.openai_bot_page_frequencies) return;
+    if (!entries || entries.length === 0) return;
 
     let logs: LogEntry[] = [];
-    Object.entries(data.totals.openai_bot_page_frequencies).forEach(
-      ([path, entries]) => {
-        (entries as any[]).forEach((entry: any) => {
-          logs.push({
-            ...entry,
-            path,
-          });
-        });
-      },
-    );
+    entries.forEach((entry) => {
+      const ct = (entry.crawler_type || "").toLowerCase();
+      const ua = (entry.user_agent || "").toLowerCase();
+      if ((ct.includes("open") || ct.includes("openai") || ct.includes("gpt") || ua.includes("oai-searchbot") || ua.includes("chatgpt-user") || ua.includes("gptbot")) && entry.crawler_type !== "Human") {
+        logs.push({ ...entry, frequency: 1 });
+      }
+    });
 
     const uniqueLogs = ensureUniqueUrls(logs);
     setInitialLogs(uniqueLogs);
     setFilteredLogs(uniqueLogs);
-  }, [data]);
+  }, [entries]);
 
   useEffect(() => {
     let result = [...initialLogs];
@@ -589,8 +587,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "path" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -603,8 +601,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -617,8 +615,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -631,8 +629,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -748,8 +746,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                               <Badge
                                 variant="outline"
                                 className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
-                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
-                                    : "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
+                                  : "bg-green-100 text-green-800 border-green-200"
                                   }`}
                               >
                                 {log.crawler_type.startsWith("Goo")

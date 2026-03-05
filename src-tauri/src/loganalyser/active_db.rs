@@ -177,6 +177,15 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
             clauses.push("user_agent LIKE '%Mobile%'".to_string());
         } else if bot_type == "Desktop" {
             clauses.push("user_agent NOT LIKE '%Mobile%'".to_string());
+        } else if bot_type == "All Bots" {
+            clauses.push("crawler_type != 'Human'".to_string());
+        } else if bot_type == "All Crawlers" {
+            clauses.push("is_crawler = 1".to_string());
+        } else {
+            let bot_pattern = format!("%{}%", bot_type.to_lowercase());
+            clauses.push("(LOWER(crawler_type) LIKE ? OR LOWER(user_agent) LIKE ?)".to_string());
+            params.push(bot_pattern.clone().into());
+            params.push(bot_pattern.into());
         }
     }
 
@@ -317,7 +326,7 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
     }
 
     let query = format!(
-        "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT 50000",
+        "SELECT * FROM active_parsed_logs WHERE {} {}",
         where_sql, order_sql
     );
 
@@ -617,9 +626,7 @@ pub struct WidgetAggregations {
 }
 
 #[tauri::command]
-pub fn get_widget_aggregations(
-    filters: ActiveFilters,
-) -> Result<WidgetAggregations, String> {
+pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregations, String> {
     let mut lock = DB_CONN.lock().unwrap();
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
@@ -630,7 +637,7 @@ pub fn get_widget_aggregations(
         where_sql
     );
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-    
+
     let mut aggs = WidgetAggregations::default();
 
     let mut rows = stmt
@@ -644,17 +651,29 @@ pub fn get_widget_aggregations(
         let ua: Option<String> = row.get(3).unwrap_or(None);
         let ref_str: Option<String> = row.get(4).unwrap_or(None);
 
-        *aggs.file_types.entry(ft.unwrap_or_else(|| "Other".to_string())).or_insert(0) += 1;
-        *aggs.content.entry(tax.unwrap_or_else(|| "other".to_string())).or_insert(0) += 1;
-        
+        *aggs
+            .file_types
+            .entry(ft.unwrap_or_else(|| "Other".to_string()))
+            .or_insert(0) += 1;
+        *aggs
+            .content
+            .entry(tax.unwrap_or_else(|| "other".to_string()))
+            .or_insert(0) += 1;
+
         if let Some(s) = st {
             if s > 0 {
                 *aggs.status_codes.entry(s).or_insert(0) += 1;
             }
         }
 
-        *aggs.user_agents.entry(ua.unwrap_or_else(|| "Unknown".to_string())).or_insert(0) += 1;
-        *aggs.referrers.entry(ref_str.unwrap_or_else(|| "Direct/None".to_string())).or_insert(0) += 1;
+        *aggs
+            .user_agents
+            .entry(ua.unwrap_or_else(|| "Unknown".to_string()))
+            .or_insert(0) += 1;
+        *aggs
+            .referrers
+            .entry(ref_str.unwrap_or_else(|| "Direct/None".to_string()))
+            .or_insert(0) += 1;
     }
 
     Ok(aggs)
@@ -666,7 +685,9 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     // Get total count, crawler count, unique IPs and UAs
-    let mut stmt = conn.prepare("
+    let mut stmt = conn
+        .prepare(
+            "
         SELECT 
             COUNT(*), 
             SUM(CASE WHEN is_crawler = 1 THEN 1 ELSE 0 END),
@@ -676,7 +697,9 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
             MIN(timestamp),
             MAX(timestamp)
         FROM active_parsed_logs
-    ").map_err(|e| e.to_string())?;
+    ",
+        )
+        .map_err(|e| e.to_string())?;
 
     let (total_count, crawler_count, unique_ips, unique_uas, success_count, start_time, end_time): (i64, Option<i64>, i64, i64, Option<i64>, Option<String>, Option<String>) = stmt.query_row([], |row| {
         Ok((
@@ -699,11 +722,15 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let log_finish_time = end_time.unwrap_or_default();
 
     // Get Status Code Counts
-    let mut status_stmt = conn.prepare("SELECT status, COUNT(*) FROM active_parsed_logs GROUP BY status").map_err(|e| e.to_string())?;
+    let mut status_stmt = conn
+        .prepare("SELECT status, COUNT(*) FROM active_parsed_logs GROUP BY status")
+        .map_err(|e| e.to_string())?;
     let mut status_codes = StatusCodeCounts::new();
-    let status_rows = status_stmt.query_map([], |row| {
-        Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
-    }).map_err(|e| e.to_string())?;
+    let status_rows = status_stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
+        })
+        .map_err(|e| e.to_string())?;
 
     for row in status_rows {
         let (status, count) = row.map_err(|e| e.to_string())?;
@@ -714,29 +741,44 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let mut bot_totals = Totals::default();
     bot_totals.status_codes = status_codes.clone();
 
-    let mut bot_stmt = conn.prepare("
+    let mut bot_stmt = conn
+        .prepare(
+            "
         SELECT 
             LOWER(crawler_type), 
             COUNT(*) 
         FROM active_parsed_logs 
         WHERE crawler_type != 'Human'
         GROUP BY LOWER(crawler_type)
-    ").map_err(|e| e.to_string())?;
+    ",
+        )
+        .map_err(|e| e.to_string())?;
 
-    let bot_rows = bot_stmt.query_map([], |row| {
-        Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
-    }).map_err(|e| e.to_string())?;
+    let bot_rows = bot_stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+        })
+        .map_err(|e| e.to_string())?;
 
     for row in bot_rows {
         let (crawler, count) = row.map_err(|e| e.to_string())?;
-        if crawler.contains("google") { bot_totals.google = count; }
-        else if crawler.contains("bing") { bot_totals.bing = count; }
-        else if crawler.contains("semrush") { bot_totals.semrush = count; }
-        else if crawler.contains("hrefs") { bot_totals.hrefs = count; }
-        else if crawler.contains("moz") { bot_totals.moz = count; }
-        else if crawler.contains("uptime") { bot_totals.uptime = count; }
-        else if crawler.contains("openai") || crawler.contains("gpt") { bot_totals.openai = count; }
-        else if crawler.contains("claude") { bot_totals.claude = count; }
+        if crawler.contains("google") {
+            bot_totals.google = count;
+        } else if crawler.contains("bing") {
+            bot_totals.bing = count;
+        } else if crawler.contains("semrush") {
+            bot_totals.semrush = count;
+        } else if crawler.contains("hrefs") {
+            bot_totals.hrefs = count;
+        } else if crawler.contains("moz") {
+            bot_totals.moz = count;
+        } else if crawler.contains("uptime") {
+            bot_totals.uptime = count;
+        } else if crawler.contains("openai") || crawler.contains("gpt") {
+            bot_totals.openai = count;
+        } else if crawler.contains("claude") {
+            bot_totals.claude = count;
+        }
     }
 
     Ok(LogAnalysisResult {
@@ -745,7 +787,11 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
         unique_ips,
         unique_user_agents,
         crawler_count,
-        success_rate: if total_count > 0 { (success_count as f32 / total_count as f32) * 100.0 } else { 0.0 },
+        success_rate: if total_count > 0 {
+            (success_count as f32 / total_count as f32) * 100.0
+        } else {
+            0.0
+        },
         totals: bot_totals,
         log_start_time,
         log_finish_time,
@@ -754,6 +800,24 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
         segment_summary: SegmentSummary::default(),
     })
 }
+#[tauri::command]
+pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
+    let mut lock = DB_CONN.lock().unwrap();
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let query = "SELECT DISTINCT crawler_type FROM active_parsed_logs WHERE crawler_type != 'Human' AND crawler_type != '' ORDER BY crawler_type";
+    let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+
+    let bot_types: Vec<String> = stmt
+        .query_map([], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .filter(|s: &String| !s.is_empty())
+        .collect();
+
+    Ok(bot_types)
+}
+
 #[tauri::command]
 pub fn clear_active_db_command() -> Result<(), String> {
     let mut lock = DB_CONN.lock().unwrap();
@@ -764,5 +828,4 @@ pub fn clear_active_db_command() -> Result<(), String> {
     Ok(())
 }
 
-
-use super::analyser::{BotStatsMap, LogAnalysisResult, Totals, StatusCodeCounts, SegmentSummary};
+use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};

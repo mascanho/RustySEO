@@ -209,20 +209,62 @@ export default function WidgetLogs() {
     [widgetAggs],
   );
 
-  // Prepare crawler data
-  const crawlerData = useMemo(
-    () =>
-      overview?.totals
-        ? Object.entries(overview.totals)
-          .filter(([_, value]) => value > 0)
-          .map(([name, value]) => ({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            value,
-          }))
-          .sort((a, b) => b.value - a.value)
-        : [],
-    [overview],
-  );
+  // Prepare crawler data based on filtered logs
+  const crawlerData = useMemo(() => {
+    if (!allFilteredLogs || allFilteredLogs.length === 0) return [];
+
+    const counts = {
+      google: 0,
+      bing: 0,
+      semrush: 0,
+      hrefs: 0,
+      moz: 0,
+      uptime: 0,
+      openai: 0,
+      claude: 0,
+    };
+
+    allFilteredLogs.forEach((entry) => {
+      // Ensure we only count crawlers
+      if (!entry.is_crawler && entry.crawler_type === "Human") return;
+
+      const crawlerType = (entry.crawler_type || "").toLowerCase();
+      const ua = (entry.user_agent || "").toLowerCase();
+
+      if (crawlerType.includes("google")) {
+        counts.google += 1;
+      } else if (crawlerType.includes("bing")) {
+        counts.bing += 1;
+      } else if (crawlerType.includes("semrush")) {
+        counts.semrush += 1;
+      } else if (crawlerType.includes("hrefs")) {
+        counts.hrefs += 1;
+      } else if (crawlerType.includes("moz")) {
+        counts.moz += 1;
+      } else if (crawlerType.includes("uptime")) {
+        counts.uptime += 1;
+      } else if (
+        crawlerType.includes("open") ||
+        crawlerType.includes("openai") ||
+        crawlerType.includes("gpt") ||
+        ua.includes("oai-searchbot") ||
+        ua.includes("chatgpt-user") ||
+        ua.includes("gptbot")
+      ) {
+        counts.openai += 1;
+      } else if (crawlerType.includes("claude") || ua.includes("claude")) {
+        counts.claude += 1;
+      }
+    });
+
+    return Object.entries(counts)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [allFilteredLogs]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(

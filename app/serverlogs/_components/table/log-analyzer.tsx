@@ -132,7 +132,20 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+  const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string | null>(
+    null,
+  );
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const uniqueCrawlerTypes = useMemo(() => {
+    const types = new Set<string>();
+    entries.forEach((entry) => {
+      if (entry?.crawler_type && entry.crawler_type !== "Human") {
+        types.add(entry.crawler_type);
+      }
+    });
+    return Array.from(types).sort();
+  }, [entries]);
 
   const allStatusCodes = useMemo(() => {
     const codes = new Set<number>();
@@ -315,6 +328,11 @@ export function LogAnalyzer() {
       }
     }
 
+    // Apply Crawler type filter (specific bot types)
+    if (crawlerTypeFilter !== null) {
+      result = result.filter((log) => log?.crawler_type === crawlerTypeFilter);
+    }
+
     // Apply verified filter
     if (verifiedFilter !== null) {
       result = result.filter((log) => log.verified === verifiedFilter);
@@ -364,6 +382,7 @@ export function LogAnalyzer() {
     botFilter,
     verifiedFilter,
     botTypeFilter,
+    crawlerTypeFilter,
     sortConfig,
   ]);
 
@@ -390,6 +409,7 @@ export function LogAnalyzer() {
     file_type_filter: fileTypeFilter,
     bot_filter: botFilter === "all" ? null : botFilter,
     bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+    crawler_type_filter: crawlerTypeFilter,
     verified_filter: verifiedFilter,
     sort_key: sortConfig?.key || "timestamp",
     sort_dir:
@@ -411,6 +431,7 @@ export function LogAnalyzer() {
     botFilter,
     verifiedFilter,
     botTypeFilter,
+    crawlerTypeFilter,
     sortConfig,
     currentPage,
     itemsPerPage,
@@ -426,6 +447,13 @@ export function LogAnalyzer() {
       setFilteredLogs(entries);
     }
   }, [entries]);
+
+  // Apply filters when crawler type filter changes
+  useEffect(() => {
+    if (entries.length > 0) {
+      applyFilters();
+    }
+  }, [crawlerTypeFilter, applyFilters, entries]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -448,8 +476,11 @@ export function LogAnalyzer() {
   }, [filteredLogs]);
 
   // Get current logs for pagination (now from DB)
-  const currentLogs = entries;
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const hasActiveFilters = crawlerTypeFilter !== null;
+  const currentLogs = hasActiveFilters ? filteredLogs : entries;
+  const totalPages = Math.ceil(
+    (hasActiveFilters ? filteredLogs.length : totalCount) / itemsPerPage,
+  );
 
   // Handle sorting
   const requestSort = useCallback((key: string) => {
@@ -477,6 +508,7 @@ export function LogAnalyzer() {
     setFileTypeFilter([]);
     setVerifiedFilter(null);
     setBotTypeFilter(null);
+    setCrawlerTypeFilter(null);
     setShowAgent(false);
     setUrlAgentFilter("url");
   }, []);
@@ -1010,6 +1042,56 @@ export function LogAnalyzer() {
                 </SelectItem>
               </SelectContent>
             </Select>
+
+            {/* FILTERED BY CRAWLERS */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                >
+                  <Filter className="h-4 w-4" />
+                  Crawlers
+                  {crawlerTypeFilter && (
+                    <Badge variant="secondary" className="ml-0">
+                      1
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="center"
+                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-64 overflow-y-auto"
+              >
+                <DropdownMenuLabel>Filter by Crawler Type</DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuCheckboxItem
+                  className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
+                  checked={crawlerTypeFilter === null}
+                  onCheckedChange={() => {
+                    setCrawlerTypeFilter(null);
+                  }}
+                >
+                  All Crawlers
+                </DropdownMenuCheckboxItem>
+
+                {uniqueCrawlerTypes.map((crawlerType) => (
+                  <DropdownMenuCheckboxItem
+                    className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
+                    key={crawlerType}
+                    checked={crawlerTypeFilter === crawlerType}
+                    onCheckedChange={() => {
+                      setCrawlerTypeFilter(crawlerType);
+                    }}
+                  >
+                    {crawlerType}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               variant="outline"

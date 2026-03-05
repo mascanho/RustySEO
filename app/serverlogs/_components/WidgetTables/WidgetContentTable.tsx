@@ -174,7 +174,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   // Pre-set selectedTaxonomy based on segment
   useEffect(() => {
     if (taxonomies.length > 0 && segment && segment !== "all") {
-      if (segment === "Uncategorized") {
+      if (segment === "Uncategorized" || segment === "Other" || segment === "other") {
         setSelectedTaxonomy("all");
       } else {
         const tax = taxonomies.find((t) => t.name === segment);
@@ -298,7 +298,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         if (!match) return false;
       }
 
-      if (segment === "Uncategorized" || selectedTaxonomy === "all") {
+      // Filter for Uncategorized/Other segment — only show entries that don't belong to any taxonomy
+      if (
+        (segment === "Uncategorized" || segment === "Other" || segment === "other") &&
+        !activeSegmentTaxonomy
+      ) {
         const taxonomyName = getTaxonomyForPath(log.path);
         if (taxonomyName !== "Uncategorized") return false;
       }
@@ -853,14 +857,14 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                            ? "bg-green-500"
-                            : statusCode >= 300 && statusCode < 400
-                              ? "bg-blue-500"
-                              : statusCode >= 400 && statusCode < 500
-                                ? "bg-yellow-500"
-                                : statusCode >= 500
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
                           }`}
                       />
                       <span>{statusCode}</span>
@@ -978,8 +982,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -992,8 +996,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "path" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1006,8 +1010,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1021,8 +1025,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1035,8 +1039,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "status" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}

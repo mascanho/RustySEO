@@ -126,30 +126,37 @@ interface LogEntry {
 
 interface WidgetTableProps {
   data: any;
+  entries: LogEntry[];
 }
 
-const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
+const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
   // Transform data into logs (memoized)
   const initialLogs = useMemo(() => {
-    if (!data?.totals?.bot_stats?.google?.page_frequencies) return [];
+    if (!entries || entries.length === 0) return [];
 
-    let logs: LogEntry[] = [];
-    const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
+    const crawlerLogs = entries.filter((log) => {
+      const ct = (log.crawler_type || "").toLowerCase();
+      return ct.includes("google") && log.crawler_type !== "Human";
+    });
 
-    Object.entries(data.totals.bot_stats.google.page_frequencies).forEach(
-      ([path, entries]) => {
-        if (entries.length > 0) {
-          const aggregatedEntry = entries[0];
-          logs.push({
-            ...aggregatedEntry,
-            path,
-            status_codes: pageStatus[path],
-          });
+    const urlMap = new Map<string, LogEntry>();
+    crawlerLogs.forEach((log) => {
+      if (urlMap.has(log.path)) {
+        const existingLog = urlMap.get(log.path)!;
+        existingLog.frequency = (existingLog.frequency || 1) + 1;
+        existingLog.response_size = (existingLog.response_size || 0) + (log.response_size || 0);
+        if (new Date(log.timestamp) < new Date(existingLog.timestamp)) {
+          existingLog.timestamp = log.timestamp;
         }
-      },
+      } else {
+        urlMap.set(log.path, { ...log, frequency: 1 });
+      }
+    });
+
+    return Array.from(urlMap.values()).sort(
+      (a, b) => b.frequency - a.frequency
     );
-    return logs;
-  }, [data]);
+  }, [entries]);
 
   // State definitions
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -622,8 +629,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "path" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -636,8 +643,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -650,8 +657,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -664,8 +671,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
+                            ? "rotate-180"
+                            : ""
                             }`}
                         />
                       )}
@@ -781,8 +788,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               <Badge
                                 variant="outline"
                                 className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
-                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                    : "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  : "bg-green-100 text-green-800 border-green-200"
                                   }`}
                               >
                                 {log.crawler_type.length > 10

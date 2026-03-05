@@ -309,6 +309,7 @@ async fn main() {
             loganalyser::active_db::get_widget_aggregations,
             loganalyser::active_db::get_active_logs_stats,
             loganalyser::active_db::clear_active_db_command,
+            loganalyser::active_db::get_distinct_bot_types,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,
