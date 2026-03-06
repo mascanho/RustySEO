@@ -314,6 +314,7 @@ async fn main() {
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::log_commands::check_logs_from_paths_command,
+            loganalyser::log_commands::get_file_size,
             loganalyser::active_db::get_active_logs_page,
             loganalyser::active_db::get_all_logs_with_filters,
             loganalyser::active_db::get_timeline_aggregations,

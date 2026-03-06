@@ -63,6 +63,13 @@ pub fn check_logs_from_paths_command(
     }
 }
 
+#[tauri::command]
+pub fn get_file_size(path: String) -> Result<u64, String> {
+    std::fs::metadata(path)
+        .map(|m| m.len())
+        .map_err(|e| e.to_string())
+}
+
 
 #[tauri::command]
 pub fn check_logs_command(

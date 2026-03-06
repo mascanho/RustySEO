@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLogAnalysisStore } from "@/store/ServerLogsStore";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { MoreVertical } from "lucide-react";
 import {
@@ -160,6 +161,20 @@ export default function Page() {
             if (payload.overview) {
               setLogData({ overview: payload.overview }, "replace");
               setTotalCount(payload.overview.line_count || 0);
+
+              // Update the latest batch in the history with the line count
+              if (payload.overview.line_count) {
+                const logs = useServerLogsStore.getState().uploadedLogFiles;
+                if (logs.length > 0) {
+                  const latestLog = logs[logs.length - 1];
+                  useServerLogsStore
+                    .getState()
+                    .updateLogEntry(latestLog.time, {
+                      lineCount: payload.overview.line_count,
+                    });
+                }
+              }
+
               // Fetch first page of logs from DB
               await fetchLogsFromDb(1, 100, {
                 search_term: "",

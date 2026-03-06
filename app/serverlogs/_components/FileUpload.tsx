@@ -15,6 +15,7 @@ import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { FaDatabase } from "react-icons/fa";
 import { useSelectedProject } from "@/store/logFilterStore";
 import { open } from "@tauri-apps/plugin-dialog";
+// import { stat } from "@tauri-apps/plugin-fs";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -36,7 +37,7 @@ interface ProgressUpdate {
   total_files: number;
   percentage: number;
   filename: string;
-  status: string;
+  phase: string;
 }
 
 export function FileUpload({
@@ -54,7 +55,7 @@ export function FileUpload({
     total: 0,
     percent: 0,
     filename: "",
-    status: "",
+    phase: "",
   });
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
   const { selectedProject } = useSelectedProject();
@@ -85,10 +86,10 @@ export function FileUpload({
         total: payload.total_files,
         percent: payload.percentage,
         filename: payload.filename,
-        status: payload.status,
+        phase: payload.phase,
       }));
 
-      if (payload.status === "started") {
+      if (payload.phase === "started") {
         toast.info(`Starting to process ${payload.filename}`);
       }
     });
@@ -116,16 +117,24 @@ export function FileUpload({
       // open() returns string | string[] | null
       const paths = Array.isArray(selected) ? selected : [selected];
 
-      const newFiles: SelectedFilePath[] = paths.map((filePath) => {
-        const name =
-          filePath.split("/").pop()?.split("\\").pop() || filePath;
-        return {
-          name,
-          path: filePath,
-          success: false,
-          error: null,
-        };
-      });
+      const newFiles: SelectedFilePath[] = await Promise.all(
+        paths.map(async (filePath) => {
+          const name = filePath.split("/").pop()?.split("\\").pop() || filePath;
+          let size = 0;
+          try {
+            size = await invoke<number>("get_file_size", { path: filePath });
+          } catch (e) {
+            console.error("Failed to get file size via backend:", e);
+          }
+          return {
+            name,
+            path: filePath,
+            size,
+            success: false,
+            error: null,
+          };
+        }),
+      );
 
       if (newFiles.length > 0) {
         setFiles((prev) => [...prev, ...newFiles]);
@@ -135,6 +144,15 @@ export function FileUpload({
       console.error("File selection error:", err);
       setError("Failed to open file dialog");
     }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (bytes === undefined || bytes === null) return "Unknown";
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
   const delay = (ms: number) =>
@@ -168,13 +186,15 @@ export function FileUpload({
 
       const filesUploaded = files.map((f) => f.name);
       const timeUploaded = new Date().toISOString();
+      const individualSizes = files.map((f) => f.size || 0);
+      const totalSize = individualSizes.reduce((a, b) => a + b, 0);
 
       const logEntry = {
         names: filesUploaded,
         time: timeUploaded,
-        individualSizes: [],
-        totalSize: 0,
-        totalBatchSize: 0,
+        individualSizes: individualSizes,
+        totalSize: totalSize,
+        totalBatchSize: totalSize,
       };
 
       // Set the state for the popup modal
@@ -226,6 +246,8 @@ export function FileUpload({
     setError(null);
   };
 
+  const totalSelectionSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
+
   return (
     <div className={cn("w-full", className)}>
       {files.length === 0 ? (
@@ -253,7 +275,8 @@ export function FileUpload({
           <div className="mb-2 flex justify-between items-center ">
             <div className="flex items-center">
               <h3 className="text-sm font-medium">
-                {files.length} file{files.length !== 1 ? "s" : ""} selected
+                {files.length} file{files.length !== 1 ? "s" : ""} selected •{" "}
+                {formatFileSize(totalSelectionSize)}
               </h3>
             </div>
             <div className="flex items-center gap-2">
@@ -289,19 +312,21 @@ export function FileUpload({
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded border-none border-r bg-muted flex items-center justify-center mr-3">
                     <span className="text-xs font-medium">
-                      {fileInfo.name
-                        .split(".")
-                        .pop()
-                        ?.toUpperCase()}
+                      {fileInfo.name.split(".").pop()?.toUpperCase()}
                     </span>
                   </div>
                   <div className="overflow-hidden dark:text-white">
                     <p className="text-sm font-medium truncate text-brand-bright">
                       {fileInfo.name}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[250px]">
-                      {fileInfo.path}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="text-[10px] text-muted-foreground truncate max-w-[250px] opacity-70">
+                        {fileInfo.path}
+                      </p>
+                      <p className="text-xs font-semibold text-brand-bright/80">
+                        {formatFileSize(fileInfo.size)}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -321,8 +346,15 @@ export function FileUpload({
             <div className="w-full mt-2 space-y-2">
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
-                  <span>Processing: {progress.filename}</span>
-                  <span>{Math.round(progress.percent)}%</span>
+                  <span>
+                    Processing: {progress.filename}{" "}
+                    {files.find((f) => f.name === progress.filename) && (
+                      <span className="text-brand-bright font-medium">
+                        ({formatFileSize(files.find((f) => f.name === progress.filename)?.size)})
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-mono text-brand-bright">{Math.round(progress.percent)}%</span>
                 </div>
                 <Progress
                   value={progress.percent}
@@ -343,7 +375,7 @@ export function FileUpload({
                 <div className="border-gray-300 h-4 w-4 animate-spin rounded-full border-2 border-t-blue-600" />
               </>
             ) : (
-              `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
+              `Analyze ${files.length} File${files.length !== 1 ? "s" : ""} (${formatFileSize(totalSelectionSize)})`
             )}
           </Button>
 
