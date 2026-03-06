@@ -203,7 +203,7 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     }
 
     if let Some(ref taxonomy) = filters.taxonomy_filter {
-        clauses.push("taxonomy = ?".to_string());
+        clauses.push("segment = ?".to_string());
         params.push(taxonomy.clone().into());
     }
 
@@ -697,7 +697,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
     // 2. Taxonomy / Content
     {
         let query = format!(
-            "SELECT taxonomy, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY taxonomy",
+            "SELECT segment, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY segment",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -710,7 +710,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         for row in rows {
             let (tax, count) = row.map_err(|e| e.to_string())?;
             aggs.content
-                .insert(tax.unwrap_or_else(|| "other".to_string()), count);
+                .insert(tax.unwrap_or_else(|| "Other".to_string()), count);
         }
     }
 

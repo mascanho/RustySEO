@@ -131,7 +131,8 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, allFilteredLogs, totalCount, widgetAggs } = useLogAnalysis();
+  const { overview, allFilteredLogs, totalCount, widgetAggs } =
+    useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
@@ -198,10 +199,7 @@ export default function WidgetLogs() {
   );
 
   // Prepare content data from actual entries
-  const contentData = useMemo(
-    () => widgetAggs?.content || {},
-    [widgetAggs],
-  );
+  const contentData = useMemo(() => widgetAggs?.content || {}, [widgetAggs]);
 
   // Prepare status code data from actual entries
   const statusCodeData = useMemo(
@@ -234,11 +232,11 @@ export default function WidgetLogs() {
   }, [overview]);
 
   // Prepare User Agents Data
-  const userAgentData = useMemo(
-    () => {
-      if (!widgetAggs?.user_agents) return {};
+  const userAgentData = useMemo(() => {
+    if (!widgetAggs?.user_agents) return {};
 
-      return Object.entries(widgetAggs.user_agents).reduce((acc, [userAgent, count]) => {
+    return Object.entries(widgetAggs.user_agents).reduce(
+      (acc, [userAgent, count]) => {
         const categorizedAgent = categorizeUserAgent(userAgent);
 
         if (!acc[categorizedAgent]) {
@@ -255,17 +253,17 @@ export default function WidgetLogs() {
         }
 
         return acc;
-      }, {});
-    },
-    [widgetAggs],
-  );
+      },
+      {},
+    );
+  }, [widgetAggs]);
 
   // Prepare Referrers Data
-  const referrerData = useMemo(
-    () => {
-      if (!widgetAggs?.referrers) return {};
+  const referrerData = useMemo(() => {
+    if (!widgetAggs?.referrers) return {};
 
-      return Object.entries(widgetAggs.referrers).reduce((acc, [referrer, count]) => {
+    return Object.entries(widgetAggs.referrers).reduce(
+      (acc, [referrer, count]) => {
         const categorizedReferrer = categorizeReferrer(referrer);
 
         if (!acc[categorizedReferrer]) {
@@ -282,10 +280,10 @@ export default function WidgetLogs() {
         }
 
         return acc;
-      }, {});
-    },
-    [widgetAggs],
-  );
+      },
+      {},
+    );
+  }, [widgetAggs]);
 
   // Get chart data for active tab
   const chartData = useMemo(() => {
@@ -295,7 +293,10 @@ export default function WidgetLogs() {
           // If the key is 'other', use 'Uncategorized' for display
           // If the key is already a taxonomy name, keep it.
           // The taxonomyNameMap is useful if the key was a path, but the backend sends taxonomy names.
-          const name = pathOrName === "other" ? "Uncategorized" : (taxonomyNameMap[pathOrName] || pathOrName);
+          const name =
+            pathOrName.toLowerCase() === "other"
+              ? "Uncategorized"
+              : taxonomyNameMap[pathOrName] || pathOrName;
 
           if (!acc[name]) {
             acc[name] = { value: 0 };
@@ -454,8 +455,8 @@ export default function WidgetLogs() {
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
                 className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
-                  ? "bg-brand-bright text-white"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                    ? "bg-brand-bright text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
                   }`}
               >
                 <div
@@ -531,10 +532,10 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
-              ? "grid-cols-5 max-w-2xl mr-6"
-              : activeTab === "Status Codes"
-                ? "grid-cols-4 mr-6"
-                : "grid-cols-4 mr-6"
+                ? "grid-cols-5 max-w-2xl mr-6"
+                : activeTab === "Status Codes"
+                  ? "grid-cols-4 mr-6"
+                  : "grid-cols-4 mr-6"
               }`}
           >
             {chartData.map((entry, idx) => (
@@ -571,6 +572,7 @@ export default function WidgetLogs() {
                       data={overview}
                       entries={allFilteredLogs}
                       chartData={chartData}
+                      segment={entry?.name}
                       selectedFileType={entry?.name}
                     />
                   ) : activeTab === "Status Codes" ? (
