@@ -594,7 +594,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     fileTypeFilter,
     botTypeFilter,
     crawlerTypeFilter,
-    verified_filter,
+    verifiedFilter,
     sortConfig,
     segment,
     selectedTaxonomy,
@@ -1111,14 +1111,14 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                            ? "bg-green-500"
-                            : statusCode >= 300 && statusCode < 400
-                              ? "bg-blue-500"
-                              : statusCode >= 400 && statusCode < 500
-                                ? "bg-yellow-500"
-                                : statusCode >= 500
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
                           }`}
                       />
                       <span>{statusCode}</span>
@@ -1236,8 +1236,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1250,8 +1250,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "path" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1264,8 +1264,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "user_agent" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1280,8 +1280,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1294,8 +1294,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "status" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}

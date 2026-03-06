@@ -137,6 +137,26 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     isLoading: isStoreLoading,
   } = useLogAnalysis();
 
+  // State definitions
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+  const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
+  const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>({ key: "frequency", direction: "descending" });
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>(null);
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const initialLogs = entries;
+
   // Main Data Fetcher
   useEffect(() => {
     const fetchFilteredData = async () => {
@@ -186,25 +206,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
         indexOfFirstItem,
       };
     }, [pathAggregations, itemsPerPage, currentPage]);
-
-  // State definitions
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-  const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
-  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>({ key: "frequency", direction: "descending" });
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [botTypeFilter, setBotTypeFilter] = useState<string | null>(null);
-  const [domain, setDomain] = useState("");
-  const [showOnTables, setShowOnTables] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<any | null>(null);
-
   const {
     credentials,
     data: GSCdata,
@@ -627,10 +628,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
             Export CSV
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2 w-[14em]">
             <Badge
               variant="outline"
-              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 w-fit"
             >
               {pathAggregations.total_hits.toLocaleString()} hits
             </Badge>

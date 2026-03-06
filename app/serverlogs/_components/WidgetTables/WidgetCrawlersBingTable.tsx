@@ -139,7 +139,11 @@ const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
   return Array.from(urlMap.values());
 };
 
-const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType }) => {
+const WidgetTableBing: React.FC<WidgetTableProps> = ({
+  data,
+  entries,
+  crawlerType,
+}) => {
   const {
     pathAggregations,
     fetchPathAggregationsPage,
@@ -347,8 +351,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [initialLogs],
   );
@@ -357,8 +361,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [initialLogs],
   );
@@ -516,7 +520,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
             Export CSV
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-[13rem] justify-end">
             <Badge
               variant="outline"
               className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
@@ -527,7 +531,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
               variant="outline"
               className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
             >
-              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+              {pathAggregations.total_unique_paths.toLocaleString()} unique
+              paths
             </Badge>
           </div>
         </div>
@@ -555,10 +560,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -569,10 +575,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -583,10 +590,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -597,10 +605,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -693,17 +702,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
 
                           <TableCell className="text-center min-w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.total}
-                              </span>
+                              <span>{timings(log)?.frequency?.total}</span>
                             </div>
                           </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.perHour}
-                              </span>
+                              <span>{timings(log)?.frequency?.perHour}</span>
                             </div>
                           </TableCell>
 
@@ -714,10 +719,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                             <div className="flex items-center h-full justify-center">
                               <Badge
                                 variant="outline"
-                                className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
-                                  }`}
+                                className={`flex items-center align-middle justify-center ${
+                                  log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                }`}
                               >
                                 {log.crawler_type.startsWith("Goo")
                                   ? "Google 🤖"
@@ -937,32 +943,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries, crawlerType })
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                            Other Codes:{" "}
-                                            {log.status_codes?.other_count || 0}
-                                          </span>
-                                          <div className="flex flex-wrap gap-1 mt-1">
-                                            {Object.entries(
-                                              log.status_codes?.counts || {},
-                                            )
-                                              .filter(([code]) => {
-                                                const status = parseInt(code);
-                                                return (
-                                                  status < 200 || status >= 600
-                                                );
-                                              })
-                                              .map(([code, count]) => (
-                                                <span
-                                                  key={code}
-                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                                >
-                                                  {code}: {count}
-                                                </span>
-                                              ))}
-                                          </div>
+                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                          Other Codes:{" "}
+                                          {log.status_codes?.other_count || 0}
+                                        </span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {Object.entries(
+                                            log.status_codes?.counts || {},
+                                          )
+                                            .filter(([code]) => {
+                                              const status = parseInt(code);
+                                              return (
+                                                status < 200 || status >= 600
+                                              );
+                                            })
+                                            .map(([code, count]) => (
+                                              <span
+                                                key={code}
+                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                              >
+                                                {code}: {count}
+                                              </span>
+                                            ))}
                                         </div>
-                                      )}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
