@@ -420,7 +420,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
         file_type_filter: fileTypeFilter,
         bot_filter: "all" as any, // Default to all if not specified
         bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-        crawler_type_filter: crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
+        crawler_type_filter:
+          crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
         verified_filter: verifiedFilter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
@@ -440,7 +441,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
     fileTypeFilter,
     botTypeFilter,
     crawlerTypeFilter,
-    verified_filter,
+    verifiedFilter,
     sortConfig,
     segment,
     selectedTaxonomy,
@@ -572,8 +573,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
     () =>
       isReady && entries.length > 0
         ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [entries, isReady],
   );
@@ -582,8 +583,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
     () =>
       isReady && entries.length > 0
         ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [entries, isReady],
   );
@@ -700,8 +701,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
-                {pathAggregations.total_hits.toLocaleString()} hits)
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -727,8 +728,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200"
               >
-                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
-                {pathAggregations.total_hits.toLocaleString()} hits)
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -863,14 +864,17 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         ]);
                       } else {
                         setStatusCategoryFilter(
-                          statusCategoryFilter.filter((cat) => cat !== category),
+                          statusCategoryFilter.filter(
+                            (cat) => cat !== category,
+                          ),
                         );
                       }
                     }}
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${category === "Success"
+                        className={`w-3 h-3 rounded-full ${
+                          category === "Success"
                             ? "bg-green-500"
                             : category === "Redirection"
                               ? "bg-yellow-500"
@@ -881,7 +885,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                   : category === "Informational"
                                     ? "bg-blue-500"
                                     : "bg-gray-500"
-                          }`}
+                        }`}
                       />
                       <span>{category}</span>
                     </div>
@@ -1039,7 +1043,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                     checked={crawlerTypeFilter.includes(crawlerType)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setCrawlerTypeFilter([...crawlerTypeFilter, crawlerType]);
+                        setCrawlerTypeFilter([
+                          ...crawlerTypeFilter,
+                          crawlerType,
+                        ]);
                       } else {
                         setCrawlerTypeFilter(
                           crawlerTypeFilter.filter(
@@ -1109,10 +1116,11 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1123,10 +1131,11 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         Path
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1137,10 +1146,11 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         Status Code
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1153,10 +1163,11 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         Size
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1172,12 +1183,12 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         const statusInfo = log.status
                           ? getStatusCodeInfo(log.status)
                           : {
-                            category: "Unknown",
-                            description: "No status code",
-                            color: "bg-gray-500",
-                            textColor: "text-gray-800 dark:text-gray-200",
-                            bgColor: "bg-gray-100 dark:bg-gray-900",
-                          };
+                              category: "Unknown",
+                              description: "No status code",
+                              color: "bg-gray-500",
+                              textColor: "text-gray-800 dark:text-gray-200",
+                              bgColor: "bg-gray-100 dark:bg-gray-900",
+                            };
 
                         return (
                           <React.Fragment
@@ -1211,7 +1222,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                     }
                                     className="hover:scale-105 active:scale-95 mr-1"
                                   >
-                                    {getFileIcon(log.file_type || "Unknown")} {""}
+                                    {getFileIcon(log.file_type || "Unknown")}{" "}
+                                    {""}
                                   </span>
                                   <span
                                     className="hover:underline"
@@ -1223,26 +1235,28 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                       ? "https://" + domain + log.path
                                       : log?.path}
                                   </span>
-                                  {credentials?.token?.length > 0 && hoveredRow === index && (
-                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
-                                      <KeyRound
-                                        size={14}
-                                        className="text-[10px] text-yellow-500 cursor-pointer"
-                                        onClick={async (e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          setSelectedLog(log);
-                                          const response = await FetchMatchGSC(
-                                            log.path,
-                                            credentials,
-                                            GSCdata,
-                                          );
+                                  {credentials?.token?.length > 0 &&
+                                    hoveredRow === index && (
+                                      <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
+                                        <KeyRound
+                                          size={14}
+                                          className="text-[10px] text-yellow-500 cursor-pointer"
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            setSelectedLog(log);
+                                            const response =
+                                              await FetchMatchGSC(
+                                                log.path,
+                                                credentials,
+                                                GSCdata,
+                                              );
 
-                                          setSelectedURLDetails(response);
-                                        }}
-                                      />
-                                    </span>
-                                  )}
+                                            setSelectedURLDetails(response);
+                                          }}
+                                        />
+                                      </span>
+                                    )}
                                 </span>
                               </TableCell>
                               <TableCell className="text-center align-middle">
@@ -1281,7 +1295,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                   }
                                 >
                                   {log.crawler_type &&
-                                    log.crawler_type.length > 12
+                                  log.crawler_type.length > 12
                                     ? log.crawler_type.trim().slice(0, 15)
                                     : log.crawler_type || "Unknown"}
                                 </Badge>
@@ -1361,9 +1375,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                           <div
                                             className="flex flex-col items-center justify-center p-3 rounded-lg"
                                             style={{
-                                              backgroundColor: statusInfo.bgColor
-                                                .replace("bg-", "bg-")
-                                                .replace("dark:", "dark:"),
+                                              backgroundColor:
+                                                statusInfo.bgColor
+                                                  .replace("bg-", "bg-")
+                                                  .replace("dark:", "dark:"),
                                             }}
                                           >
                                             <div
@@ -1444,7 +1459,9 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                                 .find(
                                                   (tax) =>
                                                     tax.name ===
-                                                    getTaxonomyForPath(log.path),
+                                                    getTaxonomyForPath(
+                                                      log.path,
+                                                    ),
                                                 )
                                                 ?.paths.map((pathRule, idx) => (
                                                   <Badge

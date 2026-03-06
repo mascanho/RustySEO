@@ -181,7 +181,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   // Pre-set selectedTaxonomy based on segment
   useEffect(() => {
     if (taxonomies.length > 0 && segment && segment !== "all") {
-      if (segment === "Uncategorized" || segment === "Other" || segment === "other") {
+      if (
+        segment === "Uncategorized" ||
+        segment === "Other" ||
+        segment === "other"
+      ) {
         setSelectedTaxonomy("all");
       } else {
         const tax = taxonomies.find((t) => t.name === segment);
@@ -307,7 +311,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
       // Filter for Uncategorized/Other segment — only show entries that don't belong to any taxonomy
       if (
-        (segment === "Uncategorized" || segment === "Other" || segment === "other") &&
+        (segment === "Uncategorized" ||
+          segment === "Other" ||
+          segment === "other") &&
         !activeSegmentTaxonomy
       ) {
         const taxonomyName = getTaxonomyForPath(log.path);
@@ -394,7 +400,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       if (selectedTaxonomy !== "all") {
         activeTaxonomyFilter =
           taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
-      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
+      } else if (
+        segment &&
+        segment !== "all" &&
+        segment !== "Uncategorized" &&
+        segment !== "Other"
+      ) {
         activeTaxonomyFilter = segment;
       }
 
@@ -405,7 +416,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         file_type_filter: fileTypeFilter,
         bot_filter: botFilter === "all" ? null : botFilter,
         bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-        crawler_type_filter: crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
+        crawler_type_filter:
+          crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
         verified_filter: verifiedFilter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
@@ -426,7 +438,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     botFilter,
     botTypeFilter,
     crawlerTypeFilter,
-    verified_filter,
+    verifiedFilter,
     sortConfig,
     segment,
     selectedTaxonomy,
@@ -568,8 +580,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [entries],
   );
@@ -578,8 +590,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [entries],
   );
@@ -718,8 +730,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
-                {pathAggregations.total_hits.toLocaleString()} hits)
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -877,16 +889,17 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                          ? "bg-green-500"
-                          : statusCode >= 300 && statusCode < 400
-                            ? "bg-blue-500"
-                            : statusCode >= 400 && statusCode < 500
-                              ? "bg-yellow-500"
-                              : statusCode >= 500
-                                ? "bg-red-500"
-                                : "bg-gray-500"
-                          }`}
+                        className={`w-3 h-3 rounded-full ${
+                          statusCode >= 200 && statusCode < 300
+                            ? "bg-green-500"
+                            : statusCode >= 300 && statusCode < 400
+                              ? "bg-blue-500"
+                              : statusCode >= 400 && statusCode < 500
+                                ? "bg-yellow-500"
+                                : statusCode >= 500
+                                  ? "bg-red-500"
+                                  : "bg-gray-500"
+                        }`}
                       />
                       <span>{statusCode}</span>
                     </div>
@@ -1002,10 +1015,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1016,10 +1030,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Path
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1030,10 +1045,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         File Type
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1045,10 +1061,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Size
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1059,10 +1076,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1129,11 +1147,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                             e.stopPropagation();
                                             e.preventDefault();
                                             setSelectedLog(log);
-                                            const response = await FetchMatchGSC(
-                                              log.path,
-                                              credentials,
-                                              GSCdata,
-                                            );
+                                            const response =
+                                              await FetchMatchGSC(
+                                                log.path,
+                                                credentials,
+                                                GSCdata,
+                                              );
 
                                             setSelectedURLDetails(response);
                                           }}
@@ -1164,7 +1183,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                         : log.status >= 300 && log.status < 400
                                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                                           : log.status >= 400 &&
-                                            log.status < 500
+                                              log.status < 500
                                             ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                             : log.status >= 500
                                               ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
@@ -1354,10 +1373,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                                     log.status < 300
                                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                     : log.status >= 300 &&
-                                                      log.status < 400
+                                                        log.status < 400
                                                       ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                       : log.status >= 400 &&
-                                                        log.status < 500
+                                                          log.status < 500
                                                         ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                         : log.status >= 500
                                                           ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
