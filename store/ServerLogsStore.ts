@@ -571,7 +571,6 @@ export const useLogAnalysisStore = create<
             ...existingOverview,
             ...incomingOverview,
             totals: {
-              ...existingOverview.totals,
               ...incomingTotals,
             },
           };

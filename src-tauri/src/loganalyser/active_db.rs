@@ -192,9 +192,16 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     }
 
     if let Some(ref crawler_type) = filters.crawler_type_filter {
-        let ct_pattern = format!("%{}%", crawler_type.to_lowercase());
-        clauses.push("LOWER(crawler_type) LIKE ?".to_string());
-        params.push(ct_pattern.into());
+        let lower_ct = crawler_type.to_lowercase();
+        if lower_ct == "openai" {
+            clauses.push("(LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(crawler_type) LIKE '%oai-%' OR LOWER(user_agent) LIKE '%openai%')".to_string());
+        } else if lower_ct == "claude" {
+            clauses.push("(LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%')".to_string());
+        } else {
+            let ct_pattern = format!("%{}%", lower_ct);
+            clauses.push("LOWER(crawler_type) LIKE ?".to_string());
+            params.push(ct_pattern.into());
+        }
     }
 
     if let Some(verified) = filters.verified_filter {
@@ -841,45 +848,46 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let mut bot_totals = Totals::default();
     bot_totals.status_codes = status_codes.clone();
 
+    // Get Bot Totals using a single SUM(CASE) query for consistency
     let mut bot_stmt = conn
         .prepare(
             "
         SELECT
-            LOWER(crawler_type),
-            COUNT(*)
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%semrush%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%ahrefs%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%moz%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%uptime%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%' OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%' THEN 1 ELSE 0 END)
         FROM active_parsed_logs
-        WHERE crawler_type != 'Human'
-        GROUP BY LOWER(crawler_type)
     ",
         )
         .map_err(|e| e.to_string())?;
 
-    let bot_rows = bot_stmt
-        .query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
-        })
-        .map_err(|e| e.to_string())?;
+    let (ggl, bng, sem, ahr, moz, upt, oai, cld): (Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>) = 
+        bot_stmt.query_row([], |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+                row.get(5)?,
+                row.get(6)?,
+                row.get(7)?,
+            ))
+        }).map_err(|e| e.to_string())?;
 
-    for row in bot_rows {
-        let (crawler, count) = row.map_err(|e| e.to_string())?;
-        if crawler.contains("google") {
-            bot_totals.google = count;
-        } else if crawler.contains("bing") {
-            bot_totals.bing = count;
-        } else if crawler.contains("semrush") {
-            bot_totals.semrush = count;
-        } else if crawler.contains("hrefs") {
-            bot_totals.hrefs = count;
-        } else if crawler.contains("moz") {
-            bot_totals.moz = count;
-        } else if crawler.contains("uptime") {
-            bot_totals.uptime = count;
-        } else if crawler.contains("openai") || crawler.contains("gpt") {
-            bot_totals.openai = count;
-        } else if crawler.contains("claude") {
-            bot_totals.claude = count;
-        }
-    }
+    bot_totals.google = ggl.unwrap_or(0) as usize;
+    bot_totals.bing = bng.unwrap_or(0) as usize;
+    bot_totals.semrush = sem.unwrap_or(0) as usize;
+    bot_totals.hrefs = ahr.unwrap_or(0) as usize;
+    bot_totals.moz = moz.unwrap_or(0) as usize;
+    bot_totals.uptime = upt.unwrap_or(0) as usize;
+    bot_totals.openai = oai.unwrap_or(0) as usize;
+    bot_totals.claude = cld.unwrap_or(0) as usize;
 
     Ok(LogAnalysisResult {
         message: "Stats retrieved".to_string(),

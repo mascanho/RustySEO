@@ -511,6 +511,8 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("typhoeus", "Typhoeus Bot"),
         ("hubspot", "Hubspot Bot"),
         ("expanse", "Expanse Bot"),
+        ("claudebot", "Claude Bot"),
+        ("anthropic", "Claude Bot"),
     ];
 
     // Check for empty or dash user agent first
