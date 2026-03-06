@@ -9,6 +9,8 @@ import React, {
 import {
   AlertCircle,
   BadgeCheck,
+  Bot,
+  CheckCircle,
   ChevronDown,
   Download,
   FileAudio,
@@ -20,16 +22,14 @@ import {
   Filter,
   Image,
   KeyRound,
+  Loader2,
   Package,
   RefreshCw,
   Search,
   FolderTree,
   User,
-  Bot,
-  CheckCircle,
-  XCircle,
-  Loader2,
 } from "lucide-react";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -217,6 +217,12 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  } = useLogAnalysis();
+
+  const {
     credentials,
     data: GSCdata,
     setSelectedURLDetails,
@@ -271,7 +277,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
           }
         }
 
-        // Get unique file types
+        // Get unique file types from entries or widgetAggs if available
         if (entries && entries.length > 0) {
           const types = new Set<string>();
           for (const log of entries) {
@@ -282,7 +288,6 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
           const sortedTypes = Array.from(types).sort();
           setAvailableFileTypes(sortedTypes);
 
-          // Initialize file type filter if selectedFileType is provided
           if (selectedFileType && sortedTypes.length > 0) {
             const normalizedSelectedType = selectedFileType.trim();
             const exactType = sortedTypes.find(
@@ -305,7 +310,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     };
 
     initialize();
-  }, [entries]); // Run once on mount
+  }, [entries, selectedFileType]); // Added selectedFileType to dependencies
 
   // Precompute entries metadata
   const {
@@ -525,61 +530,70 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     ],
   );
 
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    entries,
-    filterFn,
-    sortConfig,
-    sortFn, // We pass custom sortFn to handle localeCompare etc
-  );
-
-  // Reset page when filters change
+  // Main Data Fetcher
   useEffect(() => {
-    setCurrentPage(1);
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter =
+          taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all") {
+        activeTaxonomyFilter = segment;
+      }
+
+      const activeFilters = {
+        search_term: debouncedSearchTerm,
+        status_filter: statusFilter,
+        method_filter: methodFilter,
+        file_type_filter: fileTypeFilter,
+        bot_filter: botFilter === "all" ? null : botFilter,
+        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+        crawler_type_filter:
+          crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
+        verified_filter: verifiedFilter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: activeTaxonomyFilter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     debouncedSearchTerm,
-    methodFilter,
-    botFilter,
-    verifiedFilter,
-    fileTypeFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    segment,
     statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    botTypeFilter,
     crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
   ]);
 
-  // Pre-calculate pagination values
-  const { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages } =
-    useMemo(() => {
-      const indexOfLastItem = currentPage * itemsPerPage;
-      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-      const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-      const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
 
-      return { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages };
-    }, [filteredLogs, currentPage, itemsPerPage]);
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs; // For backward compatibility with some UI parts
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -803,7 +817,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
               variant="outline"
               className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
             >
-              {filteredLogs.length} entries
+              {pathAggregations.total_unique_paths.toLocaleString()} unique
+              paths ({pathAggregations.total_hits.toLocaleString()} hits)
             </Badge>
           </div>
         </div>
@@ -839,7 +854,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {filteredLogs.length} entries
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -1240,24 +1256,24 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                     : log?.path}
                                 </span>
                                 {credentials?.token?.length > 0 && (
-                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-                                      <KeyRound
-                                        size={14}
-                                        className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                                        onClick={async (e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          setSelectedLog(log);
-                                          const response = await FetchMatchGSC(
-                                            log.path,
-                                            credentials,
-                                            GSCdata,
-                                          );
-                                          setSelectedURLDetails(response);
-                                        }}
-                                      />
-                                    </span>
-                                  )}
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">

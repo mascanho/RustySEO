@@ -107,6 +107,8 @@ export function LogAnalyzer() {
     resetAll,
     fetchLogsFromDb,
     fetchAllFilteredLogs,
+    fetchWidgetAggregations,
+    fetchOverviewStats,
     setActiveFilters,
     totalCount,
   } = useLogAnalysis();
@@ -455,7 +457,10 @@ export function LogAnalyzer() {
       if (totalCount > 0 || entries.length > 0) {
         fetchLogsFromDb(currentPage, itemsPerPage, currentFilters);
         setActiveFilters(currentFilters);
+        // Fetch widget aggregations from backend instead of all logs
+        fetchWidgetAggregations(currentFilters);
         fetchAllFilteredLogs(currentFilters);
+        fetchOverviewStats();
       }
     }, 300);
 
@@ -467,7 +472,9 @@ export function LogAnalyzer() {
     itemsPerPage,
     totalCount,
     fetchLogsFromDb,
+    fetchWidgetAggregations,
     fetchAllFilteredLogs,
+    fetchOverviewStats,
     setActiveFilters,
   ]);
 

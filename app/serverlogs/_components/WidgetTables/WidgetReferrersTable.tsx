@@ -69,6 +69,7 @@ import { toast } from "sonner";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -226,6 +227,12 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
   const [isReady, setIsReady] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  } = useLogAnalysis();
 
   const {
     credentials,
@@ -501,76 +508,76 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       lowerCaseFileTypeFilters,
       verifiedFilter,
       botTypeFilter,
-      statusFilter,
-      crawlerTypeFilter,
     ],
   );
 
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
+  const isInitialized = isReady;
 
-      if (aValue === undefined || bValue === undefined) return 0;
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const hookSortConfig = useMemo(() => {
-    if (!sortConfig) return null;
-    return {
-      key: sortConfig.key,
-      direction: (sortConfig.direction === "ascending" ? "asc" : "desc") as
-        | "asc"
-        | "desc",
-    };
-  }, [sortConfig]);
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    entries,
-    filterFn,
-    hookSortConfig,
-    sortFn,
-  );
-
-  // Reset page when filters change
+  // Main Data Fetcher
   useEffect(() => {
-    setCurrentPage(1);
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter = taxonomies.find(t => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
+        // If segment is a referrer category, we don't treat it as taxonomy
+        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (!isReferrerCat) {
+          activeTaxonomyFilter = segment;
+        }
+      }
+
+      const activeFilters = {
+        search_term: searchTerm,
+        status_filter: statusFilter,
+        method_filter: methodFilter,
+        file_type_filter: fileTypeFilter,
+        bot_filter: null, // Referrers usually care about all hits
+        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
+        verified_filter: verifiedFilter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: activeTaxonomyFilter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     searchTerm,
-    methodFilter,
-    verifiedFilter,
-    fileTypeFilter,
-    referrerCategoryFilter,
-    referrerFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    segment,
     statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botTypeFilter,
     crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
+    availableReferrerCategories
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(
-    () => filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
-    [filteredLogs, indexOfFirstItem, indexOfLastItem],
-  );
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs;
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -810,7 +817,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {filteredLogs.length} entries
+                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
+                {pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -1065,14 +1073,14 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                            ? "bg-green-500"
-                            : statusCode >= 300 && statusCode < 400
-                              ? "bg-blue-500"
-                              : statusCode >= 400 && statusCode < 500
-                                ? "bg-yellow-500"
-                                : statusCode >= 500
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
                           }`}
                       />
                       <span>{statusCode}</span>
@@ -1187,8 +1195,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1201,8 +1209,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "path" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1215,8 +1223,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "referer" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1231,8 +1239,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1245,8 +1253,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "status" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}

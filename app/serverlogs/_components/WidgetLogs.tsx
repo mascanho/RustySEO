@@ -209,62 +209,29 @@ export default function WidgetLogs() {
     [widgetAggs],
   );
 
-  // Prepare crawler data based on filtered logs
+  // Prepare crawler data based on overview totals
   const crawlerData = useMemo(() => {
-    if (!allFilteredLogs || allFilteredLogs.length === 0) return [];
+    if (!overview?.totals) return [];
 
     const counts = {
-      google: 0,
-      bing: 0,
-      semrush: 0,
-      hrefs: 0,
-      moz: 0,
-      uptime: 0,
-      openai: 0,
-      claude: 0,
+      Google: overview.totals.google || 0,
+      Bing: overview.totals.bing || 0,
+      Semrush: overview.totals.semrush || 0,
+      Hrefs: overview.totals.hrefs || 0,
+      Moz: overview.totals.moz || 0,
+      Uptime: overview.totals.uptime || 0,
+      Openai: overview.totals.openai || 0,
+      Claude: overview.totals.claude || 0,
     };
-
-    allFilteredLogs.forEach((entry) => {
-      // Ensure we only count crawlers
-      if (!entry.is_crawler && entry.crawler_type === "Human") return;
-
-      const crawlerType = (entry.crawler_type || "").toLowerCase();
-      const ua = (entry.user_agent || "").toLowerCase();
-
-      if (crawlerType.includes("google")) {
-        counts.google += 1;
-      } else if (crawlerType.includes("bing")) {
-        counts.bing += 1;
-      } else if (crawlerType.includes("semrush")) {
-        counts.semrush += 1;
-      } else if (crawlerType.includes("hrefs")) {
-        counts.hrefs += 1;
-      } else if (crawlerType.includes("moz")) {
-        counts.moz += 1;
-      } else if (crawlerType.includes("uptime")) {
-        counts.uptime += 1;
-      } else if (
-        crawlerType.includes("open") ||
-        crawlerType.includes("openai") ||
-        crawlerType.includes("gpt") ||
-        ua.includes("oai-searchbot") ||
-        ua.includes("chatgpt-user") ||
-        ua.includes("gptbot")
-      ) {
-        counts.openai += 1;
-      } else if (crawlerType.includes("claude") || ua.includes("claude")) {
-        counts.claude += 1;
-      }
-    });
 
     return Object.entries(counts)
       .filter(([_, value]) => value > 0)
       .map(([name, value]) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
+        name,
         value,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [allFilteredLogs]);
+  }, [overview]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(
@@ -324,23 +291,27 @@ export default function WidgetLogs() {
   const chartData = useMemo(() => {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce(
-        (acc, [path, value]) => {
-          const name = taxonomyNameMap[path] || "Other";
+        (acc, [pathOrName, value]) => {
+          // If the key is 'other', use 'Uncategorized' for display
+          // If the key is already a taxonomy name, keep it.
+          // The taxonomyNameMap is useful if the key was a path, but the backend sends taxonomy names.
+          const name = pathOrName === "other" ? "Uncategorized" : (taxonomyNameMap[pathOrName] || pathOrName);
+
           if (!acc[name]) {
-            acc[name] = { value: 0, paths: {} };
+            acc[name] = { value: 0 };
           }
           acc[name].value += value;
-          acc[name].paths[path] = value;
           return acc;
         },
         {},
       );
 
-      return Object.entries(contentBySegment).map(([name, data]) => ({
-        name: name,
-        value: data.value,
-        paths: data.paths,
-      }));
+      return Object.entries(contentBySegment)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.value,
+        }))
+        .sort((a, b) => b.value - a.value);
     }
 
     if (activeTab === "User Agents") {

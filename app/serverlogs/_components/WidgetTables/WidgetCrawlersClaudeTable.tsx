@@ -60,6 +60,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useLogAnalysis, BotPathDetail } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -139,8 +140,13 @@ const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
 };
 
 const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data, entries }) => {
-  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  } = useLogAnalysis();
+
+  const initialLogs = entries;
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -178,103 +184,53 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data, entries }) => {
     }
   }, [data.length]);
 
+  // Main Data Fetcher
   useEffect(() => {
-    if (!entries || entries.length === 0) return;
+    const fetchFilteredData = async () => {
+      const activeFilters = {
+        search_term: searchTerm,
+        status_filter: [],
+        method_filter: methodFilter,
+        file_type_filter: fileTypeFilter,
+        bot_filter: "bot",
+        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+        crawler_type_filter: "claude",
+        verified_filter: verifiedFilter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: null,
+      };
 
-    let logs: LogEntry[] = [];
-    entries.forEach((entry) => {
-      const ct = (entry.crawler_type || "").toLowerCase();
-      const ua = (entry.user_agent || "").toLowerCase();
-      if ((ct.includes("claude") || ua.includes("claude")) && entry.crawler_type !== "Human") {
-        logs.push({ ...entry, frequency: 1 });
-      }
-    });
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
 
-    const uniqueLogs = ensureUniqueUrls(logs);
-    setInitialLogs(uniqueLogs);
-    setFilteredLogs(uniqueLogs);
-  }, [entries]);
-
-  useEffect(() => {
-    let result = [...initialLogs];
-
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
-
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
-    }
-
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log.crawler_type === "Human");
-      }
-    }
-
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log.user_agent.includes("Mobile"));
-      }
-    }
-
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredLogs(result);
-    setCurrentPage(1);
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     searchTerm,
     methodFilter,
-    botFilter,
-    verifiedFilter,
-    sortConfig,
-    initialLogs,
     fileTypeFilter,
     botTypeFilter,
+    verified_filter,
+    sortConfig,
+    fetchPathAggregationsPage,
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const _currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs: _currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs;
+
+  const totalHits = pathAggregations.total_hits || 0;
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -295,7 +251,6 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data, entries }) => {
     setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
-    setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
     setFileTypeFilter([]);
 
@@ -561,6 +516,21 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data, entries }) => {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+            >
+              {pathAggregations.total_hits.toLocaleString()} hits
+            </Badge>
+            <Badge
+              variant="outline"
+              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+            >
+              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+            </Badge>
+          </div>
         </div>
       </div>
 

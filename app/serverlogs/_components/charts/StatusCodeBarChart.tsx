@@ -44,81 +44,37 @@ const chartConfig = {
 export function StatusCodeBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { allFilteredLogs } = useLogAnalysis();
+  const { statusTimelineData, fetchStatusAggregations, activeFilters } = useLogAnalysis();
 
-  const processData = () => {
-    if (!allFilteredLogs || allFilteredLogs.length === 0) return [];
+  React.useEffect(() => {
+    fetchStatusAggregations(viewMode, activeFilters);
+  }, [viewMode, activeFilters, fetchStatusAggregations]);
 
-    const dateMap = new Map<string, any>();
-    const allDates: Date[] = [];
+  const chartData = React.useMemo(() => {
+    if (!statusTimelineData || statusTimelineData.length === 0) return [];
 
-    const logsToProcess = allFilteredLogs;
-
-    logsToProcess.forEach((entry) => {
-      const date = new Date(entry.timestamp);
-      allDates.push(date);
-
-      let key: string;
-      if (viewMode === "daily") {
-        key = date.toISOString().split("T")[0];
-      } else {
-        const hour = date.getHours();
-        key = `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:00`;
-      }
-
-      if (!dateMap.has(key)) {
-        dateMap.set(key, {
-          date: key,
-          success: 0,
-          redirect: 0,
-          clientError: 0,
-          serverError: 0,
-        });
-      }
-
-      const counts = dateMap.get(key);
-      const status = entry.status;
-
-      if (status >= 200 && status < 300) {
-        counts.success += 1;
-      } else if (status >= 300 && status < 400) {
-        counts.redirect += 1;
-      } else if (status >= 400 && status < 500) {
-        counts.clientError += 1;
-      } else if (status >= 500 && status < 600) {
-        counts.serverError += 1;
-      }
-    });
-
-    if (allDates.length === 0) return [];
-
-    allDates.sort((a, b) => a.getTime() - b.getTime());
-    const minDate = allDates[0];
-    const maxDate = allDates[allDates.length - 1];
-
-    let startDate = new Date(minDate);
-    const endDate = new Date(maxDate);
+    const endDate = new Date();
+    let startDate = new Date(0); // All time
 
     if (timeRange === "7d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 7);
     } else if (timeRange === "30d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
     } else if (timeRange === "90d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return Array.from(dateMap.values())
+    return statusTimelineData
       .filter((item) => {
+        if (timeRange === "all") return true;
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
-
-  const chartData = processData();
+  }, [statusTimelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
@@ -216,19 +172,19 @@ export function StatusCodeBarChart() {
                     const date = new Date(value);
                     return viewMode === "daily"
                       ? date.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
                       : date.toLocaleTimeString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        });
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      });
                   }}
                 />
               }

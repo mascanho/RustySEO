@@ -19,6 +19,7 @@ use super::google_ip_fetcher::get_google_ip_ranges;
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static SORTED_TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 // Tauri command to set taxonomies from frontend
@@ -26,7 +27,14 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
-    println!("Taxonomies: {:#?}", taxonomies);
+    
+    // Also update sorted cache
+    let mut sorted = taxonomies.clone();
+    sorted.sort_by(|a, b| b.path.len().cmp(&a.path.len()));
+    let mut sorted_lock = SORTED_TAXONOMIES.lock().map_err(|e| e.to_string())?;
+    *sorted_lock = sorted;
+    
+    println!("Taxonomies updated and sorted.");
     Ok(())
 }
 
@@ -38,17 +46,13 @@ pub fn get_taxonomies() -> Vec<TaxonomyInfo> {
 }
 
 // Filter the path to see if it matches any taxonomy
-fn classify_taxonomy(path: &str) -> String {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_taxonomy_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> String {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
-            "exactMatch" => path == taxonomy.path, // New exactMatch case
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            "exactMatch" => path == taxonomy.path,
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
@@ -59,40 +63,30 @@ fn classify_taxonomy(path: &str) -> String {
 }
 
 /// Classify the segment of the path based on taxonomy configuration
-fn classify_segment_name(path: &str) -> String {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_segment_name_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> String {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
             "exactMatch" => path == taxonomy.path,
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
-            // Return the taxonomy name instead of the path
-            // Assuming TaxonomyInfo has a 'name' field based on your frontend data
-            return taxonomy.name.clone(); // This should return "Blogs", "Industries", etc.
+            return taxonomy.name.clone();
         }
     }
-    "Other".to_string() // Default to "Other" when no taxonomy matches
+    "Other".to_string()
 }
 
 /// Get the match type of the segment based on taxonomy configuration
-fn classify_segment_match(path: &str) -> Option<String> {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_segment_match_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> Option<String> {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
             "exactMatch" => path == taxonomy.path,
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
@@ -100,6 +94,31 @@ fn classify_segment_match(path: &str) -> Option<String> {
         }
     }
     None
+}
+
+// Public wrappers that use the CACHED sorted taxonomies
+pub fn classify_taxonomy(path: &str) -> String {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_taxonomy_internal(path, &sorted)
+    } else {
+        "other".to_string()
+    }
+}
+
+pub fn classify_segment_name(path: &str) -> String {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_segment_name_internal(path, &sorted)
+    } else {
+        "Other".to_string()
+    }
+}
+
+pub fn classify_segment_match(path: &str) -> Option<String> {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_segment_match_internal(path, &sorted)
+    } else {
+        None
+    }
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
@@ -563,12 +582,12 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
 
     let verified = is_verified_crawler(&ip, &crawler_type);
 
-    let position = gsc_log::gsc_position_match(path);
-    let clicks = gsc_log::gsc_clicks_match(path);
-    let impressions = gsc_log::gsc_impressions_match(path);
-    let gsc_url = gsc_log::get_matching_url(path);
-    let ctr = gsc_log::gsc_ctr_match(path);
+    // Consolidated GSC matching - single lock, single normalization
+    let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
 
+    // Get sorted taxonomies from CACHE - much faster than sorting every line
+    let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
+    
     Some(LogEntry {
         ip,
         timestamp,
@@ -588,9 +607,9 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
         browser,
         file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
         verified,
-        segment: classify_segment_name(path),
-        segment_match: classify_segment_match(path),
-        taxonomy: classify_taxonomy(path),
+        segment: classify_segment_name_internal(path, &sorted_taxonomies),
+        segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
+        taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
     })
 }
 

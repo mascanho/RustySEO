@@ -14,6 +14,29 @@ interface StatusCodeCounts {
   other_count: number;
 }
 
+export interface TimelinePoint {
+  date: string;
+  human: number;
+  crawler: number;
+}
+
+export interface StatusPoint {
+  date: string;
+  success: number;
+  redirect: number;
+  clientError: number;
+  serverError: number;
+}
+
+export interface CrawlerPoint {
+  date: string;
+  google: number;
+  bing: number;
+  openai: number;
+  claude: number;
+  other: number;
+}
+
 interface BotStats {
   count: number;
   status_codes: StatusCodeCounts;
@@ -148,6 +171,29 @@ interface LogAnalysisState {
   activeFilters: ActiveFilters;
   totalCount: number;
   currentPage: number;
+  botPathsAggregated: BotPathDetail[];
+  timelineData: TimelinePoint[];
+  statusTimelineData: StatusPoint[];
+  crawlerTimelineData: CrawlerPoint[];
+  pathAggregations: PathAggregationsPage;
+}
+
+export interface BotPathDetail {
+  ip: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  status: number;
+  user_agent: string;
+  referer: string;
+  response_size: number;
+  country: string;
+  is_crawler: boolean;
+  crawler_type: string;
+  browser: string;
+  file_type: string;
+  frequency: number;
+  verified: boolean;
 }
 
 interface ActiveFilters {
@@ -161,11 +207,18 @@ interface ActiveFilters {
   verified_filter: boolean | null;
   sort_key: string | null;
   sort_dir: string | null;
+  taxonomy_filter: string | null;
 }
 
 interface FilteredLogsPage {
   entries: LogEntry[];
   total_count: number;
+}
+
+export interface PathAggregationsPage {
+  entries: BotPathDetail[];
+  total_unique_paths: number;
+  total_hits: number;
 }
 
 export interface WidgetAggregations {
@@ -199,6 +252,12 @@ interface LogAnalysisActions {
   setError: (error: string | null) => void;
   clearEntries: () => void;
   setTotalCount: (count: number) => void;
+  fetchBotPathsAggregated: (filters: ActiveFilters) => Promise<void>;
+  fetchPathAggregationsPage: (page: number, limit: number, filters: ActiveFilters) => Promise<void>;
+  fetchOverviewStats: () => Promise<void>;
+  fetchTimelineAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
+  fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
+  fetchCrawlerAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
 }
 
 // Default values for new structures
@@ -281,6 +340,11 @@ const initialState: LogAnalysisState = {
     user_agents: {},
     referrers: {},
   },
+  pathAggregations: {
+    entries: [],
+    total_unique_paths: 0,
+    total_hits: 0,
+  },
   isLoading: false,
   error: null,
   filters: {
@@ -300,9 +364,14 @@ const initialState: LogAnalysisState = {
     verified_filter: null,
     sort_key: null,
     sort_dir: null,
+    taxonomy_filter: null,
   },
   totalCount: 0,
   currentPage: 1,
+  botPathsAggregated: [],
+  timelineData: [],
+  statusTimelineData: [],
+  crawlerTimelineData: [],
 };
 
 // Helper functions for merging complex objects
@@ -377,7 +446,11 @@ const mergeFrequencyObjects = (
   existing: Record<string, BotPageDetails[]> = {},
   incoming: Record<string, BotPageDetails[]> = {},
 ): Record<string, BotPageDetails[]> => {
-  const merged = JSON.parse(JSON.stringify(existing));
+  // We use the existing object as-is and just add/update entries.
+  // With Zimmer (via state), we don't need to manually deep clone.
+  // But this helper might be called on non-proxied data...
+  // Let's assume it should return a merged object.
+  const merged = { ...existing };
 
   for (const [url, incomingDetails] of Object.entries(incoming)) {
     if (!merged[url]) {
@@ -385,38 +458,41 @@ const mergeFrequencyObjects = (
       continue;
     }
 
+    // We don't want to modify the original array, so we create a new one
+    const updatedDetails = [...merged[url]];
+
     // Create a map for existing details for efficient lookup
-    const existingDetailsMap = new Map<string, BotPageDetails>();
-    merged[url].forEach((detail) => {
+    const existingDetailsMap = new Map<string, number>();
+    updatedDetails.forEach((detail, index) => {
       const key = `${detail.timestamp}_${detail.ip}_${detail.user_agent}`;
-      existingDetailsMap.set(key, detail);
+      existingDetailsMap.set(key, index);
     });
 
     // Process incoming details
     for (const newDetail of incomingDetails) {
       const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
+      const existingIdx = existingDetailsMap.get(key);
 
-      if (existingDetailsMap.has(key)) {
-        // Merge frequencies and response sizes for matching details
-        const existingDetail = existingDetailsMap.get(key)!;
+      if (existingIdx !== undefined) {
+        // Update existing entry in the array
+        const existingDetail = { ...updatedDetails[existingIdx] };
         existingDetail.frequency += newDetail.frequency;
         existingDetail.response_size += newDetail.response_size;
 
-        // Merge status codes if they exist
         if (existingDetail.status_codes && newDetail.status_codes) {
           existingDetail.status_codes = mergeStatusCodeCounts(
             existingDetail.status_codes,
-            newDetail.status_codes,
+            newDetail.status_codes
           );
         }
+        updatedDetails[existingIdx] = existingDetail;
       } else {
         // Add new detail
-        existingDetailsMap.set(key, { ...newDetail });
+        updatedDetails.push({ ...newDetail });
       }
     }
 
-    // Update the merged result with the combined details
-    merged[url] = Array.from(existingDetailsMap.values());
+    merged[url] = updatedDetails;
   }
 
   return merged;
@@ -484,167 +560,153 @@ export const useLogAnalysisStore = create<
           state.entries.push(...data.entries);
         }
 
-        // Merge overview
         const existingOverview = state.overview;
         const incomingOverview = data.overview || {};
+        const incomingTotals = incomingOverview.totals || {};
 
+        // 1. Handle cumulative counts and top-level overview
         if (mode === "replace") {
+          // Replace with backend's cumulative truth
           state.overview = {
             ...existingOverview,
             ...incomingOverview,
-            totals: incomingOverview.totals
-              ? {
-                ...existingOverview.totals,
-                ...incomingOverview.totals,
-                bot_stats:
-                  incomingOverview.totals.bot_stats ||
-                  existingOverview.totals.bot_stats,
-                status_codes:
-                  incomingOverview.totals.status_codes ||
-                  existingOverview.totals.status_codes,
-              }
-              : existingOverview.totals,
+            totals: {
+              ...existingOverview.totals,
+              ...incomingTotals,
+            },
           };
-          return;
+        } else {
+          // Append/Increment counts
+          state.overview.line_count += incomingOverview.line_count || 0;
+          state.overview.unique_ips += incomingOverview.unique_ips || 0;
+          state.overview.unique_user_agents += incomingOverview.unique_user_agents || 0;
+          state.overview.crawler_count += incomingOverview.crawler_count || 0;
+          state.overview.file_count += incomingOverview.file_count || 0;
+
+          if (incomingOverview.success_rate) {
+            state.overview.success_rate = incomingOverview.success_rate;
+          }
+          if (incomingOverview.log_start_time) {
+            state.overview.log_start_time = incomingOverview.log_start_time;
+          }
+          if (incomingOverview.log_finish_time) {
+            state.overview.log_finish_time = incomingOverview.log_finish_time;
+          }
+
+          // Increment totals
+          state.overview.totals.google += incomingTotals.google || 0;
+          state.overview.totals.bing += incomingTotals.bing || 0;
+          state.overview.totals.semrush += incomingTotals.semrush || 0;
+          state.overview.totals.hrefs += incomingTotals.hrefs || 0;
+          state.overview.totals.moz += incomingTotals.moz || 0;
+          state.overview.totals.uptime += incomingTotals.uptime || 0;
+          state.overview.totals.openai += incomingTotals.openai || 0;
+          state.overview.totals.claude += incomingTotals.claude || 0;
+
+          // 2. MERGE additive structures ONLY when appending
+          // These are partial in the backend response when appending
+
+          // Merge Status Codes
+          if (incomingTotals.status_codes) {
+            state.overview.totals.status_codes = mergeStatusCodeCounts(
+              state.overview.totals.status_codes,
+              incomingTotals.status_codes
+            );
+          }
+
+          // Merge Bot Stats
+          if (incomingTotals.bot_stats) {
+            state.overview.totals.bot_stats = mergeBotStatsMap(
+              state.overview.totals.bot_stats,
+              incomingTotals.bot_stats
+            );
+          }
+
+          // Merge Segmentations
+          if (incomingOverview.segmentations) {
+            state.overview.segmentations = mergeSegmentations(
+              state.overview.segmentations,
+              incomingOverview.segmentations
+            );
+          }
+
+          // Merge Page Arrays
+          if (incomingTotals.google_bot_pages) {
+            state.overview.totals.google_bot_pages = [
+              ...new Set([
+                ...state.overview.totals.google_bot_pages,
+                ...incomingTotals.google_bot_pages,
+              ]),
+            ];
+          }
+          if (incomingTotals.bing_bot_pages) {
+            state.overview.totals.bing_bot_pages = [
+              ...new Set([
+                ...state.overview.totals.bing_bot_pages,
+                ...incomingTotals.bing_bot_pages,
+              ]),
+            ];
+          }
+          if (incomingTotals.openai_bot_pages) {
+            state.overview.totals.openai_bot_pages = [
+              ...new Set([
+                ...state.overview.totals.openai_bot_pages,
+                ...incomingTotals.openai_bot_pages,
+              ]),
+            ];
+          }
+          if (incomingTotals.claude_bot_pages) {
+            state.overview.totals.claude_bot_pages = [
+              ...new Set([
+                ...state.overview.totals.claude_bot_pages,
+                ...incomingTotals.claude_bot_pages,
+              ]),
+            ];
+          }
+
+          // Merge Frequencies
+          if (incomingTotals.google_bot_page_frequencies) {
+            state.overview.totals.google_bot_page_frequencies = mergeFrequencyObjects(
+              state.overview.totals.google_bot_page_frequencies,
+              incomingTotals.google_bot_page_frequencies
+            );
+          }
+          if (incomingTotals.bing_bot_page_frequencies) {
+            state.overview.totals.bing_bot_page_frequencies = mergeFrequencyObjects(
+              state.overview.totals.bing_bot_page_frequencies,
+              incomingTotals.bing_bot_page_frequencies
+            );
+          }
+          if (incomingTotals.openai_bot_page_frequencies) {
+            state.overview.totals.openai_bot_page_frequencies = mergeFrequencyObjects(
+              state.overview.totals.openai_bot_page_frequencies,
+              incomingTotals.openai_bot_page_frequencies
+            );
+          }
+          if (incomingTotals.claude_bot_page_frequencies) {
+            state.overview.totals.claude_bot_page_frequencies = mergeFrequencyObjects(
+              state.overview.totals.claude_bot_page_frequencies,
+              incomingTotals.claude_bot_page_frequencies
+            );
+          }
         }
 
-        state.overview = {
-          ...existingOverview,
-          message: incomingOverview.message || existingOverview.message,
-          line_count:
-            existingOverview.line_count + (incomingOverview.line_count || 0),
-          unique_ips:
-            existingOverview.unique_ips + (incomingOverview.unique_ips || 0),
-          unique_user_agents:
-            existingOverview.unique_user_agents +
-            (incomingOverview.unique_user_agents || 0),
-          crawler_count:
-            existingOverview.crawler_count +
-            (incomingOverview.crawler_count || 0),
-          success_rate:
-            incomingOverview.success_rate || existingOverview.success_rate,
-          file_count:
-            existingOverview.file_count + (incomingOverview.file_count || 0),
-          log_start_time:
-            incomingOverview.log_start_time || existingOverview.log_start_time,
-          log_finish_time:
-            incomingOverview.log_finish_time ||
-            existingOverview.log_finish_time,
 
-          // Merge totals
-          totals: {
-            ...existingOverview.totals,
-            google:
-              existingOverview.totals.google +
-              (incomingOverview.totals?.google || 0),
-            bing:
-              existingOverview.totals.bing +
-              (incomingOverview.totals?.bing || 0),
-            semrush:
-              existingOverview.totals.semrush +
-              (incomingOverview.totals?.semrush || 0),
-            hrefs:
-              existingOverview.totals.hrefs +
-              (incomingOverview.totals?.hrefs || 0),
-            moz:
-              existingOverview.totals.moz + (incomingOverview.totals?.moz || 0),
-            uptime:
-              existingOverview.totals.uptime +
-              (incomingOverview.totals?.uptime || 0),
-            openai:
-              existingOverview.totals.openai +
-              (incomingOverview.totals?.openai || 0),
-            claude:
-              existingOverview.totals.claude +
-              (incomingOverview.totals?.claude || 0),
-
-            // Merge bot stats
-            bot_stats: incomingOverview.totals?.bot_stats
-              ? mergeBotStatsMap(
-                existingOverview.totals.bot_stats,
-                incomingOverview.totals.bot_stats,
-              )
-              : existingOverview.totals.bot_stats,
-
-            // Merge status codes
-            status_codes: incomingOverview.totals?.status_codes
-              ? mergeStatusCodeCounts(
-                existingOverview.totals.status_codes,
-                incomingOverview.totals.status_codes,
-              )
-              : existingOverview.totals.status_codes,
-
-            // Merge page arrays
-            google_bot_pages: [
-              ...new Set([
-                ...existingOverview.totals.google_bot_pages,
-                ...(incomingOverview.totals?.google_bot_pages || []),
-              ]),
-            ],
-            bing_bot_pages: [
-              ...new Set([
-                ...existingOverview.totals.bing_bot_pages,
-                ...(incomingOverview.totals?.bing_bot_pages || []),
-              ]),
-            ],
-            openai_bot_pages: [
-              ...new Set([
-                ...existingOverview.totals.openai_bot_pages,
-                ...(incomingOverview.totals?.openai_bot_pages || []),
-              ]),
-            ],
-            claude_bot_pages: [
-              ...new Set([
-                ...existingOverview.totals.claude_bot_pages,
-                ...(incomingOverview.totals?.claude_bot_pages || []),
-              ]),
-            ],
-
-            // Merge frequency objects
-            google_bot_page_frequencies: mergeFrequencyObjects(
-              existingOverview.totals.google_bot_page_frequencies,
-              incomingOverview.totals?.google_bot_page_frequencies || {},
+        // Merge Segment Summary
+        if (incomingOverview.segment_summary) {
+          state.overview.segment_summary = {
+            total_segments: Math.max(
+              state.overview.segment_summary.total_segments,
+              incomingOverview.segment_summary.total_segments
             ),
-            bing_bot_page_frequencies: mergeFrequencyObjects(
-              existingOverview.totals.bing_bot_page_frequencies,
-              incomingOverview.totals?.bing_bot_page_frequencies || {},
-            ),
-            openai_bot_page_frequencies: mergeFrequencyObjects(
-              existingOverview.totals.openai_bot_page_frequencies,
-              incomingOverview.totals?.openai_bot_page_frequencies || {},
-            ),
-            claude_bot_page_frequencies: mergeFrequencyObjects(
-              existingOverview.totals.claude_bot_page_frequencies,
-              incomingOverview.totals?.claude_bot_page_frequencies || {},
-            ),
-          },
-
-          // Merge segmentations
-          segmentations: incomingOverview.segmentations
-            ? mergeSegmentations(
-              existingOverview.segmentations,
-              incomingOverview.segmentations,
-            )
-            : existingOverview.segmentations,
-
-          // Merge segment summary
-          segment_summary: incomingOverview.segment_summary
-            ? {
-              total_segments: Math.max(
-                existingOverview.segment_summary.total_segments,
-                incomingOverview.segment_summary.total_segments,
-              ),
-              total_segment_requests:
-                existingOverview.segment_summary.total_segment_requests +
-                (incomingOverview.segment_summary.total_segment_requests ||
-                  0),
-              average_requests_per_segment:
-                incomingOverview.segment_summary
-                  .average_requests_per_segment ||
-                existingOverview.segment_summary.average_requests_per_segment,
-            }
-            : existingOverview.segment_summary,
-        };
+            total_segment_requests:
+              state.overview.segment_summary.total_segment_requests +
+              (incomingOverview.segment_summary.total_segment_requests || 0),
+            average_requests_per_segment:
+              incomingOverview.segment_summary.average_requests_per_segment ||
+              state.overview.segment_summary.average_requests_per_segment,
+          };
+        }
 
         state.isLoading = false;
         state.error = null;
@@ -701,6 +763,7 @@ export const useLogAnalysisStore = create<
           verified_filter: filters.verified_filter,
           sort_key: filters.sort_key,
           sort_dir: filters.sort_dir,
+          taxonomy_filter: filters.taxonomy_filter,
         };
 
         const result = await invoke<FilteredLogsPage>("get_active_logs_page", {
@@ -740,6 +803,7 @@ export const useLogAnalysisStore = create<
           verified_filter: filters.verified_filter ?? null,
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",
+          taxonomy_filter: filters.taxonomy_filter || null,
         };
 
         const result = await invoke<FilteredLogsPage>(
@@ -774,6 +838,7 @@ export const useLogAnalysisStore = create<
           verified_filter: filters.verified_filter ?? null,
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",
+          taxonomy_filter: filters.taxonomy_filter || null,
         };
         const widgetAggs = await invoke<WidgetAggregations>("get_widget_aggregations", {
           filters: activeFilters,
@@ -781,6 +846,77 @@ export const useLogAnalysisStore = create<
         set({ widgetAggs });
       } catch (error) {
         console.error("Failed to fetch widget aggregations:", error);
+      }
+    },
+
+    fetchOverviewStats: async () => {
+      try {
+        const overview = await invoke<LogAnalysisOverview>("get_active_logs_stats");
+        set({ overview, totalCount: overview.line_count });
+      } catch (error) {
+        console.error("Failed to fetch overview stats:", error);
+      }
+    },
+
+    fetchBotPathsAggregated: async (filters: ActiveFilters) => {
+      try {
+        const botPathsAggregated = await invoke<BotPathDetail[]>(
+          "get_bot_paths_aggregated",
+          { filters }
+        );
+        set({ botPathsAggregated });
+      } catch (error) {
+        console.error("Failed to fetch bot paths aggregated:", error);
+      }
+    },
+
+    fetchPathAggregationsPage: async (page, limit, filters) => {
+      set({ isLoading: true });
+      try {
+        const pathAggregations = await invoke<PathAggregationsPage>(
+          "get_path_aggregations_page",
+          { page, limit, filters }
+        );
+        set({ pathAggregations, isLoading: false });
+      } catch (error) {
+        console.error("Failed to fetch path aggregations page:", error);
+        set({ isLoading: false });
+      }
+    },
+
+    fetchTimelineAggregations: async (viewMode, filters) => {
+      try {
+        const timelineData = await invoke<TimelinePoint[]>(
+          "get_timeline_aggregations",
+          { viewMode, filters }
+        );
+        set({ timelineData });
+      } catch (error) {
+        console.error("Failed to fetch timeline aggregations:", error);
+      }
+    },
+
+    fetchStatusAggregations: async (viewMode, filters) => {
+      try {
+        const statusTimelineData = await invoke<StatusPoint[]>(
+          "get_status_aggregations",
+          { viewMode, filters }
+        );
+        set({ statusTimelineData });
+      } catch (error) {
+        console.error("Failed to fetch status aggregations:", error);
+      }
+    },
+
+    fetchCrawlerAggregations: async (viewMode, filters) => {
+      try {
+        const crawlerTimelineData = await invoke<CrawlerPoint[]>(
+          "get_crawler_aggregations",
+          { viewMode, filters }
+        );
+        set({ crawlerTimelineData });
+      } catch (error) {
+        console.error("Failed to fetch crawler aggregations:", error);
       }
     },
 
@@ -821,6 +957,17 @@ export const useLogAnalysis = () =>
       setError: state.setError,
       clearEntries: state.clearEntries,
       setTotalCount: state.setTotalCount,
+      botPathsAggregated: state.botPathsAggregated,
+      fetchBotPathsAggregated: state.fetchBotPathsAggregated,
+      pathAggregations: state.pathAggregations,
+      fetchPathAggregationsPage: state.fetchPathAggregationsPage,
+      fetchOverviewStats: state.fetchOverviewStats,
+      timelineData: state.timelineData,
+      fetchTimelineAggregations: state.fetchTimelineAggregations,
+      statusTimelineData: state.statusTimelineData,
+      fetchStatusAggregations: state.fetchStatusAggregations,
+      crawlerTimelineData: state.crawlerTimelineData,
+      fetchCrawlerAggregations: state.fetchCrawlerAggregations,
     }),
     shallow,
   );

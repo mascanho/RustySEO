@@ -40,10 +40,9 @@ impl Segmentation {
         }
     }
 
-    pub fn add_url(&mut self, url: String) {
-        if !self.urls.contains(&url) {
-            self.urls.push(url);
-        }
+    pub fn add_url(&mut self, _url: String) {
+        // Removed: Causes OOM and O(n^2) performance degradation on large log files.
+        // Unique URLs per segment should be queried from the database if needed.
     }
 
     pub fn add_entry(&mut self, entry: &LogEntry) {
@@ -266,15 +265,8 @@ impl BotStats {
     fn add_entry(&mut self, entry: &LogEntry) {
         self.count += 1;
         self.status_codes.add_status(entry.status);
-        // We don't push to self.pages because it causes OOM on large logs
-        // unique pages are already tracked in other fields
-
-        // Update page-specific status codes
-        let page_status = self
-            .page_status_codes
-            .entry(entry.path.clone())
-            .or_insert_with(StatusCodeCounts::new);
-        page_status.add_status(entry.status);
+        // Removed per-page status tracking to prevent OOM.
+        // This detail is now retrieved from the database on demand.
     }
 
     /// Strip heavyweight data that shouldn't be serialized over IPC events.
@@ -350,7 +342,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                             overview: LogAnalysisResult::default(),
                             entries: Vec::new(),
                         };
-                        let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
                         entries_buffer.clear();
                         thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
@@ -369,7 +361,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 overview: LogAnalysisResult::default(),
                 entries: Vec::new(),
             };
-            let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
         }
 
         if let Some(mut overview) = overview {
@@ -403,9 +395,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
     // Main processing
     let mut total_requests = 0;
-    let mut unique_ips = HashSet::new();
-    let mut unique_user_agents = HashSet::new();
-    let mut crawler_count = 0;
     let mut success_count = 0;
     let mut status_code_counts = StatusCodeCounts::new();
     
@@ -415,18 +404,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
-
-    // Page frequencies tracking (to avoid keeping all entries)
-    let mut google_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut bing_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut openai_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut claude_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-
-    // Keep original page lists
-    let mut google_bot_pages = HashSet::new();
-    let mut bing_bot_pages = HashSet::new();
-    let mut openai_bot_pages = HashSet::new();
-    let mut claude_bot_pages = HashSet::new();
 
     // SEGMENTATION - Initialize segment tracking
     let mut segments: HashMap<String, Segmentation> = HashMap::new();
@@ -498,11 +475,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
             // Update statistics
             total_requests += 1;
-            unique_ips.insert(entry.ip.clone());
-            unique_user_agents.insert(entry.user_agent.clone());
-            if entry.is_crawler {
-                crawler_count += 1;
-            }
             if entry.status >= 200 && entry.status < 300 {
                 success_count += 1;
             }
@@ -516,13 +488,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             if crawler_type.contains("google") {
                 bot_counts[0] += 1;
                 bot_stats.google.add_entry(&entry);
-                google_bot_pages.insert(entry.path.clone());
-                update_frequency(&mut google_freq, &entry);
             } else if crawler_type.contains("bing") {
                 bot_counts[1] += 1;
                 bot_stats.bing.add_entry(&entry);
-                bing_bot_pages.insert(entry.path.clone());
-                update_frequency(&mut bing_freq, &entry);
             } else if crawler_type.contains("semrush") {
                 bot_counts[2] += 1;
                 bot_stats.semrush.add_entry(&entry);
@@ -547,13 +515,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             {
                 bot_counts[6] += 1;
                 bot_stats.openai.add_entry(&entry);
-                openai_bot_pages.insert(entry.path.clone());
-                update_frequency(&mut openai_freq, &entry);
             } else if crawler_type.contains("claude") {
                 bot_counts[7] += 1;
                 bot_stats.claude.add_entry(&entry);
-                claude_bot_pages.insert(entry.path.clone());
-                update_frequency(&mut claude_freq, &entry);
             }
 
             // Stream the entry
@@ -600,11 +564,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         segment.strip_heavy_data();
     }
 
-    // Helper to finalize frequency maps
-    let google_bot_page_frequencies = finalize_frequency(google_freq);
-    let bing_bot_page_frequencies = finalize_frequency(bing_freq);
-    let openai_bot_page_frequencies = finalize_frequency(openai_freq);
-    let claude_bot_page_frequencies = finalize_frequency(claude_freq);
 
     // Strip heavyweight per-page data from bot_stats before emitting.
     // This data is already persisted in the SQLite DB and can be queried on demand.
@@ -632,14 +591,14 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 claude: stats.totals.claude,
                 bot_stats, // Use current batch's detailed stats for segments, but we should really merge them too if we want true append. For now, counts are most important.
                 status_codes: stats.totals.status_codes,
-                google_bot_pages: stats.totals.google_bot_pages,
-                google_bot_page_frequencies: stats.totals.google_bot_page_frequencies,
-                bing_bot_pages: stats.totals.bing_bot_pages,
-                bing_bot_page_frequencies: stats.totals.bing_bot_page_frequencies,
-                openai_bot_pages: stats.totals.openai_bot_pages,
-                openai_bot_page_frequencies: stats.totals.openai_bot_page_frequencies,
-                claude_bot_pages: stats.totals.claude_bot_pages,
-                claude_bot_page_frequencies: stats.totals.claude_bot_page_frequencies,
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
             },
             log_start_time: stats.log_start_time,
             log_finish_time: stats.log_finish_time,
@@ -652,9 +611,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         LogAnalysisResult {
             message: "Log analysis completed".to_string(),
             line_count: total_requests,
-            unique_ips: unique_ips.len(),
-            unique_user_agents: unique_user_agents.len(),
-            crawler_count,
+            unique_ips: 0,
+            unique_user_agents: 0,
+            crawler_count: 0,
             success_rate: if total_requests > 0 {
                 (success_count as f32 / total_requests as f32) * 100.0
             } else {
@@ -671,14 +630,14 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 claude: bot_counts[7],
                 bot_stats,
                 status_codes: status_code_counts,
-                google_bot_pages: google_bot_pages.into_iter().collect(),
-                google_bot_page_frequencies,
-                bing_bot_pages: bing_bot_pages.into_iter().collect(),
-                bing_bot_page_frequencies,
-                openai_bot_pages: openai_bot_pages.into_iter().collect(),
-                openai_bot_page_frequencies,
-                claude_bot_pages: claude_bot_pages.into_iter().collect(),
-                claude_bot_page_frequencies,
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
             },
             log_start_time,
             log_finish_time,
@@ -688,60 +647,11 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
     };
 
-    // Send the overview (with lightweight page data — frequencies already stripped from bot_stats)
-    // Also clear bot_page_frequencies in Totals to avoid serializing huge maps over IPC
-    let mut final_overview = cumulative_overview;
-    final_overview.totals.google_bot_page_frequencies.clear();
-    final_overview.totals.bing_bot_page_frequencies.clear();
-    final_overview.totals.openai_bot_page_frequencies.clear();
-    final_overview.totals.claude_bot_page_frequencies.clear();
-    final_overview.totals.google_bot_pages.clear();
-    final_overview.totals.bing_bot_pages.clear();
-    final_overview.totals.openai_bot_pages.clear();
-    final_overview.totals.claude_bot_pages.clear();
-    let _ = entry_tx.send(StreamEntry::Overview(final_overview));
+    let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
 
     Ok(())
 }
 
-fn update_frequency(freq_map: &mut HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)>, entry: &LogEntry) {
-    let stats = freq_map.entry(entry.path.clone()).or_insert((
-        0, 0, 
-        entry.crawler_type.clone(), 
-        entry.file_type.clone(), 
-        entry.timestamp.clone(), 
-        entry.ip.clone(), 
-        entry.referer.clone(), 
-        entry.taxonomy.clone(), 
-        entry.browser.clone(), 
-        entry.verified,
-        entry.status
-    ));
-    stats.0 += entry.response_size;
-    stats.1 += 1;
-}
-
-fn finalize_frequency(freq_map: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)>) -> HashMap<String, Vec<BotPageDetails>> {
-    freq_map.into_iter().map(|(path, (size, count, crawler, file, time, ip, ref_, tax, browser, verified, status))| {
-        (path, vec![BotPageDetails {
-            crawler_type: crawler,
-            file_type: file,
-            response_size: size,
-            timestamp: time,
-            ip,
-            referer: ref_,
-            browser,
-            user_agent: String::new(), // Not needed for frequency summary
-            frequency: count,
-            method: String::new(),
-            verified,
-            taxonomy: tax,
-            filename: String::new(),
-            status,
-            status_codes: StatusCodeCounts::new(), // Frequencies don't need detailed codes here as they are per-page anyway
-        }])
-    }).collect()
-}
 /// Analyse logs from file paths - reads files line-by-line via BufReader to avoid loading
 /// entire file contents into memory. This prevents OOM crashes on large log files.
 pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) -> Result<(), String> {
@@ -789,11 +699,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                         if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                             println!("Failed to insert active logs chunk: {}", e);
                         }
-                        let chunk = LogResult {
-                            overview: LogAnalysisResult::default(),
-                            entries: Vec::new(),
-                        };
-                        let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
                         entries_buffer.clear();
                         thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
@@ -812,7 +718,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 overview: LogAnalysisResult::default(),
                 entries: Vec::new(),
             };
-            let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
         }
 
         if let Some(mut overview) = overview {
@@ -846,9 +752,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
 
     // Main processing
     let mut total_requests = 0;
-    let mut unique_ips = HashSet::new();
-    let mut unique_user_agents = HashSet::new();
-    let mut crawler_count = 0;
     let mut success_count = 0;
     let mut status_code_counts = StatusCodeCounts::new();
 
@@ -859,16 +762,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
 
-    // Page frequencies tracking
-    let mut google_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut bing_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut openai_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-    let mut claude_freq: HashMap<String, (u64, usize, String, String, String, String, Option<String>, Option<String>, String, bool, u16)> = HashMap::new();
-
-    let mut google_bot_pages = HashSet::new();
-    let mut bing_bot_pages = HashSet::new();
-    let mut openai_bot_pages = HashSet::new();
-    let mut claude_bot_pages = HashSet::new();
+    // SEGMENTATION
 
     // SEGMENTATION
     let mut segments: HashMap<String, Segmentation> = HashMap::new();
@@ -961,11 +855,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
 
                 // Update statistics
                 total_requests += 1;
-                unique_ips.insert(entry.ip.clone());
-                unique_user_agents.insert(entry.user_agent.clone());
-                if entry.is_crawler {
-                    crawler_count += 1;
-                }
                 if entry.status >= 200 && entry.status < 300 {
                     success_count += 1;
                 }
@@ -975,13 +864,9 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 if crawler_type.contains("google") {
                     bot_counts[0] += 1;
                     bot_stats.google.add_entry(&entry);
-                    google_bot_pages.insert(entry.path.clone());
-                    update_frequency(&mut google_freq, &entry);
                 } else if crawler_type.contains("bing") {
                     bot_counts[1] += 1;
                     bot_stats.bing.add_entry(&entry);
-                    bing_bot_pages.insert(entry.path.clone());
-                    update_frequency(&mut bing_freq, &entry);
                 } else if crawler_type.contains("semrush") {
                     bot_counts[2] += 1;
                     bot_stats.semrush.add_entry(&entry);
@@ -1006,13 +891,9 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 {
                     bot_counts[6] += 1;
                     bot_stats.openai.add_entry(&entry);
-                    openai_bot_pages.insert(entry.path.clone());
-                    update_frequency(&mut openai_freq, &entry);
                 } else if crawler_type.contains("claude") {
                     bot_counts[7] += 1;
                     bot_stats.claude.add_entry(&entry);
-                    claude_bot_pages.insert(entry.path.clone());
-                    update_frequency(&mut claude_freq, &entry);
                 }
 
                 // Stream the entry
@@ -1057,10 +938,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         segment.strip_heavy_data();
     }
 
-    let google_bot_page_frequencies = finalize_frequency(google_freq);
-    let bing_bot_page_frequencies = finalize_frequency(bing_freq);
-    let openai_bot_page_frequencies = finalize_frequency(openai_freq);
-    let claude_bot_page_frequencies = finalize_frequency(claude_freq);
 
     // Strip heavyweight per-page data from bot_stats before emitting.
     // This data is already persisted in the SQLite DB and can be queried on demand.
@@ -1103,12 +980,13 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             segment_summary,
         }
     } else {
+        // Fallback to current batch if DB stats fail
         LogAnalysisResult {
             message: "Log analysis completed".to_string(),
             line_count: total_requests,
-            unique_ips: unique_ips.len(),
-            unique_user_agents: unique_user_agents.len(),
-            crawler_count,
+            unique_ips: 0,
+            unique_user_agents: 0,
+            crawler_count: 0,
             success_rate: if total_requests > 0 {
                 (success_count as f32 / total_requests as f32) * 100.0
             } else {
@@ -1125,7 +1003,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 claude: bot_counts[7],
                 bot_stats,
                 status_codes: status_code_counts,
-                // Send empty page lists — data is in DB, query on demand
                 google_bot_pages: Vec::new(),
                 google_bot_page_frequencies: HashMap::new(),
                 bing_bot_pages: Vec::new(),

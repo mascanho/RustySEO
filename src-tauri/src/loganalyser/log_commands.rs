@@ -20,12 +20,23 @@ pub fn check_logs_from_paths_command(
 
     // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
     if storing_logs {
+        use std::io::{BufRead, BufReader};
+        use std::fs::File;
+
         // Create the DB
         let _ = create_serverlog_db("serverlog.db");
         
-        // Read file contents to store in persistent DB
-        let mut log_contents = Vec::new();
         for path in &file_paths {
+            let metadata = std::fs::metadata(path).map_err(|e| e.to_string())?;
+            let file_size = metadata.len();
+            
+            // Safety check: Don't read files larger than 100MB into memory for persistent storage
+            // Analysis still works fine as it uses line-by-line streaming.
+            if file_size > 100 * 1024 * 1024 {
+                println!("Skipping persistent storage for {} ({} bytes) - size exceeds 100MB. Analysis will still proceed.", path, file_size);
+                continue;
+            }
+
             let filename = std::path::Path::new(path)
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -33,16 +44,17 @@ pub fn check_logs_from_paths_command(
                 .to_string();
             
             match std::fs::read_to_string(path) {
-                Ok(content) => log_contents.push((filename, content)),
-                Err(e) => println!("Warning: Failed to read {} for storage: {}", path, e),
+                Ok(content) => {
+                    let data = LogInput { log_contents: vec![(filename, content)] };
+                    add_data_to_serverlog_db("serverlog.db", &data, &project);
+                }
+                Err(e) => {
+                    println!("Warning: Failed to read {} for storage: {}", path, e);
+                    continue;
+                }
             }
         }
-
-        if !log_contents.is_empty() {
-            let data = LogInput { log_contents };
-            add_data_to_serverlog_db("serverlog.db", &data, &project);
-            println!("Stored logs in serverlog.db from paths for project: {}", project);
-        }
+        println!("Stored eligible logs in serverlog.db from paths for project: {}", project);
     }
 
     match analyse_log_from_paths(file_paths, app) {

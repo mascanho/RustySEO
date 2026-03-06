@@ -25,7 +25,7 @@ pub fn init_active_db() -> Result<(), String> {
         PRAGMA synchronous = OFF;
         PRAGMA journal_mode = MEMORY;
         PRAGMA cache_size = 10000;
-        
+
         CREATE TABLE IF NOT EXISTS active_parsed_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ip TEXT,
@@ -59,13 +59,13 @@ pub fn init_active_db() -> Result<(), String> {
     )
     .map_err(|e| e.to_string())?;
 
-    let mut lock = DB_CONN.lock().unwrap();
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     *lock = Some(conn);
     Ok(())
 }
 
 pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_mut().ok_or("DB not initialized")?;
 
     let tx = conn.transaction().map_err(|e| e.to_string())?;
@@ -73,8 +73,8 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
         let mut stmt = tx
             .prepare(
                 "INSERT INTO active_parsed_logs (
-                ip, timestamp, method, path, position, clicks, ctr, impressions, gsc_url, 
-                status, user_agent, referer, response_size, country, crawler_type, is_crawler, 
+                ip, timestamp, method, path, position, clicks, ctr, impressions, gsc_url,
+                status, user_agent, referer, response_size, country, crawler_type, is_crawler,
                 file_type, browser, verified, segment, segment_match, taxonomy, filename
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             )
@@ -125,6 +125,7 @@ pub struct ActiveFilters {
     pub verified_filter: Option<bool>,
     pub sort_key: Option<String>,
     pub sort_dir: Option<String>,
+    pub taxonomy_filter: Option<String>,
 }
 
 fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::Value>) {
@@ -201,7 +202,31 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
         params.push(verified.into());
     }
 
+    if let Some(ref taxonomy) = filters.taxonomy_filter {
+        clauses.push("taxonomy = ?".to_string());
+        params.push(taxonomy.clone().into());
+    }
+
     (clauses.join(" AND "), params)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BotPathDetail {
+    pub ip: String,
+    pub timestamp: String,
+    pub method: String,
+    pub path: String,
+    pub status: u16,
+    pub user_agent: String,
+    pub referer: String,
+    pub response_size: u64,
+    pub country: String,
+    pub is_crawler: bool,
+    pub crawler_type: String,
+    pub browser: String,
+    pub file_type: String,
+    pub frequency: usize,
+    pub verified: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -216,7 +241,8 @@ pub fn get_active_logs_page(
     limit: u32,
     filters: ActiveFilters,
 ) -> Result<FilteredLogsPage, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
@@ -298,7 +324,8 @@ pub fn get_active_logs_page(
 
 #[tauri::command]
 pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsPage, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
@@ -332,9 +359,12 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
         order_sql = format!("ORDER BY {} {}", safe_key, safe_dir);
     }
 
+    // For stability, we MUST limit the "all" logs to a sane number.
+    // Returning millions of logs via IPC will crash the app.
+    let max_logs = 10000;
     let query = format!(
-        "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT 100000",
-        where_sql, order_sql
+        "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT {}",
+        where_sql, order_sql, max_logs
     );
 
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -409,7 +439,8 @@ pub fn get_timeline_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<TimelinePoint>, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
@@ -422,7 +453,7 @@ pub fn get_timeline_aggregations(
 
     let query = format!(
         "
-        SELECT 
+        SELECT
             {} as d,
             SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END) as human_count,
             SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END) as crawler_count
@@ -466,7 +497,8 @@ pub fn get_status_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<StatusPoint>, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
@@ -478,7 +510,7 @@ pub fn get_status_aggregations(
 
     let query = format!(
         "
-        SELECT 
+        SELECT
             {} as d,
             SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END) as succ,
             SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END) as redir,
@@ -533,7 +565,8 @@ pub fn get_crawler_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<CrawlerPoint>, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
@@ -550,7 +583,7 @@ pub fn get_crawler_aggregations(
     };
 
     let query = format!("
-        SELECT 
+        SELECT
             {} as d,
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END) as ggl,
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END) as bng,
@@ -634,53 +667,112 @@ pub struct WidgetAggregations {
 
 #[tauri::command]
 pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregations, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
-
-    let query = format!(
-        "SELECT file_type, taxonomy, status, user_agent, referer FROM active_parsed_logs WHERE {}",
-        where_sql
-    );
-    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-
     let mut aggs = WidgetAggregations::default();
 
-    let mut rows = stmt
-        .query(rusqlite::params_from_iter(params_vec.iter()))
-        .map_err(|e| e.to_string())?;
+    // 1. File Types
+    {
+        let query = format!(
+            "SELECT file_type, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY file_type",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
 
-    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
-        let ft: Option<String> = row.get(0).unwrap_or(None);
-        let tax: Option<String> = row.get(1).unwrap_or(None);
-        let st: Option<u16> = row.get(2).unwrap_or(None);
-        let ua: Option<String> = row.get(3).unwrap_or(None);
-        let ref_str: Option<String> = row.get(4).unwrap_or(None);
+        for row in rows {
+            let (ft, count) = row.map_err(|e| e.to_string())?;
+            aggs.file_types
+                .insert(ft.unwrap_or_else(|| "Other".to_string()), count);
+        }
+    }
 
-        *aggs
-            .file_types
-            .entry(ft.unwrap_or_else(|| "Other".to_string()))
-            .or_insert(0) += 1;
-        *aggs
-            .content
-            .entry(tax.unwrap_or_else(|| "other".to_string()))
-            .or_insert(0) += 1;
+    // 2. Taxonomy / Content
+    {
+        let query = format!(
+            "SELECT taxonomy, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY taxonomy",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
 
-        if let Some(s) = st {
-            if s > 0 {
-                *aggs.status_codes.entry(s).or_insert(0) += 1;
+        for row in rows {
+            let (tax, count) = row.map_err(|e| e.to_string())?;
+            aggs.content
+                .insert(tax.unwrap_or_else(|| "other".to_string()), count);
+        }
+    }
+
+    // 3. Status Codes
+    {
+        let query = format!(
+            "SELECT status, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY status",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (st, count) = row.map_err(|e| e.to_string())?;
+            if st > 0 {
+                aggs.status_codes.insert(st, count);
             }
         }
+    }
 
-        *aggs
-            .user_agents
-            .entry(ua.unwrap_or_else(|| "Unknown".to_string()))
-            .or_insert(0) += 1;
-        *aggs
-            .referrers
-            .entry(ref_str.unwrap_or_else(|| "Direct/None".to_string()))
-            .or_insert(0) += 1;
+    // 4. User Agents (Top 100)
+    {
+        let query = format!(
+            "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 100",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (ua, count) = row.map_err(|e| e.to_string())?;
+            aggs.user_agents
+                .insert(ua.unwrap_or_else(|| "Unknown".to_string()), count);
+        }
+    }
+
+    // 5. Referrers (Top 100)
+    {
+        let query = format!(
+            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 100",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (ref_str, count) = row.map_err(|e| e.to_string())?;
+            aggs.referrers
+                .insert(ref_str.unwrap_or_else(|| "Direct/None".to_string()), count);
+        }
     }
 
     Ok(aggs)
@@ -688,15 +780,16 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
 
 #[tauri::command]
 pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     // Get total count, crawler count, unique IPs and UAs
     let mut stmt = conn
         .prepare(
             "
-        SELECT 
-            COUNT(*), 
+        SELECT
+            COUNT(*),
             SUM(CASE WHEN is_crawler = 1 THEN 1 ELSE 0 END),
             COUNT(DISTINCT ip),
             COUNT(DISTINCT user_agent),
@@ -751,10 +844,10 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
     let mut bot_stmt = conn
         .prepare(
             "
-        SELECT 
-            LOWER(crawler_type), 
-            COUNT(*) 
-        FROM active_parsed_logs 
+        SELECT
+            LOWER(crawler_type),
+            COUNT(*)
+        FROM active_parsed_logs
         WHERE crawler_type != 'Human'
         GROUP BY LOWER(crawler_type)
     ",
@@ -809,7 +902,8 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
 }
 #[tauri::command]
 pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let query = "SELECT DISTINCT crawler_type FROM active_parsed_logs WHERE crawler_type != 'Human' AND crawler_type != '' ORDER BY crawler_type";
@@ -827,7 +921,7 @@ pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 pub fn clear_active_db_command() -> Result<(), String> {
-    let mut lock = DB_CONN.lock().unwrap();
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = match lock.as_mut() {
         Some(c) => c,
         None => return Ok(()),
@@ -843,6 +937,188 @@ pub fn clear_all_log_data_command() -> Result<(), String> {
     // Only clear the active session logs
     clear_active_db_command()?;
     Ok(())
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PathAggregationsPage {
+    pub entries: Vec<BotPathDetail>,
+    pub total_unique_paths: u32,
+    pub total_hits: u64,
+}
+
+#[tauri::command]
+pub fn get_path_aggregations_page(
+    page: u32,
+    limit: u32,
+    filters: ActiveFilters,
+) -> Result<PathAggregationsPage, String> {
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    // 1. Get accurate counts
+    let count_query = format!(
+        "SELECT COUNT(DISTINCT path), COUNT(*) FROM active_parsed_logs WHERE {}",
+        where_sql
+    );
+    let (total_unique_paths, total_hits): (u32, u64) = conn
+        .query_row(
+            &count_query,
+            rusqlite::params_from_iter(params_vec.iter()),
+            |row| Ok((row.get(0)?, row.get::<_, i64>(1)? as u64)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    // 2. Get paginated results
+    let offset = (page - 1) * limit;
+    let sort_col = match filters.sort_key.as_deref() {
+        Some("frequency") => "frequency",
+        Some("response_size") => "total_size",
+        Some("timestamp") => "newest",
+        Some("status") => "status",
+        Some("path") => "path",
+        _ => "frequency",
+    };
+    let sort_dir = match filters.sort_dir.as_deref() {
+        Some("descending") => "DESC",
+        _ => "ASC",
+    };
+
+    let query = format!(
+        "
+        SELECT
+            path,
+            COUNT(*) as frequency,
+            SUM(response_size) as total_size,
+            MAX(timestamp) as newest,
+            MIN(timestamp) as oldest,
+            file_type,
+            status,
+            MAX(user_agent) as ua,
+            MAX(crawler_type) as ct,
+            MAX(method) as m,
+            MAX(verified) as v,
+            MAX(ip) as ip_addr,
+            MAX(referer) as ref_str,
+            MAX(browser) as br,
+            MAX(country) as c
+        FROM active_parsed_logs
+        WHERE {}
+        GROUP BY path
+        ORDER BY {} {}
+        LIMIT {} OFFSET {}
+    ",
+        where_sql, sort_col, sort_dir, limit, offset
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+            Ok(BotPathDetail {
+                path: row.get(0)?,
+                frequency: row.get(1)?,
+                response_size: row.get::<_, u32>(2)? as u64,
+                timestamp: row.get(3)?,
+                file_type: row
+                    .get::<_, Option<String>>(5)?
+                    .unwrap_or_else(|| "Other".to_string()),
+                status: row.get::<_, Option<u16>>(6)?.unwrap_or(200),
+                user_agent: row.get::<_, Option<String>>(7)?.unwrap_or_default(),
+                crawler_type: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                method: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
+                verified: row.get::<_, Option<i32>>(10)?.unwrap_or(0) == 1,
+                ip: row.get::<_, Option<String>>(11)?.unwrap_or_default(),
+                referer: row.get::<_, Option<String>>(12)?.unwrap_or_default(),
+                browser: row.get::<_, Option<String>>(13)?.unwrap_or_default(),
+                country: row.get::<_, Option<String>>(14)?.unwrap_or_default(),
+                is_crawler: true, // Marker for FE
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row.map_err(|e| e.to_string())?);
+    }
+
+    Ok(PathAggregationsPage {
+        entries: results,
+        total_unique_paths,
+        total_hits,
+    })
+}
+
+#[tauri::command]
+pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    // Group by path to get total frequencies across the entire dataset
+    let query = format!(
+        "
+        SELECT
+            path,
+            COUNT(*) as frequency,
+            SUM(response_size) as total_size,
+            MAX(timestamp) as newest,
+            MIN(timestamp) as oldest,
+            file_type,
+            status,
+            MAX(user_agent) as ua,
+            MAX(crawler_type) as ct,
+            MAX(method) as m,
+            MAX(verified) as v,
+            MAX(ip) as ip_addr,
+            MAX(referer) as ref_str,
+            MAX(browser) as br,
+            MAX(country) as c
+        FROM active_parsed_logs
+        WHERE {}
+        GROUP BY path
+        ORDER BY frequency DESC
+        LIMIT 10000
+    ",
+        where_sql
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+            Ok(BotPathDetail {
+                path: row.get(0)?,
+                frequency: row.get(1)?,
+                response_size: row.get::<_, u32>(2)? as u64,
+                timestamp: row.get(3)?, // Use newest for display
+                file_type: row
+                    .get::<_, Option<String>>(5)?
+                    .unwrap_or_else(|| "Other".to_string()),
+                status: row.get::<_, Option<u16>>(6)?.unwrap_or(200),
+                user_agent: row.get::<_, Option<String>>(7)?.unwrap_or_default(),
+                crawler_type: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                method: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
+                verified: row.get::<_, Option<i32>>(10)?.unwrap_or(0) == 1,
+                ip: row.get::<_, Option<String>>(11)?.unwrap_or_default(),
+                referer: row.get::<_, Option<String>>(12)?.unwrap_or_default(),
+                browser: row.get::<_, Option<String>>(13)?.unwrap_or_default(),
+                country: row.get::<_, Option<String>>(14)?.unwrap_or_default(),
+                is_crawler: true,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row.map_err(|e| e.to_string())?);
+    }
+
+    Ok(results)
 }
 
 use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};

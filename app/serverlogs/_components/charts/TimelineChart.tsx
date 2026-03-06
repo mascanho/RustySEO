@@ -36,75 +36,37 @@ const chartConfig = {
 export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { allFilteredLogs } = useLogAnalysis();
+  const { timelineData, fetchTimelineAggregations, activeFilters } = useLogAnalysis();
 
-  const processData = () => {
-    if (allFilteredLogs.length === 0) return [];
+  React.useEffect(() => {
+    fetchTimelineAggregations(viewMode, activeFilters);
+  }, [viewMode, activeFilters, fetchTimelineAggregations]);
 
-    const dateMap = new Map<string, { human: number; crawler: number }>();
-    const allDates: Date[] = [];
+  const chartData = React.useMemo(() => {
+    if (!timelineData || timelineData.length === 0) return [];
 
-    const logsToProcess = allFilteredLogs;
-
-    logsToProcess.forEach((entry) => {
-      const date = new Date(entry.timestamp);
-      allDates.push(date);
-
-      let key: string;
-      if (viewMode === "daily") {
-        key = date.toISOString().split("T")[0];
-      } else {
-        const hour = date.getHours();
-        key = `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:00`;
-      }
-
-      if (!dateMap.has(key)) {
-        dateMap.set(key, { human: 0, crawler: 0 });
-      }
-
-      const counts = dateMap.get(key)!;
-
-      if (entry.crawler_type && entry.crawler_type !== "Human") {
-        counts.crawler += 1;
-      } else {
-        counts.human += 1;
-      }
-    });
-
-    allDates.sort((a, b) => a.getTime() - b.getTime());
-    if (allDates.length === 0) return [];
-
-    const minDate = allDates[0];
-    const maxDate = allDates[allDates.length - 1];
-
-    let startDate = new Date(minDate);
-    const endDate = new Date(maxDate);
+    const endDate = new Date();
+    let startDate = new Date(0); // All time
 
     if (timeRange === "7d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 7);
     } else if (timeRange === "30d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
     } else if (timeRange === "90d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return Array.from(dateMap.entries())
-      .map(([date, counts]) => ({
-        date,
-        human: counts.human,
-        crawler: counts.crawler,
-      }))
+    return timelineData
       .filter((item) => {
+        if (timeRange === "all") return true;
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
-
-  const chartData = processData();
+  }, [timelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
@@ -227,19 +189,19 @@ export function TimelineChart() {
                     const date = new Date(value);
                     return viewMode === "daily"
                       ? date.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
                       : date.toLocaleTimeString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        });
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      });
                   }}
                 />
               }

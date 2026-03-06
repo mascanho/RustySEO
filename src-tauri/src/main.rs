@@ -19,7 +19,7 @@ use settings::settings::update_settings_command;
 use settings::settings::Settings;
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Manager, Window, WindowEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
@@ -324,6 +324,8 @@ async fn main() {
             loganalyser::active_db::clear_active_db_command,
             loganalyser::active_db::clear_all_log_data_command,
             loganalyser::active_db::get_distinct_bot_types,
+            loganalyser::active_db::get_bot_paths_aggregated,
+            loganalyser::active_db::get_path_aggregations_page,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

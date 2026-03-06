@@ -61,6 +61,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useLogAnalysis, BotPathDetail } from "@/store/ServerLogsStore";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
@@ -130,33 +131,61 @@ interface WidgetTableProps {
 }
 
 const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
-  // Transform data into logs (memoized)
-  const initialLogs = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  } = useLogAnalysis();
 
-    const crawlerLogs = entries.filter((log) => {
-      const ct = (log.crawler_type || "").toLowerCase();
-      return ct.includes("google") && log.crawler_type !== "Human";
-    });
+  // Main Data Fetcher
+  useEffect(() => {
+    const fetchFilteredData = async () => {
+      const activeFilters = {
+        search_term: searchTerm,
+        status_filter: [],
+        method_filter: methodFilter,
+        file_type_filter: fileTypeFilter,
+        bot_filter: "bot",
+        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+        crawler_type_filter: "google",
+        verified_filter: verifiedFilter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: null,
+      };
 
-    const urlMap = new Map<string, LogEntry>();
-    crawlerLogs.forEach((log) => {
-      if (urlMap.has(log.path)) {
-        const existingLog = urlMap.get(log.path)!;
-        existingLog.frequency = (existingLog.frequency || 1) + 1;
-        existingLog.response_size = (existingLog.response_size || 0) + (log.response_size || 0);
-        if (new Date(log.timestamp) < new Date(existingLog.timestamp)) {
-          existingLog.timestamp = log.timestamp;
-        }
-      } else {
-        urlMap.set(log.path, { ...log, frequency: 1 });
-      }
-    });
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
 
-    return Array.from(urlMap.values()).sort(
-      (a, b) => b.frequency - a.frequency
-    );
-  }, [entries]);
+    fetchFilteredData();
+  }, [
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    methodFilter,
+    fileTypeFilter,
+    botTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    fetchPathAggregationsPage,
+  ]);
+
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfLastItem, indexOfFirstItem } =
+    useMemo(() => {
+      const total = pathAggregations.total_unique_paths || 0;
+      const totalPages = Math.ceil(total / itemsPerPage);
+      const _currentLogs = pathAggregations.entries || [];
+      const indexOfLastItem = currentPage * itemsPerPage;
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+      return {
+        totalPages,
+        currentLogs: _currentLogs,
+        indexOfLastItem,
+        indexOfFirstItem,
+      };
+    }, [pathAggregations, itemsPerPage, currentPage]);
 
   // State definitions
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -297,11 +326,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     sortFn,
   );
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
@@ -418,8 +442,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [initialLogs],
   );
@@ -428,8 +452,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [initialLogs],
   );
@@ -602,6 +626,22 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+            >
+              {pathAggregations.total_hits.toLocaleString()} hits
+            </Badge>
+            <Badge
+              variant="outline"
+              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+            >
+              {pathAggregations.total_unique_paths.toLocaleString()} unique
+              paths
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -628,10 +668,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -642,10 +683,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -656,10 +698,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -670,10 +713,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -766,17 +810,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
 
                           <TableCell className="text-center min-w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.total}
-                              </span>
+                              <span>{timings(log)?.frequency?.total}</span>
                             </div>
                           </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.perHour}
-                              </span>
+                              <span>{timings(log)?.frequency?.perHour}</span>
                             </div>
                           </TableCell>
 
@@ -787,10 +827,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                             <div className="flex items-center h-full justify-center">
                               <Badge
                                 variant="outline"
-                                className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
-                                  }`}
+                                className={`flex items-center align-middle justify-center ${
+                                  log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                }`}
                               >
                                 {log.crawler_type.length > 10
                                   ? log.crawler_type.trim().slice(0, 10)
@@ -876,7 +917,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                                     </p>
                                   </div>
                                   <div className="mt-4">
-                                    <h4 className="font-bold mb-2">User Agent</h4>
+                                    <h4 className="font-bold mb-2">
+                                      User Agent
+                                    </h4>
                                     <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
                                       <span
                                         className="font-mono text-xs break-all hover:underline cursor-pointer"
@@ -1035,32 +1078,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                            Other Codes:{" "}
-                                            {log.status_codes?.other_count || 0}
-                                          </span>
-                                          <div className="flex flex-wrap gap-1 mt-1">
-                                            {Object.entries(
-                                              log.status_codes?.counts || {},
-                                            )
-                                              .filter(([code]) => {
-                                                const status = parseInt(code);
-                                                return (
-                                                  status < 200 || status >= 600
-                                                );
-                                              })
-                                              .map(([code, count]) => (
-                                                <span
-                                                  key={code}
-                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                                >
-                                                  {code}: {count}
-                                                </span>
-                                              ))}
-                                          </div>
+                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                          Other Codes:{" "}
+                                          {log.status_codes?.other_count || 0}
+                                        </span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {Object.entries(
+                                            log.status_codes?.counts || {},
+                                          )
+                                            .filter(([code]) => {
+                                              const status = parseInt(code);
+                                              return (
+                                                status < 200 || status >= 600
+                                              );
+                                            })
+                                            .map(([code, count]) => (
+                                              <span
+                                                key={code}
+                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                              >
+                                                {code}: {count}
+                                              </span>
+                                            ))}
                                         </div>
-                                      )}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
