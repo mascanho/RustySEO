@@ -176,6 +176,7 @@ interface LogAnalysisState {
   statusTimelineData: StatusPoint[];
   crawlerTimelineData: CrawlerPoint[];
   pathAggregations: PathAggregationsPage;
+  botTypes: string[];
 }
 
 export interface BotPathDetail {
@@ -258,6 +259,7 @@ interface LogAnalysisActions {
   fetchTimelineAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchCrawlerAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
+  fetchBotTypes: () => Promise<void>;
 }
 
 // Default values for new structures
@@ -372,6 +374,7 @@ const initialState: LogAnalysisState = {
   timelineData: [],
   statusTimelineData: [],
   crawlerTimelineData: [],
+  botTypes: [],
 };
 
 // Helper functions for merging complex objects
@@ -555,9 +558,13 @@ export const useLogAnalysisStore = create<
 
     setLogData: (data, mode = "append") =>
       set((state) => {
-        // Append entries
+        // Append entries, but cap at 1,000 to prevent browser OOM/crashes
+        // The full dataset is safely stored in the backend database
         if (data.entries?.length) {
-          state.entries.push(...data.entries);
+          if (state.entries.length < 1000) {
+            const remaining = 1000 - state.entries.length;
+            state.entries.push(...data.entries.slice(0, remaining));
+          }
         }
 
         const existingOverview = state.overview;
@@ -919,6 +926,17 @@ export const useLogAnalysisStore = create<
       }
     },
 
+    fetchBotTypes: async () => {
+      try {
+        const botTypes = await invoke<string[]>("get_distinct_bot_types");
+        set((state) => {
+          state.botTypes = botTypes;
+        });
+      } catch (error) {
+        console.error("Failed to fetch bot types:", error);
+      }
+    },
+
     setActiveFilters: (filters) =>
       set((state) => {
         state.activeFilters = filters;
@@ -944,9 +962,11 @@ export const useLogAnalysis = () =>
       activeFilters: state.activeFilters,
       totalCount: state.totalCount,
       currentPage: state.currentPage,
+      botTypes: state.botTypes,
       setLogData: state.setLogData,
       fetchLogsFromDb: state.fetchLogsFromDb,
       fetchAllFilteredLogs: state.fetchAllFilteredLogs,
+      fetchBotTypes: state.fetchBotTypes,
       fetchWidgetAggregations: state.fetchWidgetAggregations,
       setActiveFilters: state.setActiveFilters,
       setFilter: state.setFilter,

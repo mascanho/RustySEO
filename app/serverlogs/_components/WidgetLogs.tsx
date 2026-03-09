@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
 import {
   Dialog,
@@ -131,8 +131,11 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, allFilteredLogs, totalCount, widgetAggs } =
-    useLogAnalysis();
+  const overview = useLogAnalysisStore((state) => state.overview);
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const { entries } = useLogAnalysisStore((state) => ({ entries: state.entries }));
+  // We use entries from the store but we don't need allFilteredLogs anymore
   const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
@@ -455,8 +458,8 @@ export default function WidgetLogs() {
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
                 className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
-                    ? "bg-brand-bright text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                  ? "bg-brand-bright text-white"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
                   }`}
               >
                 <div
@@ -532,10 +535,10 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-5 max-w-2xl mr-6"
-                : activeTab === "Status Codes"
-                  ? "grid-cols-4 mr-6"
-                  : "grid-cols-4 mr-6"
+              ? "grid-cols-5 max-w-2xl mr-6"
+              : activeTab === "Status Codes"
+                ? "grid-cols-4 mr-6"
+                : "grid-cols-4 mr-6"
               }`}
           >
             {chartData.map((entry, idx) => (
@@ -570,7 +573,7 @@ export default function WidgetLogs() {
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
-                      entries={allFilteredLogs}
+                      entries={entries}
                       chartData={chartData}
                       segment={entry?.name}
                       selectedFileType={entry?.name}
@@ -578,13 +581,13 @@ export default function WidgetLogs() {
                   ) : activeTab === "Status Codes" ? (
                     <WidgetStatusCodesTable
                       data={overview}
-                      entries={allFilteredLogs}
+                      entries={entries}
                       segment={entry?.name}
                     />
                   ) : activeTab === "Referrers" ? (
                     <WidgetReferrersTable
                       data={overview}
-                      entries={allFilteredLogs}
+                      entries={entries}
                       segment={entry?.name === "Other" ? "all" : entry?.name}
                     />
                   ) : activeTab === "Content" ? (
@@ -641,7 +644,7 @@ export default function WidgetLogs() {
                       <Tabs.Panel value="logs" className="h-full">
                         <WidgetContentTable
                           data={overview}
-                          entries={allFilteredLogs}
+                          entries={entries}
                           segment={entry?.name}
                         />
                       </Tabs.Panel>
@@ -649,7 +652,7 @@ export default function WidgetLogs() {
                   ) : activeTab === "User Agents" ? (
                     <WidgetUserAgentsTable
                       data={overview}
-                      entries={allFilteredLogs}
+                      entries={entries}
                       segment={entry?.name === "Other" ? "all" : entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
@@ -663,19 +666,19 @@ export default function WidgetLogs() {
                         {entry?.name === "Google" && (
                           <WidgetTable
                             data={overview}
-                            entries={allFilteredLogs}
+                            entries={entries}
                           />
                         )}
                         {entry?.name === "Bing" && (
                           <WidgetTableBing
                             data={overview}
-                            entries={allFilteredLogs}
+                            entries={entries}
                           />
                         )}
                         {entry?.name === "Openai" && (
                           <WidgetTableOpenAi
                             data={overview}
-                            entries={allFilteredLogs}
+                            entries={entries}
                           />
                         )}
                         {entry?.name === "Claude" && (

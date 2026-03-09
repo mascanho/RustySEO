@@ -55,6 +55,8 @@ pub fn init_active_db() -> Result<(), String> {
         CREATE INDEX IF NOT EXISTS idx_timestamp ON active_parsed_logs(timestamp);
         CREATE INDEX IF NOT EXISTS idx_status ON active_parsed_logs(status);
         CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
+        CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
+        CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
         ",
     )
     .map_err(|e| e.to_string())?;
@@ -194,13 +196,12 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     if let Some(ref crawler_type) = filters.crawler_type_filter {
         let lower_ct = crawler_type.to_lowercase();
         if lower_ct == "openai" {
-            clauses.push("(LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(crawler_type) LIKE '%oai-%' OR LOWER(user_agent) LIKE '%openai%')".to_string());
+            clauses.push("(is_crawler = 1 AND (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(crawler_type) LIKE '%oai-%' OR LOWER(user_agent) LIKE '%openai%'))".to_string());
         } else if lower_ct == "claude" {
-            clauses.push("(LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%')".to_string());
+            clauses.push("(is_crawler = 1 AND (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%'))".to_string());
         } else {
-            let ct_pattern = format!("%{}%", lower_ct);
-            clauses.push("LOWER(crawler_type) LIKE ?".to_string());
-            params.push(ct_pattern.into());
+            clauses.push("crawler_type = ?".to_string());
+            params.push(crawler_type.clone().into());
         }
     }
 

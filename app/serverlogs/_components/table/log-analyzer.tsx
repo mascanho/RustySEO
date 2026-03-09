@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -67,7 +67,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { ask, message, save } from "@tauri-apps/plugin-dialog";
 import { SiGoogle, SiSuperuser } from "react-icons/si";
@@ -96,24 +96,20 @@ import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "./utils/FetchMatchGSC";
 
 export function LogAnalyzer() {
-  const {
-    entries,
-    overview,
-    isLoading,
-    error,
-    filters,
-    setLogData,
-    setFilter,
-    resetAll,
-    fetchLogsFromDb,
-    fetchAllFilteredLogs,
-    fetchWidgetAggregations,
-    fetchOverviewStats,
-    setActiveFilters,
-    totalCount,
-  } = useLogAnalysis();
+  const entries = useLogAnalysisStore((state) => state.entries);
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
+  const isLoading = useLogAnalysisStore((state) => state.isLoading);
+  const error = useLogAnalysisStore((state) => state.error);
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const botTypes = useLogAnalysisStore((state) => state.botTypes);
 
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
+  const fetchBotTypes = useLogAnalysisStore((state) => state.fetchBotTypes);
+  const fetchWidgetAggregations = useLogAnalysisStore((state) => state.fetchWidgetAggregations);
+  const fetchOverviewStats = useLogAnalysisStore((state) => state.fetchOverviewStats);
+  const setActiveFilters = useLogAnalysisStore((state) => state.setActiveFilters);
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
 
@@ -149,48 +145,17 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  const [allCrawlerTypes, setAllCrawlerTypes] = useState<string[]>([]);
-  const crawlerTypesInitialized = useRef(false);
-
+  // Load bot types on mount
   useEffect(() => {
-    if (crawlerTypesInitialized.current || entries.length === 0) return;
-
-    const types = new Set<string>();
-    entries.forEach((entry) => {
-      if (entry?.crawler_type && entry.crawler_type !== "Human") {
-        types.add(entry.crawler_type);
-      }
-    });
-    const sortedTypes = Array.from(types).sort();
-
-    if (sortedTypes.length > 0) {
-      setAllCrawlerTypes(sortedTypes);
-      crawlerTypesInitialized.current = true;
-    }
-  }, [entries]);
-
-  const uniqueCrawlerTypes =
-    allCrawlerTypes.length > 0
-      ? allCrawlerTypes
-      : (() => {
-        const types = new Set<string>();
-        entries.forEach((entry) => {
-          if (entry?.crawler_type && entry.crawler_type !== "Human") {
-            types.add(entry.crawler_type);
-          }
-        });
-        return Array.from(types).sort();
-      })();
+    fetchBotTypes();
+  }, [fetchBotTypes, totalCount]);
 
   const allStatusCodes = useMemo(() => {
-    const codes = new Set<number>();
-    entries.forEach((entry) => {
-      if (entry.status) {
-        codes.add(entry.status);
-      }
-    });
-    return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
+    if (!widgetAggs?.status_codes) return [];
+    return Object.keys(widgetAggs.status_codes)
+      .map(Number)
+      .sort((a, b) => a - b);
+  }, [widgetAggs]);
 
   // Search state - only filters when button is pressed
   const [searchInput, setSearchInput] = useState("");
@@ -310,116 +275,7 @@ export function LogAnalyzer() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
-  // Optimized filter function - only applies when explicitly called
-  const applyFilters = useCallback(() => {
-    if (!entries.length) {
-      setFilteredLogs([]);
-      return;
-    }
 
-    let result = [...entries];
-
-    // Apply search filter only when activeSearchTerm is set
-    if (activeSearchTerm.trim()) {
-      const lowerCaseSearch = activeSearchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch),
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter.length > 0) {
-      result = result.filter((log) => statusFilter.includes(log.status));
-    }
-
-    // Apply method filter
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    // Apply file type filter
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
-    }
-
-    // Apply bot filter
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log?.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log?.crawler_type === "Human");
-      }
-    }
-
-    // Apply Bot type filter (Mobile or Desktop)
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log?.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log?.user_agent.includes("Mobile"));
-      }
-    }
-
-    // Apply Crawler type filter (specific bot types)
-    if (crawlerTypeFilter !== null) {
-      result = result.filter((log) => log?.crawler_type === crawlerTypeFilter);
-    }
-
-    // Apply verified filter
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    // Apply sorting
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        // Special case for timestamp sorting
-        if (sortConfig.key === "timestamp") {
-          const aDate = new Date(aValue as string).getTime();
-          const bDate = new Date(bValue as string).getTime();
-          return sortConfig.direction === "ascending"
-            ? aDate - bDate
-            : bDate - aDate;
-        }
-
-        // Normal string sorting
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-
-        // Fallback for other types
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredLogs(result);
-    setCurrentPage(1);
-  }, [
-    entries,
-    activeSearchTerm,
-    statusFilter,
-    methodFilter,
-    fileTypeFilter,
-    botFilter,
-    verifiedFilter,
-    botTypeFilter,
-    crawlerTypeFilter,
-    sortConfig,
-  ]);
 
   // Search handlers - no debouncing, immediate response
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -436,32 +292,38 @@ export function LogAnalyzer() {
     }
   };
 
-  // Fetch logs from DB when filters or page change
-  const currentFilters = {
-    search_term: activeSearchTerm,
-    status_filter: statusFilter,
-    method_filter: methodFilter,
-    file_type_filter: fileTypeFilter,
-    bot_filter: botFilter === "all" ? null : botFilter,
-    bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-    crawler_type_filter: crawlerTypeFilter,
-    verified_filter: verifiedFilter,
-    sort_key: sortConfig?.key || "timestamp",
-    sort_dir:
-      sortConfig?.direction === "descending" ? "descending" : "ascending",
-  };
-
+  // Track whether data has been loaded at least once
+  const hasDataRef = useRef(false);
   useEffect(() => {
-    // Only fetch if we have data (analysis has been run)
+    if (totalCount > 0 || entries.length > 0) {
+      hasDataRef.current = true;
+    }
+  }, [totalCount, entries.length]);
+
+  // Fetch logs from DB when filters or page change
+  useEffect(() => {
+    if (!hasDataRef.current) return;
+
+    const filters = {
+      search_term: activeSearchTerm,
+      status_filter: statusFilter,
+      method_filter: methodFilter,
+      file_type_filter: fileTypeFilter,
+      bot_filter: botFilter === "all" ? null : botFilter,
+      bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+      crawler_type_filter: crawlerTypeFilter,
+      verified_filter: verifiedFilter,
+      sort_key: sortConfig?.key || "timestamp",
+      sort_dir:
+        sortConfig?.direction === "descending" ? "descending" : "ascending",
+    };
+
     const timeoutId = setTimeout(() => {
-      if (totalCount > 0 || entries.length > 0) {
-        fetchLogsFromDb(currentPage, itemsPerPage, currentFilters);
-        setActiveFilters(currentFilters);
-        // Fetch widget aggregations from backend instead of all logs
-        fetchWidgetAggregations(currentFilters);
-        fetchAllFilteredLogs(currentFilters);
-        fetchOverviewStats();
-      }
+      const store = useLogAnalysisStore.getState();
+      store.fetchLogsFromDb(currentPage, itemsPerPage, filters);
+      store.setActiveFilters(filters);
+      store.fetchWidgetAggregations(filters);
+      store.fetchOverviewStats();
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -470,27 +332,9 @@ export function LogAnalyzer() {
     localFilters,
     currentPage,
     itemsPerPage,
-    totalCount,
-    fetchLogsFromDb,
-    fetchWidgetAggregations,
-    fetchAllFilteredLogs,
-    fetchOverviewStats,
-    setActiveFilters,
   ]);
 
-  // Initial filter application when entries load
-  useEffect(() => {
-    if (entries.length > 0) {
-      setFilteredLogs(entries);
-    }
-  }, [entries]);
 
-  // Apply filters when crawler type filter changes
-  useEffect(() => {
-    if (entries.length > 0) {
-      applyFilters();
-    }
-  }, [crawlerTypeFilter, applyFilters, entries]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -507,17 +351,14 @@ export function LogAnalyzer() {
     }
   }, []);
 
-  // Set the Zustand store with the current filtered logs
+  // Set the Zustand store with the current logs
   useEffect(() => {
-    useCurrentLogs.getState().setCurrentLogs(filteredLogs);
-  }, [filteredLogs]);
+    useCurrentLogs.getState().setCurrentLogs(entries);
+  }, [entries]);
 
-  // Get current logs for pagination (now from DB)
-  const hasActiveFilters = crawlerTypeFilter !== null;
-  const currentLogs = hasActiveFilters ? filteredLogs : entries;
-  const totalPages = Math.ceil(
-    (hasActiveFilters ? filteredLogs.length : totalCount) / itemsPerPage,
-  );
+  // Display current page of logs directly from the backend-powered store result
+  const currentLogs = entries;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Handle sorting
   const requestSort = useCallback((key: string) => {
@@ -578,7 +419,7 @@ export function LogAnalyzer() {
     }
 
     // 2. Prepare data
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
+    const dataToExport = entries;
 
     // 3. Robust CSV sanitizer
     const sanitizeForCSV = (value: any): string => {
@@ -681,7 +522,7 @@ export function LogAnalyzer() {
         error instanceof Error ? error.message : String(error);
       toast.error(`Export failed: ${errorMessage}`);
     }
-  }, [filteredLogs, entries, formatResponseSize, ExcelLoaded]);
+  }, [entries, formatResponseSize, ExcelLoaded]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
@@ -1094,67 +935,41 @@ export function LogAnalyzer() {
                 </SelectItem>
               </SelectContent>
             </Select>
+            {/* FILTER BY HUMAN OR BOTS */}
+            <Select
+              value={botFilter || "all"}
+              onValueChange={(value) => {
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  botFilter: value === "all" ? "all" : value,
+                }));
+              }}
+            >
+              <SelectTrigger className="w-[130px] active:scale-95 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+                <SelectValue placeholder="Traffic Type" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+                <SelectItem value="all">
+                  <div className="flex items-center">
+                    <Filter className="h-3.5 w-3.5 mr-1.5" />
+                    <span>All Traffic</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="Human">
+                  <div className="flex items-center">
+                    <FaPersonHarassing className="mr-1.5" />
+                    <span>Humans</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="bot">
+                  <div className="flex items-center">
+                    <FaRobot className="mr-1.5" />
+                    <span>Bots</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-            {/* FILTERED BY CRAWLERS */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-                >
-                  <Filter className="h-4 w-4" />
-                  Crawlers
-                  {crawlerTypeFilter && (
-                    <Badge variant="secondary" className="ml-0">
-                      1
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                align="center"
-                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-80"
-              >
-                <div className="sticky top-0 bg-white dark:bg-brand-darker z-10 py-1.5 px-2 border-b dark:border-brand-dark">
-                  <DropdownMenuLabel className="text-sm font-semibold py-0">
-                    Filter by Crawler Type
-                  </DropdownMenuLabel>
-                </div>
-
-                <div className="max-h-64 overflow-y-auto py-1">
-                  <DropdownMenuCheckboxItem
-                    className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
-                    checked={crawlerTypeFilter === null}
-                    onCheckedChange={() => {
-                      setLocalFilters((prev) => ({
-                        ...prev,
-                        crawlerTypeFilter: null,
-                      }));
-                    }}
-                  >
-                    All Crawlers
-                  </DropdownMenuCheckboxItem>
-
-                  {uniqueCrawlerTypes.map((crawlerType) => (
-                    <DropdownMenuCheckboxItem
-                      className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
-                      key={crawlerType}
-                      checked={crawlerTypeFilter === crawlerType}
-                      onCheckedChange={() => {
-                        setLocalFilters((prev) => ({
-                          ...prev,
-                          crawlerTypeFilter: crawlerType,
-                        }));
-
-                      }}
-                    >
-                      {crawlerType}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <Button
               variant="outline"
@@ -1428,8 +1243,8 @@ export function LogAnalyzer() {
   );
 }
 
-// Extracted LogRow component
-function LogRow({
+// Extracted LogRow component - memoized to prevent re-renders of all rows on every state change
+const LogRow = memo(function LogRow({
   log,
   index,
   indexOfFirstItem,
@@ -1743,7 +1558,7 @@ function LogRow({
       )}
     </>
   );
-}
+});
 // Extracted PaginationControls component
 function PaginationControls({
   currentPage,
