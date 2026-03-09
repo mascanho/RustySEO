@@ -935,17 +935,47 @@ export function LogAnalyzer() {
                 </SelectItem>
               </SelectContent>
             </Select>
-            {/* FILTER BY HUMAN OR BOTS */}
+            {/* FILTER BY HUMAN, BOTS, OR SPECIFIC CRAWLER */}
             <Select
-              value={botFilter || "all"}
+              value={
+                crawlerTypeFilter
+                  ? `crawler:${crawlerTypeFilter}`
+                  : botFilter === "bot"
+                    ? "bot"
+                    : botFilter === "Human"
+                      ? "Human"
+                      : "all"
+              }
               onValueChange={(value) => {
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  botFilter: value === "all" ? "all" : value,
-                }));
+                if (value === "all") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "all",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value === "Human") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "Human",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value === "bot") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "bot",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value.startsWith("crawler:")) {
+                  const crawlerName = value.replace("crawler:", "");
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "bot",
+                    crawlerTypeFilter: crawlerName,
+                  }));
+                }
               }}
             >
-              <SelectTrigger className="w-[130px] active:scale-95 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+              <SelectTrigger className="w-[150px] active:scale-95 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
                 <SelectValue placeholder="Traffic Type" />
               </SelectTrigger>
               <SelectContent className="dark:bg-brand-darker dark:text-white dark:border-brand-dark">
@@ -964,11 +994,20 @@ export function LogAnalyzer() {
                 <SelectItem value="bot">
                   <div className="flex items-center">
                     <FaRobot className="mr-1.5" />
-                    <span>Bots</span>
+                    <span>All Bots</span>
                   </div>
                 </SelectItem>
+                {botTypes.length > 0 && botTypes.map((type) => (
+                  <SelectItem key={type} value={`crawler:${type}`}>
+                    <div className="flex items-center">
+                      <Ghost className="h-3.5 w-3.5 mr-1.5" />
+                      <span>{type}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+
 
 
             <Button
