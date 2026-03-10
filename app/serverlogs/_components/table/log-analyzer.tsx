@@ -296,17 +296,9 @@ export function LogAnalyzer() {
     }
   };
 
-  // Track whether data has been loaded at least once
-  const hasDataRef = useRef(false);
-  useEffect(() => {
-    if (totalCount > 0 || entries.length > 0) {
-      hasDataRef.current = true;
-    }
-  }, [totalCount, entries.length]);
-
   // Fetch logs from DB when filters or page change
   useEffect(() => {
-    if (!hasDataRef.current) return;
+    if (totalCount === 0 && entries.length === 0) return;
 
     const filters = {
       search_term: activeSearchTerm,
@@ -331,7 +323,13 @@ export function LogAnalyzer() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [activeSearchTerm, localFilters, currentPage, itemsPerPage]);
+  }, [
+    totalCount > 0,
+    activeSearchTerm,
+    localFilters,
+    currentPage,
+    itemsPerPage,
+  ]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -365,7 +363,7 @@ export function LogAnalyzer() {
         key,
         direction:
           prev.sortConfig?.key === key &&
-          prev.sortConfig.direction === "ascending"
+            prev.sortConfig.direction === "ascending"
             ? ("descending" as const)
             : ("ascending" as const),
       },
@@ -1058,11 +1056,10 @@ export function LogAnalyzer() {
 
                           {sortConfig?.key === "ip" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${
-                                sortConfig.direction === "descending"
+                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                   ? "rotate-180"
                                   : ""
-                              }`}
+                                }`}
                             />
                           )}
 
@@ -1080,11 +1077,10 @@ export function LogAnalyzer() {
                         Method
                         {sortConfig?.key === "method" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1096,11 +1092,10 @@ export function LogAnalyzer() {
                         Browser
                         {sortConfig?.key === "browser" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1112,11 +1107,10 @@ export function LogAnalyzer() {
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1128,11 +1122,10 @@ export function LogAnalyzer() {
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1145,11 +1138,10 @@ export function LogAnalyzer() {
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1182,11 +1174,10 @@ export function LogAnalyzer() {
                         File Type
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1199,11 +1190,10 @@ export function LogAnalyzer() {
                           Size
                           {sortConfig?.key === "responseSize" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${
-                                sortConfig.direction === "descending"
+                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                   ? "rotate-180"
                                   : ""
-                              }`}
+                                }`}
                             />
                           )}
                         </TableHead>
@@ -1417,11 +1407,10 @@ const LogRow = memo(function LogRow({
                     )}
                     <KeyRound
                       size={14}
-                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${
-                        isFetchingGSC
+                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${isFetchingGSC
                           ? "opacity-30"
                           : "text-yellow-500 hover:text-yellow-400"
-                      }`}
+                        }`}
                       onClick={async (e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -1466,11 +1455,10 @@ const LogRow = memo(function LogRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${
-                    posColumn === "position"
+                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${posColumn === "position"
                       ? getPositionBadgeColor(log?.position)
                       : "border-brand-bright/50"
-                  }`}
+                    }`}
                 >
                   {posColumn === "position"
                     ? log?.position || "-"

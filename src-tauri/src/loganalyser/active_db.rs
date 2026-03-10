@@ -121,13 +121,22 @@ pub struct ActiveFilters {
     pub status_filter: Vec<u16>,
     pub method_filter: Vec<String>,
     pub file_type_filter: Vec<String>,
+    #[serde(default)]
     pub bot_filter: Option<String>,
+    #[serde(default)]
     pub bot_type_filter: Option<String>,
+    #[serde(default)]
     pub crawler_type_filter: Option<String>,
+    #[serde(default)]
     pub verified_filter: Option<bool>,
+    #[serde(default)]
     pub sort_key: Option<String>,
+    #[serde(default)]
     pub sort_dir: Option<String>,
+    #[serde(default)]
     pub taxonomy_filter: Option<String>,
+    #[serde(default)]
+    pub referer_filter: Option<String>,
 }
 
 fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::Value>) {
@@ -213,6 +222,69 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     if let Some(ref taxonomy) = filters.taxonomy_filter {
         clauses.push("segment = ?".to_string());
         params.push(taxonomy.clone().into());
+    }
+
+    // Referrer category filter - matches the frontend's categorizeReferrer logic
+    if let Some(ref referer_cat) = filters.referer_filter {
+        match referer_cat.as_str() {
+            "Direct/None" => {
+                clauses.push("(referer IS NULL OR referer = '' OR referer = '-')".to_string());
+            }
+            "Google" => {
+                clauses.push("(LOWER(referer) LIKE '%google.com%' OR LOWER(referer) LIKE '%google.co%')".to_string());
+            }
+            "MS Bing" => {
+                clauses.push("LOWER(referer) LIKE '%bing.com%'".to_string());
+            }
+            "Yahoo" => {
+                clauses.push("LOWER(referer) LIKE '%yahoo.com%'".to_string());
+            }
+            "DuckDuckGo" => {
+                clauses.push("LOWER(referer) LIKE '%duckduckgo.com%'".to_string());
+            }
+            "Baidu" => {
+                clauses.push("LOWER(referer) LIKE '%baidu.com%'".to_string());
+            }
+            "Yandex" => {
+                clauses.push("(LOWER(referer) LIKE '%yandex.com%' OR LOWER(referer) LIKE '%yandex.ru%')".to_string());
+            }
+            "Facebook" => {
+                clauses.push("(LOWER(referer) LIKE '%facebook.com%' OR LOWER(referer) LIKE '%fb.com%')".to_string());
+            }
+            "Twitter/X" => {
+                clauses.push("(LOWER(referer) LIKE '%twitter.com%' OR LOWER(referer) LIKE '%x.com%')".to_string());
+            }
+            "LinkedIn" => {
+                clauses.push("LOWER(referer) LIKE '%linkedin.com%'".to_string());
+            }
+            "Instagram" => {
+                clauses.push("LOWER(referer) LIKE '%instagram.com%'".to_string());
+            }
+            "Pinterest" => {
+                clauses.push("LOWER(referer) LIKE '%pinterest.com%'".to_string());
+            }
+            "Reddit" => {
+                clauses.push("LOWER(referer) LIKE '%reddit.com%'".to_string());
+            }
+            "TikTok" => {
+                clauses.push("LOWER(referer) LIKE '%tiktok.com%'".to_string());
+            }
+            "GitHub" => {
+                clauses.push("LOWER(referer) LIKE '%github.com%'".to_string());
+            }
+            "YouTube" => {
+                clauses.push("LOWER(referer) LIKE '%youtube.com%'".to_string());
+            }
+            "Local/Internal" => {
+                clauses.push("(LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%')".to_string());
+            }
+            other => {
+                // Generic: match the category name as a domain substring
+                let pattern = format!("%{}%", other.to_lowercase());
+                clauses.push("LOWER(referer) LIKE ?".to_string());
+                params.push(pattern.into());
+            }
+        }
     }
 
     (clauses.join(" AND "), params)

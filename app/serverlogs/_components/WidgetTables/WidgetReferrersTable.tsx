@@ -530,6 +530,18 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         }
       }
 
+      // Determine referer_filter from the referrerCategoryFilter or segment
+      let activeRefererFilter: string | null = null;
+      if (referrerCategoryFilter.length === 1) {
+        activeRefererFilter = referrerCategoryFilter[0];
+      } else if (segment && segment !== "all") {
+        // If the segment matches a known referrer category, use it as the filter
+        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (isReferrerCat) {
+          activeRefererFilter = availableReferrerCategories.find(cat => cat.toLowerCase() === segment.toLowerCase()) || null;
+        }
+      }
+
       const activeFilters = {
         search_term: searchTerm,
         status_filter: statusFilter,
@@ -542,6 +554,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
         taxonomy_filter: activeTaxonomyFilter,
+        referer_filter: activeRefererFilter,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
@@ -561,6 +574,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     sortConfig,
     segment,
     selectedTaxonomy,
+    referrerCategoryFilter,
     isInitialized,
     fetchPathAggregationsPage,
     taxonomies,

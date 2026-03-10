@@ -209,6 +209,7 @@ interface ActiveFilters {
   sort_key: string | null;
   sort_dir: string | null;
   taxonomy_filter: string | null;
+  referer_filter: string | null;
 }
 
 interface FilteredLogsPage {
@@ -367,6 +368,7 @@ const initialState: LogAnalysisState = {
     sort_key: null,
     sort_dir: null,
     taxonomy_filter: null,
+    referer_filter: null,
   },
   totalCount: 0,
   currentPage: 1,
@@ -714,6 +716,9 @@ export const useLogAnalysisStore = create<
           };
         }
 
+        // Update totalCount to trigger initial loads
+        state.totalCount = state.overview.line_count;
+
         state.isLoading = false;
         state.error = null;
       }),
@@ -770,6 +775,7 @@ export const useLogAnalysisStore = create<
           sort_key: filters.sort_key,
           sort_dir: filters.sort_dir,
           taxonomy_filter: filters.taxonomy_filter,
+          referer_filter: filters.referer_filter || null,
         };
 
         const result = await invoke<FilteredLogsPage>("get_active_logs_page", {
@@ -810,6 +816,7 @@ export const useLogAnalysisStore = create<
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",
           taxonomy_filter: filters.taxonomy_filter || null,
+          referer_filter: filters.referer_filter || null,
         };
 
         const result = await invoke<FilteredLogsPage>(
@@ -845,6 +852,7 @@ export const useLogAnalysisStore = create<
           sort_key: filters.sort_key || "timestamp",
           sort_dir: filters.sort_dir || "ascending",
           taxonomy_filter: filters.taxonomy_filter || null,
+          referer_filter: filters.referer_filter || null,
         };
         const widgetAggs = await invoke<WidgetAggregations>("get_widget_aggregations", {
           filters: activeFilters,
