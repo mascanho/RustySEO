@@ -355,10 +355,20 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
 
     if let Some(ref crawler_type) = filters.crawler_type_filter {
         let lower_ct = crawler_type.to_lowercase();
-        if lower_ct == "openai" {
-            clauses.push("(is_crawler = 1 AND (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(crawler_type) LIKE '%oai-%' OR LOWER(user_agent) LIKE '%openai%'))".to_string());
+        if lower_ct == "google" {
+            clauses.push("(LOWER(crawler_type) LIKE '%google%' OR LOWER(user_agent) LIKE '%googlebot%')".to_string());
+        } else if lower_ct == "bing" {
+            clauses.push("(LOWER(crawler_type) LIKE '%bing%' OR LOWER(user_agent) LIKE '%bingbot%')".to_string());
+        } else if lower_ct == "semrush" {
+            clauses.push("LOWER(crawler_type) LIKE '%semrush%'".to_string());
+        } else if lower_ct == "hrefs" {
+            clauses.push("LOWER(crawler_type) LIKE '%hrefs%'".to_string());
+        } else if lower_ct == "moz" {
+            clauses.push("LOWER(crawler_type) LIKE '%moz%'".to_string());
+        } else if lower_ct == "openai" {
+            clauses.push("(LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%' OR LOWER(user_agent) LIKE '%oai-%')".to_string());
         } else if lower_ct == "claude" {
-            clauses.push("(is_crawler = 1 AND (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%'))".to_string());
+            clauses.push("(LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%')".to_string());
         } else {
             clauses.push("crawler_type = ?".to_string());
             params.push(crawler_type.clone().into());

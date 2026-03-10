@@ -707,7 +707,7 @@ export default function WidgetLogs() {
                         {entry?.name === "Claude" && (
                           <WidgetTableClaude
                             data={overview}
-                            entries={allFilteredLogs}
+                            entries={entries}
                           />
                         )}
                       </Tabs.Panel>
