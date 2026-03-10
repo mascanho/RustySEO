@@ -105,9 +105,15 @@ export function LogAnalyzer() {
 
   const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
   const fetchBotTypes = useLogAnalysisStore((state) => state.fetchBotTypes);
-  const fetchWidgetAggregations = useLogAnalysisStore((state) => state.fetchWidgetAggregations);
-  const fetchOverviewStats = useLogAnalysisStore((state) => state.fetchOverviewStats);
-  const setActiveFilters = useLogAnalysisStore((state) => state.setActiveFilters);
+  const fetchWidgetAggregations = useLogAnalysisStore(
+    (state) => state.fetchWidgetAggregations,
+  );
+  const fetchOverviewStats = useLogAnalysisStore(
+    (state) => state.fetchOverviewStats,
+  );
+  const setActiveFilters = useLogAnalysisStore(
+    (state) => state.setActiveFilters,
+  );
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -275,8 +281,6 @@ export function LogAnalyzer() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
-
-
   // Search handlers - no debouncing, immediate response
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
@@ -327,14 +331,7 @@ export function LogAnalyzer() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [
-    activeSearchTerm,
-    localFilters,
-    currentPage,
-    itemsPerPage,
-  ]);
-
-
+  }, [activeSearchTerm, localFilters, currentPage, itemsPerPage]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -368,7 +365,7 @@ export function LogAnalyzer() {
         key,
         direction:
           prev.sortConfig?.key === key &&
-            prev.sortConfig.direction === "ascending"
+          prev.sortConfig.direction === "ascending"
             ? ("descending" as const)
             : ("ascending" as const),
       },
@@ -825,7 +822,7 @@ export function LogAnalyzer() {
 
             {/* Bot/Human Filter */}
 
-            <Select
+            {/*<Select
               value={botFilter || "all"}
               onValueChange={(value) =>
                 setLocalFilters((prev) => ({
@@ -845,7 +842,7 @@ export function LogAnalyzer() {
 
                 <SelectItem value="Human">🙋 Human</SelectItem>
               </SelectContent>
-            </Select>
+            </Select>*/}
 
             {/* USER AGENT AND URL FILTER */}
 
@@ -997,18 +994,17 @@ export function LogAnalyzer() {
                     <span>All Bots</span>
                   </div>
                 </SelectItem>
-                {botTypes.length > 0 && botTypes.map((type) => (
-                  <SelectItem key={type} value={`crawler:${type}`}>
-                    <div className="flex items-center">
-                      <Ghost className="h-3.5 w-3.5 mr-1.5" />
-                      <span>{type}</span>
-                    </div>
-                  </SelectItem>
-                ))}
+                {botTypes.length > 0 &&
+                  botTypes.map((type) => (
+                    <SelectItem key={type} value={`crawler:${type}`}>
+                      <div className="flex items-center">
+                        <Ghost className="h-3.5 w-3.5 mr-1.5" />
+                        <span>{type}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-
-
 
             <Button
               variant="outline"
@@ -1062,10 +1058,11 @@ export function LogAnalyzer() {
 
                           {sortConfig?.key === "ip" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                                }`}
+                              className={`ml-1 h-4 w-4 inline-block ${
+                                sortConfig.direction === "descending"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                             />
                           )}
 
@@ -1083,10 +1080,11 @@ export function LogAnalyzer() {
                         Method
                         {sortConfig?.key === "method" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1098,10 +1096,11 @@ export function LogAnalyzer() {
                         Browser
                         {sortConfig?.key === "browser" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1113,10 +1112,11 @@ export function LogAnalyzer() {
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1128,10 +1128,11 @@ export function LogAnalyzer() {
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1144,10 +1145,11 @@ export function LogAnalyzer() {
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1180,10 +1182,11 @@ export function LogAnalyzer() {
                         File Type
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1196,10 +1199,11 @@ export function LogAnalyzer() {
                           Size
                           {sortConfig?.key === "responseSize" && (
                             <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                                }`}
+                              className={`ml-1 h-4 w-4 inline-block ${
+                                sortConfig.direction === "descending"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                             />
                           )}
                         </TableHead>
@@ -1413,10 +1417,11 @@ const LogRow = memo(function LogRow({
                     )}
                     <KeyRound
                       size={14}
-                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${isFetchingGSC
-                        ? "opacity-30"
-                        : "text-yellow-500 hover:text-yellow-400"
-                        }`}
+                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${
+                        isFetchingGSC
+                          ? "opacity-30"
+                          : "text-yellow-500 hover:text-yellow-400"
+                      }`}
                       onClick={async (e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -1461,10 +1466,11 @@ const LogRow = memo(function LogRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${posColumn === "position"
-                    ? getPositionBadgeColor(log?.position)
-                    : "border-brand-bright/50"
-                    }`}
+                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${
+                    posColumn === "position"
+                      ? getPositionBadgeColor(log?.position)
+                      : "border-brand-bright/50"
+                  }`}
                 >
                   {posColumn === "position"
                     ? log?.position || "-"
