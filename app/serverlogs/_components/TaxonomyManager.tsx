@@ -160,6 +160,8 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
   const [newPathMatchType, setNewPathMatchType] = useState<
     "startsWith" | "contains"
   >("startsWith");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(taxonomy.name);
 
   const handleAddPath = () => {
     const cleanPath = newPath.trim();
@@ -193,23 +195,62 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
     onUpdate({ ...taxonomy, paths: updatedPaths });
   };
 
+  const handleNameUpdate = () => {
+    const cleanName = editedName.trim();
+    if (!cleanName) {
+      toast.error("Segment name cannot be empty");
+      setEditedName(taxonomy.name);
+      setIsEditingName(false);
+      return;
+    }
+    if (cleanName !== taxonomy.name) {
+      onUpdate({ ...taxonomy, name: cleanName });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelNameEdit = () => {
+    setEditedName(taxonomy.name);
+    setIsEditingName(false);
+  };
+
   return (
-    <div className="border dark:border-slate-700 rounded-md p-3 space-y-2 dark:text-white">
+    <div className="border dark:border-slate-700 rounded-md p-3 space-y-2 dark:text-white transition-all">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BiSolidCategoryAlt className="dark:text-white" size={14} />
-          <span className="font-semibold dark:text-white/90">
-            {taxonomy.name}
-          </span>
+        <div className="flex items-center gap-2 flex-1 mr-2">
+          <BiSolidCategoryAlt className="dark:text-white flex-shrink-0" size={14} />
+          {isEditingName ? (
+            <Input
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onBlur={handleNameUpdate}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleNameUpdate();
+                if (e.key === "Escape") handleCancelNameEdit();
+              }}
+              className="h-7 text-sm font-semibold py-0 flex-1"
+              autoFocus
+            />
+          ) : (
+            <span
+              className="font-semibold dark:text-white/90 cursor-pointer hover:bg-slate-700/30 rounded px-1 transition-colors flex-1"
+              onClick={() => setIsEditingName(true)}
+              title="Click to rename segment"
+            >
+              {taxonomy.name}
+            </span>
+          )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-red-500"
-          onClick={() => onRemove(taxonomy.id)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            onClick={() => onRemove(taxonomy.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-1 pl-2">
@@ -340,10 +381,10 @@ export default function TaxonomyManager({ closeDialog }) {
               ...tax,
               paths: Array.isArray(tax.paths)
                 ? tax.paths.map((p) =>
-                    typeof p === "string"
-                      ? { path: p, matchType: "startsWith" } // Default to startsWith for old string paths
-                      : p,
-                  )
+                  typeof p === "string"
+                    ? { path: p, matchType: "startsWith" } // Default to startsWith for old string paths
+                    : p,
+                )
                 : [],
             }));
 

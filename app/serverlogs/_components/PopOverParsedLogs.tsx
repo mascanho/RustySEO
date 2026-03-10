@@ -20,7 +20,9 @@ interface LogEntry {
 const PopOverParsedLogs = () => {
   const { uploadedLogFiles } = useServerLogsStore();
 
-  const totalLogsAnalysed = (Array.isArray(uploadedLogFiles) ? uploadedLogFiles : [])
+  const totalLogsAnalysed = (
+    Array.isArray(uploadedLogFiles) ? uploadedLogFiles : []
+  )
     .map((log) => log?.names?.length || 0)
     .reduce((a, b) => a + b, 0);
 
@@ -39,9 +41,11 @@ const PopOverParsedLogs = () => {
   return (
     <div className="flex flex-col rounded-lg z-20">
       <h2 className="font-semibold mb-1 text-xs font-mono pl-3 pb-2 pt-1 shadow text-brand-bright">
-        Files: {totalLogsAnalysed} | Batches: {uploadedLogFiles?.length || 0} | Total Size:{" "}
+        Files: {totalLogsAnalysed} | Total Size:{" "}
         {(() => {
-          const totalBytes = (Array.isArray(uploadedLogFiles) ? uploadedLogFiles : [])
+          const totalBytes = (
+            Array.isArray(uploadedLogFiles) ? uploadedLogFiles : []
+          )
             .map((log) => log?.totalSize || 0)
             .reduce((a, b) => a + b, 0);
           return formatFileSize(totalBytes);
@@ -87,7 +91,9 @@ const PopOverParsedLogs = () => {
                 <div className="mt-2 text-[9px] text-gray-500 dark:text-gray-400 border-t dark:border-t-gray-800 pt-1 flex flex-col">
                   <span className="mt-1">
                     Batch: {logEntry?.names?.length} files | Size:{" "}
-                    {formatFileSize(logEntry?.individualSizes?.reduce((a, b) => a + b, 0))}
+                    {formatFileSize(
+                      logEntry?.individualSizes?.reduce((a, b) => a + b, 0),
+                    )}
                   </span>
                   {logEntry.lineCount && (
                     <span className="text-brand-bright font-semibold">

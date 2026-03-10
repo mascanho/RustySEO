@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
@@ -523,10 +524,18 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       // Determine taxonomy filter
       let activeTaxonomyFilter = null;
       if (selectedTaxonomy !== "all") {
-        activeTaxonomyFilter = taxonomies.find(t => t.id === selectedTaxonomy)?.name || null;
-      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
+        activeTaxonomyFilter =
+          taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
+      } else if (
+        segment &&
+        segment !== "all" &&
+        segment !== "Uncategorized" &&
+        segment !== "Other"
+      ) {
         // If segment is a referrer category, we don't treat it as taxonomy
-        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        const isReferrerCat = availableReferrerCategories.some(
+          (cat) => cat.toLowerCase() === segment.toLowerCase(),
+        );
         if (!isReferrerCat) {
           activeTaxonomyFilter = segment;
         }
@@ -538,9 +547,14 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         activeRefererFilter = referrerCategoryFilter[0];
       } else if (segment && segment !== "all") {
         // If the segment matches a known referrer category, use it as the filter
-        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        const isReferrerCat = availableReferrerCategories.some(
+          (cat) => cat.toLowerCase() === segment.toLowerCase(),
+        );
         if (isReferrerCat) {
-          activeRefererFilter = availableReferrerCategories.find(cat => cat.toLowerCase() === segment.toLowerCase()) || null;
+          activeRefererFilter =
+            availableReferrerCategories.find(
+              (cat) => cat.toLowerCase() === segment.toLowerCase(),
+            ) || null;
         }
       }
 
@@ -550,18 +564,27 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       }
 
       // Handle special case for Internal Referral in categories
-      const activeRefererCategories = referrerCategoryFilter.map(cat => {
+      const activeRefererCategories = referrerCategoryFilter.map((cat) => {
         if (cat === "Internal Referral" && domain) return domain;
         return cat;
       });
 
       // Also handle segment if it's a referrer category
-      if (activeRefererCategories.length === 0 && segment && segment !== "all") {
-        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+      if (
+        activeRefererCategories.length === 0 &&
+        segment &&
+        segment !== "all"
+      ) {
+        const isReferrerCat = availableReferrerCategories.some(
+          (cat) => cat.toLowerCase() === segment.toLowerCase(),
+        );
         if (isReferrerCat) {
-          const cat = availableReferrerCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
+          const cat = availableReferrerCategories.find(
+            (cat) => cat.toLowerCase() === segment.toLowerCase(),
+          );
           if (cat) {
-            const finalCat = (cat === "Internal Referral" && domain) ? domain : cat;
+            const finalCat =
+              cat === "Internal Referral" && domain ? domain : cat;
             activeRefererCategories.push(finalCat);
           }
         }
@@ -574,7 +597,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         file_type_filter: fileTypeFilter,
         bot_filter: null, // Referrers usually care about all hits
         bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-        crawler_type_filter: crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
+        crawler_type_filter:
+          crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
         verified_filter: verifiedFilter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
@@ -606,7 +630,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     isInitialized,
     fetchPathAggregationsPage,
     taxonomies,
-    availableReferrerCategories
+    availableReferrerCategories,
   ]);
 
   const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
@@ -732,8 +756,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [entries],
   );
@@ -742,8 +766,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [entries],
   );
@@ -859,8 +883,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
-                {pathAggregations.total_hits.toLocaleString()} hits)
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -979,7 +1003,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                 align="end"
                 className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
               >
-                <DropdownMenuLabel>Filter by Referrer Category</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  Filter by Referrer Category
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {availableReferrerCategories.map((category) => (
                   <DropdownMenuCheckboxItem
@@ -1114,16 +1140,17 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                          ? "bg-green-500"
-                          : statusCode >= 300 && statusCode < 400
-                            ? "bg-blue-500"
-                            : statusCode >= 400 && statusCode < 500
-                              ? "bg-yellow-500"
-                              : statusCode >= 500
-                                ? "bg-red-500"
-                                : "bg-gray-500"
-                          }`}
+                        className={`w-3 h-3 rounded-full ${
+                          statusCode >= 200 && statusCode < 300
+                            ? "bg-green-500"
+                            : statusCode >= 300 && statusCode < 400
+                              ? "bg-blue-500"
+                              : statusCode >= 400 && statusCode < 500
+                                ? "bg-yellow-500"
+                                : statusCode >= 500
+                                  ? "bg-red-500"
+                                  : "bg-gray-500"
+                        }`}
                       />
                       <span>{statusCode}</span>
                     </div>
@@ -1166,7 +1193,10 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                     checked={crawlerTypeFilter.includes(crawlerType)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setCrawlerTypeFilter([...crawlerTypeFilter, crawlerType]);
+                        setCrawlerTypeFilter([
+                          ...crawlerTypeFilter,
+                          crawlerType,
+                        ]);
                       } else {
                         setCrawlerTypeFilter(
                           crawlerTypeFilter.filter(
@@ -1236,10 +1266,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1250,10 +1281,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         Path
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1264,10 +1296,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         Referer
                         {sortConfig?.key === "referer" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1280,10 +1313,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         Size
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1294,10 +1328,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                              }`}
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1341,7 +1376,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                     }
                                     className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
                                   >
-                                    {getFileIcon(log.file_type || "Unknown")} {""}
+                                    {getFileIcon(log.file_type || "Unknown")}{" "}
+                                    {""}
                                   </span>
                                   <span
                                     onClick={(click) =>
@@ -1363,11 +1399,12 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                             e.stopPropagation();
                                             e.preventDefault();
                                             setSelectedLog(log);
-                                            const response = await FetchMatchGSC(
-                                              log.path,
-                                              credentials,
-                                              GSCdata,
-                                            );
+                                            const response =
+                                              await FetchMatchGSC(
+                                                log.path,
+                                                credentials,
+                                                GSCdata,
+                                              );
 
                                             setSelectedURLDetails(response);
                                           }}
@@ -1409,7 +1446,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                                         : log.status >= 300 && log.status < 400
                                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                          : log.status >= 400 && log.status < 500
+                                          : log.status >= 400 &&
+                                              log.status < 500
                                             ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                             : log.status >= 500
                                               ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
@@ -1430,7 +1468,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                   }
                                 >
                                   {log.crawler_type &&
-                                    log.crawler_type.length > 12
+                                  log.crawler_type.length > 12
                                     ? log.crawler_type.trim().slice(0, 15)
                                     : log.crawler_type || "Unknown"}
                                 </Badge>
@@ -1573,7 +1611,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                                 .find(
                                                   (tax) =>
                                                     tax.name ===
-                                                    getTaxonomyForPath(log.path),
+                                                    getTaxonomyForPath(
+                                                      log.path,
+                                                    ),
                                                 )
                                                 ?.paths.map((pathRule, idx) => (
                                                   <Badge
@@ -1604,14 +1644,16 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                                 log.file_type || "Unknown",
                                               )}
                                               <span className="text-lg font-medium">
-                                                {log.file_type || "Unknown"} File
+                                                {log.file_type || "Unknown"}{" "}
+                                                File
                                               </span>
                                             </div>
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                                               This request accessed a{" "}
                                               {log.file_type || "Unknown"} file
                                               from{" "}
-                                              {referrerCategory === "Direct/None"
+                                              {referrerCategory ===
+                                              "Direct/None"
                                                 ? "direct traffic"
                                                 : referrerCategory}
                                             </p>

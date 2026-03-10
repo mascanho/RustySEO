@@ -195,11 +195,24 @@ fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) 
 
 fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
     let bot_patterns = [
-        "googlebot", "bingbot", "slurp", "duckduckbot", "baiduspider", "yandexbot",
-        "facebookexternalhit", "twitterbot", "linkedinbot", "applebot", "bot", "crawler", "spider"
+        "googlebot",
+        "bingbot",
+        "slurp",
+        "duckduckbot",
+        "baiduspider",
+        "yandexbot",
+        "facebookexternalhit",
+        "twitterbot",
+        "linkedinbot",
+        "applebot",
+        "bot",
+        "crawler",
+        "spider",
     ];
     let tool_patterns = ["curl", "wget", "postman", "python"];
-    let browser_patterns = ["chrome", "firefox", "safari", "edge", "opera", "trident", "msie"];
+    let browser_patterns = [
+        "chrome", "firefox", "safari", "edge", "opera", "trident", "msie",
+    ];
 
     let mut not_bot_clauses = Vec::new();
     for p in bot_patterns {
@@ -356,9 +369,15 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     if let Some(ref crawler_type) = filters.crawler_type_filter {
         let lower_ct = crawler_type.to_lowercase();
         if lower_ct == "google" {
-            clauses.push("(LOWER(crawler_type) LIKE '%google%' OR LOWER(user_agent) LIKE '%googlebot%')".to_string());
+            clauses.push(
+                "(LOWER(crawler_type) LIKE '%google%' OR LOWER(user_agent) LIKE '%googlebot%')"
+                    .to_string(),
+            );
         } else if lower_ct == "bing" {
-            clauses.push("(LOWER(crawler_type) LIKE '%bing%' OR LOWER(user_agent) LIKE '%bingbot%')".to_string());
+            clauses.push(
+                "(LOWER(crawler_type) LIKE '%bing%' OR LOWER(user_agent) LIKE '%bingbot%')"
+                    .to_string(),
+            );
         } else if lower_ct == "semrush" {
             clauses.push("LOWER(crawler_type) LIKE '%semrush%'".to_string());
         } else if lower_ct == "hrefs" {
@@ -368,7 +387,10 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
         } else if lower_ct == "openai" {
             clauses.push("(LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%' OR LOWER(user_agent) LIKE '%oai-%')".to_string());
         } else if lower_ct == "claude" {
-            clauses.push("(LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%')".to_string());
+            clauses.push(
+                "(LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%')"
+                    .to_string(),
+            );
         } else {
             clauses.push("crawler_type = ?".to_string());
             params.push(crawler_type.clone().into());
@@ -458,7 +480,6 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     if !ua_clauses.is_empty() {
         clauses.push(format!("({})", ua_clauses.join(" AND ")));
     }
-
 
     (clauses.join(" AND "), params)
 }
@@ -1015,22 +1036,32 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
     // 5. User Agent Categories (Accurate Totals for Charts)
     {
         let bot_patterns = [
-            ("googlebot", "Googlebot"), ("bingbot", "Bingbot"), ("slurp", "Yahoo Slurp"),
-            ("duckduckbot", "DuckDuckGo Bot"), ("baiduspider", "Baidu Spider"), ("yandexbot", "Yandex Bot"),
-            ("facebookexternalhit", "Facebook Bot"), ("twitterbot", "Twitter Bot"), ("linkedinbot", "LinkedIn Bot"),
-            ("applebot", "Apple Bot")
+            ("googlebot", "Googlebot"),
+            ("bingbot", "Bingbot"),
+            ("slurp", "Yahoo Slurp"),
+            ("duckduckbot", "DuckDuckGo Bot"),
+            ("baiduspider", "Baidu Spider"),
+            ("yandexbot", "Yandex Bot"),
+            ("facebookexternalhit", "Facebook Bot"),
+            ("twitterbot", "Twitter Bot"),
+            ("linkedinbot", "LinkedIn Bot"),
+            ("applebot", "Apple Bot"),
         ];
-        
+
         let mut case_parts = Vec::new();
         case_parts.push("WHEN (user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown') THEN 'Unknown/Empty'".to_string());
         for (p, cat) in bot_patterns {
-            case_parts.push(format!("WHEN LOWER(user_agent) LIKE '%{}%' THEN '{}'", p, cat));
+            case_parts.push(format!(
+                "WHEN LOWER(user_agent) LIKE '%{}%' THEN '{}'",
+                p, cat
+            ));
         }
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%') THEN 'Other Bots'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%curl%' THEN 'cURL'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%wget%' THEN 'Wget'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%postman%' THEN 'Postman'".to_string());
-        case_parts.push("WHEN LOWER(user_agent) LIKE '%python%' THEN 'Python Requests'".to_string());
+        case_parts
+            .push("WHEN LOWER(user_agent) LIKE '%python%' THEN 'Python Requests'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Chrome'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%') THEN 'Chrome Mobile'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Firefox'".to_string());
@@ -1040,7 +1071,8 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         case_parts.push("WHEN LOWER(user_agent) LIKE '%edge%' THEN 'Microsoft Edge'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%opera%' THEN 'Opera'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%') THEN 'Internet Explorer'".to_string());
-        case_parts.push("WHEN LOWER(user_agent) LIKE '%android%' THEN 'Android Browser'".to_string());
+        case_parts
+            .push("WHEN LOWER(user_agent) LIKE '%android%' THEN 'Android Browser'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') THEN 'iOS Browser'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%windows%' THEN 'Windows'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%mac os%' THEN 'macOS'".to_string());
@@ -1087,20 +1119,43 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
     // 7. Referrer Categories (Accurate Totals for Charts)
     {
         let ref_patterns = [
-            ("google.com", "Google"), ("google.co", "Google"), ("bing.com", "MS Bing"),
-            ("yahoo.com", "Yahoo"), ("duckduckgo.com", "DuckDuckGo"), ("baidu.com", "Baidu"),
-            ("yandex.com", "Yandex"), ("yandex.ru", "Yandex"), ("facebook.com", "Facebook"),
-            ("fb.com", "Facebook"), ("twitter.com", "Twitter/X"), ("x.com", "Twitter/X"),
-            ("linkedin.com", "LinkedIn"), ("instagram.com", "Instagram"), ("pinterest.com", "Pinterest"),
-            ("reddit.com", "Reddit"), ("tiktok.com", "TikTok"), ("github.com", "GitHub"),
-            ("youtube.com", "YouTube"), ("stackoverflow.com", "Stack Overflow"), ("medium.com", "Medium"),
-            ("wordpress.com", "WordPress"), ("blogger.com", "Blogger"), ("quora.com", "Quora"),
-            ("vimeo.com", "Vimeo"), ("wikipedia.org", "Wikipedia"), ("amazon.com", "Amazon"),
-            ("ebay.com", "eBay"), ("etsy.com", "Etsy"), ("shopify.com", "Shopify")
+            ("google.com", "Google"),
+            ("google.co", "Google"),
+            ("bing.com", "MS Bing"),
+            ("yahoo.com", "Yahoo"),
+            ("duckduckgo.com", "DuckDuckGo"),
+            ("baidu.com", "Baidu"),
+            ("yandex.com", "Yandex"),
+            ("yandex.ru", "Yandex"),
+            ("facebook.com", "Facebook"),
+            ("fb.com", "Facebook"),
+            ("twitter.com", "Twitter/X"),
+            ("x.com", "Twitter/X"),
+            ("linkedin.com", "LinkedIn"),
+            ("instagram.com", "Instagram"),
+            ("pinterest.com", "Pinterest"),
+            ("reddit.com", "Reddit"),
+            ("tiktok.com", "TikTok"),
+            ("github.com", "GitHub"),
+            ("youtube.com", "YouTube"),
+            ("stackoverflow.com", "Stack Overflow"),
+            ("medium.com", "Medium"),
+            ("wordpress.com", "WordPress"),
+            ("blogger.com", "Blogger"),
+            ("quora.com", "Quora"),
+            ("vimeo.com", "Vimeo"),
+            ("wikipedia.org", "Wikipedia"),
+            ("amazon.com", "Amazon"),
+            ("ebay.com", "eBay"),
+            ("etsy.com", "Etsy"),
+            ("shopify.com", "Shopify"),
         ];
 
         let mut case_parts = Vec::new();
-        case_parts.push("WHEN (referer IS NULL OR referer = '' OR referer = '-') THEN 'Direct/None'".to_string());
+        case_parts.push(
+            "WHEN (referer IS NULL OR referer = '' OR referer = '-') THEN 'Direct/None'"
+                .to_string(),
+        );
         for (p, cat) in ref_patterns {
             case_parts.push(format!("WHEN LOWER(referer) LIKE '%{}%' THEN '{}'", p, cat));
         }
@@ -1208,8 +1263,17 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
         )
         .map_err(|e| e.to_string())?;
 
-    let (ggl, bng, sem, ahr, moz, upt, oai, cld): (Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>, Option<i64>) = 
-        bot_stmt.query_row([], |row| {
+    let (ggl, bng, sem, ahr, moz, upt, oai, cld): (
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+    ) = bot_stmt
+        .query_row([], |row| {
             Ok((
                 row.get(0)?,
                 row.get(1)?,
@@ -1220,7 +1284,8 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
                 row.get(6)?,
                 row.get(7)?,
             ))
-        }).map_err(|e| e.to_string())?;
+        })
+        .map_err(|e| e.to_string())?;
 
     bot_totals.google = ggl.unwrap_or(0) as usize;
     bot_totals.bing = bng.unwrap_or(0) as usize;
@@ -1472,3 +1537,67 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
 }
 
 use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
+
+#[tauri::command]
+pub fn reclassify_all_segments() -> Result<(), String> {
+    init_active_db()?;
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+
+    // Get current taxonomies from parse_logs cache
+    let taxonomies = crate::loganalyser::helpers::parse_logs::get_taxonomies();
+
+    // Sort them by path length descending to ensure most specific matches win (as in parse_log_line)
+    let mut sorted_taxonomies = taxonomies.clone();
+    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len()));
+
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    {
+        // 1. Reset all segments to 'Other'
+        tx.execute("UPDATE active_parsed_logs SET segment = 'Other'", [])
+            .map_err(|e| e.to_string())?;
+
+        // 2. Apply each taxonomy in order
+        // Note: Since we apply them one by one, and we want specify matches to win,
+        // we should probably apply them from LEAST specific to MOST specific if we want the last win,
+        // OR we just use CASE statement in one big query.
+        // Given how classify_segment_name_internal works (returns first match in sorted list),
+        // the big CASE statement is more accurate.
+
+        if !sorted_taxonomies.is_empty() {
+            let mut case_parts = Vec::new();
+            let mut params = Vec::new();
+
+            for taxonomy in &sorted_taxonomies {
+                let (clause, pattern) = match taxonomy.match_type.as_str() {
+                    "startsWith" => ("path LIKE ?", format!("{}%", taxonomy.path)),
+                    "contains" => ("path LIKE ?", format!("%{}%", taxonomy.path)),
+                    "exactMatch" => ("path = ?", taxonomy.path.clone()),
+                    _ => ("path LIKE ?", format!("{}%", taxonomy.path)),
+                };
+                case_parts.push(format!("WHEN {} THEN ?", clause));
+                params.push(rusqlite::types::Value::Text(pattern));
+                params.push(rusqlite::types::Value::Text(taxonomy.name.clone()));
+            }
+
+            let query = format!(
+                "UPDATE active_parsed_logs SET segment = CASE {} ELSE 'Other' END",
+                case_parts.join(" ")
+            );
+
+            // Interleave params: pattern, name, pattern, name...
+            let mut interleave_params = Vec::new();
+            for i in 0..sorted_taxonomies.len() {
+                interleave_params.push(params[i * 2].clone());
+                interleave_params.push(params[i * 2 + 1].clone());
+            }
+
+            tx.execute(&query, rusqlite::params_from_iter(interleave_params.iter()))
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+
+    println!("All entries re-classified based on new taxonomies.");
+    Ok(())
+}
