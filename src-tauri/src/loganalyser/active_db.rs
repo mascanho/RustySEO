@@ -141,6 +141,12 @@ pub struct ActiveFilters {
     pub referer_categories: Vec<String>,
     #[serde(default)]
     pub referer_specific: Vec<String>,
+    #[serde(default)]
+    pub user_agent_filter: Option<String>,
+    #[serde(default)]
+    pub user_agent_categories: Vec<String>,
+    #[serde(default)]
+    pub user_agent_specific: Vec<String>,
 }
 
 fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
@@ -183,6 +189,45 @@ fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) 
         other => {
             let pattern = format!("%{}%", other.to_lowercase());
             ("LOWER(referer) LIKE ?".to_string(), vec![pattern.into()])
+        }
+    }
+}
+
+fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
+    match cat {
+        "Chrome" => ("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%')".to_string(), vec![]),
+        "Chrome Mobile" => ("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%')".to_string(), vec![]),
+        "Firefox" => ("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%')".to_string(), vec![]),
+        "Firefox Mobile" => ("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) LIKE '%mobile%')".to_string(), vec![]),
+        "Safari" => ("(LOWER(user_agent) LIKE '%safari%' AND LOWER(user_agent) NOT LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%')".to_string(), vec![]),
+        "Safari Mobile" => ("(LOWER(user_agent) LIKE '%safari%' AND NOT LOWER(user_agent) LIKE '%chrome%' AND (LOWER(user_agent) LIKE '%mobile%' OR LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%'))".to_string(), vec![]),
+        "Microsoft Edge" => ("LOWER(user_agent) LIKE '%edge%'".to_string(), vec![]),
+        "Opera" => ("LOWER(user_agent) LIKE '%opera%'".to_string(), vec![]),
+        "Internet Explorer" => ("(LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%')".to_string(), vec![]),
+        "Googlebot" => ("LOWER(user_agent) LIKE '%googlebot%'".to_string(), vec![]),
+        "Bingbot" => ("LOWER(user_agent) LIKE '%bingbot%'".to_string(), vec![]),
+        "Yahoo Slurp" => ("LOWER(user_agent) LIKE '%slurp%'".to_string(), vec![]),
+        "DuckDuckGo Bot" => ("LOWER(user_agent) LIKE '%duckduckgo.com%'".to_string(), vec![]),
+        "Baidu Spider" => ("LOWER(user_agent) LIKE '%baiduspider%'".to_string(), vec![]),
+        "Yandex Bot" => ("LOWER(user_agent) LIKE '%yandexbot%'".to_string(), vec![]),
+        "Facebook Bot" => ("LOWER(user_agent) LIKE '%facebookexternalhit%'".to_string(), vec![]),
+        "Twitter Bot" => ("LOWER(user_agent) LIKE '%twitterbot%'".to_string(), vec![]),
+        "LinkedIn Bot" => ("LOWER(user_agent) LIKE '%linkedinbot%'".to_string(), vec![]),
+        "Apple Bot" => ("LOWER(user_agent) LIKE '%applebot%'".to_string(), vec![]),
+        "Other Bots" => ("(LOWER(user_agent) NOT LIKE '%googlebot%' AND LOWER(user_agent) NOT LIKE '%bingbot%' AND LOWER(user_agent) NOT LIKE '%slurp%' AND LOWER(user_agent) NOT LIKE '%duckduckgo%' AND LOWER(user_agent) NOT LIKE '%baiduspider%' AND LOWER(user_agent) NOT LIKE '%yandexbot%' AND LOWER(user_agent) NOT LIKE '%facebookexternalhit%' AND LOWER(user_agent) NOT LIKE '%twitterbot%' AND LOWER(user_agent) NOT LIKE '%linkedinbot%' AND LOWER(user_agent) NOT LIKE '%applebot%' AND (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%'))".to_string(), vec![]),
+        "Android Browser" => ("LOWER(user_agent) LIKE '%android%'".to_string(), vec![]),
+        "iOS Browser" => ("(LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%')".to_string(), vec![]),
+        "Windows" => ("LOWER(user_agent) LIKE '%windows%'".to_string(), vec![]),
+        "macOS" => ("LOWER(user_agent) LIKE '%mac os%'".to_string(), vec![]),
+        "Linux" => ("LOWER(user_agent) LIKE '%linux%'".to_string(), vec![]),
+        "cURL" => ("LOWER(user_agent) LIKE '%curl%'".to_string(), vec![]),
+        "Wget" => ("LOWER(user_agent) LIKE '%wget%'".to_string(), vec![]),
+        "Postman" => ("LOWER(user_agent) LIKE '%postman%'".to_string(), vec![]),
+        "Python Requests" => ("LOWER(user_agent) LIKE '%python%'".to_string(), vec![]),
+        "Unknown/Empty" => ("(user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown')".to_string(), vec![]),
+        other => {
+            let pattern = format!("%{}%", other.to_lowercase());
+            ("LOWER(user_agent) LIKE ?".to_string(), vec![pattern.into()])
         }
     }
 }
@@ -307,6 +352,43 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
 
     if !referer_clauses.is_empty() {
         clauses.push(format!("({})", referer_clauses.join(" AND ")));
+    }
+
+    // User Agent Filters
+    let mut ua_clauses = Vec::new();
+
+    // 1. Categories
+    if !filters.user_agent_categories.is_empty() {
+        let mut cat_or_clauses = Vec::new();
+        for cat in &filters.user_agent_categories {
+            let (clause, p) = get_user_agent_category_sql(cat);
+            cat_or_clauses.push(clause);
+            for val in p {
+                params.push(val);
+            }
+        }
+        ua_clauses.push(format!("({})", cat_or_clauses.join(" OR ")));
+    } else if let Some(ref ua_cat) = filters.user_agent_filter {
+        // Legacy/Single category support
+        let (clause, p) = get_user_agent_category_sql(ua_cat);
+        ua_clauses.push(clause);
+        for val in p {
+            params.push(val);
+        }
+    }
+
+    // 2. Specific user agents
+    if !filters.user_agent_specific.is_empty() {
+        let mut spec_or_clauses = Vec::new();
+        for spec in &filters.user_agent_specific {
+            spec_or_clauses.push("user_agent = ?".to_string());
+            params.push(spec.clone().into());
+        }
+        ua_clauses.push(format!("({})", spec_or_clauses.join(" OR ")));
+    }
+
+    if !ua_clauses.is_empty() {
+        clauses.push(format!("({})", ua_clauses.join(" AND ")));
     }
 
 

@@ -549,6 +549,24 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         activeRefererFilter = domain;
       }
 
+      // Handle special case for Internal Referral in categories
+      const activeRefererCategories = referrerCategoryFilter.map(cat => {
+        if (cat === "Internal Referral" && domain) return domain;
+        return cat;
+      });
+
+      // Also handle segment if it's a referrer category
+      if (activeRefererCategories.length === 0 && segment && segment !== "all") {
+        const isReferrerCat = availableReferrerCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (isReferrerCat) {
+          const cat = availableReferrerCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
+          if (cat) {
+            const finalCat = (cat === "Internal Referral" && domain) ? domain : cat;
+            activeRefererCategories.push(finalCat);
+          }
+        }
+      }
+
       const activeFilters = {
         search_term: searchTerm,
         status_filter: statusFilter,
@@ -561,7 +579,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
         taxonomy_filter: activeTaxonomyFilter,
-        referer_filter: activeRefererFilter,
+        referer_filter: activeRefererFilter, // Keep for legacy
+        referer_categories: activeRefererCategories,
+        referer_specific: referrerFilter,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
@@ -582,6 +602,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     segment,
     selectedTaxonomy,
     referrerCategoryFilter,
+    referrerFilter,
     isInitialized,
     fetchPathAggregationsPage,
     taxonomies,

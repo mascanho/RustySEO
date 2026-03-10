@@ -212,6 +212,9 @@ interface ActiveFilters {
   referer_filter: string | null;
   referer_categories: string[];
   referer_specific: string[];
+  user_agent_filter: string | null;
+  user_agent_categories: string[];
+  user_agent_specific: string[];
 }
 
 interface FilteredLogsPage {
@@ -371,6 +374,11 @@ const initialState: LogAnalysisState = {
     sort_dir: null,
     taxonomy_filter: null,
     referer_filter: null,
+    referer_categories: [],
+    referer_specific: [],
+    user_agent_filter: null,
+    user_agent_categories: [],
+    user_agent_specific: [],
   },
   totalCount: 0,
   currentPage: 1,
@@ -778,6 +786,11 @@ export const useLogAnalysisStore = create<
           sort_dir: filters.sort_dir,
           taxonomy_filter: filters.taxonomy_filter,
           referer_filter: filters.referer_filter || null,
+          referer_categories: filters.referer_categories || [],
+          referer_specific: filters.referer_specific || [],
+          user_agent_filter: filters.user_agent_filter || null,
+          user_agent_categories: filters.user_agent_categories || [],
+          user_agent_specific: filters.user_agent_specific || [],
         };
 
         const result = await invoke<FilteredLogsPage>("get_active_logs_page", {
@@ -819,6 +832,11 @@ export const useLogAnalysisStore = create<
           sort_dir: filters.sort_dir || "ascending",
           taxonomy_filter: filters.taxonomy_filter || null,
           referer_filter: filters.referer_filter || null,
+          referer_categories: filters.referer_categories || [],
+          referer_specific: filters.referer_specific || [],
+          user_agent_filter: filters.user_agent_filter || null,
+          user_agent_categories: filters.user_agent_categories || [],
+          user_agent_specific: filters.user_agent_specific || [],
         };
 
         const result = await invoke<FilteredLogsPage>(
@@ -855,6 +873,11 @@ export const useLogAnalysisStore = create<
           sort_dir: filters.sort_dir || "ascending",
           taxonomy_filter: filters.taxonomy_filter || null,
           referer_filter: filters.referer_filter || null,
+          referer_categories: filters.referer_categories || [],
+          referer_specific: filters.referer_specific || [],
+          user_agent_filter: filters.user_agent_filter || null,
+          user_agent_categories: filters.user_agent_categories || [],
+          user_agent_specific: filters.user_agent_specific || [],
         };
         const widgetAggs = await invoke<WidgetAggregations>("get_widget_aggregations", {
           filters: activeFilters,

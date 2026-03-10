@@ -70,7 +70,7 @@ import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -279,6 +279,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     isLoading: isStoreLoading,
   } = useLogAnalysis();
 
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+
   const {
     credentials,
     data: GSCdata,
@@ -314,20 +316,28 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
-  // Get all unique user agent categories from entries
+  // Get all unique user agent categories and specific user agents from widgetAggs.user_agents (full dataset)
   useEffect(() => {
-    if (entries && entries.length > 0) {
+    if (!isReady) return;
+    if (widgetAggs?.user_agents) {
       const categories = new Set<string>();
-      entries.forEach((log) => {
-        if (log.user_agent) {
-          const category = categorizeUserAgent(log.user_agent);
+      const agents = new Set<string>();
+
+      Object.keys(widgetAggs.user_agents).forEach((ua) => {
+        if (ua && ua.trim() !== "" && ua !== "-") {
+          const category = categorizeUserAgent(ua);
           categories.add(category);
+          agents.add(ua);
         }
       });
+
       const sortedCategories = Array.from(categories).sort();
+      const sortedAgents = Array.from(agents).sort();
+
       setAvailableUserAgentCategories(sortedCategories);
+      // We'll update uniqueUserAgents too if it was used for the "Specific User Agent" filter
     }
-  }, [entries]);
+  }, [widgetAggs?.user_agents, isReady]);
 
   // Initialize user agent category filter when segment is a user agent category
   useEffect(() => {
@@ -387,17 +397,14 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     return Array.from(types).sort();
   }, [entries, isReady]);
 
-  // Get unique user agents from entries
+  // Get unique user agents from widgetAggs.user_agents (full dataset)
   const uniqueUserAgents = useMemo(() => {
-    if (!isReady) return [];
-    const agents = new Set<string>();
-    entries.forEach((log) => {
-      if (log.user_agent) {
-        agents.add(log.user_agent);
-      }
-    });
-    return Array.from(agents).sort();
-  }, [entries, isReady]);
+    if (!isReady || !widgetAggs?.user_agents) return [];
+    const agents = Object.keys(widgetAggs.user_agents)
+      .filter(ua => ua && ua.trim() !== "" && ua !== "-")
+      .sort();
+    return agents;
+  }, [widgetAggs?.user_agents, isReady]);
 
   // useAsyncLogFilter implementation
   const activeSegmentTaxonomy = useMemo(
@@ -567,6 +574,16 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
         }
       }
 
+      // Determine user agent category filter
+      let activeUACategories = userAgentCategoryFilter;
+      if (activeUACategories.length === 0 && segment && segment !== "all") {
+        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (isUACat) {
+          const cat = availableUserAgentCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
+          if (cat) activeUACategories = [cat];
+        }
+      }
+
       const activeFilters = {
         search_term: searchTerm,
         status_filter: statusFilter,
@@ -579,6 +596,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
         taxonomy_filter: activeTaxonomyFilter,
+        user_agent_categories: activeUACategories,
+        user_agent_specific: userAgentFilter,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
@@ -601,7 +620,9 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     isInitialized,
     fetchPathAggregationsPage,
     taxonomies,
-    availableUserAgentCategories
+    availableUserAgentCategories,
+    userAgentCategoryFilter,
+    userAgentFilter
   ]);
 
   // Pagination Values
