@@ -210,6 +210,8 @@ interface ActiveFilters {
   sort_dir: string | null;
   taxonomy_filter: string | null;
   referer_filter: string | null;
+  referer_categories: string[];
+  referer_specific: string[];
 }
 
 interface FilteredLogsPage {

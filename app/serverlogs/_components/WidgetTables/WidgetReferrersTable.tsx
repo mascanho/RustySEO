@@ -69,7 +69,7 @@ import { toast } from "sonner";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -234,6 +234,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     isLoading: isStoreLoading,
   } = useLogAnalysis();
 
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+
   const {
     credentials,
     data: GSCdata,
@@ -269,18 +271,18 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
-  // Get all unique referrer categories and referrers from entries
+  // Get all unique referrer categories and referrers from widgetAggs.referrers (full dataset)
   useEffect(() => {
     if (!isReady) return;
-    if (entries && entries.length > 0) {
+    if (widgetAggs?.referrers) {
       const categories = new Set<string>();
       const referrers = new Set<string>();
 
-      entries.forEach((log) => {
-        if (log.referer && log.referer.trim() !== "" && log.referer !== "-") {
-          const category = categorizeReferrer(log.referer);
+      Object.keys(widgetAggs.referrers).forEach((referer) => {
+        if (referer && referer.trim() !== "" && referer !== "-") {
+          const category = categorizeReferrer(referer);
           categories.add(category);
-          referrers.add(log.referer);
+          referrers.add(referer);
         }
       });
 
@@ -293,7 +295,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       setAvailableReferrerCategories(sortedCategories);
       setAvailableReferrers(sortedReferrers);
     }
-  }, [entries, isReady]);
+  }, [widgetAggs?.referrers, isReady]);
 
   // Initialize referrer category filter when segment is a referrer category
   useEffect(() => {
@@ -540,6 +542,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         if (isReferrerCat) {
           activeRefererFilter = availableReferrerCategories.find(cat => cat.toLowerCase() === segment.toLowerCase()) || null;
         }
+      }
+
+      // Handle special case for Internal Referral
+      if (activeRefererFilter === "Internal Referral" && domain) {
+        activeRefererFilter = domain;
       }
 
       const activeFilters = {

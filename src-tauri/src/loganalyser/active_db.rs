@@ -137,6 +137,54 @@ pub struct ActiveFilters {
     pub taxonomy_filter: Option<String>,
     #[serde(default)]
     pub referer_filter: Option<String>,
+    #[serde(default)]
+    pub referer_categories: Vec<String>,
+    #[serde(default)]
+    pub referer_specific: Vec<String>,
+}
+
+fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
+    match cat {
+        "Direct/None" => ("(referer IS NULL OR referer = '' OR referer = '-')".to_string(), vec![]),
+        "Google" => ("(LOWER(referer) LIKE '%google.com%' OR LOWER(referer) LIKE '%google.co%')".to_string(), vec![]),
+        "MS Bing" => ("LOWER(referer) LIKE '%bing.com%'".to_string(), vec![]),
+        "Yahoo" => ("LOWER(referer) LIKE '%yahoo.com%'".to_string(), vec![]),
+        "DuckDuckGo" => ("LOWER(referer) LIKE '%duckduckgo.com%'".to_string(), vec![]),
+        "Baidu" => ("LOWER(referer) LIKE '%baidu.com%'".to_string(), vec![]),
+        "Yandex" => ("(LOWER(referer) LIKE '%yandex.com%' OR LOWER(referer) LIKE '%yandex.ru%')".to_string(), vec![]),
+        "Facebook" => ("(LOWER(referer) LIKE '%facebook.com%' OR LOWER(referer) LIKE '%fb.com%')".to_string(), vec![]),
+        "Twitter/X" => ("(LOWER(referer) LIKE '%twitter.com%' OR LOWER(referer) LIKE '%x.com%')".to_string(), vec![]),
+        "LinkedIn" => ("LOWER(referer) LIKE '%linkedin.com%'".to_string(), vec![]),
+        "Instagram" => ("LOWER(referer) LIKE '%instagram.com%'".to_string(), vec![]),
+        "Pinterest" => ("LOWER(referer) LIKE '%pinterest.com%'".to_string(), vec![]),
+        "Reddit" => ("LOWER(referer) LIKE '%reddit.com%'".to_string(), vec![]),
+        "TikTok" => ("LOWER(referer) LIKE '%tiktok.com%'".to_string(), vec![]),
+        "GitHub" => ("LOWER(referer) LIKE '%github.com%'".to_string(), vec![]),
+        "YouTube" => ("LOWER(referer) LIKE '%youtube.com%'".to_string(), vec![]),
+        "Local/Internal" => ("(LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%')".to_string(), vec![]),
+        "Android App" => ("LOWER(referer) LIKE 'android-app://%'".to_string(), vec![]),
+        "iOS App" => ("LOWER(referer) LIKE 'ios-app://%'".to_string(), vec![]),
+        "Browser Bookmark" => ("(LOWER(referer) LIKE '%bookmark%' OR LOWER(referer) LIKE '%favorite%')".to_string(), vec![]),
+        "Chrome Extension" => ("LOWER(referer) LIKE 'chrome-extension://%'".to_string(), vec![]),
+        "Stack Overflow" => ("LOWER(referer) LIKE '%stackoverflow.com%'".to_string(), vec![]),
+        "Medium" => ("LOWER(referer) LIKE '%medium.com%'".to_string(), vec![]),
+        "WordPress" => ("LOWER(referer) LIKE '%wordpress.com%'".to_string(), vec![]),
+        "Blogger" => ("LOWER(referer) LIKE '%blogger.com%'".to_string(), vec![]),
+        "Quora" => ("LOWER(referer) LIKE '%quora.com%'".to_string(), vec![]),
+        "Vimeo" => ("LOWER(referer) LIKE '%vimeo.com%'".to_string(), vec![]),
+        "Wikipedia" => ("LOWER(referer) LIKE '%wikipedia.org%'".to_string(), vec![]),
+        "Amazon" => ("LOWER(referer) LIKE '%amazon.com%'".to_string(), vec![]),
+        "eBay" => ("LOWER(referer) LIKE '%ebay.com%'".to_string(), vec![]),
+        "Etsy" => ("LOWER(referer) LIKE '%etsy.com%'".to_string(), vec![]),
+        "Shopify" => ("LOWER(referer) LIKE '%shopify.com%'".to_string(), vec![]),
+        "Email" => ("(LOWER(referer) LIKE 'mail.%' OR LOWER(referer) LIKE '%email%')".to_string(), vec![]),
+        "News" => ("LOWER(referer) LIKE 'news.%'".to_string(), vec![]),
+        "Blog" => ("LOWER(referer) LIKE 'blog.%'".to_string(), vec![]),
+        other => {
+            let pattern = format!("%{}%", other.to_lowercase());
+            ("LOWER(referer) LIKE ?".to_string(), vec![pattern.into()])
+        }
+    }
 }
 
 fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::Value>) {
@@ -224,68 +272,43 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
         params.push(taxonomy.clone().into());
     }
 
-    // Referrer category filter - matches the frontend's categorizeReferrer logic
-    if let Some(ref referer_cat) = filters.referer_filter {
-        match referer_cat.as_str() {
-            "Direct/None" => {
-                clauses.push("(referer IS NULL OR referer = '' OR referer = '-')".to_string());
-            }
-            "Google" => {
-                clauses.push("(LOWER(referer) LIKE '%google.com%' OR LOWER(referer) LIKE '%google.co%')".to_string());
-            }
-            "MS Bing" => {
-                clauses.push("LOWER(referer) LIKE '%bing.com%'".to_string());
-            }
-            "Yahoo" => {
-                clauses.push("LOWER(referer) LIKE '%yahoo.com%'".to_string());
-            }
-            "DuckDuckGo" => {
-                clauses.push("LOWER(referer) LIKE '%duckduckgo.com%'".to_string());
-            }
-            "Baidu" => {
-                clauses.push("LOWER(referer) LIKE '%baidu.com%'".to_string());
-            }
-            "Yandex" => {
-                clauses.push("(LOWER(referer) LIKE '%yandex.com%' OR LOWER(referer) LIKE '%yandex.ru%')".to_string());
-            }
-            "Facebook" => {
-                clauses.push("(LOWER(referer) LIKE '%facebook.com%' OR LOWER(referer) LIKE '%fb.com%')".to_string());
-            }
-            "Twitter/X" => {
-                clauses.push("(LOWER(referer) LIKE '%twitter.com%' OR LOWER(referer) LIKE '%x.com%')".to_string());
-            }
-            "LinkedIn" => {
-                clauses.push("LOWER(referer) LIKE '%linkedin.com%'".to_string());
-            }
-            "Instagram" => {
-                clauses.push("LOWER(referer) LIKE '%instagram.com%'".to_string());
-            }
-            "Pinterest" => {
-                clauses.push("LOWER(referer) LIKE '%pinterest.com%'".to_string());
-            }
-            "Reddit" => {
-                clauses.push("LOWER(referer) LIKE '%reddit.com%'".to_string());
-            }
-            "TikTok" => {
-                clauses.push("LOWER(referer) LIKE '%tiktok.com%'".to_string());
-            }
-            "GitHub" => {
-                clauses.push("LOWER(referer) LIKE '%github.com%'".to_string());
-            }
-            "YouTube" => {
-                clauses.push("LOWER(referer) LIKE '%youtube.com%'".to_string());
-            }
-            "Local/Internal" => {
-                clauses.push("(LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%')".to_string());
-            }
-            other => {
-                // Generic: match the category name as a domain substring
-                let pattern = format!("%{}%", other.to_lowercase());
-                clauses.push("LOWER(referer) LIKE ?".to_string());
-                params.push(pattern.into());
+    // Referrer Filters
+    let mut referer_clauses = Vec::new();
+
+    // 1. Categories
+    if !filters.referer_categories.is_empty() {
+        let mut cat_or_clauses = Vec::new();
+        for cat in &filters.referer_categories {
+            let (clause, p) = get_referer_category_sql(cat);
+            cat_or_clauses.push(clause);
+            for val in p {
+                params.push(val);
             }
         }
+        referer_clauses.push(format!("({})", cat_or_clauses.join(" OR ")));
+    } else if let Some(ref referer_cat) = filters.referer_filter {
+        // Legacy/Single category support
+        let (clause, p) = get_referer_category_sql(referer_cat);
+        referer_clauses.push(clause);
+        for val in p {
+            params.push(val);
+        }
     }
+
+    // 2. Specific referrers
+    if !filters.referer_specific.is_empty() {
+        let mut spec_or_clauses = Vec::new();
+        for spec in &filters.referer_specific {
+            spec_or_clauses.push("referer = ?".to_string());
+            params.push(spec.clone().into());
+        }
+        referer_clauses.push(format!("({})", spec_or_clauses.join(" OR ")));
+    }
+
+    if !referer_clauses.is_empty() {
+        clauses.push(format!("({})", referer_clauses.join(" AND ")));
+    }
+
 
     (clauses.join(" AND "), params)
 }
@@ -838,7 +861,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
     // 5. Referrers (Top 100)
     {
         let query = format!(
-            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 100",
+            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 10000",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
