@@ -234,6 +234,8 @@ export interface WidgetAggregations {
   status_codes: Record<number, number>;
   user_agents: Record<string, number>;
   referrers: Record<string, number>;
+  user_agent_categories?: Record<string, number>;
+  referrer_categories?: Record<string, number>;
 }
 
 interface LogAnalysisActions {

@@ -194,37 +194,95 @@ fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) 
 }
 
 fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
+    let bot_patterns = [
+        "googlebot", "bingbot", "slurp", "duckduckbot", "baiduspider", "yandexbot",
+        "facebookexternalhit", "twitterbot", "linkedinbot", "applebot", "bot", "crawler", "spider"
+    ];
+    let tool_patterns = ["curl", "wget", "postman", "python"];
+    let browser_patterns = ["chrome", "firefox", "safari", "edge", "opera", "trident", "msie"];
+
+    let mut not_bot_clauses = Vec::new();
+    for p in bot_patterns {
+        not_bot_clauses.push(format!("LOWER(user_agent) NOT LIKE '%{}%'", p));
+    }
+    let not_bot = not_bot_clauses.join(" AND ");
+
+    let mut not_tool_clauses = Vec::new();
+    for p in tool_patterns {
+        not_tool_clauses.push(format!("LOWER(user_agent) NOT LIKE '%{}%'", p));
+    }
+    let not_tool = not_tool_clauses.join(" AND ");
+
+    let mut not_browser_clauses = Vec::new();
+    for p in browser_patterns {
+        not_browser_clauses.push(format!("LOWER(user_agent) NOT LIKE '%{}%'", p));
+    }
+    let not_browser = not_browser_clauses.join(" AND ");
+
     match cat {
-        "Chrome" => ("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%')".to_string(), vec![]),
-        "Chrome Mobile" => ("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%')".to_string(), vec![]),
-        "Firefox" => ("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%')".to_string(), vec![]),
-        "Firefox Mobile" => ("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) LIKE '%mobile%')".to_string(), vec![]),
-        "Safari" => ("(LOWER(user_agent) LIKE '%safari%' AND LOWER(user_agent) NOT LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%')".to_string(), vec![]),
-        "Safari Mobile" => ("(LOWER(user_agent) LIKE '%safari%' AND NOT LOWER(user_agent) LIKE '%chrome%' AND (LOWER(user_agent) LIKE '%mobile%' OR LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%'))".to_string(), vec![]),
-        "Microsoft Edge" => ("LOWER(user_agent) LIKE '%edge%'".to_string(), vec![]),
-        "Opera" => ("LOWER(user_agent) LIKE '%opera%'".to_string(), vec![]),
-        "Internet Explorer" => ("(LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%')".to_string(), vec![]),
+        // 1. Bots
         "Googlebot" => ("LOWER(user_agent) LIKE '%googlebot%'".to_string(), vec![]),
         "Bingbot" => ("LOWER(user_agent) LIKE '%bingbot%'".to_string(), vec![]),
         "Yahoo Slurp" => ("LOWER(user_agent) LIKE '%slurp%'".to_string(), vec![]),
-        "DuckDuckGo Bot" => ("LOWER(user_agent) LIKE '%duckduckgo.com%'".to_string(), vec![]),
+        "DuckDuckGo Bot" => ("LOWER(user_agent) LIKE '%duckduckbot%'".to_string(), vec![]),
         "Baidu Spider" => ("LOWER(user_agent) LIKE '%baiduspider%'".to_string(), vec![]),
         "Yandex Bot" => ("LOWER(user_agent) LIKE '%yandexbot%'".to_string(), vec![]),
         "Facebook Bot" => ("LOWER(user_agent) LIKE '%facebookexternalhit%'".to_string(), vec![]),
         "Twitter Bot" => ("LOWER(user_agent) LIKE '%twitterbot%'".to_string(), vec![]),
         "LinkedIn Bot" => ("LOWER(user_agent) LIKE '%linkedinbot%'".to_string(), vec![]),
         "Apple Bot" => ("LOWER(user_agent) LIKE '%applebot%'".to_string(), vec![]),
-        "Other Bots" => ("(LOWER(user_agent) NOT LIKE '%googlebot%' AND LOWER(user_agent) NOT LIKE '%bingbot%' AND LOWER(user_agent) NOT LIKE '%slurp%' AND LOWER(user_agent) NOT LIKE '%duckduckgo%' AND LOWER(user_agent) NOT LIKE '%baiduspider%' AND LOWER(user_agent) NOT LIKE '%yandexbot%' AND LOWER(user_agent) NOT LIKE '%facebookexternalhit%' AND LOWER(user_agent) NOT LIKE '%twitterbot%' AND LOWER(user_agent) NOT LIKE '%linkedinbot%' AND LOWER(user_agent) NOT LIKE '%applebot%' AND (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%'))".to_string(), vec![]),
-        "Android Browser" => ("LOWER(user_agent) LIKE '%android%'".to_string(), vec![]),
-        "iOS Browser" => ("(LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%')".to_string(), vec![]),
-        "Windows" => ("LOWER(user_agent) LIKE '%windows%'".to_string(), vec![]),
-        "macOS" => ("LOWER(user_agent) LIKE '%mac os%'".to_string(), vec![]),
-        "Linux" => ("LOWER(user_agent) LIKE '%linux%'".to_string(), vec![]),
+        "Other Bots" => (format!("({} AND (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%'))", 
+            [
+                "LOWER(user_agent) NOT LIKE '%googlebot%'", "LOWER(user_agent) NOT LIKE '%bingbot%'", 
+                "LOWER(user_agent) NOT LIKE '%slurp%'", "LOWER(user_agent) NOT LIKE '%duckduckbot%'",
+                "LOWER(user_agent) NOT LIKE '%baiduspider%'", "LOWER(user_agent) NOT LIKE '%yandexbot%'",
+                "LOWER(user_agent) NOT LIKE '%facebookexternalhit%'", "LOWER(user_agent) NOT LIKE '%twitterbot%'",
+                "LOWER(user_agent) NOT LIKE '%linkedinbot%'", "LOWER(user_agent) NOT LIKE '%applebot%'"
+            ].join(" AND ")), vec![]),
+
+        // 2. Tools
         "cURL" => ("LOWER(user_agent) LIKE '%curl%'".to_string(), vec![]),
         "Wget" => ("LOWER(user_agent) LIKE '%wget%'".to_string(), vec![]),
         "Postman" => ("LOWER(user_agent) LIKE '%postman%'".to_string(), vec![]),
         "Python Requests" => ("LOWER(user_agent) LIKE '%python%'".to_string(), vec![]),
+
+        // 3. Browsers (Exclude Bots and Tools)
+        "Chrome" => (format!("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Chrome Mobile" => (format!("(LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Firefox" => (format!("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Firefox Mobile" => (format!("(LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) LIKE '%mobile%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Safari" => (format!("(LOWER(user_agent) LIKE '%safari%' AND LOWER(user_agent) NOT LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Safari Mobile" => (format!("(LOWER(user_agent) LIKE '%safari%' AND NOT LOWER(user_agent) LIKE '%chrome%' AND (LOWER(user_agent) LIKE '%mobile%' OR LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%') AND {} AND {})", not_bot, not_tool), vec![]),
+        "Microsoft Edge" => (format!("(LOWER(user_agent) LIKE '%edge%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Opera" => (format!("(LOWER(user_agent) LIKE '%opera%' AND {} AND {})", not_bot, not_tool), vec![]),
+        "Internet Explorer" => (format!("((LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%') AND {} AND {})", not_bot, not_tool), vec![]),
+
+        // 4. Devices/OS (Exclude Bots, Tools, and Browsers)
+        "Android Browser" => (format!("(LOWER(user_agent) LIKE '%android%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "iOS Browser" => (format!("((LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "Windows" => (format!("(LOWER(user_agent) LIKE '%windows%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "macOS" => (format!("(LOWER(user_agent) LIKE '%mac os%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "Linux" => (format!("(LOWER(user_agent) LIKE '%linux%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+
+        // 5. Specials
         "Unknown/Empty" => ("(user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown')".to_string(), vec![]),
+        "Other" => {
+            // Everything that doesn't match bots, tools, browsers, or devices
+            let mut all_not = Vec::new();
+            all_not.extend(not_bot_clauses);
+            all_not.extend(not_tool_clauses);
+            all_not.extend(not_browser_clauses);
+            all_not.push("LOWER(user_agent) NOT LIKE '%android%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%iphone%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%ipad%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%ipod%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%windows%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%mac os%'".to_string());
+            all_not.push("LOWER(user_agent) NOT LIKE '%linux%'".to_string());
+            all_not.push("user_agent IS NOT NULL AND user_agent != '' AND user_agent != '-' AND user_agent != 'Unknown'".to_string());
+            (format!("({})", all_not.join(" AND ")), vec![])
+        }
+
         other => {
             let pattern = format!("%{}%", other.to_lowercase());
             ("LOWER(user_agent) LIKE ?".to_string(), vec![pattern.into()])
@@ -848,6 +906,10 @@ pub struct WidgetAggregations {
     pub status_codes: std::collections::HashMap<u16, usize>,
     pub user_agents: std::collections::HashMap<String, usize>,
     pub referrers: std::collections::HashMap<String, usize>,
+    #[serde(default)]
+    pub user_agent_categories: std::collections::HashMap<String, usize>,
+    #[serde(default)]
+    pub referrer_categories: std::collections::HashMap<String, usize>,
 }
 
 #[tauri::command]
@@ -920,10 +982,10 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     }
 
-    // 4. User Agents (Top 100)
+    // 4. User Agents (Top Strings for dropdown/examples)
     {
         let query = format!(
-            "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 100",
+            "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 500",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -940,10 +1002,62 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     }
 
-    // 5. Referrers (Top 100)
+    // 5. User Agent Categories (Accurate Totals for Charts)
+    {
+        let bot_patterns = [
+            ("googlebot", "Googlebot"), ("bingbot", "Bingbot"), ("slurp", "Yahoo Slurp"),
+            ("duckduckbot", "DuckDuckGo Bot"), ("baiduspider", "Baidu Spider"), ("yandexbot", "Yandex Bot"),
+            ("facebookexternalhit", "Facebook Bot"), ("twitterbot", "Twitter Bot"), ("linkedinbot", "LinkedIn Bot"),
+            ("applebot", "Apple Bot")
+        ];
+        
+        let mut case_parts = Vec::new();
+        case_parts.push("WHEN (user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown') THEN 'Unknown/Empty'".to_string());
+        for (p, cat) in bot_patterns {
+            case_parts.push(format!("WHEN LOWER(user_agent) LIKE '%{}%' THEN '{}'", p, cat));
+        }
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%') THEN 'Other Bots'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%curl%' THEN 'cURL'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%wget%' THEN 'Wget'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%postman%' THEN 'Postman'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%python%' THEN 'Python Requests'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Chrome'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%') THEN 'Chrome Mobile'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Firefox'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) LIKE '%mobile%') THEN 'Firefox Mobile'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%safari%' AND LOWER(user_agent) NOT LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%' AND LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%') THEN 'Safari'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%safari%' AND NOT LOWER(user_agent) LIKE '%chrome%' AND (LOWER(user_agent) LIKE '%mobile%' OR LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%')) THEN 'Safari Mobile'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%edge%' THEN 'Microsoft Edge'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%opera%' THEN 'Opera'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%') THEN 'Internet Explorer'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%android%' THEN 'Android Browser'".to_string());
+        case_parts.push("WHEN (LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') THEN 'iOS Browser'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%windows%' THEN 'Windows'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%mac os%' THEN 'macOS'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%linux%' THEN 'Linux'".to_string());
+
+        let query = format!(
+            "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
+            case_parts.join(" "),
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (cat, count) = row.map_err(|e| e.to_string())?;
+            aggs.user_agent_categories.insert(cat, count);
+        }
+    }
+
+    // 6. Referrers (Top Strings for dropdown/examples)
     {
         let query = format!(
-            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 10000",
+            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 500",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -957,6 +1071,46 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
             let (ref_str, count) = row.map_err(|e| e.to_string())?;
             aggs.referrers
                 .insert(ref_str.unwrap_or_else(|| "Direct/None".to_string()), count);
+        }
+    }
+
+    // 7. Referrer Categories (Accurate Totals for Charts)
+    {
+        let ref_patterns = [
+            ("google.com", "Google"), ("google.co", "Google"), ("bing.com", "MS Bing"),
+            ("yahoo.com", "Yahoo"), ("duckduckgo.com", "DuckDuckGo"), ("baidu.com", "Baidu"),
+            ("yandex.com", "Yandex"), ("yandex.ru", "Yandex"), ("facebook.com", "Facebook"),
+            ("fb.com", "Facebook"), ("twitter.com", "Twitter/X"), ("x.com", "Twitter/X"),
+            ("linkedin.com", "LinkedIn"), ("instagram.com", "Instagram"), ("pinterest.com", "Pinterest"),
+            ("reddit.com", "Reddit"), ("tiktok.com", "TikTok"), ("github.com", "GitHub"),
+            ("youtube.com", "YouTube"), ("stackoverflow.com", "Stack Overflow"), ("medium.com", "Medium"),
+            ("wordpress.com", "WordPress"), ("blogger.com", "Blogger"), ("quora.com", "Quora"),
+            ("vimeo.com", "Vimeo"), ("wikipedia.org", "Wikipedia"), ("amazon.com", "Amazon"),
+            ("ebay.com", "eBay"), ("etsy.com", "Etsy"), ("shopify.com", "Shopify")
+        ];
+
+        let mut case_parts = Vec::new();
+        case_parts.push("WHEN (referer IS NULL OR referer = '' OR referer = '-') THEN 'Direct/None'".to_string());
+        for (p, cat) in ref_patterns {
+            case_parts.push(format!("WHEN LOWER(referer) LIKE '%{}%' THEN '{}'", p, cat));
+        }
+        case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%') THEN 'Local/Internal'".to_string());
+
+        let query = format!(
+            "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
+            case_parts.join(" "),
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (cat, count) = row.map_err(|e| e.to_string())?;
+            aggs.referrer_categories.insert(cat, count);
         }
     }
 

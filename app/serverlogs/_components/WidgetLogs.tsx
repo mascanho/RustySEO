@@ -236,56 +236,79 @@ export default function WidgetLogs() {
 
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
-    if (!widgetAggs?.user_agents) return {};
+    if (!widgetAggs) return {};
 
-    return Object.entries(widgetAggs.user_agents).reduce(
-      (acc, [userAgent, count]) => {
-        const categorizedAgent = categorizeUserAgent(userAgent);
+    const acc: Record<string, { count: number; examples: string[] }> = {};
 
-        if (!acc[categorizedAgent]) {
-          acc[categorizedAgent] = { count: 0, examples: [] };
+    // 1. Process category totals from backend (most accurate)
+    if (widgetAggs.user_agent_categories) {
+      Object.entries(widgetAggs.user_agent_categories).forEach(
+        ([cat, count]) => {
+          acc[cat] = { count, examples: [] };
+        },
+      );
+    }
+
+    // 2. Process specific strings for examples
+    if (widgetAggs.user_agents) {
+      Object.entries(widgetAggs.user_agents).forEach(([ua, count]) => {
+        const cat = categorizeUserAgent(ua);
+        if (!acc[cat]) {
+          acc[cat] = { count: 0, examples: [] };
         }
 
-        acc[categorizedAgent].count += count;
-
-        if (
-          acc[categorizedAgent].examples.length < 5 &&
-          !acc[categorizedAgent].examples.includes(userAgent)
-        ) {
-          acc[categorizedAgent].examples.push(userAgent);
+        // If we didn't have accurate totals from backend, accumulate counts here
+        if (!widgetAggs.user_agent_categories) {
+          acc[cat].count += count;
         }
 
-        return acc;
-      },
-      {},
-    );
+        if (acc[cat].examples.length < 5 && !acc[cat].examples.includes(ua)) {
+          acc[cat].examples.push(ua);
+        }
+      });
+    }
+
+    return acc;
   }, [widgetAggs]);
 
   // Prepare Referrers Data
   const referrerData = useMemo(() => {
-    if (!widgetAggs?.referrers) return {};
+    if (!widgetAggs) return {};
 
-    return Object.entries(widgetAggs.referrers).reduce(
-      (acc, [referrer, count]) => {
-        const categorizedReferrer = categorizeReferrer(referrer);
+    const acc: Record<string, { count: number; referrers: string[] }> = {};
 
-        if (!acc[categorizedReferrer]) {
-          acc[categorizedReferrer] = { count: 0, referrers: [] };
+    // 1. Process category totals from backend (most accurate)
+    if (widgetAggs.referrer_categories) {
+      Object.entries(widgetAggs.referrer_categories).forEach(
+        ([cat, count]) => {
+          acc[cat] = { count, referrers: [] };
+        },
+      );
+    }
+
+    // 2. Process specific strings for examples
+    if (widgetAggs.referrers) {
+      Object.entries(widgetAggs.referrers).forEach(([referrer, count]) => {
+        const cat = categorizeReferrer(referrer);
+        if (!acc[cat]) {
+          acc[cat] = { count: 0, referrers: [] };
         }
 
-        acc[categorizedReferrer].count += count;
+        // If we didn't have accurate totals from backend, accumulate counts here
+        if (!widgetAggs.referrer_categories) {
+          acc[cat].count += count;
+        }
 
         if (
-          acc[categorizedReferrer].referrers.length < 5 &&
-          !acc[categorizedReferrer].referrers.includes(referrer)
+          acc[cat].referrers.length < 5 &&
+          !acc[cat].referrers.includes(referrer)
         ) {
-          acc[categorizedReferrer].referrers.push(referrer);
+          acc[cat].referrers.push(referrer);
         }
+      });
+    }
 
-        return acc;
-      },
-      {},
-    );
+    return acc;
   }, [widgetAggs]);
 
   // Get chart data for active tab
@@ -588,7 +611,7 @@ export default function WidgetLogs() {
                     <WidgetReferrersTable
                       data={overview}
                       entries={entries}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                      segment={entry?.name}
                     />
                   ) : activeTab === "Content" ? (
                     <Tabs defaultValue="logs" className="h-full">
@@ -653,7 +676,7 @@ export default function WidgetLogs() {
                     <WidgetUserAgentsTable
                       data={overview}
                       entries={entries}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                      segment={entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
                     entry?.name,
