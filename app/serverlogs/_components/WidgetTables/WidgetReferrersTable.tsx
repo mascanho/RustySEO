@@ -272,13 +272,22 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
-  // Get all unique referrer categories and referrers from widgetAggs.referrers (full dataset)
+  // Get all unique referrer categories and referrers from widgetAggs (full dataset)
   useEffect(() => {
     if (!isReady) return;
-    if (widgetAggs?.referrers) {
-      const categories = new Set<string>();
-      const referrers = new Set<string>();
 
+    const categories = new Set<string>();
+    const referrers = new Set<string>();
+
+    // 1. Include categories from backend aggregations (authoritative source)
+    if (widgetAggs?.referrer_categories) {
+      Object.keys(widgetAggs.referrer_categories).forEach((cat) => {
+        categories.add(cat);
+      });
+    }
+
+    // 2. Also derive categories from individual referrer strings
+    if (widgetAggs?.referrers) {
       Object.keys(widgetAggs.referrers).forEach((referer) => {
         if (referer && referer.trim() !== "" && referer !== "-") {
           const category = categorizeReferrer(referer);
@@ -286,17 +295,17 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
           referrers.add(referer);
         }
       });
-
-      // Always add "Direct/None" category
-      categories.add("Direct/None");
-
-      const sortedCategories = Array.from(categories).sort();
-      const sortedReferrers = Array.from(referrers).sort();
-
-      setAvailableReferrerCategories(sortedCategories);
-      setAvailableReferrers(sortedReferrers);
     }
-  }, [widgetAggs?.referrers, isReady]);
+
+    // Always add "Direct/None" category
+    categories.add("Direct/None");
+
+    const sortedCategories = Array.from(categories).sort();
+    const sortedReferrers = Array.from(referrers).sort();
+
+    setAvailableReferrerCategories(sortedCategories);
+    setAvailableReferrers(sortedReferrers);
+  }, [widgetAggs?.referrers, widgetAggs?.referrer_categories, isReady]);
 
   // Initialize referrer category filter when segment is a referrer category
   useEffect(() => {
@@ -606,6 +615,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         referer_filter: activeRefererFilter, // Keep for legacy
         referer_categories: activeRefererCategories,
         referer_specific: referrerFilter,
+        user_agent_filter: null,
+        user_agent_categories: [],
+        user_agent_specific: [],
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
@@ -1142,14 +1154,14 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                            ? "bg-green-500"
-                            : statusCode >= 300 && statusCode < 400
-                              ? "bg-blue-500"
-                              : statusCode >= 400 && statusCode < 500
-                                ? "bg-yellow-500"
-                                : statusCode >= 500
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
                           }`}
                       />
                       <span>{statusCode}</span>
@@ -1267,8 +1279,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1281,8 +1293,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "path" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1295,8 +1307,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "referer" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1311,8 +1323,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1325,8 +1337,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "status" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
