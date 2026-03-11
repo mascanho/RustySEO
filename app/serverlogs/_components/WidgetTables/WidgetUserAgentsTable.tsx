@@ -684,26 +684,27 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     }
   };
 
-  // Calculate timings based on actual entries
-  const oldestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
-        : null,
-    [entries],
-  );
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, entries]);
 
-  const newestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
-        : null,
-    [entries],
-  );
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, entries]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {

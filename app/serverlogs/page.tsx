@@ -176,7 +176,7 @@ export default function Page() {
               }
 
               // Fetch first page of logs from DB
-              await fetchLogsFromDb(1, 100, {
+              const defaultFilters = {
                 search_term: "",
                 status_filter: [],
                 method_filter: [],
@@ -186,7 +186,9 @@ export default function Page() {
                 verified_filter: null,
                 sort_key: "timestamp",
                 sort_dir: "ascending",
-              });
+              };
+              await fetchLogsFromDb(1, 100, defaultFilters);
+              await useLogAnalysisStore.getState().fetchWidgetAggregations(defaultFilters);
             }
           },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE

@@ -61,7 +61,8 @@ export const categorizeReferrer = (referrer: string): string => {
   if (typeof window !== "undefined") {
     const domain = localStorage.getItem("domain");
     if (domain && ref.includes(domain.toLowerCase())) {
-      return "Internal Referral";
+      // Return "Other" because Rust backend groups it in "Other"
+      return "Other";
     }
   }
 
@@ -84,13 +85,9 @@ export const categorizeReferrer = (referrer: string): string => {
     if (hostname.includes("ebay.com")) return "eBay";
     if (hostname.includes("etsy.com")) return "Etsy";
     if (hostname.includes("shopify.com")) return "Shopify";
-    if (hostname.includes("mail.") || hostname.includes("email"))
-      return "Email";
-    if (hostname.includes("news.")) return "News";
-    if (hostname.includes("blog.")) return "Blog";
 
-    // For other domains, show the full domain (not just the main part)
-    return hostname;
+    // For other domains that are not matched above, return "Other"
+    return "Other";
   } catch (e) {
     // If not a valid URL, check common patterns
     const match = ref.match(/https?:\/\/([^\/]+)/);
@@ -103,17 +100,12 @@ export const categorizeReferrer = (referrer: string): string => {
       if (hostname.includes("medium")) return "Medium";
       if (hostname.includes("wordpress")) return "WordPress";
 
-      return hostname;
+      return "Other";
     }
 
     // If it doesn't look like a URL at all, check if it's a common string
-    if (ref.includes("bookmark") || ref.includes("favorite"))
-      return "Browser Bookmark";
-    if (ref.includes("android-app://")) return "Android App";
-    if (ref.includes("ios-app://")) return "iOS App";
-    if (ref.includes("chrome-extension://")) return "Chrome Extension";
 
     // Return the original referrer truncated if it's too long
-    return referrer.length > 30 ? referrer.substring(0, 30) + "..." : referrer;
+    return "Other";
   }
 };

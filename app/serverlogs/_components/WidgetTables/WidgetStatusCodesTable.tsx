@@ -570,25 +570,29 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
   };
 
   // Calculate timings based on actual entries
-  const oldestEntry = useMemo(
-    () =>
-      isReady && entries.length > 0
-        ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
-        : null,
-    [entries, isReady],
-  );
+  const oldestEntry = useMemo(() => {
+    if (!isReady) return null;
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, entries, isReady]);
 
-  const newestEntry = useMemo(
-    () =>
-      isReady && entries.length > 0
-        ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
-        : null,
-    [entries, isReady],
-  );
+  const newestEntry = useMemo(() => {
+    if (!isReady) return null;
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, entries, isReady]);
 
   const elapsedTimeMs = useMemo(() => {
     if (!isReady) return 0;
@@ -875,16 +879,16 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${category === "Success"
-                            ? "bg-green-500"
-                            : category === "Redirection"
-                              ? "bg-yellow-500"
-                              : category === "Client Error"
-                                ? "bg-orange-500"
-                                : category === "Server Error"
-                                  ? "bg-red-500"
-                                  : category === "Informational"
-                                    ? "bg-blue-500"
-                                    : "bg-gray-500"
+                          ? "bg-green-500"
+                          : category === "Redirection"
+                            ? "bg-yellow-500"
+                            : category === "Client Error"
+                              ? "bg-orange-500"
+                              : category === "Server Error"
+                                ? "bg-red-500"
+                                : category === "Informational"
+                                  ? "bg-blue-500"
+                                  : "bg-gray-500"
                           }`}
                       />
                       <span>{category}</span>
@@ -1117,8 +1121,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1131,8 +1135,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "path" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1145,8 +1149,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "status" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}
@@ -1161,8 +1165,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
                             className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
+                              ? "rotate-180"
+                              : ""
                               }`}
                           />
                         )}

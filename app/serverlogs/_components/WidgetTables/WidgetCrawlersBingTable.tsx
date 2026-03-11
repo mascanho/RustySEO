@@ -347,25 +347,27 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
 
   // CALCULATE THE TIMINGS
 
-  const oldestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
-        : null,
-    [initialLogs],
-  );
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
-  const newestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
-        : null,
-    [initialLogs],
-  );
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
@@ -560,11 +562,10 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -575,11 +576,10 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -590,11 +590,10 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -605,11 +604,10 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -719,11 +717,10 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                             <div className="flex items-center h-full justify-center">
                               <Badge
                                 variant="outline"
-                                className={`flex items-center align-middle justify-center ${
-                                  log.crawler_type !== "Human"
+                                className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
                                     ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
                                     : "bg-green-100 text-green-800 border-green-200"
-                                }`}
+                                  }`}
                               >
                                 {log.crawler_type.startsWith("Goo")
                                   ? "Google 🤖"
@@ -943,32 +940,32 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                          Other Codes:{" "}
-                                          {log.status_codes?.other_count || 0}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {Object.entries(
-                                            log.status_codes?.counts || {},
-                                          )
-                                            .filter(([code]) => {
-                                              const status = parseInt(code);
-                                              return (
-                                                status < 200 || status >= 600
-                                              );
-                                            })
-                                            .map(([code, count]) => (
-                                              <span
-                                                key={code}
-                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                              >
-                                                {code}: {count}
-                                              </span>
-                                            ))}
+                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                            Other Codes:{" "}
+                                            {log.status_codes?.other_count || 0}
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {Object.entries(
+                                              log.status_codes?.counts || {},
+                                            )
+                                              .filter(([code]) => {
+                                                const status = parseInt(code);
+                                                return (
+                                                  status < 200 || status >= 600
+                                                );
+                                              })
+                                              .map(([code, count]) => (
+                                                <span
+                                                  key={code}
+                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                                >
+                                                  {code}: {count}
+                                                </span>
+                                              ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
                                   </div>
                                 </div>
                               </div>
