@@ -76,26 +76,45 @@ export function FileUpload({
     }
   }, []);
 
+  // Track whether we are currently uploading so the listener can update progress
+  const uploadingRef = useRef(false);
+
   useEffect(() => {
-    const unlisten = listen("progress-update", (event) => {
-      const payload = event.payload as ProgressUpdate;
+    let unlistenProgress: (() => void) | null = null;
+    let unlistenComplete: (() => void) | null = null;
 
-      setProgress((prev) => ({
-        ...prev,
-        current: payload.current_file,
-        total: payload.total_files,
-        percent: payload.percentage,
-        filename: payload.filename,
-        phase: payload.phase,
-      }));
+    const setup = async () => {
+      const unlistenP = await listen("progress-update", (event) => {
+        const payload = event.payload as ProgressUpdate;
 
-      if (payload.phase === "started") {
-        toast.info(`Starting to process ${payload.filename}`);
-      }
-    });
+        setProgress((prev) => ({
+          ...prev,
+          current: payload.current_file,
+          total: payload.total_files,
+          percent: payload.percentage,
+          filename: payload.filename,
+          phase: payload.phase,
+        }));
+
+        // Update overall progress based on file progress
+        if (payload.total_files > 0) {
+          const fileProgress = (payload.current_file - 1) / payload.total_files;
+          const withinFileProgress = payload.phase === "completed" ? 1 / payload.total_files : 0;
+          const pct = Math.min(
+            95,
+            Math.round((fileProgress + withinFileProgress) * 100),
+          );
+          setOverallProgress(pct);
+        }
+      });
+      unlistenProgress = unlistenP;
+    };
+
+    setup();
 
     return () => {
-      unlisten.then((f) => f()).catch(console.error);
+      if (unlistenProgress) unlistenProgress();
+      if (unlistenComplete) unlistenComplete();
     };
   }, []);
 
@@ -164,7 +183,15 @@ export function FileUpload({
     if (files.length === 0) return;
 
     setUploading(true);
+    uploadingRef.current = true;
     setOverallProgress(0);
+    setProgress({
+      current: 0,
+      total: files.length,
+      percent: 0,
+      filename: "",
+      phase: "",
+    });
     await delay(100);
 
     if (os === "Windows" && files.length > 5) {
@@ -212,6 +239,8 @@ export function FileUpload({
         percent: 0,
       }));
 
+      // Wait for both the invoke to finish AND the "log-analysis-complete" event
+      // The invoke resolves when parsing is done, but progress events may still be in-flight.
       await invoke("check_logs_from_paths_command", {
         filePaths: allPaths,
         storingLogs,
@@ -221,8 +250,14 @@ export function FileUpload({
       // Mark all files as success
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
 
+      // Show completed state briefly so user sees the bar fill up
       setOverallProgress(100);
-      await delay(300);
+      setProgress((prev) => ({
+        ...prev,
+        percent: 100,
+        phase: "completed",
+      }));
+      await delay(800);
       toast.success("Log analysis complete!");
       closeDialog();
     } catch (err) {
@@ -231,6 +266,7 @@ export function FileUpload({
       toast.error("Upload failed: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUploading(false);
+      uploadingRef.current = false;
     }
   };
 
@@ -347,9 +383,14 @@ export function FileUpload({
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
                   <span>
-                    Processing: {progress.filename}{" "}
+                    {progress.phase === "processing" ? "Processing" : "Starting"}: {progress.filename}{" "}
+                    {progress.total > 1 && (
+                      <span className="text-muted-foreground">
+                        (File {progress.current} of {progress.total})
+                      </span>
+                    )}
                     {files.find((f) => f.name === progress.filename) && (
-                      <span className="text-brand-bright font-medium">
+                      <span className="text-brand-bright font-medium ml-1">
                         ({formatFileSize(files.find((f) => f.name === progress.filename)?.size)})
                       </span>
                     )}
@@ -358,7 +399,7 @@ export function FileUpload({
                 </div>
                 <Progress
                   value={progress.percent}
-                  className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
+                  className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500 [&>div]:transition-all [&>div]:duration-300 [&>div]:ease-out"
                 />
               </div>
             </div>

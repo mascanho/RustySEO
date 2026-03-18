@@ -302,11 +302,19 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let app_handle_clone = app_handle.clone();
     thread::spawn(move || {
         let mut last_emitted = std::time::Instant::now();
+        let mut last_update: Option<ProgressUpdate> = None;
         for update in progress_rx {
-            if last_emitted.elapsed() >= Duration::from_millis(100) {
-                let _ = app_handle_clone.emit("progress-update", update);
+            if last_emitted.elapsed() >= Duration::from_millis(50) {
+                let _ = app_handle_clone.emit("progress-update", &update);
                 last_emitted = std::time::Instant::now();
+                last_update = None;
+            } else {
+                last_update = Some(update);
             }
+        }
+        // Always emit the final update so the frontend sees 100%
+        if let Some(final_update) = last_update {
+            let _ = app_handle_clone.emit("progress-update", &final_update);
         }
     });
 
@@ -663,11 +671,19 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     let app_handle_clone = app_handle.clone();
     thread::spawn(move || {
         let mut last_emitted = std::time::Instant::now();
+        let mut last_update: Option<ProgressUpdate> = None;
         for update in progress_rx {
-            if last_emitted.elapsed() >= Duration::from_millis(100) {
-                let _ = app_handle_clone.emit("progress-update", update);
+            if last_emitted.elapsed() >= Duration::from_millis(50) {
+                let _ = app_handle_clone.emit("progress-update", &update);
                 last_emitted = std::time::Instant::now();
+                last_update = None;
+            } else {
+                last_update = Some(update);
             }
+        }
+        // Always emit the final update so the frontend sees 100%
+        if let Some(final_update) = last_update {
+            let _ = app_handle_clone.emit("progress-update", &final_update);
         }
     });
 
@@ -775,6 +791,11 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             .unwrap_or(file_path)
             .to_string();
 
+        // Get file size for intra-file progress reporting
+        let file_size = std::fs::metadata(file_path)
+            .map(|m| m.len())
+            .unwrap_or(0) as f32;
+
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
             total_files: file_count,
@@ -792,12 +813,32 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             }
         };
         let reader = BufReader::with_capacity(8 * 1024 * 1024, file); // 8MB buffer
+        let mut bytes_read: u64 = 0;
+        let mut lines_since_progress: usize = 0;
 
         for line_result in reader.lines() {
             let line = match line_result {
                 Ok(l) => l,
                 Err(_) => continue,
             };
+            bytes_read += line.len() as u64 + 1; // +1 for newline
+            lines_since_progress += 1;
+
+            // Send intra-file progress every 5000 lines
+            if lines_since_progress >= 5000 && file_size > 0.0 {
+                lines_since_progress = 0;
+                let file_fraction = (bytes_read as f32 / file_size).min(1.0);
+                // Blend file index progress with intra-file progress
+                let overall_pct = ((index as f32 + file_fraction) / file_count as f32) * 100.0;
+                let _ = progress_tx.send(ProgressUpdate {
+                    current_file: index + 1,
+                    total_files: file_count,
+                    percentage: overall_pct,
+                    filename: filename.clone(),
+                    phase: "processing".to_string(),
+                });
+            }
+
             let line = line.trim().to_string();
             if line.is_empty() {
                 continue;
