@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
   BadgeCheck,
+  Bot,
   ChevronDown,
   Download,
   FileAudio,
@@ -18,7 +19,17 @@ import {
   Search,
   Loader2,
   KeyRound,
+  User,
 } from "lucide-react";
+import {
+  IoLogoGoogle,
+  IoLogoFacebook,
+} from "react-icons/io5";
+import { SiSemrush } from "react-icons/si";
+import { Link2 } from "lucide-react";
+import { TbBrandBing } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { FaSpider } from "react-icons/fa6";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
@@ -437,6 +448,42 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     }
   };
 
+  const getCrawlerIcon = (crawlerType: string) => {
+    const ct = crawlerType.toLowerCase();
+    if (ct.includes("google")) {
+      return { icon: <IoLogoGoogle size={14} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct.includes("bing")) {
+      return { icon: <TbBrandBing size={14} />, color: "text-teal-600 dark:text-teal-400" };
+    }
+    if (ct.includes("semrush")) {
+      return { icon: <SiSemrush size={12} />, color: "text-orange-600 dark:text-orange-400" };
+    }
+    if (ct.includes("ahrefs") || ct.includes("hrefs")) {
+      return { icon: <Link2 size={14} />, color: "text-blue-700 dark:text-blue-300" };
+    }
+    if (ct.includes("moz")) {
+      return { icon: <RiRobot2Fill size={14} />, color: "text-blue-500 dark:text-blue-400" };
+    }
+    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
+      return { icon: <RiOpenaiFill size={14} />, color: "text-emerald-600 dark:text-emerald-400" };
+    }
+    if (ct.includes("claude") || ct.includes("anthropic")) {
+      return { icon: <RiOpenaiFill size={14} />, color: "text-amber-700 dark:text-amber-400" };
+    }
+    if (ct.includes("meta") || ct.includes("facebook")) {
+      return { icon: <IoLogoFacebook size={14} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct === "human") {
+      return { icon: <User size={14} />, color: "text-green-600 dark:text-green-400" };
+    }
+    // Generic bot
+    if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
+      return { icon: <FaSpider size={12} />, color: "text-purple-600 dark:text-purple-400" };
+    }
+    return { icon: <Bot size={14} />, color: "text-gray-500 dark:text-gray-400" };
+  };
+
   // CALCULATE THE TIMINGS
 
   const oldestEntry = useMemo(() => {
@@ -543,6 +590,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
               ? `https://${domain}${selectedLog.path}`
               : selectedLog.path
           }
+          crawlerType={selectedLog.crawler_type}
+          verified={selectedLog.verified}
         />
       )}
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -849,15 +898,26 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className="font-bold">Details</h4>
-                                    {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                        <BadgeCheck
-                                          size={18}
-                                          className="text-blue-800 pr-1 dark:text-blue-900"
-                                        />
-                                        {log?.crawler_type}
+                                    <div className="flex items-center gap-2">
+                                      <div className={`flex items-center gap-1.5 py-1 px-2.5 text-xs rounded-md border ${log.crawler_type !== "Human"
+                                          ? "bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700"
+                                          : "bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700"
+                                        }`}>
+                                        <span className={getCrawlerIcon(log.crawler_type).color}>
+                                          {getCrawlerIcon(log.crawler_type).icon}
+                                        </span>
+                                        <span className="font-medium">{log?.crawler_type}</span>
                                       </div>
-                                    )}
+                                      {log.verified && (
+                                        <div className="flex items-center space-x-1 py-1 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 px-2 text-xs rounded-md">
+                                          <BadgeCheck
+                                            size={16}
+                                            className="text-blue-600 dark:text-blue-400"
+                                          />
+                                          <span className="text-blue-700 dark:text-blue-300 font-medium">Verified</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <div className="space-y-2 text-sm">

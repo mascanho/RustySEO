@@ -9,12 +9,22 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  IoLogoGoogle,
+  IoLogoFacebook,
+} from "react-icons/io5";
+import { SiSemrush } from "react-icons/si";
+import { Link2 } from "lucide-react";
+import { TbBrandBing } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { FaSpider } from "react-icons/fa6";
 import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
 import {
@@ -131,6 +141,39 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
+  
+  const getCrawlerIcon = (crawlerType: string) => {
+    const ct = crawlerType.toLowerCase();
+    if (ct.includes("google")) {
+      return { icon: <IoLogoGoogle size={18} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct.includes("bing")) {
+      return { icon: <TbBrandBing size={18} />, color: "text-teal-600 dark:text-teal-400" };
+    }
+    if (ct.includes("semrush")) {
+      return { icon: <SiSemrush size={16} />, color: "text-orange-600 dark:text-orange-400" };
+    }
+    if (ct.includes("ahrefs") || ct.includes("hrefs")) {
+      return { icon: <Link2 size={18} />, color: "text-blue-700 dark:text-blue-300" };
+    }
+    if (ct.includes("moz")) {
+      return { icon: <RiRobot2Fill size={18} />, color: "text-blue-500 dark:text-blue-400" };
+    }
+    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
+      return { icon: <RiOpenaiFill size={18} />, color: "text-emerald-600 dark:text-emerald-400" };
+    }
+    if (ct.includes("claude") || ct.includes("anthropic")) {
+      return { icon: <RiOpenaiFill size={18} />, color: "text-amber-700 dark:text-amber-400" };
+    }
+    if (ct.includes("meta") || ct.includes("facebook")) {
+      return { icon: <IoLogoFacebook size={18} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    // Generic bot
+    if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
+      return { icon: <FaSpider size={16} />, color: "text-purple-600 dark:text-purple-400" };
+    }
+    return { icon: <Bot size={18} />, color: "text-gray-500 dark:text-gray-400" };
+  };
   const overview = useLogAnalysisStore((state) => state.overview);
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
@@ -681,7 +724,32 @@ export default function WidgetLogs() {
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
                     entry?.name,
                   ) ? (
-                    <Tabs defaultValue="overview" className="h-full">
+                    <div className="flex flex-col h-full">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2 shrink-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}>
+                              {getCrawlerIcon(entry.name).icon}
+                            </span>
+                            <div>
+                              <h3 className="font-semibold text-blue-800 dark:text-blue-300">
+                                Viewing: {entry.name} Bot
+                              </h3>
+                              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                                Showing request activity and analysis for {entry.name}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
+                          >
+                            {entry.value.toLocaleString()} requests
+                          </Badge>
+                        </div>
+                      </div>
+                      <Tabs defaultValue="overview" className="h-full mt-4 flex-1 flex flex-col min-h-0">
+
                       <Tabs.List>
                         <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                       </Tabs.List>
@@ -712,6 +780,7 @@ export default function WidgetLogs() {
                         )}
                       </Tabs.Panel>
                     </Tabs>
+                    </div>
                   ) : activeTab === "Crawlers" ? (
                     <>
                       <DialogHeader>
