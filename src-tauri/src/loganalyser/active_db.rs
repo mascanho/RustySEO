@@ -1416,7 +1416,7 @@ pub fn get_path_aggregations_page(
             MAX(method) as m,
             MAX(verified) as v,
             MAX(ip) as ip_addr,
-            MAX(referer) as ref_str,
+            GROUP_CONCAT(DISTINCT referer) as ref_str,
             MAX(browser) as br,
             MAX(country) as c
         FROM active_parsed_logs
@@ -1490,7 +1490,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
             MAX(method) as m,
             MAX(verified) as v,
             MAX(ip) as ip_addr,
-            MAX(referer) as ref_str,
+            GROUP_CONCAT(DISTINCT referer) as ref_str,
             MAX(browser) as br,
             MAX(country) as c
         FROM active_parsed_logs

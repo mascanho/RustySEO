@@ -720,8 +720,18 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
-    const csvRows = dataToExport.map((log) =>
-      [
+    const csvRows = dataToExport.map((log) => {
+      const referrersList = (log.referer || "")
+        .split(",")
+        .map((r) => r.trim())
+        .filter((r) => r && r !== "-");
+      const cleanReferrers =
+        referrersList.length > 0 ? referrersList : ["Direct/None"];
+      const categoriesList = Array.from(
+        new Set(cleanReferrers.map((r) => categorizeReferrer(r)))
+      );
+
+      return [
         log.ip || "",
         log.timestamp || "",
         log.method || "",
@@ -731,13 +741,13 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         log.status || "",
         log.frequency || "",
         `"${(log.user_agent || "").replace(/"/g, '""')}"`,
-        log.referer || "",
-        categorizeReferrer(log.referer || ""),
+        `"${(log.referer || "").replace(/"/g, '""')}"`,
+        `"${categoriesList.join(", ")}"`,
         log.crawler_type || "",
         log.verified ? "Yes" : "No",
         getTaxonomyForPath(log.path),
-      ].join(","),
-    );
+      ].join(",");
+    });
 
     const csvContent = [headers.join(","), ...csvRows].join("\n");
 
@@ -1351,8 +1361,14 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       currentLogs.map((log, index) => {
                         // Calculate details only for visible rows
                         const { timings } = getLogDetails(log);
-                        const referrerCategory = categorizeReferrer(
-                          log.referer || "",
+                        const referrersList = (log.referer || "")
+                          .split(",")
+                          .map((r) => r.trim())
+                          .filter((r) => r && r !== "-");
+                        const cleanReferrers =
+                          referrersList.length > 0 ? referrersList : ["Direct/None"];
+                        const categoriesList = Array.from(
+                          new Set(cleanReferrers.map((r) => categorizeReferrer(r)))
                         );
 
                         return (
@@ -1421,20 +1437,28 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                   )}
                                 </span>
                               </TableCell>
-                              <TableCell className="truncate max-w-[250px] align-middle">
-                                <span className="flex items-start truncate">
-                                  <span className="mr-1">
-                                    {getReferrerIcon(referrerCategory)} {""}
-                                  </span>
-                                  <span className="text-xs">
-                                    {log.referer || "Direct/None"}
-                                  </span>
-                                </span>
+                              <TableCell className="max-w-[250px] align-middle">
+                                <div className="flex flex-col gap-1.5 max-h-24 overflow-y-auto py-1 custom-scrollbar">
+                                  {cleanReferrers.map((refStr, idx) => (
+                                    <span key={idx} className="flex items-start text-xs">
+                                      <span className="mr-1.5 mt-0.5 min-w-[12px]">
+                                        {getReferrerIcon(categorizeReferrer(refStr))}
+                                      </span>
+                                      <span className="truncate" title={refStr}>
+                                        {refStr}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </div>
                               </TableCell>
                               <TableCell className="min-w-[100px] align-middle">
-                                <Badge variant="outline" className="text-xs">
-                                  {referrerCategory}
-                                </Badge>
+                                <div className="flex flex-wrap gap-1">
+                                  {categoriesList.map(cat => (
+                                    <Badge key={cat} variant="outline" className="text-xs">
+                                      {cat}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </TableCell>
                               <TableCell className="min-w-[100px] align-middle">
                                 <Badge variant="secondary" className="text-xs">
