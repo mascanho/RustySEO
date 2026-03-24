@@ -16,8 +16,8 @@ export interface ImageFile {
 }
 
 export interface ResizeSettings {
-  width: number;
-  height: number;
+  width: number | "";
+  height: number | "";
   quality: number;
   format: string;
   maintainAspectRatio: boolean;
