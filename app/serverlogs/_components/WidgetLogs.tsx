@@ -178,6 +178,7 @@ export default function WidgetLogs() {
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
   const { entries } = useLogAnalysisStore((state) => ({ entries: state.entries }));
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
   // We use entries from the store but we don't need allFilteredLogs anymore
   const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
@@ -740,12 +741,26 @@ export default function WidgetLogs() {
                               </p>
                             </div>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
-                          >
-                            {entry.value.toLocaleString()} requests
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {pathAggregations.total_hits.toLocaleString()} hits
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {entry.value.toLocaleString()} requests
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                       <Tabs defaultValue="overview" className="h-full mt-4 flex-1 flex flex-col min-h-0">

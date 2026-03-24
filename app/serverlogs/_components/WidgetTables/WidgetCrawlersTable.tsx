@@ -679,21 +679,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
             Export CSV
           </Button>
 
-          <div className="flex items-center justify-end gap-2 w-[14em]">
-            <Badge
-              variant="outline"
-              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 w-fit"
-            >
-              {pathAggregations.total_hits.toLocaleString()} hits
-            </Badge>
-            <Badge
-              variant="outline"
-              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
-            >
-              {pathAggregations.total_unique_paths.toLocaleString()} unique
-              paths
-            </Badge>
-          </div>
+
         </div>
       </div>
 
