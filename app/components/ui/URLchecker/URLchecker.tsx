@@ -543,7 +543,7 @@ export function UrlStatusChecker() {
         className="fixed inset-0 bg-black/20 dark:bg-black/60 z-40 backdrop-blur-[2px] transition-all duration-300"
         onClick={handleHideHttpChecker}
       />
-      <Card className="max-w-full bg-white dark:bg-brand-darker w-[750px] border-border fixed bottom-9 left-2 z-50 h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
+      <Card className="max-w-full bg-white dark:bg-brand-darker w-[750px] border-border fixed bottom-10 left-2 z-50 h-[calc(100vh-170px)] max-h-[800px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
         {/* Header */}
         <div className="p-4 border-b dark:border-white/20 border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
           <div className="flex items-center gap-2">
