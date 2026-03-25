@@ -37,62 +37,10 @@ interface CrawlResult {
   file_type: string;
 }
 
-interface ProgressUpdate {
-  progress: number;
-  status?: string;
-}
-
-interface LogEntry {
-  ip: string;
-  timestamp: string;
-  method: string;
-  path: string;
-  position: number | null;
-  clicks: number | null;
-  ctr: number | null;
-  impressions: number | null;
-  gsc_url: string | null;
-  status: number;
-  user_agent: string;
-  referer: string | null;
-  response_size: number;
-  country: string | null;
-  crawler_type: string;
-  is_crawler: boolean;
-  file_type: string;
-  browser: string;
-  verified: boolean;
-  segment: string;
-  segment_match: string | null;
-  taxonomy: string | null;
-  filename: string;
-}
-
-interface LogAnalysisResult {
-  message: string;
-  line_count: number;
-  unique_ips: number;
-  unique_user_agents: number;
-  crawler_count: number;
-  success_rate: number;
-  totals: Record<string, number>;
-  log_start_time: string;
-  log_finish_time: string;
-  file_count: number;
-  segmentations: Array<Record<string, unknown>>;
-  segment_summary: Record<string, unknown>;
-}
-
-interface LogResult {
-  overview: LogAnalysisResult;
-  entries: LogEntry[];
-}
-
 export default function Page() {
   const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
     "overall",
   );
-  const [progress, setProgress] = useState<ProgressUpdate | null>(null);
 
   // Select only the method we need to prevent Page from re-rendering on every log chunk
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
@@ -219,9 +167,11 @@ export default function Page() {
                 const logs = useServerLogsStore.getState().uploadedLogFiles;
                 if (logs.length > 0) {
                   const latestLog = logs[logs.length - 1];
-                  useServerLogsStore.getState().updateLogEntry(latestLog.time, {
-                    lineCount: payload.overview.line_count,
-                  });
+                  useServerLogsStore
+                    .getState()
+                    .updateLogEntry(latestLog.time, {
+                      lineCount: payload.overview.line_count,
+                    });
                 }
               }
 
@@ -238,9 +188,7 @@ export default function Page() {
                 sort_dir: "ascending",
               };
               await fetchLogsFromDb(1, 100, defaultFilters);
-              await useLogAnalysisStore
-                .getState()
-                .fetchWidgetAggregations(defaultFilters);
+              await useLogAnalysisStore.getState().fetchWidgetAggregations(defaultFilters);
             }
           },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
@@ -317,31 +265,28 @@ export default function Page() {
                 >
                   <DropdownMenuItem
                     onClick={() => setChartView("overall")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
-                      chartView === "overall"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "overall"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     Overall Traffic
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("crawlers")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
-                      chartView === "crawlers"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${chartView === "crawlers"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     AI Crawlers
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
-                      chartView === "status"
-                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
-                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
-                    }`}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${chartView === "status"
+                      ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                      }`}
                   >
                     HTTP Status
                   </DropdownMenuItem>

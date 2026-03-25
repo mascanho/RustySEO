@@ -55,7 +55,7 @@ const PRESETS = {
     icon: Zap,
   },
   optimal: {
-    width: 0,
+    with: 0,
     height: 0,
     quality: 100,
     format: "webp",
@@ -256,10 +256,9 @@ export function SettingsPanel({
                   type="number"
                   value={resizeSettings.width}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,
-                      width: isNaN(val) ? "" : val,
+                      width: parseInt(e.target.value) || 0,
                     }));
                   }}
                   onBlur={(e) => {
@@ -281,10 +280,9 @@ export function SettingsPanel({
                   type="number"
                   value={resizeSettings.height}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value);
                     setResizeSettings((prev) => ({
                       ...prev,
-                      height: isNaN(val) ? "" : val,
+                      height: parseInt(e.target.value) || 0,
                     }));
                   }}
                   onBlur={(e) => {
