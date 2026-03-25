@@ -8,6 +8,8 @@ import {
 } from "react-icons/fa";
 import { FaFile } from "react-icons/fa6";
 
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
+
 interface LogEntry {
   names: string[];
   time: string;
@@ -19,15 +21,12 @@ interface LogEntry {
 
 const PopOverParsedLogs = () => {
   const { uploadedLogFiles } = useServerLogsStore();
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
 
   const totalLogsAnalysed = (
     Array.isArray(uploadedLogFiles) ? uploadedLogFiles : []
   )
     .map((log) => log?.names?.length || 0)
-    .reduce((a, b) => a + b, 0);
-
-  const totalHits = (Array.isArray(uploadedLogFiles) ? uploadedLogFiles : [])
-    .map((log) => log?.lineCount || 0)
     .reduce((a, b) => a + b, 0);
 
   const formatFileSize = (bytes?: number) => {
@@ -52,7 +51,7 @@ const PopOverParsedLogs = () => {
         })()}
       </h2>
       <div className="text-[10px] pl-3 py-1 bg-brand-bright/5 text-brand-bright/70 font-mono border-b dark:border-brand-dark">
-        Registered Entries: {totalHits.toLocaleString()}
+        Registered Entries: {totalCount?.toLocaleString() || "0"}
       </div>
       <section className="flex flex-col gap-2 max-h-80 overflow-auto px-2 pt-1">
         {Array.isArray(uploadedLogFiles) &&
