@@ -3,9 +3,7 @@
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
-use crawler::{
-    CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse,
-};
+use crawler::{CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse};
 use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
@@ -19,7 +17,7 @@ use settings::settings::update_settings_command;
 use settings::settings::Settings;
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Manager, WindowEvent};
+use tauri::{Emitter, Listener, Manager, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
@@ -28,11 +26,11 @@ use tracing_subscriber::fmt;
 pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
+pub mod logging;
 pub mod settings;
 pub mod uploads;
 pub mod url_checker;
 pub mod users;
-pub mod logging;
 
 pub mod machine_learning;
 
@@ -46,6 +44,7 @@ pub mod globals {
     pub mod actions;
 }
 
+pub mod ai_preamble;
 pub mod commands;
 pub mod gemini;
 pub mod genai;
@@ -55,7 +54,6 @@ mod image_converter;
 pub mod loganalyser;
 pub mod server;
 pub mod version;
-pub mod ai_preamble;
 
 // Handling the app state
 pub struct AppState {
@@ -210,14 +208,24 @@ async fn main() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
+            // Clear the active DB & Server logs unconditionally on backend start
+            println!("App starting, unconditionally clearing active DB and server_logs table...");
+            let _ = loganalyser::active_db::init_active_db();
+            if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                eprintln!("Error clearing active DB on startup: {}", e);
+            }
+            remove_all_logs_from_serverlog_db("serverlog.db");
+
             // Handle app close event to clear active DB
             if let Some(window) = app.get_webview_window("main") {
                 window.on_window_event(move |event| {
                     if let WindowEvent::CloseRequested { .. } = event {
-                        println!("App closing, clearing active DB...");
+                        println!("App closing, clearing active DB and server_logs table...");
+                        let _ = loganalyser::active_db::init_active_db();
                         if let Err(e) = loganalyser::active_db::clear_active_db_command() {
                             eprintln!("Error clearing active DB on close: {}", e);
                         }
+                        remove_all_logs_from_serverlog_db("serverlog.db");
                     }
                 });
             }
@@ -228,7 +236,9 @@ async fn main() {
                 }
             });
 
-            tracing::info!("🚀 RustySEO Backend logging system initialized. Ready to capture events.");
+            tracing::info!(
+                "🚀 RustySEO Backend logging system initialized. Ready to capture events."
+            );
             Ok(())
         })
         .plugin(tauri_plugin_http::init())
