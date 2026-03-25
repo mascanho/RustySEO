@@ -209,23 +209,21 @@ async fn main() {
             let handle = app.handle().clone();
 
             // Clear the active DB & Server logs unconditionally on backend start
-            println!("App starting, unconditionally clearing active DB and server_logs table...");
+            println!("App starting, unconditionally clearing active DB...");
             let _ = loganalyser::active_db::init_active_db();
             if let Err(e) = loganalyser::active_db::clear_active_db_command() {
                 eprintln!("Error clearing active DB on startup: {}", e);
             }
-            remove_all_logs_from_serverlog_db("serverlog.db");
 
             // Handle app close event to clear active DB
             if let Some(window) = app.get_webview_window("main") {
                 window.on_window_event(move |event| {
                     if let WindowEvent::CloseRequested { .. } = event {
-                        println!("App closing, clearing active DB and server_logs table...");
+                        println!("App closing, clearing active DB...");
                         let _ = loganalyser::active_db::init_active_db();
                         if let Err(e) = loganalyser::active_db::clear_active_db_command() {
                             eprintln!("Error clearing active DB on close: {}", e);
                         }
-                        remove_all_logs_from_serverlog_db("serverlog.db");
                     }
                 });
             }
