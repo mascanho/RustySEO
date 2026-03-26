@@ -66,7 +66,7 @@ const FooterLoader = ({
                   "h-2 w-2 rounded-full transition-all duration-500",
                   isActive
                     ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-                    : "bg-gray-300 dark:bg-gray-600"
+                    : "bg-gray-300 dark:bg-gray-600",
                 )}
               />
               {isActive && (
@@ -81,8 +81,10 @@ const FooterLoader = ({
               </span>
               <span
                 className={cn(
-                  "text-[10px] font-bold tracking-tight transition-colors leading-none",
-                  isActive ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-gray-500",
+                  "text-[8px] font-bold tracking-tight transition-colors leading-none",
+                  isActive
+                    ? "text-red-500 dark:text-red-400"
+                    : "text-gray-500 dark:text-gray-500",
                 )}
               >
                 HTTP MONITOR
@@ -119,7 +121,7 @@ const FooterLoader = ({
           </div>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider >
+    </TooltipProvider>
   );
 };
 

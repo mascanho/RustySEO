@@ -36,6 +36,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import useLoaderStore from "@/store/loadersStore";
+import toast from "sonner";
 
 interface UrlStatus {
   url: string;
@@ -147,7 +148,7 @@ export function UrlStatusChecker() {
         interval: 1,
       });
 
-      console.log(results, "Results From HTTP");
+      // console.log(results, "Results From HTTP");
 
       // Update URLs with new results
       const updatedUrls = urls.map((urlStatus) => {
@@ -200,6 +201,7 @@ export function UrlStatusChecker() {
       return updatedUrls;
     } catch (error) {
       console.error("Failed to check URLs:", error);
+      toast.error("Failed to check URLs");
       addLog({
         url: "System",
         status: "offline",
@@ -276,6 +278,7 @@ export function UrlStatusChecker() {
       }
     } catch (error) {
       console.error("Failed to check URL:", error);
+
       addLog({
         url,
         status: "offline",
@@ -285,6 +288,7 @@ export function UrlStatusChecker() {
         prev.map((u, i) => (i === index ? { ...u, status: "offline" } : u)),
       );
     }
+    toast.error("Failed to check URL");
   };
 
   // Toggle polling
