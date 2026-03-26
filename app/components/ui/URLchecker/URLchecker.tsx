@@ -36,7 +36,6 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import useLoaderStore from "@/store/loadersStore";
-import toast from "sonner";
 
 interface UrlStatus {
   url: string;

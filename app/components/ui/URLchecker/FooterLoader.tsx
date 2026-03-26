@@ -57,7 +57,7 @@ const FooterLoader = ({
         <TooltipTrigger asChild>
           <div
             onClick={showUrlChecker}
-            className="flex items-center space-x-3 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 ml-4 backdrop-blur-sm transition-all hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer active:scale-95"
+            className="flex items-center space-x-3 px-3  bg-white/40 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 ml-4 backdrop-blur-sm transition-all hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer active:scale-95"
           >
             {/* Status Dot */}
             <div className="relative flex items-center justify-center">
@@ -76,18 +76,18 @@ const FooterLoader = ({
 
             {/* Label */}
             <div className="flex flex-col -space-y-0.5">
-              <span className="text-[8px] uppercase font-bold text-gray-400 dark:text-white/40 tracking-widest leading-none">
-                Background Engine
+              <span className="text-[8px] uppercase font-bold text-gray-400 dark:text-white/40 tracking-widest leading-none pt-0.5">
+                Background Monitor
               </span>
               <span
                 className={cn(
-                  "text-[8px] font-bold tracking-tight transition-colors leading-none",
+                  "text-[9px] font-bold  transition-colors ",
                   isActive
                     ? "text-red-500 dark:text-red-400"
                     : "text-gray-500 dark:text-gray-500",
                 )}
               >
-                HTTP MONITOR
+                HTTP Checker
               </span>
             </div>
           </div>
