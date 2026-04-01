@@ -146,6 +146,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     pathAggregations,
     fetchPathAggregationsPage,
     isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
   } = useLogAnalysis();
 
   // State definitions
@@ -172,17 +173,17 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
   useEffect(() => {
     const fetchFilteredData = async () => {
       const activeFilters = {
-        search_term: searchTerm,
-        status_filter: [],
-        method_filter: methodFilter,
-        file_type_filter: fileTypeFilter,
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
         bot_filter: "bot",
-        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
         crawler_type_filter: "google",
-        verified_filter: verifiedFilter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
-        taxonomy_filter: null,
+        taxonomy_filter: globalActiveFilters.taxonomy_filter,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);

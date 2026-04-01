@@ -219,6 +219,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     pathAggregations,
     fetchPathAggregationsPage,
     isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
   } = useLogAnalysis();
 
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
@@ -527,19 +528,19 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
       }
 
       const activeFilters = {
-        search_term: searchTerm,
-        status_filter: statusFilter,
-        method_filter: methodFilter,
-        file_type_filter: fileTypeFilter,
-        bot_filter: null, // UA table shows all
-        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-        crawler_type_filter: crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
-        verified_filter: verifiedFilter,
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: statusFilter?.length > 0 ? statusFilter : globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: globalActiveFilters.bot_filter, // UA table shows all
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter?.length > 0 ? crawlerTypeFilter[0] : globalActiveFilters.crawler_type_filter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
-        taxonomy_filter: activeTaxonomyFilter,
-        user_agent_categories: activeUACategories,
-        user_agent_specific: userAgentFilter,
+        taxonomy_filter: activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
+        user_agent_categories: activeUACategories?.length > 0 ? activeUACategories : globalActiveFilters.user_agent_categories,
+        user_agent_specific: userAgentFilter?.length > 0 ? userAgentFilter : globalActiveFilters.user_agent_specific,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);

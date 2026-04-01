@@ -221,6 +221,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     fetchPathAggregationsPage,
     widgetAggs,
     isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
   } = useLogAnalysis();
 
   const {
@@ -583,18 +584,17 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       }
 
       const activeFilters = {
-        search_term: debouncedSearchTerm,
-        status_filter: statusFilter,
-        method_filter: methodFilter,
-        file_type_filter: fileTypeFilter,
-        bot_filter: botFilter === "all" ? null : botFilter,
-        bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
-        crawler_type_filter:
-          crawlerTypeFilter.length > 0 ? crawlerTypeFilter[0] : null,
-        verified_filter: verifiedFilter,
+        search_term: debouncedSearchTerm || globalActiveFilters.search_term,
+        status_filter: statusFilter?.length > 0 ? statusFilter : globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: botFilter === "all" ? globalActiveFilters.bot_filter : botFilter,
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter?.length > 0 ? crawlerTypeFilter[0] : globalActiveFilters.crawler_type_filter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
         sort_key: sortConfig?.key || "frequency",
         sort_dir: sortConfig?.direction || "descending",
-        taxonomy_filter: activeTaxonomyFilter,
+        taxonomy_filter: activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
       };
 
       await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
