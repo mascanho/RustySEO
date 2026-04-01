@@ -1375,14 +1375,19 @@ pub fn get_path_aggregations_page(
 
     // 1. Get accurate counts
     let count_query = format!(
-        "SELECT COUNT(DISTINCT path), COUNT(*) FROM active_parsed_logs WHERE {}",
+        "SELECT COUNT(*), SUM(freq) FROM (
+            SELECT COUNT(*) as freq 
+            FROM active_parsed_logs 
+            WHERE {} 
+            GROUP BY path, crawler_type, user_agent
+        )",
         where_sql
     );
     let (total_unique_paths, total_hits): (u32, u64) = conn
         .query_row(
             &count_query,
             rusqlite::params_from_iter(params_vec.iter()),
-            |row| Ok((row.get(0)?, row.get::<_, i64>(1)? as u64)),
+            |row| Ok((row.get::<_, u32>(0)?, row.get::<_, Option<i64>>(1)?.unwrap_or(0) as u64)),
         )
         .map_err(|e| e.to_string())?;
 
@@ -1421,7 +1426,7 @@ pub fn get_path_aggregations_page(
             MAX(country) as c
         FROM active_parsed_logs
         WHERE {}
-        GROUP BY path
+        GROUP BY path, crawler_type, user_agent
         ORDER BY {} {}
         LIMIT {} OFFSET {}
     ",
@@ -1495,7 +1500,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
             MAX(country) as c
         FROM active_parsed_logs
         WHERE {}
-        GROUP BY path
+        GROUP BY path, crawler_type, user_agent
         ORDER BY frequency DESC
         LIMIT 10000
     ",

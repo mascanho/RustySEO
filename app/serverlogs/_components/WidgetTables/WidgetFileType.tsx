@@ -281,7 +281,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         // Get unique file types from widgetAggs instead of entries
         const types = new Set<string>();
         if (widgetAggs?.file_types) {
-          Object.keys(widgetAggs.file_types).forEach(type => {
+          Object.keys(widgetAggs.file_types).forEach((type) => {
             if (type.trim() !== "") types.add(type);
           });
         }
@@ -337,17 +337,27 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     if (data?.log_start_time && data?.log_finish_time) {
       elapsedTimeMs = Math.abs(
         new Date(data.log_finish_time).getTime() -
-        new Date(data.log_start_time).getTime()
+          new Date(data.log_start_time).getTime(),
       );
     }
 
     const statusCodes = new Set<number>();
     if (widgetAggs?.status_codes) {
-      Object.keys(widgetAggs.status_codes).forEach(key => statusCodes.add(Number(key)));
+      Object.keys(widgetAggs.status_codes).forEach((key) =>
+        statusCodes.add(Number(key)),
+      );
     }
 
     const crawlerTypes = new Set<string>([
-      "Google", "Bing", "Semrush", "Hrefs", "Moz", "Uptime", "Openai", "Claude", "Human"
+      "Google",
+      "Bing",
+      "Semrush",
+      "Hrefs",
+      "Moz",
+      "Uptime",
+      "Openai",
+      "Claude",
+      "Human",
     ]);
 
     let oldest = entries && entries.length > 0 ? entries[0] : null;
@@ -364,14 +374,16 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
           if (logTime > newestTime) newest = log;
         }
 
-        if (log.status && !widgetAggs?.status_codes) statusCodes.add(log.status);
-        if (log.crawler_type && log.crawler_type !== "Human") crawlerTypes.add(log.crawler_type);
+        if (log.status && !widgetAggs?.status_codes)
+          statusCodes.add(log.status);
+        if (log.crawler_type && log.crawler_type !== "Human")
+          crawlerTypes.add(log.crawler_type);
       }
 
       if (!data?.log_start_time && oldest && newest) {
         elapsedTimeMs = Math.abs(
           new Date(newest.timestamp).getTime() -
-          new Date(oldest.timestamp).getTime()
+            new Date(oldest.timestamp).getTime(),
         );
       }
     }
@@ -802,7 +814,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Processing {entries?.length?.toLocaleString()} logs...
+            Processing logs...
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             This may take a moment for large datasets
@@ -1040,16 +1052,17 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                        ? "bg-green-500"
-                        : statusCode >= 300 && statusCode < 400
-                          ? "bg-blue-500"
-                          : statusCode >= 400 && statusCode < 500
-                            ? "bg-yellow-500"
-                            : statusCode >= 500
-                              ? "bg-red-500"
-                              : "bg-gray-500"
-                        }`}
+                      className={`w-3 h-3 rounded-full ${
+                        statusCode >= 200 && statusCode < 300
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
+                      }`}
                     />
                     <span>{statusCode}</span>
                   </div>
@@ -1162,10 +1175,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1176,10 +1190,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1190,10 +1205,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1205,10 +1221,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1219,10 +1236,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1339,7 +1357,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                 }
                               >
                                 {log.crawler_type &&
-                                  log.crawler_type.length > 12
+                                log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
                                   : log.crawler_type || "Unknown"}
                               </Badge>
@@ -1507,10 +1525,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                                   log.status < 300
                                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                   : log.status >= 300 &&
-                                                    log.status < 400
+                                                      log.status < 400
                                                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                     : log.status >= 400 &&
-                                                      log.status < 500
+                                                        log.status < 500
                                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                       : log.status >= 500
                                                         ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
