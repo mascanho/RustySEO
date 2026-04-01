@@ -70,6 +70,7 @@ import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -122,65 +123,7 @@ const formatResponseSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-// Categorize user agents (same function as parent component)
-const categorizeUserAgent = (userAgent: string): string => {
-  if (!userAgent || userAgent.trim() === "" || userAgent === "-") {
-    return "Unknown/Empty";
-  }
-
-  const ua = userAgent.toLowerCase();
-
-  // Browser detection
-  if (ua.includes("chrome")) {
-    return ua.includes("mobile") ? "Chrome Mobile" : "Chrome";
-  }
-  if (ua.includes("firefox")) {
-    return ua.includes("mobile") ? "Firefox Mobile" : "Firefox";
-  }
-  if (ua.includes("safari") && !ua.includes("chrome")) {
-    return ua.includes("mobile") || ua.includes("iphone") || ua.includes("ipad")
-      ? "Safari Mobile"
-      : "Safari";
-  }
-  if (ua.includes("edge")) return "Microsoft Edge";
-  if (ua.includes("opera")) return "Opera";
-  if (ua.includes("trident") || ua.includes("msie")) return "Internet Explorer";
-
-  // Bot/Crawler detection
-  if (ua.includes("googlebot")) return "Googlebot";
-  if (ua.includes("bingbot")) return "Bingbot";
-  if (ua.includes("slurp")) return "Yahoo Slurp";
-  if (ua.includes("duckduckbot")) return "DuckDuckGo Bot";
-  if (ua.includes("baiduspider")) return "Baidu Spider";
-  if (ua.includes("yandexbot")) return "Yandex Bot";
-  if (ua.includes("facebookexternalhit")) return "Facebook Bot";
-  if (ua.includes("twitterbot")) return "Twitter Bot";
-  if (ua.includes("linkedinbot")) return "LinkedIn Bot";
-  if (ua.includes("applebot")) return "Apple Bot";
-
-  // Generic bot patterns
-  if (ua.includes("bot") || ua.includes("crawler") || ua.includes("spider")) {
-    return "Other Bots";
-  }
-
-  // Mobile device detection
-  if (ua.includes("android")) return "Android Browser";
-  if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod"))
-    return "iOS Browser";
-
-  // Operating System detection
-  if (ua.includes("windows")) return "Windows";
-  if (ua.includes("mac os")) return "macOS";
-  if (ua.includes("linux")) return "Linux";
-
-  // Tools and libraries
-  if (ua.includes("curl")) return "cURL";
-  if (ua.includes("wget")) return "Wget";
-  if (ua.includes("postman")) return "Postman";
-  if (ua.includes("python")) return "Python Requests";
-
-  return "Other";
-};
+import { categorizeUserAgent } from "./helpers/useCategoriseUserAgents";
 
 // Get icon based on user agent category
 const getUserAgentIcon = (category: string) => {
@@ -273,6 +216,15 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
+  } = useLogAnalysis();
+
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+
+  const {
     credentials,
     data: GSCdata,
     setSelectedURLDetails,
@@ -307,20 +259,28 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
-  // Get all unique user agent categories from entries
+  // Get all unique user agent categories and specific user agents from widgetAggs.user_agents (full dataset)
   useEffect(() => {
-    if (entries && entries.length > 0) {
+    if (!isReady) return;
+    if (widgetAggs?.user_agents) {
       const categories = new Set<string>();
-      entries.forEach((log) => {
-        if (log.user_agent) {
-          const category = categorizeUserAgent(log.user_agent);
+      const agents = new Set<string>();
+
+      Object.keys(widgetAggs.user_agents).forEach((ua) => {
+        if (ua && ua.trim() !== "" && ua !== "-") {
+          const category = categorizeUserAgent(ua);
           categories.add(category);
+          agents.add(ua);
         }
       });
+
       const sortedCategories = Array.from(categories).sort();
+      const sortedAgents = Array.from(agents).sort();
+
       setAvailableUserAgentCategories(sortedCategories);
+      // We'll update uniqueUserAgents too if it was used for the "Specific User Agent" filter
     }
-  }, [entries]);
+  }, [widgetAggs?.user_agents, isReady]);
 
   // Initialize user agent category filter when segment is a user agent category
   useEffect(() => {
@@ -380,17 +340,14 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     return Array.from(types).sort();
   }, [entries, isReady]);
 
-  // Get unique user agents from entries
+  // Get unique user agents from widgetAggs.user_agents (full dataset)
   const uniqueUserAgents = useMemo(() => {
-    if (!isReady) return [];
-    const agents = new Set<string>();
-    entries.forEach((log) => {
-      if (log.user_agent) {
-        agents.add(log.user_agent);
-      }
-    });
-    return Array.from(agents).sort();
-  }, [entries, isReady]);
+    if (!isReady || !widgetAggs?.user_agents) return [];
+    const agents = Object.keys(widgetAggs.user_agents)
+      .filter(ua => ua && ua.trim() !== "" && ua !== "-")
+      .sort();
+    return agents;
+  }, [widgetAggs?.user_agents, isReady]);
 
   // useAsyncLogFilter implementation
   const activeSegmentTaxonomy = useMemo(
@@ -541,59 +498,88 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     ],
   );
 
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
+  const isInitialized = isReady;
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    entries,
-    filterFn,
-    sortConfig,
-    sortFn,
-  );
-
-  // Reset page when filters change
+  // Main Data Fetcher
   useEffect(() => {
-    setCurrentPage(1);
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter = taxonomies.find(t => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
+        // If segment is a UA category, we don't treat it as taxonomy
+        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (!isUACat) {
+          activeTaxonomyFilter = segment;
+        }
+      }
+
+      // Determine user agent category filter
+      let activeUACategories = userAgentCategoryFilter;
+      if (activeUACategories.length === 0 && segment && segment !== "all") {
+        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
+        if (isUACat) {
+          const cat = availableUserAgentCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
+          if (cat) activeUACategories = [cat];
+        }
+      }
+
+      const activeFilters = {
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: statusFilter?.length > 0 ? statusFilter : globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: globalActiveFilters.bot_filter, // UA table shows all
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter?.length > 0 ? crawlerTypeFilter[0] : globalActiveFilters.crawler_type_filter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
+        user_agent_categories: activeUACategories?.length > 0 ? activeUACategories : globalActiveFilters.user_agent_categories,
+        user_agent_specific: userAgentFilter?.length > 0 ? userAgentFilter : globalActiveFilters.user_agent_specific,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     searchTerm,
-    methodFilter,
-    verifiedFilter,
-    fileTypeFilter,
-    userAgentCategoryFilter,
-    userAgentFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    segment,
     statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botTypeFilter,
     crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
+    availableUserAgentCategories,
+    userAgentCategoryFilter,
+    userAgentFilter
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(
-    () => filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
-    [filteredLogs, indexOfFirstItem, indexOfLastItem],
-  );
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs;
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -699,26 +685,27 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     }
   };
 
-  // Calculate timings based on actual entries
-  const oldestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
-        : null,
-    [entries],
-  );
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, entries]);
 
-  const newestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
-        : null,
-    [entries],
-  );
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, entries]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
@@ -831,7 +818,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {filteredLogs.length} entries
+                {pathAggregations.total_unique_paths.toLocaleString()} unique paths (
+                {pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -1087,17 +1075,16 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${
-                          statusCode >= 200 && statusCode < 300
-                            ? "bg-green-500"
-                            : statusCode >= 300 && statusCode < 400
-                              ? "bg-blue-500"
-                              : statusCode >= 400 && statusCode < 500
-                                ? "bg-yellow-500"
-                                : statusCode >= 500
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
-                        }`}
+                        className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
+                          }`}
                       />
                       <span>{statusCode}</span>
                     </div>
@@ -1213,11 +1200,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1228,11 +1214,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         Path
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1243,11 +1228,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         User Agent
                         {sortConfig?.key === "user_agent" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1260,11 +1244,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         Size
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1275,11 +1258,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         )}
                       </TableHead>
@@ -1402,7 +1384,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                         : log.status >= 300 && log.status < 400
                                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                                           : log.status >= 400 &&
-                                              log.status < 500
+                                            log.status < 500
                                             ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                             : log.status >= 500
                                               ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
@@ -1423,7 +1405,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                   }
                                 >
                                   {log.crawler_type &&
-                                  log.crawler_type.length > 12
+                                    log.crawler_type.length > 12
                                     ? log.crawler_type.trim().slice(0, 15)
                                     : log.crawler_type || "Unknown"}
                                 </Badge>

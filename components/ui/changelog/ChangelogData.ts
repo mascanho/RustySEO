@@ -6,7 +6,7 @@ export const changelogData = [
     changes: [
       "Global: Bug fixes and improvements",
       "Global: Settings UI",
-      "Deep Crawler: Sitemap Parsing",
+      "Deep Crawler: Sitemap Discovery & Parsing",
       "Deep Crawler: Improved Performance",
     ],
   },

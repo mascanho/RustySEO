@@ -9,6 +9,8 @@ import React, {
 import {
   AlertCircle,
   BadgeCheck,
+  Bot,
+  CheckCircle,
   ChevronDown,
   Download,
   FileAudio,
@@ -20,16 +22,14 @@ import {
   Filter,
   Image,
   KeyRound,
+  Loader2,
   Package,
   RefreshCw,
   Search,
   FolderTree,
   User,
-  Bot,
-  CheckCircle,
-  XCircle,
-  Loader2,
 } from "lucide-react";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -217,6 +217,14 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    widgetAggs,
+    isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
+  } = useLogAnalysis();
+
+  const {
     credentials,
     data: GSCdata,
     setSelectedURLDetails,
@@ -271,31 +279,40 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
           }
         }
 
-        // Get unique file types
+        // Get unique file types from widgetAggs instead of entries
+        const types = new Set<string>();
+        if (widgetAggs?.file_types) {
+          Object.keys(widgetAggs.file_types).forEach((type) => {
+            if (type.trim() !== "") types.add(type);
+          });
+        }
+
+        // Fallback to entries just in case
         if (entries && entries.length > 0) {
-          const types = new Set<string>();
           for (const log of entries) {
             if (log.file_type && log.file_type.trim() !== "") {
               types.add(log.file_type);
             }
           }
-          const sortedTypes = Array.from(types).sort();
-          setAvailableFileTypes(sortedTypes);
+        }
 
-          // Initialize file type filter if selectedFileType is provided
-          if (selectedFileType && sortedTypes.length > 0) {
-            const normalizedSelectedType = selectedFileType.trim();
-            const exactType = sortedTypes.find(
-              (type) =>
-                type.toLowerCase() === normalizedSelectedType.toLowerCase(),
-            );
+        const sortedTypes = Array.from(types).sort();
+        setAvailableFileTypes(sortedTypes);
 
-            if (exactType) {
-              setFileTypeFilter([exactType]);
-            } else if (selectedFileType !== "") {
-              setFileTypeFilter([selectedFileType]);
-            }
+        if (selectedFileType && sortedTypes.length > 0) {
+          const normalizedSelectedType = selectedFileType.trim();
+          const exactType = sortedTypes.find(
+            (type) =>
+              type.toLowerCase() === normalizedSelectedType.toLowerCase(),
+          );
+
+          if (exactType) {
+            setFileTypeFilter([exactType]);
+          } else if (selectedFileType !== "") {
+            setFileTypeFilter([selectedFileType]);
           }
+        } else if (selectedFileType) {
+          setFileTypeFilter([selectedFileType]);
         }
 
         setIsInitialized(true);
@@ -305,7 +322,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     };
 
     initialize();
-  }, [entries]); // Run once on mount
+  }, [entries, selectedFileType, widgetAggs]); // Added selectedFileType to dependencies
 
   // Precompute entries metadata
   const {
@@ -315,38 +332,62 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     uniqueStatusCodes,
     uniqueCrawlerTypes,
   } = useMemo(() => {
-    if (!isReady || !entries || entries.length === 0) {
-      return {
-        oldestEntry: null,
-        newestEntry: null,
-        elapsedTimeMs: 0,
-        uniqueStatusCodes: [] as number[],
-        uniqueCrawlerTypes: [] as string[],
-      };
+    let elapsedTimeMs = 0;
+
+    // Check if we can use data.log_start_time and data.log_finish_time
+    if (data?.log_start_time && data?.log_finish_time) {
+      elapsedTimeMs = Math.abs(
+        new Date(data.log_finish_time).getTime() -
+          new Date(data.log_start_time).getTime(),
+      );
     }
 
-    // Single pass to compute multiple values
-    let oldest = entries[0];
-    let newest = entries[0];
     const statusCodes = new Set<number>();
-    const crawlerTypes = new Set<string>();
-
-    for (const log of entries) {
-      const logTime = new Date(log.timestamp).getTime();
-      const oldestTime = new Date(oldest.timestamp).getTime();
-      const newestTime = new Date(newest.timestamp).getTime();
-
-      if (logTime < oldestTime) oldest = log;
-      if (logTime > newestTime) newest = log;
-
-      if (log.status) statusCodes.add(log.status);
-      if (log.crawler_type) crawlerTypes.add(log.crawler_type);
+    if (widgetAggs?.status_codes) {
+      Object.keys(widgetAggs.status_codes).forEach((key) =>
+        statusCodes.add(Number(key)),
+      );
     }
 
-    const elapsedTimeMs = Math.abs(
-      new Date(newest.timestamp).getTime() -
-        new Date(oldest.timestamp).getTime(),
-    );
+    const crawlerTypes = new Set<string>([
+      "Google",
+      "Bing",
+      "Semrush",
+      "Hrefs",
+      "Moz",
+      "Uptime",
+      "Openai",
+      "Claude",
+      "Human",
+    ]);
+
+    let oldest = entries && entries.length > 0 ? entries[0] : null;
+    let newest = entries && entries.length > 0 ? entries[0] : null;
+
+    if (entries && entries.length > 0) {
+      for (const log of entries) {
+        if (!data?.log_start_time) {
+          const logTime = new Date(log.timestamp).getTime();
+          const oldestTime = new Date(oldest?.timestamp || 0).getTime();
+          const newestTime = new Date(newest?.timestamp || 0).getTime();
+
+          if (logTime < oldestTime) oldest = log;
+          if (logTime > newestTime) newest = log;
+        }
+
+        if (log.status && !widgetAggs?.status_codes)
+          statusCodes.add(log.status);
+        if (log.crawler_type && log.crawler_type !== "Human")
+          crawlerTypes.add(log.crawler_type);
+      }
+
+      if (!data?.log_start_time && oldest && newest) {
+        elapsedTimeMs = Math.abs(
+          new Date(newest.timestamp).getTime() -
+            new Date(oldest.timestamp).getTime(),
+        );
+      }
+    }
 
     return {
       oldestEntry: oldest,
@@ -355,7 +396,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
       uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
     };
-  }, [entries, isReady]);
+  }, [entries, isReady, data, widgetAggs]);
 
   // Function to get taxonomy name for a path (with caching)
   const getTaxonomyForPath = useCallback(
@@ -525,61 +566,72 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     ],
   );
 
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    entries,
-    filterFn,
-    sortConfig,
-    sortFn, // We pass custom sortFn to handle localeCompare etc
-  );
-
-  // Reset page when filters change
+  // Main Data Fetcher
   useEffect(() => {
-    setCurrentPage(1);
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter =
+          taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all") {
+        const isTaxonomy = taxonomies.some((t) => t.name === segment);
+        if (isTaxonomy) {
+          activeTaxonomyFilter = segment;
+        }
+      }
+
+      const activeFilters = {
+        search_term: debouncedSearchTerm || globalActiveFilters.search_term,
+        status_filter: statusFilter?.length > 0 ? statusFilter : globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: botFilter === "all" ? globalActiveFilters.bot_filter : botFilter,
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter?.length > 0 ? crawlerTypeFilter[0] : globalActiveFilters.crawler_type_filter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     debouncedSearchTerm,
-    methodFilter,
-    botFilter,
-    verifiedFilter,
-    fileTypeFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    segment,
     statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    botTypeFilter,
     crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
   ]);
 
-  // Pre-calculate pagination values
-  const { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages } =
-    useMemo(() => {
-      const indexOfLastItem = currentPage * itemsPerPage;
-      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-      const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-      const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
 
-      return { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages };
-    }, [filteredLogs, currentPage, itemsPerPage]);
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs; // For backward compatibility with some UI parts
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -762,7 +814,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Processing {entries?.length?.toLocaleString()} logs...
+            Processing logs...
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             This may take a moment for large datasets
@@ -803,7 +855,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
               variant="outline"
               className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
             >
-              {filteredLogs.length} entries
+              {pathAggregations.total_unique_paths.toLocaleString()} unique
+              paths ({pathAggregations.total_hits.toLocaleString()} hits)
             </Badge>
           </div>
         </div>
@@ -839,7 +892,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {filteredLogs.length} entries
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -1240,24 +1294,24 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                     : log?.path}
                                 </span>
                                 {credentials?.token?.length > 0 && (
-                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-                                      <KeyRound
-                                        size={14}
-                                        className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                                        onClick={async (e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          setSelectedLog(log);
-                                          const response = await FetchMatchGSC(
-                                            log.path,
-                                            credentials,
-                                            GSCdata,
-                                          );
-                                          setSelectedURLDetails(response);
-                                        }}
-                                      />
-                                    </span>
-                                  )}
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">

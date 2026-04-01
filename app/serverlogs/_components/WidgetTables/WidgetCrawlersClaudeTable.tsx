@@ -60,6 +60,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useLogAnalysis, BotPathDetail } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -114,6 +115,7 @@ interface LogEntry {
 
 interface WidgetTableProps {
   data: any;
+  entries: LogEntry[];
 }
 
 const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
@@ -137,9 +139,15 @@ const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
   return Array.from(urlMap.values());
 };
 
-const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
-  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data, entries }) => {
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
+  } = useLogAnalysis();
+
+  const initialLogs = entries;
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -177,106 +185,53 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
     }
   }, [data.length]);
 
+  // Main Data Fetcher
   useEffect(() => {
-    if (!data?.totals?.claude_bot_page_frequencies) return;
+    const fetchFilteredData = async () => {
+      const activeFilters = {
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: "bot",
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: "claude",
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: globalActiveFilters.taxonomy_filter,
+      };
 
-    let logs: LogEntry[] = [];
-    Object.entries(data.totals.claude_bot_page_frequencies).forEach(
-      ([path, entries]) => {
-        (entries as any[]).forEach((entry: any) => {
-          logs.push({
-            ...entry,
-            path,
-          });
-        });
-      },
-    );
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
 
-    const uniqueLogs = ensureUniqueUrls(logs);
-    setInitialLogs(uniqueLogs);
-    setFilteredLogs(uniqueLogs);
-  }, [data]);
-
-  useEffect(() => {
-    let result = [...initialLogs];
-
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
-
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
-    }
-
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log.crawler_type === "Human");
-      }
-    }
-
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log.user_agent.includes("Mobile"));
-      }
-    }
-
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredLogs(result);
-    setCurrentPage(1);
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     searchTerm,
     methodFilter,
-    botFilter,
-    verifiedFilter,
-    sortConfig,
-    initialLogs,
     fileTypeFilter,
     botTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    fetchPathAggregationsPage,
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const _currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs: _currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs;
+
+  const totalHits = pathAggregations.total_hits || 0;
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -297,7 +252,6 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
     setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
-    setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
     setFileTypeFilter([]);
 
@@ -391,25 +345,27 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
 
   // CALCULATE THE TIMINGS
 
-  const oldestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
-        : null,
-    [initialLogs],
-  );
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
-  const newestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
-        : null,
-    [initialLogs],
-  );
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
@@ -563,6 +519,8 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
+
+
         </div>
       </div>
 
@@ -726,17 +684,13 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
 
                           <TableCell className="text-center min-w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.total}
-                              </span>
+                              <span>{timings(log)?.frequency?.total}</span>
                             </div>
                           </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.perHour}
-                              </span>
+                              <span>{timings(log)?.frequency?.perHour}</span>
                             </div>
                           </TableCell>
 

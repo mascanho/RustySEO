@@ -24,6 +24,12 @@ import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 import { listen } from "@tauri-apps/api/event";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
 import { IoIosAddCircleOutline } from "react-icons/io";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -45,12 +51,12 @@ const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
   }, []);
 
   return (
@@ -114,12 +120,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
   }, []);
 
   // Optimized project fetching
@@ -260,6 +266,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         // Process logs
         if (action === "replace") {
           resetAll();
+          await invoke("clear_active_db_command");
         }
 
         await processLogs(allLogs);
@@ -443,11 +450,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   className="h-5 w-5 p-0 pt-[2px] hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
-                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
-                                      openDropdowns.has(projectName)
+                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${openDropdowns.has(projectName)
                                         ? "rotate-180"
                                         : ""
-                                    }`}
+                                      }`}
                                   />
                                 </Button>
                               </div>
@@ -455,35 +461,49 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                             {["append", "replace"].map((action) => (
                               <div key={action} className="flex items-center">
                                 {projectName !== DBprojects?.project && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                                    onClick={() =>
-                                      getSelectedLogForAnalysis(
-                                        projectName,
-                                        action,
-                                      )
-                                    }
-                                    disabled={
-                                      loadingProjects[
-                                        `${projectName}-${action}`
-                                      ]
-                                    }
-                                  >
-                                    {loadingProjects[
-                                      `${projectName}-${action}`
-                                    ] ? (
-                                      <Spinner
-                                        className="h-2 w-2 text-gray-500 dark:text-brand-bright"
-                                        bg-gray-200
-                                      />
-                                    ) : action === "replace" ? (
-                                      <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
-                                    ) : (
-                                      <IoIosAddCircleOutline className="h-4 w-4 text-xl text-gray-500 dark:text-brand-bright" />
-                                    )}
-                                  </Button>
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                                          onClick={() =>
+                                            getSelectedLogForAnalysis(
+                                              projectName,
+                                              action,
+                                            )
+                                          }
+                                          disabled={
+                                            loadingProjects[
+                                            `${projectName}-${action}`
+                                            ]
+                                          }
+                                        >
+                                          {loadingProjects[
+                                            `${projectName}-${action}`
+                                          ] ? (
+                                            <Spinner
+                                              className="h-2 w-2 text-gray-500 dark:text-brand-bright"
+                                              bg-gray-200
+                                            />
+                                          ) : action === "replace" ? (
+                                            <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                          ) : (
+                                            <IoIosAddCircleOutline className="h-4 w-4 text-xl text-gray-500 dark:text-brand-bright" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent
+                                        side="bottom"
+                                        className="text-xs z-[99999] mr-10 py-1 px-2"
+                                      >
+                                        {action === "append"
+                                          ? "Append logs"
+                                          : "Replace logs"}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 )}
                               </div>
                             ))}{" "}

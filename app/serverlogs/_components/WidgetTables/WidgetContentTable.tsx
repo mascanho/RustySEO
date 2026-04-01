@@ -67,6 +67,7 @@ import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -138,6 +139,13 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
+  } = useLogAnalysis();
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
@@ -174,7 +182,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   // Pre-set selectedTaxonomy based on segment
   useEffect(() => {
     if (taxonomies.length > 0 && segment && segment !== "all") {
-      if (segment === "Uncategorized") {
+      if (
+        segment === "Uncategorized" ||
+        segment === "Other" ||
+        segment === "other"
+      ) {
         setSelectedTaxonomy("all");
       } else {
         const tax = taxonomies.find((t) => t.name === segment);
@@ -298,7 +310,13 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         if (!match) return false;
       }
 
-      if (segment === "Uncategorized" || selectedTaxonomy === "all") {
+      // Filter for Uncategorized/Other segment — only show entries that don't belong to any taxonomy
+      if (
+        (segment === "Uncategorized" ||
+          segment === "Other" ||
+          segment === "other") &&
+        !activeSegmentTaxonomy
+      ) {
         const taxonomyName = getTaxonomyForPath(log.path);
         if (taxonomyName !== "Uncategorized") return false;
       }
@@ -371,58 +389,75 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     ],
   );
 
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
+  const isInitialized = isReady;
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    entries,
-    filterFn,
-    sortConfig,
-    sortFn,
-  );
-
-  // Reset page when filters change
+  // Main Data Fetcher
   useEffect(() => {
-    setCurrentPage(1);
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter =
+          taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all") {
+        if (segment === "Uncategorized" || segment.toLowerCase() === "other") {
+          activeTaxonomyFilter = "Other";
+        } else {
+          activeTaxonomyFilter = segment;
+        }
+      }
+
+      const activeFilters = {
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: statusFilter?.length > 0 ? statusFilter : globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: botFilter === "all" ? globalActiveFilters.bot_filter : botFilter,
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: crawlerTypeFilter?.length > 0 ? crawlerTypeFilter[0] : globalActiveFilters.crawler_type_filter,
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
   }, [
+    currentPage,
+    itemsPerPage,
     searchTerm,
-    methodFilter,
-    botFilter,
-    verifiedFilter,
-    fileTypeFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    segment,
     statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    botTypeFilter,
     crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(
-    () => filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
-    [filteredLogs, indexOfFirstItem, indexOfLastItem],
-  );
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs;
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -540,25 +575,27 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   };
 
   // Calculate timings based on actual entries
-  const oldestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((oldest, log) =>
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((oldest, log) =>
           new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
         )
-        : null,
-    [entries],
-  );
+      : null;
+  }, [data, entries]);
 
-  const newestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((newest, log) =>
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return entries.length > 0
+      ? entries.reduce((newest, log) =>
           new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
         )
-        : null,
-    [entries],
-  );
+      : null;
+  }, [data, entries]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
@@ -627,7 +664,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Processing {entries?.length?.toLocaleString()} logs...
+            Processing logs...
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             This may take a moment for large datasets
@@ -694,7 +731,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                 variant="outline"
                 className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
               >
-                {filteredLogs.length} entries
+                {pathAggregations.total_unique_paths.toLocaleString()} unique
+                paths ({pathAggregations.total_hits.toLocaleString()} hits)
               </Badge>
             </div>
           </div>
@@ -852,7 +890,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
+                        className={`w-3 h-3 rounded-full ${
+                          statusCode >= 200 && statusCode < 300
                             ? "bg-green-500"
                             : statusCode >= 300 && statusCode < 400
                               ? "bg-blue-500"
@@ -861,7 +900,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                 : statusCode >= 500
                                   ? "bg-red-500"
                                   : "bg-gray-500"
-                          }`}
+                        }`}
                       />
                       <span>{statusCode}</span>
                     </div>
@@ -977,10 +1016,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Timestamp
                         {sortConfig?.key === "timestamp" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -991,10 +1031,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Path
                         {sortConfig?.key === "path" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1005,10 +1046,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         File Type
                         {sortConfig?.key === "file_type" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1020,10 +1062,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Size
                         {sortConfig?.key === "response_size" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1034,10 +1077,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         Status
                         {sortConfig?.key === "status" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1104,11 +1148,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                             e.stopPropagation();
                                             e.preventDefault();
                                             setSelectedLog(log);
-                                            const response = await FetchMatchGSC(
-                                              log.path,
-                                              credentials,
-                                              GSCdata,
-                                            );
+                                            const response =
+                                              await FetchMatchGSC(
+                                                log.path,
+                                                credentials,
+                                                GSCdata,
+                                              );
 
                                             setSelectedURLDetails(response);
                                           }}
@@ -1139,7 +1184,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                         : log.status >= 300 && log.status < 400
                                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                                           : log.status >= 400 &&
-                                            log.status < 500
+                                              log.status < 500
                                             ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                             : log.status >= 500
                                               ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
@@ -1329,10 +1374,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                                     log.status < 300
                                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                     : log.status >= 300 &&
-                                                      log.status < 400
+                                                        log.status < 400
                                                       ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                       : log.status >= 400 &&
-                                                        log.status < 500
+                                                          log.status < 500
                                                         ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                         : log.status >= 500
                                                           ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"

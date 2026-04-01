@@ -32,50 +32,27 @@ const HistoryDomainCrawls = () => {
     summary,
     crawlSessionTotalArray,
   } = useGlobalCrawlStore();
-  const [crawledPages, setCrawledPages] = useState<number>(0);
-  const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
-  const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
   const [crawlCompleted, setCrawlCompleted] = useState<boolean>(false);
 
+  // Read streamed progress from the Zustand store (updated centrally by FooterLoader)
+  const { streamedCrawledPages, streamedTotalPages } = useGlobalCrawlStore();
+
+  // Derived values from the store — no duplicate listener needed
+  const crawledPages = streamedCrawledPages || 0;
+  const crawledPagesCount = streamedTotalPages || 1;
+  const percentageCrawled = crawledPagesCount > 0
+    ? Math.min(100, Math.max(0, (crawledPages / crawledPagesCount) * 100))
+    : 0;
+
   useEffect(() => {
-    const progressUnlisten = listen("progress_update", (event) => {
-      const progressData = event.payload as {
-        crawled_urls: number;
-        percentage: number;
-        total_urls: number;
-      };
-
-      // Validate and sanitize the received data to prevent NaN
-      const safeCrawledUrls = Math.max(0, progressData.crawled_urls || 0);
-      const safePercentage = Math.min(
-        100,
-        Math.max(0, progressData.percentage || 0),
-      );
-      const safeTotalUrls = Math.max(1, progressData.total_urls || 1);
-
-      setCrawledPages(safeCrawledUrls);
-      setPercentageCrawled(safePercentage);
-      setCrawledPagesCount(safeTotalUrls);
-
-      // Reset completion state if new crawl starts
-      if (safePercentage < 100) {
-        setCrawlCompleted(false);
-      }
-    });
-
     const completeUnlisten = listen("crawl_complete", () => {
-      // Ensure percentage shows 100% when crawl is complete and sync with actual data
-      setCrawledPages(crawlData.length);
-      setCrawledPagesCount(crawlData.length);
-      setPercentageCrawled(100);
       setCrawlCompleted(true);
-      console.log("Crawl completed - data synchronized with actual crawlData");
     });
 
     return () => {
-      progressUnlisten.then((f) => f());
       completeUnlisten.then((f) => f());
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sessionArr = crawlSessionTotalArray;
@@ -102,13 +79,13 @@ const HistoryDomainCrawls = () => {
 
     const totalIssueCount = Array.isArray(issues)
       ? issues.reduce((sum, item) => {
-          if (item && typeof item.issueCount === "number") {
-            return sum + item.issueCount;
-          } else {
-            console.warn("Invalid issue item:", item);
-            return sum;
-          }
-        }, 0)
+        if (item && typeof item.issueCount === "number") {
+          return sum + item.issueCount;
+        } else {
+          console.warn("Invalid issue item:", item);
+          return sum;
+        }
+      }, 0)
       : 0;
 
     const newEntry: DeepCrawlHistory = {
@@ -203,11 +180,10 @@ const HistoryDomainCrawls = () => {
               <React.Fragment key={entry.id || index}>
                 <div
                   onClick={() => handleRowClick(index)}
-                  className={`cursor-pointer px-2 flex pr-2 py-1 justify-between border-b dark:border-brand-dark/50 ${
-                    index % 2 === 0
+                  className={`cursor-pointer px-2 flex pr-2 py-1 justify-between border-b dark:border-brand-dark/50 ${index % 2 === 0
                       ? "bg-gray-100 dark:bg-gray-800"
                       : "bg-gray-200 dark:bg-gray-900"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center space-x-1 flex-1">
                     <RiCalendarLine className="text-gray-500" />

@@ -21,7 +21,7 @@ pub struct DatabaseResults {
 }
 
 pub struct Database {
-    conn: Connection,
+    pub conn: Connection,
     db_name: String,
 }
 
@@ -69,9 +69,21 @@ pub fn create_serverlog_db(db_name: &str) {
 // ADD LOGS TO THE DB
 pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput, project: &str) {
     let today_date = chrono::Utc::now().to_rfc3339().to_string();
-    let mut db = Database::new(db_name).unwrap();
+    let mut db = match Database::new(db_name) {
+        Ok(db) => db,
+        Err(e) => {
+            eprintln!("Failed to open database {}: {}", db_name, e);
+            return;
+        }
+    };
 
-    let tx = db.conn.transaction().unwrap(); // Start transaction
+    let tx = match db.conn.transaction() {
+        Ok(tx) => tx,
+        Err(e) => {
+            eprintln!("Failed to start transaction: {}", e);
+            return;
+        }
+    };
 
     for (filename, content) in &data.log_contents {
         if let Err(e) = tx.execute(
@@ -80,30 +92,32 @@ pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput, project: &str) {
                 today_date,
                 project,
                 filename,
-                serde_json::to_string(&content).unwrap()
+                content // Raw text, no JSON encoding
             ],
         ) {
             eprintln!("Failed to insert log: {}", e);
-            tx.rollback().unwrap();
+            let _ = tx.rollback();
             return;
         }
     }
 
-    tx.commit().unwrap();
+    let _ = tx.commit();
 }
 
 // REMOVE ALL THE LOGS
 #[tauri::command]
 pub fn remove_all_logs_from_serverlog_db(db_name: &str) {
-    let db = Database::new(db_name).unwrap();
-    let _ = db.conn.execute("DELETE FROM server_logs", []);
+    if let Ok(db) = Database::new(db_name) {
+        let _ = db.conn.execute("DELETE FROM server_logs", []);
+    }
 }
 
 pub fn remove_item_from_serverlog_db(db_name: &str, date: &str) {
-    let db = Database::new(db_name).unwrap();
-    let _ = db
-        .conn
-        .execute("DELETE FROM server_logs WHERE date = ?1", params![date]);
+    if let Ok(db) = Database::new(db_name) {
+        let _ = db
+            .conn
+            .execute("DELETE FROM server_logs WHERE date = ?1", params![date]);
+    }
 }
 
 // GET A LIST OF ALL THE ENTRIES INSIDE THE TABLE
@@ -142,10 +156,11 @@ pub struct LogMetadata {
 // DELETE A SPECIFIC LOG USING THE ID
 #[tauri::command]
 pub fn delete_log_from_db(id: i32) {
-    let db = Database::new("serverlog.db").unwrap();
-    let _ = db
-        .conn
-        .execute("DELETE FROM server_logs WHERE id = ?1", params![id]);
+    if let Ok(db) = Database::new("serverlog.db") {
+        let _ = db
+            .conn
+            .execute("DELETE FROM server_logs WHERE id = ?1", params![id]);
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -178,8 +193,9 @@ pub fn get_stored_logs_command(window: Window) -> Result<(), String> {
 
     for row in rows {
         let log_data = row.map_err(|e| e.to_string())?;
-        let log_json: serde_json::Value =
-            serde_json::from_str(&log_data.log).map_err(|e| e.to_string())?;
+        // Content is now raw text, no need to parse as JSON
+        let log_content = log_data.log;
+        let log_json = serde_json::Value::String(log_content);
 
         println!(
             "Log ID: {}, Date: {}, Filename: {}",
@@ -277,13 +293,8 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
     let logs = stmt
         .query_map([project], |row| {
             let log_text: String = row.get(3)?;
-            let log_value: serde_json::Value = serde_json::from_str(&log_text).map_err(|e| {
-                rusqlite::Error::FromSqlConversionFailure(
-                    3,
-                    rusqlite::types::Type::Text,
-                    Box::new(e),
-                )
-            })?;
+            // Raw text, no parsing needed here as DatabaseResults doesn't include the log field anyway
+            // (Wait, the struct has no log field, but it was being parsed? Cleaned up.)
 
             Ok(DatabaseResults {
                 id: row.get(0)?,
@@ -353,8 +364,8 @@ pub async fn get_logs_by_project_name_for_processing_command(
                 .get::<_, String>(4)
                 .map_err(|e| format!("Failed to get log text: {}", e))?;
 
-            let log_value: Value = serde_json::from_str(&log_text)
-                .map_err(|e| format!("JSON parse error for log {}: {}", id, e))?;
+            // Content is now raw text
+            let log_value = Value::String(log_text);
 
             batch.push(SelectedLogs {
                 id,

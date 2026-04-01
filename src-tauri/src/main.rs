@@ -3,9 +3,7 @@
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
-use crawler::{
-    CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse,
-};
+use crawler::{CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse};
 use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
@@ -19,8 +17,7 @@ use settings::settings::update_settings_command;
 use settings::settings::Settings;
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::State;
-use tauri::{Emitter, Manager, Window, WindowEvent};
+use tauri::{Emitter, Listener, Manager, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
@@ -29,11 +26,11 @@ use tracing_subscriber::fmt;
 pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
+pub mod logging;
 pub mod settings;
 pub mod uploads;
 pub mod url_checker;
 pub mod users;
-pub mod logging;
 
 pub mod machine_learning;
 
@@ -47,6 +44,7 @@ pub mod globals {
     pub mod actions;
 }
 
+pub mod ai_preamble;
 pub mod commands;
 pub mod gemini;
 pub mod genai;
@@ -56,7 +54,6 @@ mod image_converter;
 pub mod loganalyser;
 pub mod server;
 pub mod version;
-pub mod ai_preamble;
 
 // Handling the app state
 pub struct AppState {
@@ -210,13 +207,36 @@ async fn main() {
     tauri::Builder::default()
         .setup(move |app| {
             let handle = app.handle().clone();
+
+            // Clear the active DB & Server logs unconditionally on backend start
+            println!("App starting, unconditionally clearing active DB...");
+            let _ = loganalyser::active_db::init_active_db();
+            if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                eprintln!("Error clearing active DB on startup: {}", e);
+            }
+
+            // Handle app close event to clear active DB
+            if let Some(window) = app.get_webview_window("main") {
+                window.on_window_event(move |event| {
+                    if let WindowEvent::CloseRequested { .. } = event {
+                        println!("App closing, clearing active DB...");
+                        let _ = loganalyser::active_db::init_active_db();
+                        if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                            eprintln!("Error clearing active DB on close: {}", e);
+                        }
+                    }
+                });
+            }
+
             std::thread::spawn(move || {
                 while let Ok(log) = rx.recv() {
                     let _ = handle.emit("tui-log", log);
                 }
             });
 
-            tracing::info!("🚀 RustySEO Backend logging system initialized. Ready to capture events.");
+            tracing::info!(
+                "🚀 RustySEO Backend logging system initialized. Ready to capture events."
+            );
             Ok(())
         })
         .plugin(tauri_plugin_http::init())
@@ -301,6 +321,21 @@ async fn main() {
             domain_commands::get_incoming_links_command,
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
+            loganalyser::log_commands::check_logs_from_paths_command,
+            loganalyser::log_commands::get_file_size,
+            loganalyser::active_db::get_active_logs_page,
+            loganalyser::active_db::get_all_logs_with_filters,
+            loganalyser::active_db::get_timeline_aggregations,
+            loganalyser::active_db::get_status_aggregations,
+            loganalyser::active_db::get_crawler_aggregations,
+            loganalyser::active_db::get_widget_aggregations,
+            loganalyser::active_db::get_active_logs_stats,
+            loganalyser::active_db::clear_active_db_command,
+            loganalyser::active_db::clear_all_log_data_command,
+            loganalyser::active_db::get_distinct_bot_types,
+            loganalyser::active_db::get_bot_paths_aggregated,
+            loganalyser::active_db::get_path_aggregations_page,
+            loganalyser::active_db::reclassify_all_segments,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -67,7 +67,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { ask, message, save } from "@tauri-apps/plugin-dialog";
 import { SiGoogle, SiSuperuser } from "react-icons/si";
@@ -96,49 +96,72 @@ import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "./utils/FetchMatchGSC";
 
 export function LogAnalyzer() {
-  const {
-    entries,
-    overview,
-    isLoading,
-    error,
-    filters,
-    setLogData,
-    setFilter,
-    resetAll,
-  } = useLogAnalysis();
+  const entries = useLogAnalysisStore((state) => state.entries);
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
+  const isLoading = useLogAnalysisStore((state) => state.isLoading);
+  const error = useLogAnalysisStore((state) => state.error);
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const botTypes = useLogAnalysisStore((state) => state.botTypes);
 
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
+  const fetchBotTypes = useLogAnalysisStore((state) => state.fetchBotTypes);
+  const fetchWidgetAggregations = useLogAnalysisStore(
+    (state) => state.fetchWidgetAggregations,
+  );
+  const fetchOverviewStats = useLogAnalysisStore(
+    (state) => state.fetchOverviewStats,
+  );
+  const setActiveFilters = useLogAnalysisStore(
+    (state) => state.setActiveFilters,
+  );
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
-  const [statusFilter, setStatusFilter] = useState<number[]>([]);
-  const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>({
-    key: "timestamp",
-    direction: "ascending",
+
+  const [localFilters, setLocalFilters] = useState({
+    statusFilter: [] as number[],
+    methodFilter: [] as string[],
+    fileTypeFilter: [] as string[],
+    botFilter: "all" as string | null,
+    verifiedFilter: null as boolean | null,
+    botTypeFilter: "all" as string | null,
+    crawlerTypeFilter: null as string | null,
+    sortConfig: {
+      key: "timestamp",
+      direction: "ascending" as "ascending" | "descending",
+    } as { key: string; direction: "ascending" | "descending" } | null,
   });
+
+  const {
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    crawlerTypeFilter,
+    sortConfig,
+  } = localFilters;
+
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [ipModal, setIpModal] = useState(false);
   const [ip, setIP] = useState("");
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
-  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
-  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
+  // Load bot types on mount
+  useEffect(() => {
+    fetchBotTypes();
+  }, [fetchBotTypes, totalCount]);
+
   const allStatusCodes = useMemo(() => {
-    const codes = new Set<number>();
-    entries.forEach((entry) => {
-      if (entry.status) {
-        codes.add(entry.status);
-      }
-    });
-    return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
+    if (!widgetAggs?.status_codes) return [];
+    return Object.keys(widgetAggs.status_codes)
+      .map(Number)
+      .sort((a, b) => a - b);
+  }, [widgetAggs]);
 
   // Search state - only filters when button is pressed
   const [searchInput, setSearchInput] = useState("");
@@ -258,111 +281,6 @@ export function LogAnalyzer() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
-  // Optimized filter function - only applies when explicitly called
-  const applyFilters = useCallback(() => {
-    if (!entries.length) {
-      setFilteredLogs([]);
-      return;
-    }
-
-    let result = [...entries];
-
-    // Apply search filter only when activeSearchTerm is set
-    if (activeSearchTerm.trim()) {
-      const lowerCaseSearch = activeSearchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch),
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter.length > 0) {
-      result = result.filter((log) => statusFilter.includes(log.status));
-    }
-
-    // Apply method filter
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    // Apply file type filter
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
-    }
-
-    // Apply bot filter
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log?.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log?.crawler_type === "Human");
-      }
-    }
-
-    // Apply Bot type filter (Mobile or Desktop)
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log?.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log?.user_agent.includes("Mobile"));
-      }
-    }
-
-    // Apply verified filter
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    // Apply sorting
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        // Special case for timestamp sorting
-        if (sortConfig.key === "timestamp") {
-          const aDate = new Date(aValue as string).getTime();
-          const bDate = new Date(bValue as string).getTime();
-          return sortConfig.direction === "ascending"
-            ? aDate - bDate
-            : bDate - aDate;
-        }
-
-        // Normal string sorting
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-
-        // Fallback for other types
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredLogs(result);
-    setCurrentPage(1);
-  }, [
-    entries,
-    activeSearchTerm,
-    statusFilter,
-    methodFilter,
-    fileTypeFilter,
-    botFilter,
-    verifiedFilter,
-    botTypeFilter,
-    sortConfig,
-  ]);
-
   // Search handlers - no debouncing, immediate response
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
@@ -378,27 +296,40 @@ export function LogAnalyzer() {
     }
   };
 
-  // Apply filters when activeSearchTerm changes OR when other filters change
+  // Fetch logs from DB when filters or page change
   useEffect(() => {
-    applyFilters();
-  }, [
-    activeSearchTerm,
-    statusFilter,
-    methodFilter,
-    fileTypeFilter,
-    botFilter,
-    verifiedFilter,
-    botTypeFilter,
-    sortConfig,
-    applyFilters,
-  ]);
+    if (totalCount === 0 && entries.length === 0) return;
 
-  // Initial filter application when entries load
-  useEffect(() => {
-    if (entries.length > 0) {
-      applyFilters();
-    }
-  }, [entries.length, applyFilters]);
+    const filters = {
+      search_term: activeSearchTerm,
+      status_filter: statusFilter,
+      method_filter: methodFilter,
+      file_type_filter: fileTypeFilter,
+      bot_filter: botFilter === "all" ? null : botFilter,
+      bot_type_filter: botTypeFilter === "all" ? null : botTypeFilter,
+      crawler_type_filter: crawlerTypeFilter,
+      verified_filter: verifiedFilter,
+      sort_key: sortConfig?.key || "timestamp",
+      sort_dir:
+        sortConfig?.direction === "descending" ? "descending" : "ascending",
+    };
+
+    const timeoutId = setTimeout(() => {
+      const store = useLogAnalysisStore.getState();
+      store.fetchLogsFromDb(currentPage, itemsPerPage, filters);
+      store.setActiveFilters(filters);
+      store.fetchWidgetAggregations(filters);
+      store.fetchOverviewStats();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    totalCount > 0,
+    activeSearchTerm,
+    localFilters,
+    currentPage,
+    itemsPerPage,
+  ]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -415,43 +346,46 @@ export function LogAnalyzer() {
     }
   }, []);
 
-  // Set the Zustand store with the current filtered logs
+  // Set the Zustand store with the current logs
   useEffect(() => {
-    useCurrentLogs.getState().setCurrentLogs(filteredLogs);
-  }, [filteredLogs]);
+    useCurrentLogs.getState().setCurrentLogs(entries);
+  }, [entries]);
 
-  // Get current logs for pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Display current page of logs directly from the backend-powered store result
+  const currentLogs = entries;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Handle sorting
   const requestSort = useCallback((key: string) => {
-    setSortConfig((prev) => {
-      if (prev?.key === key) {
-        return {
-          key,
-          direction:
-            prev.direction === "ascending" ? "descending" : "ascending",
-        };
-      }
-      return { key, direction: "ascending" };
-    });
+    setLocalFilters((prev) => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction:
+          prev.sortConfig?.key === key &&
+          prev.sortConfig.direction === "ascending"
+            ? ("descending" as const)
+            : ("ascending" as const),
+      },
+    }));
   }, []);
 
   // Reset all filters
   const resetFilters = useCallback(() => {
     setSearchInput("");
     setActiveSearchTerm("");
-    setStatusFilter([]);
-    setMethodFilter([]);
-    setBotFilter("all");
-    setSortConfig(null);
+    setCurrentPage(1); // Crucial for performance
+    setLocalFilters({
+      statusFilter: [],
+      methodFilter: [],
+      botFilter: "all",
+      sortConfig: null,
+      fileTypeFilter: [],
+      verifiedFilter: null,
+      botTypeFilter: "all",
+      crawlerTypeFilter: null,
+    });
     setExpandedRow(null);
-    setFileTypeFilter([]);
-    setVerifiedFilter(null);
-    setBotTypeFilter(null);
     setShowAgent(false);
     setUrlAgentFilter("url");
   }, []);
@@ -480,7 +414,7 @@ export function LogAnalyzer() {
     }
 
     // 2. Prepare data
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
+    const dataToExport = entries;
 
     // 3. Robust CSV sanitizer
     const sanitizeForCSV = (value: any): string => {
@@ -583,7 +517,7 @@ export function LogAnalyzer() {
         error instanceof Error ? error.message : String(error);
       toast.error(`Export failed: ${errorMessage}`);
     }
-  }, [filteredLogs, entries, formatResponseSize, ExcelLoaded]);
+  }, [entries, formatResponseSize, ExcelLoaded]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
@@ -592,13 +526,13 @@ export function LogAnalyzer() {
 
   const mac = process.platform === "darwin";
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-full">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+  //     </div>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -743,11 +677,12 @@ export function LogAnalyzer() {
                     key={code}
                     checked={statusFilter.includes(code)}
                     onCheckedChange={(checked) => {
-                      setStatusFilter((prev) =>
-                        checked
-                          ? [...prev, code]
-                          : prev.filter((c) => c !== code),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        statusFilter: checked
+                          ? [...prev.statusFilter, code]
+                          : prev.statusFilter.filter((c) => c !== code),
+                      }));
                     }}
                   >
                     <Badge
@@ -801,11 +736,12 @@ export function LogAnalyzer() {
                     key={method}
                     checked={methodFilter.includes(method)}
                     onCheckedChange={(checked) => {
-                      setMethodFilter((prev) =>
-                        checked
-                          ? [...prev, method]
-                          : prev.filter((m) => m !== method),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        methodFilter: checked
+                          ? [...prev.methodFilter, method]
+                          : prev.methodFilter.filter((m) => m !== method),
+                      }));
                     }}
                   >
                     {method}
@@ -868,11 +804,12 @@ export function LogAnalyzer() {
                     key={fileType}
                     checked={fileTypeFilter.includes(fileType)}
                     onCheckedChange={(checked) => {
-                      setFileTypeFilter((prev) =>
-                        checked
-                          ? [...prev, fileType]
-                          : prev.filter((m) => m !== fileType),
-                      );
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        fileTypeFilter: checked
+                          ? [...prev.fileTypeFilter, fileType]
+                          : prev.fileTypeFilter.filter((m) => m !== fileType),
+                      }));
                     }}
                   >
                     {fileType}
@@ -883,10 +820,13 @@ export function LogAnalyzer() {
 
             {/* Bot/Human Filter */}
 
-            <Select
+            {/*<Select
               value={botFilter || "all"}
               onValueChange={(value) =>
-                setBotFilter(value === "all" ? null : value)
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  botFilter: value === "all" ? null : value,
+                }))
               }
             >
               <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
@@ -900,7 +840,7 @@ export function LogAnalyzer() {
 
                 <SelectItem value="Human">🙋 Human</SelectItem>
               </SelectContent>
-            </Select>
+            </Select>*/}
 
             {/* USER AGENT AND URL FILTER */}
 
@@ -928,7 +868,10 @@ export function LogAnalyzer() {
             <Select
               value={botTypeFilter === null ? "all" : botTypeFilter}
               onValueChange={(value) =>
-                setBotTypeFilter(value === "all" ? null : value)
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  botTypeFilter: value === "all" ? null : value,
+                }))
               }
             >
               <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
@@ -955,8 +898,10 @@ export function LogAnalyzer() {
                     : "unverified"
               }
               onValueChange={(value) => {
-                if (value === "all") setVerifiedFilter(null);
-                else setVerifiedFilter(value === "verified");
+                setLocalFilters((prev) => ({
+                  ...prev,
+                  verifiedFilter: value === "all" ? null : value === "verified",
+                }));
               }}
             >
               <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
@@ -983,6 +928,79 @@ export function LogAnalyzer() {
                     <span className="ml-1">Unverified</span>
                   </div>
                 </SelectItem>
+              </SelectContent>
+            </Select>
+            {/* FILTER BY HUMAN, BOTS, OR SPECIFIC CRAWLER */}
+            <Select
+              value={
+                crawlerTypeFilter
+                  ? `crawler:${crawlerTypeFilter}`
+                  : botFilter === "bot"
+                    ? "bot"
+                    : botFilter === "Human"
+                      ? "Human"
+                      : "all"
+              }
+              onValueChange={(value) => {
+                if (value === "all") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "all",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value === "Human") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "Human",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value === "bot") {
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "bot",
+                    crawlerTypeFilter: null,
+                  }));
+                } else if (value.startsWith("crawler:")) {
+                  const crawlerName = value.replace("crawler:", "");
+                  setLocalFilters((prev) => ({
+                    ...prev,
+                    botFilter: "bot",
+                    crawlerTypeFilter: crawlerName,
+                  }));
+                }
+              }}
+            >
+              <SelectTrigger className="w-[150px] active:scale-95 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+                <SelectValue placeholder="Traffic Type" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+                <SelectItem value="all">
+                  <div className="flex items-center">
+                    <Filter className="h-3.5 w-3.5 mr-1.5" />
+                    <span>All Traffic</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="Human">
+                  <div className="flex items-center">
+                    <FaPersonHarassing className="mr-1.5" />
+                    <span>Humans</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="bot">
+                  <div className="flex items-center">
+                    <FaRobot className="mr-1.5" />
+                    <span>All Bots</span>
+                  </div>
+                </SelectItem>
+                {botTypes.length > 0 &&
+                  botTypes.map((type) => (
+                    <SelectItem key={type} value={`crawler:${type}`}>
+                      <div className="flex items-center">
+                        <Ghost className="h-3.5 w-3.5 mr-1.5" />
+                        <span>{type}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
 
@@ -1151,7 +1169,7 @@ export function LogAnalyzer() {
                         </TableHead>
                       )}
 
-                      <TableHead className="min-w-[50px] w-[50px] max-w-[100px] text-center">
+                      <TableHead className="min-w-[50px] w-[80px] max-w-[100px] text-center">
                         Segment
                       </TableHead>
 
@@ -1196,13 +1214,13 @@ export function LogAnalyzer() {
                   </TableHeader>
 
                   <TableBody className="relative">
-                    {filteredLogs.length > 0 ? (
+                    {entries.length > 0 ? (
                       currentLogs.map((log, index) => (
                         <LogRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
                           log={log}
                           index={index}
-                          indexOfFirstItem={indexOfFirstItem}
+                          indexOfFirstItem={(currentPage - 1) * itemsPerPage}
                           expandedRow={expandedRow}
                           setExpandedRow={setExpandedRow}
                           handleIP={handleIP}
@@ -1257,9 +1275,7 @@ export function LogAnalyzer() {
           setCurrentPage={setCurrentPage}
           itemsPerPage={itemsPerPage}
           setItemsPerPage={setItemsPerPage}
-          indexOfFirstItem={indexOfFirstItem}
-          indexOfLastItem={indexOfLastItem}
-          filteredLogs={filteredLogs}
+          totalCount={totalCount}
           entries={entries}
           formatedNumber={formatedNumber}
         />
@@ -1268,8 +1284,8 @@ export function LogAnalyzer() {
   );
 }
 
-// Extracted LogRow component
-function LogRow({
+// Extracted LogRow component - memoized to prevent re-renders of all rows on every state change
+const LogRow = memo(function LogRow({
   log,
   index,
   indexOfFirstItem,
@@ -1585,7 +1601,7 @@ function LogRow({
       )}
     </>
   );
-}
+});
 // Extracted PaginationControls component
 function PaginationControls({
   currentPage,
@@ -1593,12 +1609,13 @@ function PaginationControls({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
-  indexOfFirstItem,
-  indexOfLastItem,
-  filteredLogs,
+  totalCount,
   entries,
   formatedNumber,
 }) {
+  const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+  const indexOfLastItem = Math.min(currentPage * itemsPerPage, totalCount);
+
   return (
     <div
       className="flex items-center justify-between w-full"
@@ -1689,16 +1706,8 @@ function PaginationControls({
       </Pagination>
       <div>
         <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
-          {indexOfFirstItem + 1}-
-          {Math.min(
-            indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
-          )}{" "}
-          of{" "}
-          {filteredLogs.length > 0
-            ? formatedNumber(filteredLogs.length)
-            : entries.length}{" "}
-          logs
+          {totalCount > 0 ? indexOfFirstItem + 1 : 0}-{indexOfLastItem} of{" "}
+          {formatedNumber(totalCount)} logs
         </span>
       </div>
     </div>

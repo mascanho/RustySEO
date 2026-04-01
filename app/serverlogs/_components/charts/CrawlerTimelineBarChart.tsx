@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useCurrentLogs } from "@/store/logFilterStore";
 import {
   ChartConfig,
   ChartContainer,
@@ -49,100 +48,37 @@ const chartConfig = {
 export function CrawlerTimelineBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { entries } = useLogAnalysis();
-  const { currentLogs } = useCurrentLogs();
+  const { crawlerTimelineData, fetchCrawlerAggregations, activeFilters } = useLogAnalysis();
 
-  const processData = () => {
-    if (!entries || entries.length === 0) return [];
+  React.useEffect(() => {
+    fetchCrawlerAggregations(viewMode, activeFilters);
+  }, [viewMode, activeFilters, fetchCrawlerAggregations]);
 
-    const dateMap = new Map<string, any>();
-    const allDates: Date[] = [];
+  const chartData = React.useMemo(() => {
+    if (!crawlerTimelineData || crawlerTimelineData.length === 0) return [];
 
-    const logsToProcess =
-      currentLogs && currentLogs.length > 0 ? currentLogs : entries;
-
-    logsToProcess.forEach((entry) => {
-      // Only process entries that are crawlers according to our logic
-      if (
-        !entry.is_crawler &&
-        (!entry.crawler_type || entry.crawler_type === "Human")
-      )
-        return;
-
-      const date = new Date(entry.timestamp);
-      allDates.push(date);
-
-      let key: string;
-      if (viewMode === "daily") {
-        key = date.toISOString().split("T")[0];
-      } else {
-        const hour = date.getHours();
-        key = `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:00`;
-      }
-
-      if (!dateMap.has(key)) {
-        dateMap.set(key, {
-          date: key,
-          google: 0,
-          bing: 0,
-          openai: 0,
-          claude: 0,
-          other: 0,
-        });
-      }
-
-      const counts = dateMap.get(key);
-      const crawlerType = (entry.crawler_type || "").toLowerCase();
-      const ua = (entry.user_agent || "").toLowerCase();
-
-      if (crawlerType.includes("google")) {
-        counts.google += 1;
-      } else if (crawlerType.includes("bing")) {
-        counts.bing += 1;
-      } else if (
-        crawlerType.includes("openai") ||
-        crawlerType.includes("gpt") ||
-        ua.includes("chatgpt") ||
-        ua.includes("gptbot") ||
-        ua.includes("oai-")
-      ) {
-        counts.openai += 1;
-      } else if (crawlerType.includes("claude") || ua.includes("claude")) {
-        counts.claude += 1;
-      } else {
-        counts.other += 1;
-      }
-    });
-
-    if (allDates.length === 0) return [];
-
-    allDates.sort((a, b) => a.getTime() - b.getTime());
-    const minDate = allDates[0];
-    const maxDate = allDates[allDates.length - 1];
-
-    let startDate = new Date(minDate);
-    const endDate = new Date(maxDate);
+    const endDate = new Date();
+    let startDate = new Date(0); // All time
 
     if (timeRange === "7d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 7);
     } else if (timeRange === "30d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
     } else if (timeRange === "90d") {
-      startDate = new Date(endDate);
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return Array.from(dateMap.values())
+    return crawlerTimelineData
       .filter((item) => {
+        if (timeRange === "all") return true;
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
-
-  const chartData = processData();
+  }, [crawlerTimelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
@@ -240,19 +176,19 @@ export function CrawlerTimelineBarChart() {
                     const date = new Date(value);
                     return viewMode === "daily"
                       ? date.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
                       : date.toLocaleTimeString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        });
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      });
                   }}
                 />
               }

@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest;
 use serde::{Deserialize, Serialize};
-use std::io::{self, Write};
+use std::io::{self};
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -19,6 +19,7 @@ use super::google_ip_fetcher::get_google_ip_ranges;
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static SORTED_TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 // Tauri command to set taxonomies from frontend
@@ -26,7 +27,14 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
-    println!("Taxonomies: {:#?}", taxonomies);
+    
+    // Also update sorted cache
+    let mut sorted = taxonomies.clone();
+    sorted.sort_by(|a, b| b.path.len().cmp(&a.path.len()));
+    let mut sorted_lock = SORTED_TAXONOMIES.lock().map_err(|e| e.to_string())?;
+    *sorted_lock = sorted;
+    
+    println!("Taxonomies updated and sorted.");
     Ok(())
 }
 
@@ -38,17 +46,13 @@ pub fn get_taxonomies() -> Vec<TaxonomyInfo> {
 }
 
 // Filter the path to see if it matches any taxonomy
-fn classify_taxonomy(path: &str) -> String {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_taxonomy_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> String {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
-            "exactMatch" => path == taxonomy.path, // New exactMatch case
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            "exactMatch" => path == taxonomy.path,
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
@@ -59,40 +63,30 @@ fn classify_taxonomy(path: &str) -> String {
 }
 
 /// Classify the segment of the path based on taxonomy configuration
-fn classify_segment_name(path: &str) -> String {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_segment_name_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> String {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
             "exactMatch" => path == taxonomy.path,
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
-            // Return the taxonomy name instead of the path
-            // Assuming TaxonomyInfo has a 'name' field based on your frontend data
-            return taxonomy.name.clone(); // This should return "Blogs", "Industries", etc.
+            return taxonomy.name.clone();
         }
     }
-    "Other".to_string() // Default to "Other" when no taxonomy matches
+    "Other".to_string()
 }
 
 /// Get the match type of the segment based on taxonomy configuration
-fn classify_segment_match(path: &str) -> Option<String> {
-    let taxonomies = TAXONOMIES.lock().unwrap();
-    let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
-
-    for taxonomy in sorted_taxonomies.iter() {
+fn classify_segment_match_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> Option<String> {
+    for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
             "exactMatch" => path == taxonomy.path,
-            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+            _ => path.starts_with(&taxonomy.path),
         };
 
         if matches {
@@ -100,6 +94,31 @@ fn classify_segment_match(path: &str) -> Option<String> {
         }
     }
     None
+}
+
+// Public wrappers that use the CACHED sorted taxonomies
+pub fn classify_taxonomy(path: &str) -> String {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_taxonomy_internal(path, &sorted)
+    } else {
+        "other".to_string()
+    }
+}
+
+pub fn classify_segment_name(path: &str) -> String {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_segment_name_internal(path, &sorted)
+    } else {
+        "Other".to_string()
+    }
+}
+
+pub fn classify_segment_match(path: &str) -> Option<String> {
+    if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
+        classify_segment_match_internal(path, &sorted)
+    } else {
+        None
+    }
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
@@ -492,6 +511,8 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("typhoeus", "Typhoeus Bot"),
         ("hubspot", "Hubspot Bot"),
         ("expanse", "Expanse Bot"),
+        ("claudebot", "Claude Bot"),
+        ("anthropic", "Claude Bot"),
     ];
 
     // Check for empty or dash user agent first
@@ -524,7 +545,80 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     Some("Human".to_string())
 }
 
-pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
+// Static compiled regex so it's not recompiled on every call
+static LOG_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?x)
+        ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
+        "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path
+        (\d{3})\s+(\d+)\s+                                                # Status and response size
+        "([^"]*)"\s+                                                      # Referer
+        "([^"]*)"                                                         # User agent
+    "#).expect("Invalid regex pattern")
+});
+
+/// Parse a single log line and return a LogEntry if it matches.
+/// This avoids loading entire files into memory — used by analyse_log_from_paths.
+pub fn parse_log_line(line: &str) -> Option<LogEntry> {
+    let line = line.trim();
+    if line.is_empty() {
+        return None;
+    }
+
+    let caps = LOG_REGEX.captures(line)?;
+
+    let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
+        Ok(t) => t,
+        Err(_) => return None,
+    };
+
+    let referer = match caps[7].trim() {
+        "-" => None,
+        ref r => Some(r.to_string()),
+    };
+
+    let user_agent = caps[8].to_string();
+    let crawler_type = detect_bot(&user_agent).unwrap_or_default();
+    let browser = detect_browser(&user_agent).unwrap_or_default();
+    let ip = caps[1].to_string();
+    let path = &caps[4];
+
+    let verified = is_verified_crawler(&ip, &crawler_type);
+
+    // Consolidated GSC matching - single lock, single normalization
+    let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
+
+    // Get sorted taxonomies from CACHE - much faster than sorting every line
+    let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
+    
+    Some(LogEntry {
+        ip,
+        timestamp,
+        method: caps[3].to_string(),
+        path: caps[4].to_string(),
+        position,
+        impressions,
+        clicks,
+        ctr,
+        status: caps[5].parse().unwrap_or(0),
+        user_agent,
+        country: None,
+        gsc_url,
+        referer,
+        response_size: caps[6].parse().unwrap_or(0),
+        crawler_type,
+        browser,
+        file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
+        verified,
+        segment: classify_segment_name_internal(path, &sorted_taxonomies),
+        segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
+        taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
+    })
+}
+
+pub fn parse_log_entries<F>(log: &str, mut f: F)
+where
+    F: FnMut(LogEntry),
+{
     let re = Regex::new(r#"(?x)
         ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
         "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path
@@ -535,7 +629,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 
     println!("Log contains {} lines", log.lines().count());
 
-    let mut entries = Vec::new();
     for (i, line) in log.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() {
@@ -576,7 +669,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             let gsc_url = gsc_log::get_matching_url(path);
             let ctr = gsc_log::gsc_ctr_match(path);
 
-            entries.push(LogEntry {
+            f(LogEntry {
                 ip,
                 timestamp,
                 method: caps[3].to_string(),
@@ -601,9 +694,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             });
         }
     }
-
-    println!("Parsed {} valid log entries", entries.len());
-    entries
 }
 
 // Tauri command to fetch all bot IP ranges at once

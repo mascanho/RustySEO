@@ -19,7 +19,8 @@ import { toast, Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { MoreVertical } from "lucide-react";
 import {
@@ -36,13 +37,67 @@ interface CrawlResult {
   file_type: string;
 }
 
+interface ProgressUpdate {
+  progress: number;
+  status?: string;
+}
+
+interface LogEntry {
+  ip: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  position: number | null;
+  clicks: number | null;
+  ctr: number | null;
+  impressions: number | null;
+  gsc_url: string | null;
+  status: number;
+  user_agent: string;
+  referer: string | null;
+  response_size: number;
+  country: string | null;
+  crawler_type: string;
+  is_crawler: boolean;
+  file_type: string;
+  browser: string;
+  verified: boolean;
+  segment: string;
+  segment_match: string | null;
+  taxonomy: string | null;
+  filename: string;
+}
+
+interface LogAnalysisResult {
+  message: string;
+  line_count: number;
+  unique_ips: number;
+  unique_user_agents: number;
+  crawler_count: number;
+  success_rate: number;
+  totals: Record<string, number>;
+  log_start_time: string;
+  log_finish_time: string;
+  file_count: number;
+  segmentations: Array<Record<string, unknown>>;
+  segment_summary: Record<string, unknown>;
+}
+
+interface LogResult {
+  overview: LogAnalysisResult;
+  entries: LogEntry[];
+}
+
 export default function Page() {
-  const [keysPressed, setKeysPressed] = useState(new Set());
-  const [shortcutActivated, setShortcutActivated] = useState(false);
   const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
     "overall",
   );
-  const { setLogData, logData } = useLogAnalysis();
+  const [progress, setProgress] = useState<ProgressUpdate | null>(null);
+
+  // Select only the method we need to prevent Page from re-rendering on every log chunk
+  const setLogData = useLogAnalysisStore((state) => state.setLogData);
+  const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
+  const setTotalCount = useLogAnalysisStore((state) => state.setTotalCount);
   // const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
@@ -93,43 +148,18 @@ export default function Page() {
 
   // SHORTCUT TO CLEAR ALL THE LOGS
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const newKeysPressed = new Set(keysPressed);
-      newKeysPressed.add(e.key.toLowerCase());
-      setKeysPressed(newKeysPressed);
-
-      // Check for Ctrl+L+C sequence
-      if (
-        newKeysPressed.has("control") &&
-        newKeysPressed.has("shift") &&
-        newKeysPressed.has("c")
-      ) {
-        setShortcutActivated(true);
-        // Your action here
-        // Perform your specific action
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "c") {
         performCustomAction();
       }
     };
 
-    const handleKeyUp = (e) => {
-      const newKeysPressed = new Set(keysPressed);
-      newKeysPressed.delete(e.key.toLowerCase());
-      setKeysPressed(newKeysPressed);
-
-      // Reset activation state when keys are released
-      if (e.key.toLowerCase() === "c") {
-        setShortcutActivated(false);
-      }
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [keysPressed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const performCustomAction = () => {
     // REMOVE ALL THE LOGS FROM DB
@@ -140,7 +170,7 @@ export default function Page() {
 
   const handleRemoveAllLogs = () => {
     try {
-      invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
+      invoke("clear_all_log_data_command");
       // setSaveLogs(false);
       toast.success("All logs have been removed from database");
     } catch (error) {
@@ -164,32 +194,53 @@ export default function Page() {
         const unlistenChunk = await listen<LogResult>(
           "log-analysis-chunk",
           ({ payload }) => {
-            console.log(
-              `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-                `at ${new Date().toISOString()}`,
-            );
-
-            // Add performance marker
-            performance.mark(`chunk-received-${Date.now()}`);
-
             if (!isMounted) return;
-            // console.log("Received chunk", payload);
-            if (payload.entries?.length) {
-              setLogData({ entries: payload.entries });
-            }
-            if (payload.overview) {
-              setLogData({ overview: payload.overview });
+            // Single setLogData call per chunk — avoids 2x state updates + re-renders
+            if (payload.entries?.length || payload.overview) {
+              setLogData({
+                entries: payload.entries || [],
+                overview: payload.overview || {},
+              });
             }
           },
         );
 
         const unlistenComplete = await listen<LogResult>(
           "log-analysis-complete",
-          ({ payload }) => {
+          async ({ payload }) => {
             if (!isMounted) return;
             console.log("Analysis complete", payload);
             if (payload.overview) {
-              setLogData({ overview: payload });
+              setLogData({ overview: payload.overview }, "replace");
+              setTotalCount(payload.overview.line_count || 0);
+
+              // Update the latest batch in the history with the line count
+              if (payload.overview.line_count) {
+                const logs = useServerLogsStore.getState().uploadedLogFiles;
+                if (logs.length > 0) {
+                  const latestLog = logs[logs.length - 1];
+                  useServerLogsStore.getState().updateLogEntry(latestLog.time, {
+                    lineCount: payload.overview.line_count,
+                  });
+                }
+              }
+
+              // Fetch first page of logs from DB
+              const defaultFilters = {
+                search_term: "",
+                status_filter: [],
+                method_filter: [],
+                file_type_filter: [],
+                bot_filter: null,
+                bot_type_filter: null,
+                verified_filter: null,
+                sort_key: "timestamp",
+                sort_dir: "ascending",
+              };
+              await fetchLogsFromDb(1, 100, defaultFilters);
+              await useLogAnalysisStore
+                .getState()
+                .fetchWidgetAggregations(defaultFilters);
             }
           },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
@@ -210,7 +261,7 @@ export default function Page() {
     return () => {
       isMounted = false;
     };
-  }, [setLogData]);
+  }, [setLogData, fetchLogsFromDb, setTotalCount]);
 
   // useEffect(() => {
   //   if (window) {
@@ -228,6 +279,22 @@ export default function Page() {
       localStorage.removeItem("GscExcel");
     }
   }, []);
+
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
+
+  // CLEAR THE TABLE FROM THE LOGS IN THE DB
+  useEffect(() => {
+    async function clearDB() {
+      try {
+        await invoke("clear_all_log_data_command");
+        resetAll();
+      } catch (error) {
+        console.error("Failed to clear database:", error);
+      }
+    }
+
+    clearDB();
+  }, [resetAll]);
 
   return (
     <section className="flex flex-col dark:bg-brand-darker  w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">

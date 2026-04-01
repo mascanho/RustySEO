@@ -2,6 +2,8 @@ use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -10,7 +12,8 @@ use tauri::{AppHandle, Emitter};
 use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
-use crate::loganalyser::helpers::parse_logs::parse_log_entries;
+use crate::loganalyser::helpers::parse_logs::{parse_log_entries, parse_log_line};
+use crate::loganalyser::active_db::{get_active_logs_stats, init_active_db, insert_active_logs_batch};
 use crate::settings::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -37,10 +40,9 @@ impl Segmentation {
         }
     }
 
-    pub fn add_url(&mut self, url: String) {
-        if !self.urls.contains(&url) {
-            self.urls.push(url);
-        }
+    pub fn add_url(&mut self, _url: String) {
+        // Removed: Causes OOM and O(n^2) performance degradation on large log files.
+        // Unique URLs per segment should be queried from the database if needed.
     }
 
     pub fn add_entry(&mut self, entry: &LogEntry) {
@@ -52,6 +54,11 @@ impl Segmentation {
             let crawler_type = entry.crawler_type.to_lowercase();
             *self.bot_breakdown.entry(crawler_type).or_insert(0) += 1;
         }
+    }
+
+    /// Strip heavyweight data that shouldn't be serialized over IPC events.
+    pub fn strip_heavy_data(&mut self) {
+        self.urls.clear();
     }
 }
 
@@ -209,7 +216,7 @@ enum StreamEntry {
 }
 
 impl StatusCodeCounts {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             counts: HashMap::new(),
             success_count: 0,
@@ -220,7 +227,7 @@ impl StatusCodeCounts {
         }
     }
 
-    fn add_status(&mut self, status: u16) {
+    pub fn add_status(&mut self, status: u16) {
         *self.counts.entry(status).or_insert(0) += 1;
 
         match status {
@@ -258,33 +265,64 @@ impl BotStats {
     fn add_entry(&mut self, entry: &LogEntry) {
         self.count += 1;
         self.status_codes.add_status(entry.status);
-        self.pages.push(entry.path.clone());
+        // Removed per-page status tracking to prevent OOM.
+        // This detail is now retrieved from the database on demand.
+    }
 
-        // Update page-specific status codes
-        let page_status = self
-            .page_status_codes
-            .entry(entry.path.clone())
-            .or_insert_with(StatusCodeCounts::new);
-        page_status.add_status(entry.status);
+    /// Strip heavyweight data that shouldn't be serialized over IPC events.
+    /// The detailed per-page data is already in the SQLite DB.
+    fn strip_heavy_data(&mut self) {
+        self.pages.clear();
+        self.page_frequencies.clear();
+        self.page_status_codes.clear();
+    }
+}
+
+impl BotStatsMap {
+    /// Strip all heavyweight per-page data from every bot's stats.
+    /// Call this before emitting the overview event to prevent UI freeze.
+    fn strip_heavy_data(&mut self) {
+        self.google.strip_heavy_data();
+        self.bing.strip_heavy_data();
+        self.semrush.strip_heavy_data();
+        self.hrefs.strip_heavy_data();
+        self.moz.strip_heavy_data();
+        self.uptime.strip_heavy_data();
+        self.openai.strip_heavy_data();
+        self.claude.strip_heavy_data();
     }
 }
 
 pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> {
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
-    let (entry_tx, entry_rx) = mpsc::channel();
+    let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
 
     // Progress reporting thread
     let app_handle_clone = app_handle.clone();
     thread::spawn(move || {
         let mut last_emitted = std::time::Instant::now();
+        let mut last_update: Option<ProgressUpdate> = None;
         for update in progress_rx {
-            if last_emitted.elapsed() >= Duration::from_millis(100) {
-                let _ = app_handle_clone.emit("progress-update", update);
+            if last_emitted.elapsed() >= Duration::from_millis(50) {
+                let _ = app_handle_clone.emit("progress-update", &update);
                 last_emitted = std::time::Instant::now();
+                last_update = None;
+            } else {
+                last_update = Some(update);
             }
         }
+        // Always emit the final update so the frontend sees 100%
+        if let Some(final_update) = last_update {
+            let _ = app_handle_clone.emit("progress-update", &final_update);
+        }
     });
+
+    // Wait for the initialize to succeed before creating threads
+    if let Err(e) = init_active_db() {
+        println!("Failed to init active db: {}", e);
+        return Err(e);
+    }
 
     // Entry streaming thread
     let app_handle_stream = app_handle.clone();
@@ -305,11 +343,15 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     entries_buffer.push(e);
 
                     if entries_buffer.len() >= settings.log_chunk_size {
+                        if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                            println!("Failed to insert active logs chunk: {}", e);
+                        }
                         let chunk = LogResult {
-                            overview: overview.clone().unwrap_or_default(),
-                            entries: entries_buffer.drain(..).collect(),
+                            overview: LogAnalysisResult::default(),
+                            entries: Vec::new(),
                         };
-                        let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
+                        entries_buffer.clear();
                         thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
                 }
@@ -319,20 +361,36 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             }
         }
 
-        println!(
-            "[BACKEND] Emitting chunk of {} entries (buffer size: {})",
-            entries_buffer.len(),
-            settings.log_chunk_size
-        );
         if !entries_buffer.is_empty() {
+            if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                println!("Failed to insert final active logs chunk: {}", e);
+            }
             let chunk = LogResult {
-                overview: overview.clone().unwrap_or_default(),
-                entries: entries_buffer,
+                overview: LogAnalysisResult::default(),
+                entries: Vec::new(),
             };
-            let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+
         }
 
-        if let Some(overview) = overview {
+        if let Some(mut overview) = overview {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+                overview.line_count = stats.line_count;
+                overview.unique_ips = stats.unique_ips;
+                overview.unique_user_agents = stats.unique_user_agents;
+                overview.crawler_count = stats.crawler_count;
+                overview.success_rate = stats.success_rate;
+                overview.log_start_time = stats.log_start_time.clone();
+                overview.log_finish_time = stats.log_finish_time.clone();
+                overview.totals.google = stats.totals.google;
+                overview.totals.bing = stats.totals.bing;
+                overview.totals.semrush = stats.totals.semrush;
+                overview.totals.hrefs = stats.totals.hrefs;
+                overview.totals.moz = stats.totals.moz;
+                overview.totals.uptime = stats.totals.uptime;
+                overview.totals.openai = stats.totals.openai;
+                overview.totals.claude = stats.totals.claude;
+                overview.totals.status_codes = stats.totals.status_codes;
+            }
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -344,28 +402,16 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     });
 
     // Main processing
-    let mut all_entries = Vec::new();
-    let mut unique_ips = HashSet::new();
-    let mut unique_user_agents = HashSet::new();
-    let mut crawler_count = 0;
+    let mut total_requests = 0;
     let mut success_count = 0;
     let mut status_code_counts = StatusCodeCounts::new();
+    
+    let mut log_start_time = String::new();
+    let mut log_finish_time = String::new();
 
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
-
-    // For detailed frequency analysis (keep original fields)
-    let mut google_bot_entries = Vec::new();
-    let mut bing_bot_entries = Vec::new();
-    let mut openai_bot_entries = Vec::new();
-    let mut claude_bot_entries = Vec::new();
-
-    // Keep original page lists
-    let mut google_bot_pages = Vec::new();
-    let mut bing_bot_pages = Vec::new();
-    let mut openai_bot_pages = Vec::new();
-    let mut claude_bot_pages = Vec::new();
 
     // SEGMENTATION - Initialize segment tracking
     let mut segments: HashMap<String, Segmentation> = HashMap::new();
@@ -380,10 +426,426 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             phase: "started".to_string(),
         });
 
-        let entries = parse_log_entries(&log_content)
-            .into_iter()
-            .map(|e| {
-                let is_crawler = is_crawler(&e.user_agent);
+        parse_log_entries(&log_content, |e| {
+            let is_crawler = is_crawler(&e.user_agent);
+            let entry = LogEntry {
+                ip: e.ip.clone(),
+                timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                method: e.method,
+                path: e.path,
+                position: e.position,
+                impressions: e.impressions,
+                clicks: e.clicks,
+                ctr: e.ctr,
+                gsc_url: e.gsc_url,
+                status: e.status,
+                user_agent: e.user_agent,
+                referer: e.referer,
+                response_size: e.response_size,
+                country: extract_country(&e.ip),
+                crawler_type: e.crawler_type,
+                is_crawler,
+                file_type: e.file_type,
+                browser: browser_trim_name::trim_browser_name(&e.browser),
+                verified: e.verified,
+                segment: e.segment.clone(),
+                segment_match: e.segment_match.clone(),
+                taxonomy: Some(e.taxonomy),
+                filename: filename.clone(),
+            };
+
+            // Track start/finish times
+            if log_start_time.is_empty() {
+                log_start_time = entry.timestamp.clone();
+            }
+            log_finish_time = entry.timestamp.clone();
+
+            // Update segment statistics
+            if !entry.segment.is_empty() {
+                let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
+                    let mut seg = Segmentation::new();
+                    seg.name = entry.segment.clone();
+                    seg.match_type = entry.segment_match.clone().unwrap_or_default();
+                    seg
+                });
+
+                segment.add_entry(&entry);
+
+                // Track unique IPs per segment
+                let segment_ip_set = segment_ips
+                    .entry(entry.segment.clone())
+                    .or_insert_with(HashSet::new);
+                segment_ip_set.insert(entry.ip.clone());
+
+                // Add URL if not already present
+                segment.add_url(entry.path.clone());
+            }
+
+            // Update statistics
+            total_requests += 1;
+            if entry.status >= 200 && entry.status < 300 {
+                success_count += 1;
+            }
+
+            // Update overall status code counts
+            status_code_counts.add_status(entry.status);
+
+            // Update bot counts and their status codes
+            let crawler_type = entry.crawler_type.to_lowercase();
+
+            if crawler_type.contains("google") {
+                bot_counts[0] += 1;
+                bot_stats.google.add_entry(&entry);
+            } else if crawler_type.contains("bing") {
+                bot_counts[1] += 1;
+                bot_stats.bing.add_entry(&entry);
+            } else if crawler_type.contains("semrush") {
+                bot_counts[2] += 1;
+                bot_stats.semrush.add_entry(&entry);
+            } else if crawler_type.contains("hrefs") {
+                bot_counts[3] += 1;
+                bot_stats.hrefs.add_entry(&entry);
+            } else if crawler_type.contains("moz") {
+                bot_counts[4] += 1;
+                bot_stats.moz.add_entry(&entry);
+            } else if crawler_type.contains("uptime") {
+                bot_counts[5] += 1;
+                bot_stats.uptime.add_entry(&entry);
+            } else if crawler_type.contains("open")
+                || crawler_type.contains("openai")
+                || crawler_type.contains("gpt")
+                || entry.user_agent.contains("OAI-SearchBot")
+                || entry.user_agent.contains("ChatGPT-User")
+                || entry.user_agent.contains("GPTBot")
+                || entry.user_agent.contains("openai.com/searchbot")
+                || entry.user_agent.contains("openai.com/bot")
+                || entry.user_agent.contains("openai.com/gptbot")
+            {
+                bot_counts[6] += 1;
+                bot_stats.openai.add_entry(&entry);
+            } else if crawler_type.contains("claude") {
+                bot_counts[7] += 1;
+                bot_stats.claude.add_entry(&entry);
+            }
+
+            // Stream the entry
+            let _ = entry_tx.send(StreamEntry::LogEntry(entry));
+        });
+
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
+            filename,
+            phase: "completed".to_string(),
+        });
+    }
+
+    if total_requests == 0 {
+        return Err("No logs found".to_string());
+    }
+
+    // Update segment counts with unique IPs
+    for (segment_name, ip_set) in segment_ips {
+        if let Some(segment) = segments.get_mut(&segment_name) {
+            segment.unique_ips = ip_set.len();
+        }
+    }
+
+    // Convert segments HashMap to Vec for the result
+    let mut segmentations: Vec<Segmentation> = segments.into_values().collect();
+
+    // Calculate segment summary
+    let total_segment_requests: usize = segmentations.iter().map(|s| s.count).sum();
+    let segment_summary = SegmentSummary {
+        total_segments: segmentations.len(),
+        total_segment_requests,
+        average_requests_per_segment: if !segmentations.is_empty() {
+            total_segment_requests as f32 / segmentations.len() as f32
+        } else {
+            0.0
+        },
+    };
+
+    // Strip out heavy segment lists
+    for segment in &mut segmentations {
+        segment.strip_heavy_data();
+    }
+
+
+    // Strip heavyweight per-page data from bot_stats before emitting.
+    // This data is already persisted in the SQLite DB and can be queried on demand.
+    // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
+    bot_stats.strip_heavy_data();
+
+    // GET CUMULATIVE STATS FROM DB TO PROVIDE A TRUE "APPEND" EXPERIENCE
+    // We'll merge our current segmentation/frequency data with the global stats from DB
+    let cumulative_overview = if let Ok(stats) = get_active_logs_stats() {
+        LogAnalysisResult {
+            message: "Log analysis completed (cumulative)".to_string(),
+            line_count: stats.line_count,
+            unique_ips: stats.unique_ips,
+            unique_user_agents: stats.unique_user_agents,
+            crawler_count: stats.crawler_count,
+            success_rate: stats.success_rate,
+            totals: Totals {
+                google: stats.totals.google,
+                bing: stats.totals.bing,
+                semrush: stats.totals.semrush,
+                hrefs: stats.totals.hrefs,
+                moz: stats.totals.moz,
+                uptime: stats.totals.uptime,
+                openai: stats.totals.openai,
+                claude: stats.totals.claude,
+                bot_stats, // Use current batch's detailed stats for segments, but we should really merge them too if we want true append. For now, counts are most important.
+                status_codes: stats.totals.status_codes,
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time: stats.log_start_time,
+            log_finish_time: stats.log_finish_time,
+            file_count: stats.file_count, // Updated later if needed
+            segmentations, // We keep the current batch's segmentations or we'd need to re-scan the whole DB
+            segment_summary,
+        }
+    } else {
+        // Fallback to current batch if DB stats fail
+        LogAnalysisResult {
+            message: "Log analysis completed".to_string(),
+            line_count: total_requests,
+            unique_ips: 0,
+            unique_user_agents: 0,
+            crawler_count: 0,
+            success_rate: if total_requests > 0 {
+                (success_count as f32 / total_requests as f32) * 100.0
+            } else {
+                0.0
+            },
+            totals: Totals {
+                google: bot_counts[0],
+                bing: bot_counts[1],
+                semrush: bot_counts[2],
+                hrefs: bot_counts[3],
+                moz: bot_counts[4],
+                uptime: bot_counts[5],
+                openai: bot_counts[6],
+                claude: bot_counts[7],
+                bot_stats,
+                status_codes: status_code_counts,
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time,
+            log_finish_time,
+            file_count,
+            segmentations,
+            segment_summary,
+        }
+    };
+
+    let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
+
+    Ok(())
+}
+
+/// Analyse logs from file paths - reads files line-by-line via BufReader to avoid loading
+/// entire file contents into memory. This prevents OOM crashes on large log files.
+pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) -> Result<(), String> {
+    let file_count = file_paths.len();
+    let (progress_tx, progress_rx) = mpsc::channel();
+    let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
+
+    // Progress reporting thread
+    let app_handle_clone = app_handle.clone();
+    thread::spawn(move || {
+        let mut last_emitted = std::time::Instant::now();
+        let mut last_update: Option<ProgressUpdate> = None;
+        for update in progress_rx {
+            if last_emitted.elapsed() >= Duration::from_millis(50) {
+                let _ = app_handle_clone.emit("progress-update", &update);
+                last_emitted = std::time::Instant::now();
+                last_update = None;
+            } else {
+                last_update = Some(update);
+            }
+        }
+        // Always emit the final update so the frontend sees 100%
+        if let Some(final_update) = last_update {
+            let _ = app_handle_clone.emit("progress-update", &final_update);
+        }
+    });
+
+    // Wait for the initialize to succeed before creating threads
+    if let Err(e) = init_active_db() {
+        println!("Failed to init active db: {}", e);
+        return Err(e);
+    }
+
+    // Entry streaming thread
+    let app_handle_stream = app_handle.clone();
+    thread::spawn(move || {
+        let settings = match tokio::task::block_in_place(|| {
+            tauri::async_runtime::block_on(settings::load_settings())
+        }) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+
+        let mut entries_buffer = Vec::new();
+        let mut overview: Option<LogAnalysisResult> = None;
+
+        for entry in entry_rx {
+            match entry {
+                StreamEntry::LogEntry(e) => {
+                    entries_buffer.push(e);
+
+                    if entries_buffer.len() >= settings.log_chunk_size {
+                        if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                            println!("Failed to insert active logs chunk: {}", e);
+                        }
+
+                        entries_buffer.clear();
+                        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
+                    }
+                }
+                StreamEntry::Overview(o) => {
+                    overview = Some(o);
+                }
+            }
+        }
+
+        if !entries_buffer.is_empty() {
+            if let Err(e) = insert_active_logs_batch(&entries_buffer) {
+                println!("Failed to insert final active logs chunk: {}", e);
+            }
+            let chunk = LogResult {
+                overview: LogAnalysisResult::default(),
+                entries: Vec::new(),
+            };
+
+        }
+
+        if let Some(mut overview) = overview {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+                overview.line_count = stats.line_count;
+                overview.unique_ips = stats.unique_ips;
+                overview.unique_user_agents = stats.unique_user_agents;
+                overview.crawler_count = stats.crawler_count;
+                overview.success_rate = stats.success_rate;
+                overview.log_start_time = stats.log_start_time.clone();
+                overview.log_finish_time = stats.log_finish_time.clone();
+                overview.totals.google = stats.totals.google;
+                overview.totals.bing = stats.totals.bing;
+                overview.totals.semrush = stats.totals.semrush;
+                overview.totals.hrefs = stats.totals.hrefs;
+                overview.totals.moz = stats.totals.moz;
+                overview.totals.uptime = stats.totals.uptime;
+                overview.totals.openai = stats.totals.openai;
+                overview.totals.claude = stats.totals.claude;
+                overview.totals.status_codes = stats.totals.status_codes;
+            }
+            let _ = app_handle_stream.emit(
+                "log-analysis-complete",
+                LogResult {
+                    overview,
+                    entries: Vec::new(),
+                },
+            );
+        }
+    });
+
+    // Main processing
+    let mut total_requests = 0;
+    let mut success_count = 0;
+    let mut status_code_counts = StatusCodeCounts::new();
+
+    let mut log_start_time = String::new();
+    let mut log_finish_time = String::new();
+
+    // Initialize bot stats
+    let mut bot_stats = BotStatsMap::default();
+    let mut bot_counts = [0; 8];
+
+    // SEGMENTATION
+
+    // SEGMENTATION
+    let mut segments: HashMap<String, Segmentation> = HashMap::new();
+    let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for (index, file_path) in file_paths.iter().enumerate() {
+        let filename = std::path::Path::new(file_path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(file_path)
+            .to_string();
+
+        // Get file size for intra-file progress reporting
+        let file_size = std::fs::metadata(file_path)
+            .map(|m| m.len())
+            .unwrap_or(0) as f32;
+
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: (index as f32 / file_count as f32) * 100.0,
+            filename: filename.clone(),
+            phase: "started".to_string(),
+        });
+
+        // Open the file and read line-by-line with BufReader — no full file in memory
+        let file = match File::open(file_path) {
+            Ok(f) => f,
+            Err(e) => {
+                println!("Failed to open file {}: {}", file_path, e);
+                continue;
+            }
+        };
+        let reader = BufReader::with_capacity(8 * 1024 * 1024, file); // 8MB buffer
+        let mut bytes_read: u64 = 0;
+        let mut lines_since_progress: usize = 0;
+
+        for line_result in reader.lines() {
+            let line = match line_result {
+                Ok(l) => l,
+                Err(_) => continue,
+            };
+            bytes_read += line.len() as u64 + 1; // +1 for newline
+            lines_since_progress += 1;
+
+            // Send intra-file progress every 5000 lines
+            if lines_since_progress >= 5000 && file_size > 0.0 {
+                lines_since_progress = 0;
+                let file_fraction = (bytes_read as f32 / file_size).min(1.0);
+                // Blend file index progress with intra-file progress
+                let overall_pct = ((index as f32 + file_fraction) / file_count as f32) * 100.0;
+                let _ = progress_tx.send(ProgressUpdate {
+                    current_file: index + 1,
+                    total_files: file_count,
+                    percentage: overall_pct,
+                    filename: filename.clone(),
+                    phase: "processing".to_string(),
+                });
+            }
+
+            let line = line.trim().to_string();
+            if line.is_empty() {
+                continue;
+            }
+
+            if let Some(e) = parse_log_line(&line) {
+                let is_crawler_flag = is_crawler(&e.user_agent);
                 let entry = LogEntry {
                     ip: e.ip.clone(),
                     timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -396,11 +858,11 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     gsc_url: e.gsc_url,
                     status: e.status,
                     user_agent: e.user_agent,
-                    referer: e.referer, // Keep as Option<String>
+                    referer: e.referer,
                     response_size: e.response_size,
                     country: extract_country(&e.ip),
                     crawler_type: e.crawler_type,
-                    is_crawler,
+                    is_crawler: is_crawler_flag,
                     file_type: e.file_type,
                     browser: browser_trim_name::trim_browser_name(&e.browser),
                     verified: e.verified,
@@ -410,6 +872,12 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     filename: filename.clone(),
                 };
 
+                // Track start/finish times
+                if log_start_time.is_empty() {
+                    log_start_time = entry.timestamp.clone();
+                }
+                log_finish_time = entry.timestamp.clone();
+
                 // Update segment statistics
                 if !entry.segment.is_empty() {
                     let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
@@ -418,45 +886,28 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                         seg.match_type = entry.segment_match.clone().unwrap_or_default();
                         seg
                     });
-
                     segment.add_entry(&entry);
-
-                    // Track unique IPs per segment
                     let segment_ip_set = segment_ips
                         .entry(entry.segment.clone())
                         .or_insert_with(HashSet::new);
                     segment_ip_set.insert(entry.ip.clone());
-
-                    // Add URL if not already present
                     segment.add_url(entry.path.clone());
                 }
 
                 // Update statistics
-                unique_ips.insert(entry.ip.clone());
-                unique_user_agents.insert(entry.user_agent.clone());
-                if entry.is_crawler {
-                    crawler_count += 1;
-                }
+                total_requests += 1;
                 if entry.status >= 200 && entry.status < 300 {
                     success_count += 1;
                 }
-
-                // Update overall status code counts
                 status_code_counts.add_status(entry.status);
 
-                // Update bot counts and their status codes
                 let crawler_type = entry.crawler_type.to_lowercase();
-
                 if crawler_type.contains("google") {
                     bot_counts[0] += 1;
                     bot_stats.google.add_entry(&entry);
-                    google_bot_entries.push(entry.clone());
-                    google_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("bing") {
                     bot_counts[1] += 1;
                     bot_stats.bing.add_entry(&entry);
-                    bing_bot_entries.push(entry.clone());
-                    bing_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("semrush") {
                     bot_counts[2] += 1;
                     bot_stats.semrush.add_entry(&entry);
@@ -481,23 +932,15 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 {
                     bot_counts[6] += 1;
                     bot_stats.openai.add_entry(&entry);
-                    openai_bot_entries.push(entry.clone());
-                    openai_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("claude") {
                     bot_counts[7] += 1;
                     bot_stats.claude.add_entry(&entry);
-                    claude_bot_entries.push(entry.clone());
-                    claude_bot_pages.push(entry.path.clone());
                 }
 
                 // Stream the entry
-                let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
-
-                entry
-            })
-            .collect::<Vec<_>>();
-
-        all_entries.extend(entries);
+                let _ = entry_tx.send(StreamEntry::LogEntry(entry));
+            }
+        }
 
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
@@ -508,7 +951,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         });
     }
 
-    if all_entries.is_empty() {
+    if total_requests == 0 {
         return Err("No logs found".to_string());
     }
 
@@ -519,10 +962,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
     }
 
-    // Convert segments HashMap to Vec for the result
-    let segmentations: Vec<Segmentation> = segments.into_values().collect();
-
-    // Calculate segment summary
+    let mut segmentations: Vec<Segmentation> = segments.into_values().collect();
     let total_segment_requests: usize = segmentations.iter().map(|s| s.count).sum();
     let segment_summary = SegmentSummary {
         total_segments: segmentations.len(),
@@ -534,145 +974,96 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         },
     };
 
-    // Calculate overview data
-    let log_start_time = all_entries
-        .first()
-        .map(|e| e.timestamp.clone())
-        .unwrap_or_default();
-    let log_finish_time = all_entries
-        .last()
-        .map(|e| e.timestamp.clone())
-        .unwrap_or_default();
-    let total_requests = all_entries.len();
-
-    // Calculate page frequencies for bots that have detailed entries
-    let google_bot_page_frequencies =
-        calculate_url_frequencies(google_bot_entries.iter().collect());
-    let bing_bot_page_frequencies = calculate_url_frequencies(bing_bot_entries.iter().collect());
-    let openai_bot_page_frequencies =
-        calculate_url_frequencies(openai_bot_entries.iter().collect());
-    let claude_bot_page_frequencies =
-        calculate_url_frequencies(claude_bot_entries.iter().collect());
-
-    // Update bot stats with page frequencies
-    bot_stats.google.page_frequencies = google_bot_page_frequencies.clone();
-    bot_stats.bing.page_frequencies = bing_bot_page_frequencies.clone();
-    bot_stats.openai.page_frequencies = openai_bot_page_frequencies.clone();
-    bot_stats.claude.page_frequencies = claude_bot_page_frequencies.clone();
-
-    // DEBUG OUTPUT - Show page status code examples
-    println!("=== DEBUG PAGE STATUS CODES ===");
-    for (page, status_codes) in bot_stats.google.page_status_codes.iter().take(5) {
-        println!(
-            "Google Page: {} - Status codes: {:?}",
-            page, status_codes.counts
-        );
+    // Strip out heavy segment lists
+    for segment in &mut segmentations {
+        segment.strip_heavy_data();
     }
 
-    // DEBUG OUTPUT - Show segment information
-    println!("=== DEBUG SEGMENT INFORMATION ===");
-    for segment in &segmentations {
-        println!(
-            "Segment: {} - Requests: {} - Unique IPs: {} - URLs: {}",
-            segment.name,
-            segment.count,
-            segment.unique_ips,
-            segment.urls.len()
-        );
-    }
 
-    let overview = LogAnalysisResult {
-        message: "Log analysis completed".to_string(),
-        line_count: total_requests,
-        unique_ips: unique_ips.len(),
-        unique_user_agents: unique_user_agents.len(),
-        crawler_count,
-        success_rate: if total_requests > 0 {
-            (success_count as f32 / total_requests as f32) * 100.0
-        } else {
-            0.0
-        },
-        totals: Totals {
-            // Original fields for backward compatibility
-            google: bot_counts[0],
-            bing: bot_counts[1],
-            semrush: bot_counts[2],
-            hrefs: bot_counts[3],
-            moz: bot_counts[4],
-            uptime: bot_counts[5],
-            openai: bot_counts[6],
-            claude: bot_counts[7],
+    // Strip heavyweight per-page data from bot_stats before emitting.
+    // This data is already persisted in the SQLite DB and can be queried on demand.
+    // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
+    bot_stats.strip_heavy_data();
 
-            // New fields for detailed stats
-            bot_stats,
-            status_codes: status_code_counts,
-
-            // Original page fields
-            google_bot_pages,
-            google_bot_page_frequencies,
-            bing_bot_pages,
-            bing_bot_page_frequencies,
-            openai_bot_pages,
-            openai_bot_page_frequencies,
-            claude_bot_pages,
-            claude_bot_page_frequencies,
-        },
-        log_start_time,
-        log_finish_time,
-        file_count,
-        segmentations,
-        segment_summary,
+    let cumulative_overview = if let Ok(stats) = get_active_logs_stats() {
+        LogAnalysisResult {
+            message: "Log analysis completed (cumulative)".to_string(),
+            line_count: stats.line_count,
+            unique_ips: stats.unique_ips,
+            unique_user_agents: stats.unique_user_agents,
+            crawler_count: stats.crawler_count,
+            success_rate: stats.success_rate,
+            totals: Totals {
+                google: stats.totals.google,
+                bing: stats.totals.bing,
+                semrush: stats.totals.semrush,
+                hrefs: stats.totals.hrefs,
+                moz: stats.totals.moz,
+                uptime: stats.totals.uptime,
+                openai: stats.totals.openai,
+                claude: stats.totals.claude,
+                bot_stats,
+                status_codes: stats.totals.status_codes,
+                // Send empty page lists — data is in DB, query on demand
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time: stats.log_start_time,
+            log_finish_time: stats.log_finish_time,
+            file_count: stats.file_count,
+            segmentations,
+            segment_summary,
+        }
+    } else {
+        // Fallback to current batch if DB stats fail
+        LogAnalysisResult {
+            message: "Log analysis completed".to_string(),
+            line_count: total_requests,
+            unique_ips: 0,
+            unique_user_agents: 0,
+            crawler_count: 0,
+            success_rate: if total_requests > 0 {
+                (success_count as f32 / total_requests as f32) * 100.0
+            } else {
+                0.0
+            },
+            totals: Totals {
+                google: bot_counts[0],
+                bing: bot_counts[1],
+                semrush: bot_counts[2],
+                hrefs: bot_counts[3],
+                moz: bot_counts[4],
+                uptime: bot_counts[5],
+                openai: bot_counts[6],
+                claude: bot_counts[7],
+                bot_stats,
+                status_codes: status_code_counts,
+                google_bot_pages: Vec::new(),
+                google_bot_page_frequencies: HashMap::new(),
+                bing_bot_pages: Vec::new(),
+                bing_bot_page_frequencies: HashMap::new(),
+                openai_bot_pages: Vec::new(),
+                openai_bot_page_frequencies: HashMap::new(),
+                claude_bot_pages: Vec::new(),
+                claude_bot_page_frequencies: HashMap::new(),
+            },
+            log_start_time,
+            log_finish_time,
+            file_count,
+            segmentations,
+            segment_summary,
+        }
     };
 
-    // Send the overview
-    let _ = entry_tx.send(StreamEntry::Overview(overview));
+    let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
 
     Ok(())
-}
-
-fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
-    let mut frequency_map: HashMap<String, Vec<&LogEntry>> = HashMap::new();
-
-    for entry in entries {
-        frequency_map
-            .entry(entry.path.clone())
-            .or_insert_with(Vec::new)
-            .push(entry);
-    }
-
-    frequency_map
-        .into_iter()
-        .map(|(path, entries_vec)| {
-            if entries_vec.is_empty() {
-                return (path, Vec::new());
-            }
-
-            let first = entries_vec[0];
-            let mut status_codes = StatusCodeCounts::new();
-            for entry in &entries_vec {
-                status_codes.add_status(entry.status);
-            }
-
-            let aggregated = BotPageDetails {
-                crawler_type: first.crawler_type.clone(),
-                file_type: first.file_type.clone(),
-                response_size: entries_vec.iter().map(|d| d.response_size).sum(),
-                timestamp: first.timestamp.clone(),
-                ip: first.ip.clone(),
-                referer: first.referer.clone(),
-                browser: first.browser.clone(),
-                user_agent: first.user_agent.clone(),
-                frequency: entries_vec.len(),
-                method: first.method.clone(),
-                verified: first.verified,
-                taxonomy: first.taxonomy.clone(),
-                filename: first.filename.clone(),
-                status: first.status,
-                status_codes,
-            };
-            (path, vec![aggregated])
-        })
-        .collect()
 }
 
 // Enhanced segment_log function for detailed segment analysis
@@ -681,9 +1072,7 @@ pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
     let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
 
     for (_filename, log_content) in &data.log_contents {
-        let entries = parse_log_entries(log_content);
-
-        for entry in entries {
+        parse_log_entries(log_content, |entry| {
             if !entry.segment.is_empty() {
                 let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
                     let mut seg = Segmentation::new();
@@ -716,11 +1105,8 @@ pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
                     segment: entry.segment.clone(),
                     segment_match: entry.segment_match.clone(),
                     taxonomy: Some(entry.taxonomy.clone()),
-                    filename: "".to_string(), // Not needed for this analysis
+                    filename: "".to_string(),
                 });
-
-                // Add URL if not already present
-                segment.add_url(entry.path.clone());
 
                 // Track unique IPs
                 let segment_ip_set = segment_ips
@@ -728,7 +1114,7 @@ pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
                     .or_insert_with(HashSet::new);
                 segment_ip_set.insert(entry.ip.clone());
             }
-        }
+        });
     }
 
     // Update segment counts with unique IPs

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
   BadgeCheck,
+  Bot,
   ChevronDown,
   Download,
   FileAudio,
@@ -18,7 +19,17 @@ import {
   Search,
   Loader2,
   KeyRound,
+  User,
 } from "lucide-react";
+import {
+  IoLogoGoogle,
+  IoLogoFacebook,
+} from "react-icons/io5";
+import { SiSemrush } from "react-icons/si";
+import { Link2 } from "lucide-react";
+import { TbBrandBing } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { FaSpider } from "react-icons/fa6";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
@@ -61,6 +72,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useLogAnalysis, BotPathDetail } from "@/store/ServerLogsStore";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
@@ -126,30 +138,16 @@ interface LogEntry {
 
 interface WidgetTableProps {
   data: any;
+  entries: LogEntry[];
 }
 
-const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
-  // Transform data into logs (memoized)
-  const initialLogs = useMemo(() => {
-    if (!data?.totals?.bot_stats?.google?.page_frequencies) return [];
-
-    let logs: LogEntry[] = [];
-    const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
-
-    Object.entries(data.totals.bot_stats.google.page_frequencies).forEach(
-      ([path, entries]) => {
-        if (entries.length > 0) {
-          const aggregatedEntry = entries[0];
-          logs.push({
-            ...aggregatedEntry,
-            path,
-            status_codes: pageStatus[path],
-          });
-        }
-      },
-    );
-    return logs;
-  }, [data]);
+const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
+  const {
+    pathAggregations,
+    fetchPathAggregationsPage,
+    isLoading: isStoreLoading,
+  activeFilters: globalActiveFilters,
+  } = useLogAnalysis();
 
   // State definitions
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -169,6 +167,57 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [showOnTables, setShowOnTables] = useState(false);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
+  const initialLogs = entries;
+
+  // Main Data Fetcher
+  useEffect(() => {
+    const fetchFilteredData = async () => {
+      const activeFilters = {
+        search_term: searchTerm || globalActiveFilters.search_term,
+        status_filter: globalActiveFilters.status_filter,
+        method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+        file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+        bot_filter: "bot",
+        bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+        crawler_type_filter: "google",
+        verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter: globalActiveFilters.taxonomy_filter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
+  }, [
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    methodFilter,
+    fileTypeFilter,
+    botTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    fetchPathAggregationsPage,
+  ]);
+
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfLastItem, indexOfFirstItem } =
+    useMemo(() => {
+      const total = pathAggregations.total_unique_paths || 0;
+      const totalPages = Math.ceil(total / itemsPerPage);
+      const _currentLogs = pathAggregations.entries || [];
+      const indexOfLastItem = currentPage * itemsPerPage;
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+      return {
+        totalPages,
+        currentLogs: _currentLogs,
+        indexOfLastItem,
+        indexOfFirstItem,
+      };
+    }, [pathAggregations, itemsPerPage, currentPage]);
   const {
     credentials,
     data: GSCdata,
@@ -290,11 +339,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     sortFn,
   );
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
@@ -405,27 +449,65 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
+  const getCrawlerIcon = (crawlerType: string) => {
+    const ct = crawlerType.toLowerCase();
+    if (ct.includes("google")) {
+      return { icon: <IoLogoGoogle size={14} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct.includes("bing")) {
+      return { icon: <TbBrandBing size={14} />, color: "text-teal-600 dark:text-teal-400" };
+    }
+    if (ct.includes("semrush")) {
+      return { icon: <SiSemrush size={12} />, color: "text-orange-600 dark:text-orange-400" };
+    }
+    if (ct.includes("ahrefs") || ct.includes("hrefs")) {
+      return { icon: <Link2 size={14} />, color: "text-blue-700 dark:text-blue-300" };
+    }
+    if (ct.includes("moz")) {
+      return { icon: <RiRobot2Fill size={14} />, color: "text-blue-500 dark:text-blue-400" };
+    }
+    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
+      return { icon: <RiOpenaiFill size={14} />, color: "text-emerald-600 dark:text-emerald-400" };
+    }
+    if (ct.includes("claude") || ct.includes("anthropic")) {
+      return { icon: <RiOpenaiFill size={14} />, color: "text-amber-700 dark:text-amber-400" };
+    }
+    if (ct.includes("meta") || ct.includes("facebook")) {
+      return { icon: <IoLogoFacebook size={14} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct === "human") {
+      return { icon: <User size={14} />, color: "text-green-600 dark:text-green-400" };
+    }
+    // Generic bot
+    if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
+      return { icon: <FaSpider size={12} />, color: "text-purple-600 dark:text-purple-400" };
+    }
+    return { icon: <Bot size={14} />, color: "text-gray-500 dark:text-gray-400" };
+  };
+
   // CALCULATE THE TIMINGS
 
-  const oldestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
-        : null,
-    [initialLogs],
-  );
+  const oldestEntry = useMemo(() => {
+    if (data?.log_start_time) {
+      return { timestamp: data.log_start_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((oldest, log) =>
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
-  const newestEntry = useMemo(
-    () =>
-      initialLogs.length > 0
-        ? initialLogs.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
-        : null,
-    [initialLogs],
-  );
+  const newestEntry = useMemo(() => {
+    if (data?.log_finish_time) {
+      return { timestamp: data.log_finish_time };
+    }
+    return initialLogs.length > 0
+      ? initialLogs.reduce((newest, log) =>
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
+      : null;
+  }, [data, initialLogs]);
 
   const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
@@ -509,6 +591,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               ? `https://${domain}${selectedLog.path}`
               : selectedLog.path
           }
+          crawlerType={selectedLog.crawler_type}
+          verified={selectedLog.verified}
         />
       )}
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -595,6 +679,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
+
+
         </div>
       </div>
 
@@ -759,17 +845,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
                           <TableCell className="text-center min-w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.total}
-                              </span>
+                              <span>{timings(log)?.frequency?.total}</span>
                             </div>
                           </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
                             <div className="flex items-center justify-center h-full">
-                              <span>
-                                {timings(log)?.frequency?.perHour}
-                              </span>
+                              <span>{timings(log)?.frequency?.perHour}</span>
                             </div>
                           </TableCell>
 
@@ -803,15 +885,26 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className="font-bold">Details</h4>
-                                    {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                        <BadgeCheck
-                                          size={18}
-                                          className="text-blue-800 pr-1 dark:text-blue-900"
-                                        />
-                                        {log?.crawler_type}
+                                    <div className="flex items-center gap-2">
+                                      <div className={`flex items-center gap-1.5 py-1 px-2.5 text-xs rounded-md border ${log.crawler_type !== "Human"
+                                          ? "bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700"
+                                          : "bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700"
+                                        }`}>
+                                        <span className={getCrawlerIcon(log.crawler_type).color}>
+                                          {getCrawlerIcon(log.crawler_type).icon}
+                                        </span>
+                                        <span className="font-medium">{log?.crawler_type}</span>
                                       </div>
-                                    )}
+                                      {log.verified && (
+                                        <div className="flex items-center space-x-1 py-1 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 px-2 text-xs rounded-md">
+                                          <BadgeCheck
+                                            size={16}
+                                            className="text-blue-600 dark:text-blue-400"
+                                          />
+                                          <span className="text-blue-700 dark:text-blue-300 font-medium">Verified</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <div className="space-y-2 text-sm">
@@ -869,7 +962,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                     </p>
                                   </div>
                                   <div className="mt-4">
-                                    <h4 className="font-bold mb-2">User Agent</h4>
+                                    <h4 className="font-bold mb-2">
+                                      User Agent
+                                    </h4>
                                     <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
                                       <span
                                         className="font-mono text-xs break-all hover:underline cursor-pointer"

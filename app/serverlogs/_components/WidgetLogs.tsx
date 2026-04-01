@@ -9,13 +9,23 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import {
+  IoLogoGoogle,
+  IoLogoFacebook,
+} from "react-icons/io5";
+import { SiSemrush } from "react-icons/si";
+import { Link2 } from "lucide-react";
+import { TbBrandBing } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { FaSpider } from "react-icons/fa6";
+import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
 import {
   Dialog,
@@ -73,7 +83,6 @@ const WidgetStatusCodesTable = lazy(() =>
 
 import { Tabs } from "@mantine/core";
 
-import { useCurrentLogs } from "@/store/logFilterStore";
 import { FaInfoCircle } from "react-icons/fa";
 
 import {
@@ -132,9 +141,46 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, entries } = useLogAnalysis();
+  
+  const getCrawlerIcon = (crawlerType: string) => {
+    const ct = crawlerType.toLowerCase();
+    if (ct.includes("google")) {
+      return { icon: <IoLogoGoogle size={18} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    if (ct.includes("bing")) {
+      return { icon: <TbBrandBing size={18} />, color: "text-teal-600 dark:text-teal-400" };
+    }
+    if (ct.includes("semrush")) {
+      return { icon: <SiSemrush size={16} />, color: "text-orange-600 dark:text-orange-400" };
+    }
+    if (ct.includes("ahrefs") || ct.includes("hrefs")) {
+      return { icon: <Link2 size={18} />, color: "text-blue-700 dark:text-blue-300" };
+    }
+    if (ct.includes("moz")) {
+      return { icon: <RiRobot2Fill size={18} />, color: "text-blue-500 dark:text-blue-400" };
+    }
+    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
+      return { icon: <RiOpenaiFill size={18} />, color: "text-emerald-600 dark:text-emerald-400" };
+    }
+    if (ct.includes("claude") || ct.includes("anthropic")) {
+      return { icon: <RiOpenaiFill size={18} />, color: "text-amber-700 dark:text-amber-400" };
+    }
+    if (ct.includes("meta") || ct.includes("facebook")) {
+      return { icon: <IoLogoFacebook size={18} />, color: "text-blue-600 dark:text-blue-400" };
+    }
+    // Generic bot
+    if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
+      return { icon: <FaSpider size={16} />, color: "text-purple-600 dark:text-purple-400" };
+    }
+    return { icon: <Bot size={18} />, color: "text-gray-500 dark:text-gray-400" };
+  };
+  const overview = useLogAnalysisStore((state) => state.overview);
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const { entries } = useLogAnalysisStore((state) => ({ entries: state.entries }));
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  // We use entries from the store but we don't need allFilteredLogs anymore
   const [openDialogs, setOpenDialogs] = useState({});
-  const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
@@ -195,133 +241,148 @@ export default function WidgetLogs() {
 
   // Prepare filetype data from actual entries
   const fileTypeData = useMemo(
-    () =>
-      currentLogs?.reduce((acc, entry) => {
-        const type = entry.file_type || "Other";
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {}),
-    [currentLogs],
+    () => widgetAggs?.file_types || {},
+    [widgetAggs],
   );
 
   // Prepare content data from actual entries
-  const contentData = useMemo(
-    () =>
-      currentLogs?.reduce((acc, entry) => {
-        const taxonomy = entry.taxonomy;
-        if (taxonomy && taxonomy !== "other") {
-          acc[taxonomy] = (acc[taxonomy] || 0) + 1;
-        } else {
-          acc["other"] = (acc["other"] || 0) + 1;
-        }
-        return acc;
-      }, {}) || {},
-    [currentLogs],
-  );
+  const contentData = useMemo(() => widgetAggs?.content || {}, [widgetAggs]);
 
   // Prepare status code data from actual entries
   const statusCodeData = useMemo(
-    () =>
-      currentLogs?.reduce((acc, entry) => {
-        const code = entry.status;
-        acc[code] = (acc[code] || 0) + 1;
-        return acc;
-      }, {}),
-    [currentLogs],
+    () => widgetAggs?.status_codes || {},
+    [widgetAggs],
   );
 
-  // Prepare crawler data
-  const crawlerData = useMemo(
-    () =>
-      overview?.totals
-        ? Object.entries(overview.totals)
-            .filter(([_, value]) => value > 0)
-            .map(([name, value]) => ({
-              name: name.charAt(0).toUpperCase() + name.slice(1),
-              value,
-            }))
-            .sort((a, b) => b.value - a.value)
-        : [],
-    [overview],
-  );
+  // Prepare crawler data based on overview totals
+  const crawlerData = useMemo(() => {
+    if (!overview?.totals) return [];
+
+    const counts = {
+      Google: overview.totals.google || 0,
+      Bing: overview.totals.bing || 0,
+      Semrush: overview.totals.semrush || 0,
+      Hrefs: overview.totals.hrefs || 0,
+      Moz: overview.totals.moz || 0,
+      Uptime: overview.totals.uptime || 0,
+      Openai: overview.totals.openai || 0,
+      Claude: overview.totals.claude || 0,
+    };
+
+    return Object.entries(counts)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({
+        name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [overview]);
 
   // Prepare User Agents Data
-  const userAgentData = useMemo(
-    () =>
-      currentLogs?.reduce((acc, entry) => {
-        const userAgent = entry.user_agent || "Unknown";
+  const userAgentData = useMemo(() => {
+    if (!widgetAggs) return {};
 
-        // Categorize user agents to make the data more manageable
-        const categorizedAgent = categorizeUserAgent(userAgent);
+    const acc: Record<string, { count: number; examples: string[] }> = {};
 
-        if (!acc[categorizedAgent]) {
-          acc[categorizedAgent] = { count: 0, examples: [] };
+    // 1. Process category totals from backend (most accurate)
+    if (widgetAggs.user_agent_categories) {
+      Object.entries(widgetAggs.user_agent_categories).forEach(
+        ([cat, count]) => {
+          acc[cat] = { count, examples: [] };
+        },
+      );
+    }
+
+    // 2. Process specific strings for examples
+    if (widgetAggs.user_agents) {
+      Object.entries(widgetAggs.user_agents).forEach(([ua, count]) => {
+        const cat = categorizeUserAgent(ua);
+        if (!acc[cat]) {
+          acc[cat] = { count: 0, examples: [] };
         }
 
-        acc[categorizedAgent].count += 1;
-
-        // Keep a few examples of user agents in this category (max 5)
-        if (
-          acc[categorizedAgent].examples.length < 5 &&
-          !acc[categorizedAgent].examples.includes(userAgent)
-        ) {
-          acc[categorizedAgent].examples.push(userAgent);
+        // If we didn't have accurate totals from backend, accumulate counts here
+        if (!widgetAggs.user_agent_categories) {
+          acc[cat].count += count;
         }
 
-        return acc;
-      }, {}),
-    [currentLogs],
-  );
+        if (acc[cat].examples.length < 5 && !acc[cat].examples.includes(ua)) {
+          acc[cat].examples.push(ua);
+        }
+      });
+    }
+
+    return acc;
+  }, [widgetAggs]);
 
   // Prepare Referrers Data
-  const referrerData = useMemo(
-    () =>
-      currentLogs?.reduce((acc, entry) => {
-        const referrer = entry.referer || "Direct/None";
+  const referrerData = useMemo(() => {
+    if (!widgetAggs) return {};
 
-        // Categorize referrers to make the data more manageable
-        const categorizedReferrer = categorizeReferrer(referrer);
+    const acc: Record<string, { count: number; referrers: string[] }> = {};
 
-        if (!acc[categorizedReferrer]) {
-          acc[categorizedReferrer] = { count: 0, referrers: [] };
+    // 1. Process category totals from backend (most accurate)
+    if (widgetAggs.referrer_categories) {
+      Object.entries(widgetAggs.referrer_categories).forEach(
+        ([cat, count]) => {
+          acc[cat] = { count, referrers: [] };
+        },
+      );
+    }
+
+    // 2. Process specific strings for examples
+    if (widgetAggs.referrers) {
+      Object.entries(widgetAggs.referrers).forEach(([referrer, count]) => {
+        const cat = categorizeReferrer(referrer);
+        if (!acc[cat]) {
+          acc[cat] = { count: 0, referrers: [] };
         }
 
-        acc[categorizedReferrer].count += 1;
+        // If we didn't have accurate totals from backend, accumulate counts here
+        if (!widgetAggs.referrer_categories) {
+          acc[cat].count += count;
+        }
 
-        // Keep a few examples of referrers in this category (max 5)
         if (
-          acc[categorizedReferrer].referrers.length < 5 &&
-          !acc[categorizedReferrer].referrers.includes(referrer)
+          acc[cat].referrers.length < 5 &&
+          !acc[cat].referrers.includes(referrer)
         ) {
-          acc[categorizedReferrer].referrers.push(referrer);
+          acc[cat].referrers.push(referrer);
         }
+      });
+    }
 
-        return acc;
-      }, {}),
-    [currentLogs],
-  );
+    return acc;
+  }, [widgetAggs]);
 
   // Get chart data for active tab
   const chartData = useMemo(() => {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce(
-        (acc, [path, value]) => {
-          const name = taxonomyNameMap[path] || "Other";
+        (acc, [pathOrName, value]) => {
+          // If the key is 'other', use 'Uncategorized' for display
+          // If the key is already a taxonomy name, keep it.
+          // The taxonomyNameMap is useful if the key was a path, but the backend sends taxonomy names.
+          const name =
+            pathOrName.toLowerCase() === "other"
+              ? "Uncategorized"
+              : taxonomyNameMap[pathOrName] || pathOrName;
+
           if (!acc[name]) {
-            acc[name] = { value: 0, paths: {} };
+            acc[name] = { value: 0 };
           }
           acc[name].value += value;
-          acc[name].paths[path] = value;
           return acc;
         },
         {},
       );
 
-      return Object.entries(contentBySegment).map(([name, data]) => ({
-        name: name,
-        value: data.value,
-        paths: data.paths,
-      }));
+      return Object.entries(contentBySegment)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.value,
+        }))
+        .sort((a, b) => b.value - a.value);
     }
 
     if (activeTab === "User Agents") {
@@ -410,7 +471,7 @@ export default function WidgetLogs() {
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span className="hover:text-brand-bright">
-              {formatNumber(currentLogs?.length)} entries
+              {formatNumber(totalCount)} entries
             </span>
           </div>
         </PopoverTrigger>
@@ -463,11 +524,10 @@ export default function WidgetLogs() {
               <DropdownMenuItem
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
-                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
-                  activeTab === tab.label
-                    ? "bg-brand-bright text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
-                }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
+                  ? "bg-brand-bright text-white"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                  }`}
               >
                 <div
                   className={
@@ -541,13 +601,12 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4  ${
-              activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-5 max-w-2xl mr-6"
-                : activeTab === "Status Codes"
-                  ? "grid-cols-4 mr-6"
-                  : "grid-cols-4 mr-6"
-            }`}
+            className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
+              ? "grid-cols-5 max-w-2xl mr-6"
+              : activeTab === "Status Codes"
+                ? "grid-cols-4 mr-6"
+                : "grid-cols-4 mr-6"
+              }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -581,21 +640,22 @@ export default function WidgetLogs() {
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
-                      entries={currentLogs}
+                      entries={entries}
                       chartData={chartData}
+                      segment={entry?.name}
                       selectedFileType={entry?.name}
                     />
                   ) : activeTab === "Status Codes" ? (
                     <WidgetStatusCodesTable
                       data={overview}
-                      entries={currentLogs}
+                      entries={entries}
                       segment={entry?.name}
                     />
                   ) : activeTab === "Referrers" ? (
                     <WidgetReferrersTable
                       data={overview}
-                      entries={currentLogs}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                      entries={entries}
+                      segment={entry?.name}
                     />
                   ) : activeTab === "Content" ? (
                     <Tabs defaultValue="logs" className="h-full">
@@ -651,7 +711,7 @@ export default function WidgetLogs() {
                       <Tabs.Panel value="logs" className="h-full">
                         <WidgetContentTable
                           data={overview}
-                          entries={currentLogs}
+                          entries={entries}
                           segment={entry?.name}
                         />
                       </Tabs.Panel>
@@ -659,40 +719,83 @@ export default function WidgetLogs() {
                   ) : activeTab === "User Agents" ? (
                     <WidgetUserAgentsTable
                       data={overview}
-                      entries={currentLogs}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                      entries={entries}
+                      segment={entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                      entry?.name,
-                    ) ? (
-                    <Tabs defaultValue="overview" className="h-full">
+                    entry?.name,
+                  ) ? (
+                    <div className="flex flex-col h-full">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2 shrink-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}>
+                              {getCrawlerIcon(entry.name).icon}
+                            </span>
+                            <div>
+                              <h3 className="font-semibold text-blue-800 dark:text-blue-300">
+                                Viewing: {entry.name} Bot
+                              </h3>
+                              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                                Showing request activity and analysis for {entry.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {pathAggregations.total_hits.toLocaleString()} hits
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
+                            >
+                              {entry.value.toLocaleString()} requests
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Tabs defaultValue="overview" className="h-full mt-4 flex-1 flex flex-col min-h-0">
+
                       <Tabs.List>
                         <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                       </Tabs.List>
                       <Tabs.Panel value="overview" className="h-full">
                         {entry?.name === "Google" && (
-                          <WidgetTable data={overview} entries={currentLogs} />
+                          <WidgetTable
+                            data={overview}
+                            entries={entries}
+                          />
                         )}
                         {entry?.name === "Bing" && (
                           <WidgetTableBing
                             data={overview}
-                            entries={currentLogs}
+                            entries={entries}
                           />
                         )}
                         {entry?.name === "Openai" && (
                           <WidgetTableOpenAi
                             data={overview}
-                            entries={currentLogs}
+                            entries={entries}
                           />
                         )}
                         {entry?.name === "Claude" && (
                           <WidgetTableClaude
                             data={overview}
-                            entries={currentLogs}
+                            entries={entries}
                           />
                         )}
                       </Tabs.Panel>
                     </Tabs>
+                    </div>
                   ) : activeTab === "Crawlers" ? (
                     <>
                       <DialogHeader>
@@ -714,7 +817,7 @@ export default function WidgetLogs() {
                                   (sum, item) => sum + item.value,
                                   0,
                                 )) *
-                                100,
+                              100,
                             )}
                             %
                           </span>
