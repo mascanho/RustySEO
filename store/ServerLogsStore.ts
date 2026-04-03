@@ -892,7 +892,8 @@ export const useLogAnalysisStore = create<
 
     fetchOverviewStats: async () => {
       try {
-        const overview = await invoke<LogAnalysisOverview>("get_active_logs_stats");
+        const filters = get().activeFilters;
+        const overview = await invoke<LogAnalysisOverview>("get_active_logs_stats", { filters });
         set({ overview, totalCount: overview.line_count });
       } catch (error) {
         console.error("Failed to fetch overview stats:", error);

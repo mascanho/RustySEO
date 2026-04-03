@@ -115,7 +115,7 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ActiveFilters {
     pub search_term: String,
     pub status_filter: Vec<u16>,
@@ -1183,14 +1183,16 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
 }
 
 #[tauri::command]
-pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
+pub fn get_active_logs_stats(filters: ActiveFilters) -> Result<LogAnalysisResult, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
     // Get total count, crawler count, unique IPs and UAs
     let mut stmt = conn
-        .prepare(
+        .prepare(&format!(
             "
         SELECT
             COUNT(*),
@@ -1201,21 +1203,26 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
             MIN(timestamp),
             MAX(timestamp)
         FROM active_parsed_logs
+        WHERE {}
     ",
-        )
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
 
-    let (total_count, crawler_count, unique_ips, unique_uas, success_count, start_time, end_time): (i64, Option<i64>, i64, i64, Option<i64>, Option<String>, Option<String>) = stmt.query_row([], |row| {
-        Ok((
-            row.get(0)?,
-            row.get(1)?,
-            row.get(2)?,
-            row.get(3)?,
-            row.get(4)?,
-            row.get(5)?,
-            row.get(6)?,
-        ))
-    }).map_err(|e| e.to_string())?;
+    let (total_count, crawler_count, unique_ips, unique_uas, success_count, start_time, end_time): (i64, Option<i64>, i64, i64, Option<i64>, Option<String>, Option<String>) = stmt.query_row(
+        rusqlite::params_from_iter(params_vec.iter()),
+        |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+                row.get(5)?,
+                row.get(6)?,
+            ))
+        }
+    ).map_err(|e| e.to_string())?;
 
     let total_count = total_count as usize;
     let crawler_count = crawler_count.unwrap_or(0) as usize;
@@ -1227,11 +1234,14 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
 
     // Get Status Code Counts
     let mut status_stmt = conn
-        .prepare("SELECT status, COUNT(*) FROM active_parsed_logs GROUP BY status")
+        .prepare(&format!(
+            "SELECT status, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY status",
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
     let mut status_codes = StatusCodeCounts::new();
     let status_rows = status_stmt
-        .query_map([], |row| {
+        .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
             Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
         })
         .map_err(|e| e.to_string())?;
@@ -1247,7 +1257,7 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
 
     // Get Bot Totals using a single SUM(CASE) query for consistency
     let mut bot_stmt = conn
-        .prepare(
+        .prepare(&format!(
             "
         SELECT
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
@@ -1259,8 +1269,10 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
             SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%' OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%' THEN 1 ELSE 0 END)
         FROM active_parsed_logs
+        WHERE {}
     ",
-        )
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
 
     let (ggl, bng, sem, ahr, moz, upt, oai, cld): (
@@ -1273,7 +1285,7 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
         Option<i64>,
         Option<i64>,
     ) = bot_stmt
-        .query_row([], |row| {
+        .query_row(rusqlite::params_from_iter(params_vec.iter()), |row| {
             Ok((
                 row.get(0)?,
                 row.get(1)?,
