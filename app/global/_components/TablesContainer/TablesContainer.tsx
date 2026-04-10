@@ -134,17 +134,27 @@ export default function Home() {
   const handleResize = useCallback((newBottomHeight: number) => {
     setBottomTableHeight(newBottomHeight);
   }, []);
-  const [debouncedCrawlData, setDebouncedCrawlData] = useState(crawlData);
-
-  const debouncedUpdate = useMemo(() => {
-    const baseDelay = crawlData.length > 5000 ? 2000 : 500;
-    return debounce(setDebouncedCrawlData, baseDelay);
-  }, [crawlData.length]); // Recreate only when length changes
+  // Use a ref to avoid duplicating the entire crawlData array in memory.
+  // We use an interval to periodically sync the render state.
+  const debouncedCrawlDataRef = useRef(crawlData);
+  const [, setRenderTick] = useState(0);
 
   useEffect(() => {
-    debouncedUpdate(crawlData);
-    return () => debouncedUpdate.cancel();
-  }, [crawlData, debouncedUpdate]);
+    // Continuously check if crawlData has grown and sync it every 2s
+    const timer = setInterval(() => {
+      // Only trigger a re-render if the array size has actually changed significantly
+      // (or we could just use latest state from store)
+      const currentStored = useGlobalCrawlStore.getState().crawlData;
+      if (debouncedCrawlDataRef.current.length !== currentStored.length) {
+        debouncedCrawlDataRef.current = currentStored;
+        setRenderTick((t) => t + 1);
+      }
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const debouncedCrawlData = debouncedCrawlDataRef.current;
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();

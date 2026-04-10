@@ -121,11 +121,21 @@ const IssuesContainer = () => {
   const [debouncedCrawlData, setDebouncedCrawlData] = React.useState(crawlData);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedCrawlData(crawlData);
-    }, crawlData.length > 5000 ? 5000 : 1000);
-    return () => clearTimeout(timer);
-  }, [crawlData]);
+    // Instead of a timeout that gets constantly cancelled by fast crawlData updates,
+    // we use an interval to periodically fetch the latest valid array from the store.
+    const timer = setInterval(() => {
+      const currentStored = useGlobalCrawlStore.getState().crawlData;
+      setDebouncedCrawlData((prev) => {
+        // Only update if there is actually new data to avoid unnecessary renders
+        if (prev.length !== currentStored.length) {
+          return currentStored;
+        }
+        return prev;
+      });
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const robotsBlocked = useGlobalCrawlStore((state) => state.robotsBlocked);
   const setIssues = useGlobalCrawlStore((state) => state.setIssues);

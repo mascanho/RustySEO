@@ -147,27 +147,50 @@ export default function Page() {
   useEffect(() => {
     console.log("Initializing crawl event listeners...");
 
+    const buffer = {
+      results: [] as any[],
+      timer: null as any,
+    };
+
+    const flushBuffer = () => {
+      if (buffer.results.length > 0) {
+        // Deep clone or slice isn't necessarily needed, but we pass the accumulated array
+        addDomainCrawlResult(buffer.results);
+        buffer.results = [];
+      }
+      buffer.timer = null;
+    };
+
     const unlistenPromise = listen("crawl_result", (event) => {
       // The payload structure is now { results: LightCrawlResult[] } (batched)
-      const payload = event.payload;
+      const payload: any = event.payload;
 
       if (payload && typeof payload === "object") {
         const results = payload.results;
 
         if (Array.isArray(results) && results.length > 0) {
-          addDomainCrawlResult(results);
+          buffer.results.push(...results);
         } else if (payload.result && typeof payload.result === "object") {
-          // Backward compatibility: handle single result
-          addDomainCrawlResult(payload.result);
+          buffer.results.push(payload.result);
+        }
+
+        // Throttle updates to Zustand to prevent memory thrashing
+        // At 40K URLs, Zustand concats are very expensive.
+        if (!buffer.timer) {
+          buffer.timer = setTimeout(flushBuffer, 1500);
         }
       }
     });
 
-
-
     listen("crawl_complete", (event) => {
       console.log("🏁 Crawl complete event received!");
       console.log("🏁 Crawl complete payload:", event.payload);
+
+      // Flush any remaining items immediately
+      if (buffer.timer) {
+        clearTimeout(buffer.timer);
+      }
+      flushBuffer();
 
       // @ts-ignore
       if (event.payload && event.payload.robots_blocked) {
@@ -182,6 +205,12 @@ export default function Page() {
     });
 
     listen("robots_blocked", (event) => {
+      // Flush before setting other status
+      if (buffer.timer) {
+        clearTimeout(buffer.timer);
+      }
+      flushBuffer();
+      
       console.log("🚫 Robot Blocked URLs received:", event.payload);
       if (Array.isArray(event.payload)) {
         // @ts-ignore
@@ -204,6 +233,8 @@ export default function Page() {
     console.log("✅ Crawl event listeners registered");
 
     return () => {
+      if (buffer.timer) clearTimeout(buffer.timer);
+      flushBuffer();
       unlistenPromise
         .then((unlisten) => {
           console.log("Cleaning up listeners");

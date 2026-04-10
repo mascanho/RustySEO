@@ -538,8 +538,14 @@ async fn update_state_and_emit_progress(
     state.pending_urls.remove(&normalized_current_url);
     state.last_activity = Instant::now();
 
-    // Only process links if we haven't reached limits and depth allows
-    if depth < settings.max_depth && state.total_urls < settings.max_urls_per_domain {
+    // Only process links if we haven't reached limits, depth allows, and queue isn't too large.
+    // Cap the queue at 50K entries to prevent unbounded memory growth — the queue grows
+    // much faster than it drains (each page yields 50-200+ links).
+    const MAX_QUEUE_SIZE: usize = 50_000;
+    if depth < settings.max_depth
+        && state.total_urls < settings.max_urls_per_domain
+        && state.queue.len() < MAX_QUEUE_SIZE
+    {
         let links = links_for_crawler;
         let links_found = links.len();
         if links_found > 0 && state.crawled_urls % 100 == 0 {
@@ -560,12 +566,12 @@ async fn update_state_and_emit_progress(
             // Pattern checking to avoid infinite URL traps
             let pattern_count = *state.url_patterns.get(&url_pattern).unwrap_or(&0);
 
-            // Set a very high limit for pattern-based skipping.
-            // 10,000 is high enough to not interfere with normal sites but low enough to stop an infinite trap eventually.
-            let should_skip_pattern = pattern_count > 10000;
+            // Set a reasonable limit for pattern-based skipping.
+            // 500 is high enough for normal sites but catches infinite URL traps before memory bloats.
+            let should_skip_pattern = pattern_count > 500;
 
             if should_skip_pattern {
-                if pattern_count == 10001 {
+                if pattern_count == 501 {
                     tracing::warn!(
                         "Pattern trap detected for pattern: {}. Limiting discovery.",
                         url_pattern

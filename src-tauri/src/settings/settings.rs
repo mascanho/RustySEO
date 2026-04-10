@@ -131,7 +131,7 @@ impl Settings {
             concurrent_requests: 5, // Reduced from 10
             batch_size: 40,
             max_depth: 50,
-            max_urls_per_domain: 10000000,
+            max_urls_per_domain: 100000,
 
             // --- Timing & Throttling ---
             adaptive_crawling: true,
