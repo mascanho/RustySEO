@@ -50,6 +50,8 @@ pub struct Settings {
     pub stall_check_interval: u64,
     /// Maximum time a URL can be pending before considered stalled (seconds)
     pub max_pending_time: u64,
+    /// Threashold for table download switch from memory to sqlite excel export
+    pub table_download_threshold: usize,
 
     // --- Request / Network ---
     /// Timeout for individual HTTP requests (seconds)
@@ -135,12 +137,15 @@ impl Settings {
 
             // --- Timing & Throttling ---
             adaptive_crawling: true,
-            base_delay: 1500,        // Increased from 1000
-            max_delay: 30000,        // Increased from 10000 — gives adaptive system more room
-            min_crawl_delay: 500,    // Increased from 300
+            base_delay: 1500,     // Increased from 1000
+            max_delay: 30000,     // Increased from 10000 — gives adaptive system more room
+            min_crawl_delay: 500, // Increased from 300
             crawl_timeout: 28800,
-            stall_check_interval: 30, // SECONDS
-            max_pending_time: 900,    // SECONDS
+            stall_check_interval: 30,        // SECONDS
+            max_pending_time: 900,           // SECONDS
+            table_download_threshold: 10000, // Past 10K it no longer downloads the table data from
+            // memory, instead it exports it to an excel file from
+            // the DB
 
             // --- Request / Network ---
             client_timeout: 60,
@@ -203,7 +208,10 @@ impl Settings {
         s.push_str(&format!("user_agents = {}\n", ua));
 
         s.push_str("# Number of concurrent requests for domain crawling\n");
-        s.push_str(&format!("concurrent_requests = {}\n", self.concurrent_requests));
+        s.push_str(&format!(
+            "concurrent_requests = {}\n",
+            self.concurrent_requests
+        ));
 
         s.push_str("# Number of URLs to process between sleeps/checks\n");
         s.push_str(&format!("batch_size = {}\n", self.batch_size));
@@ -212,7 +220,10 @@ impl Settings {
         s.push_str(&format!("max_depth = {}\n", self.max_depth));
 
         s.push_str("# Maximum URLs to crawl per domain\n");
-        s.push_str(&format!("max_urls_per_domain = {}\n", self.max_urls_per_domain));
+        s.push_str(&format!(
+            "max_urls_per_domain = {}\n",
+            self.max_urls_per_domain
+        ));
 
         s.push_str("\n# --- Timing & Throttling (Adaptive) ---\n");
         s.push_str("# Enable adaptive crawling speed based on server response\n");
@@ -231,7 +242,10 @@ impl Settings {
         s.push_str(&format!("crawl_timeout = {}\n", self.crawl_timeout));
 
         s.push_str("# Interval to check for stalled crawlers (seconds)\n");
-        s.push_str(&format!("stall_check_interval = {}\n", self.stall_check_interval));
+        s.push_str(&format!(
+            "stall_check_interval = {}\n",
+            self.stall_check_interval
+        ));
 
         s.push_str("# Maximum time a URL can be pending before considered stalled (seconds)\n");
         s.push_str(&format!("max_pending_time = {}\n", self.max_pending_time));
@@ -241,7 +255,10 @@ impl Settings {
         s.push_str(&format!("client_timeout = {}\n", self.client_timeout));
 
         s.push_str("# Timeout for connection establishment (seconds)\n");
-        s.push_str(&format!("client_connect_timeout = {}\n", self.client_connect_timeout));
+        s.push_str(&format!(
+            "client_connect_timeout = {}\n",
+            self.client_connect_timeout
+        ));
 
         s.push_str("# Number of redirects to follow\n");
         s.push_str(&format!("redirect_policy = {}\n", self.redirect_policy));
@@ -254,10 +271,16 @@ impl Settings {
         s.push_str(&format!("html = {}\n", self.html));
 
         s.push_str("# Enable Headless Chrome rendering\n");
-        s.push_str(&format!("javascript_rendering = {}\n", self.javascript_rendering));
+        s.push_str(&format!(
+            "javascript_rendering = {}\n",
+            self.javascript_rendering
+        ));
 
         s.push_str("# Concurrency for Headless Chrome\n");
-        s.push_str(&format!("javascript_concurrency = {}\n", self.javascript_concurrency));
+        s.push_str(&format!(
+            "javascript_concurrency = {}\n",
+            self.javascript_concurrency
+        ));
 
         s.push_str("\n# --- Link Processor (Internal/External Check) ---\n");
         s.push_str("# Max concurrent checks for link status\n");
@@ -279,16 +302,28 @@ impl Settings {
         s.push_str(&format!("links_retry_delay = {}\n", self.links_retry_delay));
 
         s.push_str("# Timeout for link check requests (seconds)\n");
-        s.push_str(&format!("links_request_timeout = {}\n", self.links_request_timeout));
+        s.push_str(&format!(
+            "links_request_timeout = {}\n",
+            self.links_request_timeout
+        ));
 
         s.push_str("# Jitter factor for randomized delays (0.0 - 1.0)\n");
-        s.push_str(&format!("links_jitter_factor = {}\n", self.links_jitter_factor));
+        s.push_str(&format!(
+            "links_jitter_factor = {}\n",
+            self.links_jitter_factor
+        ));
 
         s.push_str("# Idle timeout for connection pool (seconds)\n");
-        s.push_str(&format!("links_pool_idle_timeout = {}\n", self.links_pool_idle_timeout));
+        s.push_str(&format!(
+            "links_pool_idle_timeout = {}\n",
+            self.links_pool_idle_timeout
+        ));
 
         s.push_str("# Max idle connections per host\n");
-        s.push_str(&format!("links_max_idle_per_host = {}\n", self.links_max_idle_per_host));
+        s.push_str(&format!(
+            "links_max_idle_per_host = {}\n",
+            self.links_max_idle_per_host
+        ));
 
         s.push_str("\n# --- Extraction & Content ---\n");
         s.push_str("# Enable N-gram extraction\n");
@@ -406,7 +441,7 @@ pub async fn create_config_file() -> Result<Settings, String> {
 
     if !config_path.exists() {
         let toml_str = settings.generate_commented_config();
-        
+
         fs::write(&config_path, toml_str)
             .await
             .map_err(|e| format!("Failed to write config: {}", e))?;
@@ -740,6 +775,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
         settings.min_crawl_delay = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("table_download_threshold")
+        .and_then(|v| v.as_integer())
+    {
+        settings.table_download_threshold = val as usize;
     }
 
     // Explicit file writing with flush

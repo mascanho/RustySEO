@@ -403,6 +403,7 @@ const TableCrawl = ({
       return;
     }
 
+    //TODO: Set the limit here to then export directly from the sqlite database
     if (rows.length > 0) {
       toast.info("Getting your data ready...");
       await exportSEODataCSV(rows);
