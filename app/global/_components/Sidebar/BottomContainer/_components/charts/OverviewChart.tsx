@@ -85,12 +85,16 @@ function OverviewChart() {
   // progress_update is handled centrally by FooterLoader — no duplicate listener here.
   useEffect(() => {
     const completeUnlisten = listen("crawl_complete", () => {
-      // Read latest state at event time to avoid stale closure
-      const currentData = useGlobalCrawlStore.getState().crawlData;
-      setStreamedCrawledPages(currentData.length);
-      setStreamedTotalPages(currentData.length);
+      // Use the backend-reported totals (streamedCrawledPages) as the source of truth.
+      // crawlData.length is capped at 10K in memory and must NOT be used as the count here.
+      const state = useGlobalCrawlStore.getState();
+      const trueCount = state.streamedCrawledPages || state.crawlData.length;
+      setStreamedCrawledPages(trueCount);
+      setStreamedTotalPages(trueCount);
 
-      // Calculate 4XX and 5XX separately from crawlData
+      // Calculate 4XX and 5XX separately from the in-memory crawlData slice
+      // (only a subset for large crawls, but gives a reasonable approximation)
+      const currentData = state.crawlData;
       const count4xx =
         currentData?.filter((page) => {
           const status = page?.status_code || 0;
@@ -198,7 +202,8 @@ function OverviewChart() {
               style={{ color: "white" }}
               className="text-3xl dark:fill-white text-white font-bold dark:text-white"
             >
-              {crawlData?.length || 0}
+              {/* Use backend progress count (not crawlData.length which is capped at 10K in memory) */}
+              {streamedCrawledPages || crawlData?.length || 0}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -256,7 +261,7 @@ function OverviewChart() {
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
           {/* WARNING: Something strange on this It is not adding up with the CSV doenload */}
-          With a total of {[totalPagesCrawledInSession + crawlData.length] || 0}{" "}
+          With a total of {totalPagesCrawledInSession + (streamedTotalPages || crawlData.length) || 0}{" "}
           pages analyzed
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>

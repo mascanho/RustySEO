@@ -167,3 +167,19 @@ pub async fn get_incoming_links_command(target_url: String) -> Result<Value, Str
     let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
     db.get_incoming_links(target_url).await.map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn get_crawl_page_command(
+    limit: i64,
+    offset: i64,
+    search: Option<String>,
+) -> Result<Value, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    db.get_crawl_page(limit, offset, search).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_crawl_total_count_command(search: Option<String>) -> Result<i64, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    db.get_crawl_total_count(search).await.map_err(|e| e.to_string())
+}

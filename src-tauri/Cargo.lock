@@ -273,6 +273,7 @@ dependencies = [
  "chrono",
  "colored",
  "csv",
+ "dashmap",
  "directories",
  "dotenv",
  "futures",

@@ -319,6 +319,8 @@ async fn main() {
             domain_commands::get_url_data_command,
             domain_commands::get_aggregated_crawl_data_command,
             domain_commands::get_incoming_links_command,
+            domain_commands::get_crawl_page_command,
+            domain_commands::get_crawl_total_count_command,
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::log_commands::check_logs_from_paths_command,

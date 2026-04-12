@@ -154,9 +154,17 @@ export default function Page() {
 
     const flushBuffer = () => {
       if (buffer.results.length > 0) {
-        // Deep clone or slice isn't necessarily needed, but we pass the accumulated array
-        addDomainCrawlResult(buffer.results);
+        // Chunk large flushes to avoid freezing the main thread.
+        // A single concat of 400+ items into a 30K+ array can freeze the UI.
+        const CHUNK_SIZE = 200;
+        const chunks: any[][] = [];
+        for (let i = 0; i < buffer.results.length; i += CHUNK_SIZE) {
+          chunks.push(buffer.results.slice(i, i + CHUNK_SIZE));
+        }
         buffer.results = [];
+        chunks.forEach((chunk, i) => {
+          setTimeout(() => addDomainCrawlResult(chunk), i * 30);
+        });
       }
       buffer.timer = null;
     };

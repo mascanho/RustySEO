@@ -9,12 +9,13 @@ use rand::Rng;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
+use dashmap::DashMap;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
@@ -115,8 +116,8 @@ pub async fn crawl_domain(
 
     // Create the global URL status registry — shared between the crawler and the link checker
     // so that URLs already crawled are never re-requested during link checking.
-    let url_status_registry: Arc<RwLock<HashMap<String, u16>>> =
-        Arc::new(RwLock::new(HashMap::new()));
+    // DashMap is used here instead of RwLock<HashMap> to avoid blocking async executor threads.
+    let url_status_registry: Arc<DashMap<String, u16>> = Arc::new(DashMap::with_capacity(4096));
 
     let link_checker = Arc::new(SharedLinkChecker::new(
         &settings,

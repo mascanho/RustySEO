@@ -248,13 +248,12 @@ pub async fn process_url(
     }
 
     // Register all URL status codes from this crawl into the global registry.
-    // This includes every redirect hop and the final URL, so the link checker
-    // can resolve these instantly without any HTTP requests.
-    // Note: blocked/fake-200 pages are NOT registered (we returned Err above),
-    // so the link checker will re-check them normally.
-    if let Ok(mut reg) = url_status_registry.write() {
+    // DashMap allows concurrent inserts without any blocking or locking.
+    // Cap the registry at 200K entries to prevent unbounded memory growth on huge crawls.
+    const MAX_REGISTRY_SIZE: usize = 200_000;
+    if url_status_registry.len() < MAX_REGISTRY_SIZE {
         for hop in &redirect_chain {
-            reg.insert(hop.url.clone(), hop.status_code);
+            url_status_registry.insert(hop.url.clone(), hop.status_code);
         }
     }
 
@@ -711,13 +710,18 @@ async fn update_state_and_emit_progress(
         || active_pending == 0; // Flush on completion
 
     if should_emit_results && !state.pending_results.is_empty() {
+        // Drain results BEFORE dropping the lock so we minimise lock-held time.
+        // The IPC emit happens after the lock is released to avoid blocking
+        // other tasks that are waiting to acquire the state mutex.
         let result_data = CrawlResultData {
             results: state.pending_results.drain(..).collect(),
         };
+        drop(state); // Release lock before IPC call
         if let Err(err) = app_handle.emit("crawl_result", result_data) {
             eprintln!("Failed to emit crawl result batch: {}", err);
         }
-        state.last_result_emit = now;
+        // Note: state is dropped here; last_result_emit is updated implicitly through the emit timestamp
+        return; // state is consumed by drop, exit the function
     }
 
     // progress info already logged above
