@@ -91,6 +91,22 @@ pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String
     }
 }
 
+// GENERATE EXCEL DIRECTLY FROM SQLITE WITHOUT FRONTEND LIMITS
+#[tauri::command]
+pub async fn export_full_crawl_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    
+    // Fetch all raw data from SQLite (bypassing frontend memory limits)
+    let all_data: Vec<Value> = db.get_all_crawl_data().await
+        .map_err(|e| e.to_string())?;
+
+    // Generate Excel
+    match generate_excel_main_table(all_data) {
+        Ok(file) => Ok(file),
+        Err(e) => Err(e),
+    }
+}
+
 // CREATE THE EXCEL FROM THE TABLE
 #[tauri::command]
 pub async fn create_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {

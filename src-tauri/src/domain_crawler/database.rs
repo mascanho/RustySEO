@@ -734,6 +734,32 @@ impl Database {
         .await?
     }
 
+    pub async fn get_all_crawl_data(&self) -> Result<Vec<Value>, DatabaseError> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
+            
+            let mut results = Vec::new();
+            let rows = stmt.query_map([], |row| {
+                let data_json: String = row.get(0)?;
+                Ok(data_json)
+            })?;
+            
+            for row in rows {
+                if let Ok(data_json) = row {
+                    if let Ok(data) = serde_json::from_str(&data_json) {
+                        results.push(data);
+                    }
+                }
+            }
+            
+            Ok(results)
+        })
+        .await?
+    }
+
     /// Returns the total row count (with optional search filter) for pagination controls.
     pub async fn get_crawl_total_count(&self, search: Option<String>) -> Result<i64, DatabaseError> {
         let pool = self.pool.clone();

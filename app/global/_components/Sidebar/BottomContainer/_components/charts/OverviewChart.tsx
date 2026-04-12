@@ -51,6 +51,7 @@ function OverviewChart() {
     setStreamedCrawledPages,
     streamedCrawledPages,
     streamedTotalPages,
+    totalUrlsCrawled,
   } = useGlobalCrawlStore();
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
@@ -217,7 +218,7 @@ function OverviewChart() {
       }
       return null;
     },
-    [crawlData],
+    [streamedCrawledPages, crawlData],
   );
 
   return (
@@ -260,8 +261,7 @@ function OverviewChart() {
           This session has recorded {sessionCrawls || 0} crawls.
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
-          {/* WARNING: Something strange on this It is not adding up with the CSV doenload */}
-          With a total of {totalPagesCrawledInSession + (streamedTotalPages || crawlData.length) || 0}{" "}
+          With a total of {totalPagesCrawledInSession + (streamedTotalPages || crawlData.length || 0)}{" "}
           pages analyzed
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>

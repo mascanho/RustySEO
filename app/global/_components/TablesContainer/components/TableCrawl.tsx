@@ -394,25 +394,25 @@ const TableCrawl = ({
   const setIsGeneratingExcel = useGlobalCrawlStore(
     (s) => s.setIsGeneratingExcel,
   );
+  const totalUrlsCrawled = useGlobalCrawlStore((s) => s.totalUrlsCrawled);
+
   const { setInlinks, setOutlinks, setSelectedTableURL, selectURL } =
     useDataActions();
 
   const handleDownload = useCallback(async () => {
-    if (!rows.length) {
+    if (!rows.length && totalUrlsCrawled === 0) {
       toast.error("No data to download");
       return;
     }
 
-    //TODO: Set the limit here to then export directly from the sqlite database
-    if (rows.length > 0) {
-      toast.info("Getting your data ready...");
-      await exportSEODataCSV(rows);
-    } else {
+    //NOTE: Here sets the exporting state threshold to switch to excel and backend export.
+    if (totalUrlsCrawled > 0) {
+      toast.info(
+        "Massive dataset detected. Exporting directly from Database...",
+      );
       setIsGeneratingExcel(true);
       try {
-        const fileBuffer = await invoke("create_excel_main_table", {
-          data: rows,
-        });
+        const fileBuffer = await invoke("export_full_crawl_to_excel_command");
 
         setIsGeneratingExcel(false);
         const filePath = await save({
@@ -422,19 +422,50 @@ const TableCrawl = ({
               extensions: ["xlsx"],
             },
           ],
-          defaultPath: `RustySEO-${tabName}.xlsx`,
+          defaultPath: `RustySEO-DeepCrawl-Export.xlsx`,
         });
 
         if (filePath) {
           await writeFile(filePath, new Uint8Array(fileBuffer as any));
-          toast.success("Excel file saved successfully!");
+          toast.success("Excel Database Export completed!");
         }
       } catch (error) {
-        console.error("Error generating or saving Excel file:", error);
+        console.error("Error generating massive Excel export:", error);
         setIsGeneratingExcel(false);
       }
+    } else {
+      if (rows.length > 0) {
+        toast.info("Getting your data ready...");
+        await exportSEODataCSV(rows);
+      } else {
+        setIsGeneratingExcel(true);
+        try {
+          const fileBuffer = await invoke("create_excel_main_table", {
+            data: rows,
+          });
+
+          setIsGeneratingExcel(false);
+          const filePath = await save({
+            filters: [
+              {
+                name: "Excel File",
+                extensions: ["xlsx"],
+              },
+            ],
+            defaultPath: `RustySEO-${tabName}.xlsx`,
+          });
+
+          if (filePath) {
+            await writeFile(filePath, new Uint8Array(fileBuffer as any));
+            toast.success("Excel file saved successfully!");
+          }
+        } catch (error) {
+          console.error("Error generating or saving Excel file:", error);
+          setIsGeneratingExcel(false);
+        }
+      }
     }
-  }, [rows, tabName, setIsGeneratingExcel]);
+  }, [rows, tabName, setIsGeneratingExcel, totalUrlsCrawled]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;

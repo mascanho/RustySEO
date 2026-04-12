@@ -77,13 +77,13 @@ const FooterLoader = () => {
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
     return showComplete
-      ? crawlData?.length || streamedCrawledPages || 0
+      ? streamedCrawledPages || crawlData?.length || 0
       : streamedCrawledPages || 0;
   }, [showComplete, crawlData.length, streamedCrawledPages]);
 
   const displayTotal = useMemo(() => {
     return showComplete
-      ? crawlData?.length || streamedTotalPages || 0
+      ? streamedTotalPages || crawlData?.length || 0
       : streamedTotalPages || 0;
   }, [showComplete, crawlData.length, streamedTotalPages]);
 

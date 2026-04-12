@@ -307,6 +307,7 @@ async fn main() {
             domain_commands::domain_crawl_command,
             domain_commands::create_excel,
             domain_commands::create_excel_main_table,
+            domain_commands::export_full_crawl_to_excel_command,
             // DEEP CRAWL DATABASE STUFF
             db::create_domain_results_table,
             db::read_domain_results_history_table,
