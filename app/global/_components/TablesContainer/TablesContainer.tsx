@@ -62,15 +62,17 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { selectedTableURL } = useGlobalCrawlStore();
-  const {
-    crawlData,
-    issuesView,
-    setIssuesView,
-    issuesData,
-    setGenericChart,
-    setDeepCrawlTab,
-  } = useCrawlStore();
+  const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
+  const issuesView = useCrawlStore((state) => state.issuesView);
+  const issuesData = useCrawlStore((state) => state.issuesData);
+  const { setIssuesView, setGenericChart, setDeepCrawlTab } = useCrawlStore(
+    (state) => ({
+      setIssuesView: state.setIssuesView,
+      setGenericChart: state.setGenericChart,
+      setDeepCrawlTab: state.setDeepCrawlTab,
+    }),
+    shallow
+  );
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
   const { inlinks, outlinks } = useGlobalCrawlStore(
@@ -81,8 +83,7 @@ export default function Home() {
     shallow,
   );
 
-  // Sync `activeTab` with `deepCrawlTab` when it changes from outside
-  const { deepCrawlTab: storeDeepCrawlTab } = useGlobalCrawlStore();
+  const storeDeepCrawlTab = useGlobalCrawlStore((state) => state.deepCrawlTab);
   useEffect(() => {
     if (storeDeepCrawlTab && storeDeepCrawlTab !== activeTab) {
       setActiveTab(storeDeepCrawlTab);
@@ -136,7 +137,7 @@ export default function Home() {
   }, []);
   // Use a ref to avoid duplicating the entire crawlData array in memory.
   // We use an interval to periodically sync the render state.
-  const debouncedCrawlDataRef = useRef(crawlData);
+  const debouncedCrawlDataRef = useRef(useGlobalCrawlStore.getState().crawlData);
   const [, setRenderTick] = useState(0);
 
   useEffect(() => {
@@ -254,7 +255,11 @@ export default function Home() {
       else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
         shouldFetchImmediate = true;
 
-      if (shouldFetchImmediate || !isFinishedDeepCrawl) {
+      const totalUrlsCrawled = useGlobalCrawlStore.getState().totalUrlsCrawled;
+      // Prevent massive JSON payloads crossing the IPC bridge during large crawls
+      const isScaleTooLargeForLive = totalUrlsCrawled > 2000;
+
+      if (shouldFetchImmediate || (!isFinishedDeepCrawl && !isScaleTooLargeForLive)) {
         await fetchForTab();
       }
     };
@@ -264,7 +269,7 @@ export default function Home() {
     // Set up polling if crawl is active
     let intervalId = null;
     if (!isFinishedDeepCrawl) {
-      intervalId = setInterval(fetchData, 5000); // Poll every 5 seconds
+      intervalId = setInterval(fetchData, 10000); // Poll every 10 seconds to reduce IPC bottleneck
     }
 
     return () => {
@@ -330,11 +335,11 @@ export default function Home() {
 
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return [];
-    if (!crawlData) {
+    if (!debouncedCrawlData) {
       return [];
     }
 
-    const customSearch = crawlData.filter(
+    const customSearch = debouncedCrawlData.filter(
       (search) => search?.extractor?.html === true,
     );
     return customSearch;
@@ -501,7 +506,7 @@ export default function Home() {
                 rows={
                   aggregatedData?.cwv?.length > 0
                     ? aggregatedData.cwv
-                    : crawlData
+                    : debouncedCrawlData
                 }
               />
             </TabsContent>

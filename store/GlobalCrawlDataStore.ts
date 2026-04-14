@@ -255,9 +255,15 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        if (state.visitedUrls) state.visitedUrls.add(result.url);
+        const MAX_CRAWL_ROWS = 10_000;
+        let newCrawlData = state.crawlData.concat([result]);
+        
+        if (newCrawlData.length > MAX_CRAWL_ROWS) {
+          newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+        }
+
         return {
-          crawlData: state.crawlData.concat([result]),
+          crawlData: newCrawlData,
           streamedCrawledPages: crawledPages,
           streamedTotalPages: totalPages,
         };
@@ -482,6 +488,11 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
               if (!isDuplicate) {
                 if (state.visitedUrls) state.visitedUrls.add(update.result.url);
                 newCrawlData = state.crawlData.concat([update.result]);
+                
+                const MAX_CRAWL_ROWS = 10_000;
+                if (newCrawlData.length > MAX_CRAWL_ROWS) {
+                  newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+                }
               }
             }
             return {

@@ -59,13 +59,9 @@ export default function Page() {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
 
-
-
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
   const [error, setError] = useState("");
-
-
 
   // Debounced search handler
   const handleSearchChange = useCallback(
@@ -218,7 +214,7 @@ export default function Page() {
         clearTimeout(buffer.timer);
       }
       flushBuffer();
-      
+
       console.log("🚫 Robot Blocked URLs received:", event.payload);
       if (Array.isArray(event.payload)) {
         // @ts-ignore
@@ -278,8 +274,6 @@ export default function Page() {
 
     check_psi_status();
   }, []);
-
-
 
   return (
     <main className="flex h-full w-full">
