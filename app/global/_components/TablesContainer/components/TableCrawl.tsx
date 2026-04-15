@@ -544,18 +544,25 @@ const TableCrawl = ({
     [],
   );
 
+  const rafRef = useRef<number | null>(null);
+
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
       if (isResizing === null) return;
 
-      const delta = event.clientX - startXRef.current;
-      setColumnWidths((prevWidths) => {
-        const newWidths = [...prevWidths];
-        const currentWidth = Number.parseInt(newWidths[isResizing]);
-        newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
-        return newWidths;
+      const evtX = event.clientX;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+      rafRef.current = requestAnimationFrame(() => {
+        setColumnWidths((prevWidths) => {
+          const delta = evtX - startXRef.current;
+          const newWidths = [...prevWidths];
+          const currentWidth = Number.parseInt(newWidths[isResizing]);
+          newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
+          startXRef.current = evtX;
+          return newWidths;
+        });
       });
-      startXRef.current = event.clientX;
     },
     [isResizing],
   );

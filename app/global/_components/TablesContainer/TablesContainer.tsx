@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
-import { debounce } from "lodash";
+import { debounce, throttle } from "lodash";
 import TableCrawl from "./components/TableCrawl";
 import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
 import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
@@ -132,9 +132,13 @@ export default function Home() {
     };
   }, [debouncedUpdateHeight]);
 
-  const handleResize = useCallback((newBottomHeight: number) => {
-    setBottomTableHeight(newBottomHeight);
-  }, []);
+  const handleResize = useMemo(
+    () =>
+      throttle((newBottomHeight: number) => {
+        setBottomTableHeight(newBottomHeight);
+      }, 16),
+    [],
+  );
   // Use a ref to avoid duplicating the entire crawlData array in memory.
   // We use an interval to periodically sync the render state.
   const debouncedCrawlDataRef = useRef(useGlobalCrawlStore.getState().crawlData);
