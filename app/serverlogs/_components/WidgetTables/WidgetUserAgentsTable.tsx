@@ -284,19 +284,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
 
   // Initialize user agent category filter when segment is a user agent category
   useEffect(() => {
-    if (
-      segment &&
-      segment !== "all" &&
-      availableUserAgentCategories.length > 0
-    ) {
-      const category = availableUserAgentCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setUserAgentCategoryFilter([category]);
-      }
+    if (segment && segment !== "all") {
+      setUserAgentCategoryFilter([segment]);
     }
-  }, [segment, availableUserAgentCategories]);
+  }, [segment]);
 
   // Function to check if a path matches taxonomy criteria
   const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
@@ -509,22 +500,12 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
       let activeTaxonomyFilter = null;
       if (selectedTaxonomy !== "all") {
         activeTaxonomyFilter = taxonomies.find(t => t.id === selectedTaxonomy)?.name || null;
-      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
-        // If segment is a UA category, we don't treat it as taxonomy
-        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
-        if (!isUACat) {
-          activeTaxonomyFilter = segment;
-        }
       }
 
       // Determine user agent category filter
       let activeUACategories = userAgentCategoryFilter;
       if (activeUACategories.length === 0 && segment && segment !== "all") {
-        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
-        if (isUACat) {
-          const cat = availableUserAgentCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
-          if (cat) activeUACategories = [cat];
-        }
+        activeUACategories = [segment];
       }
 
       const activeFilters = {
