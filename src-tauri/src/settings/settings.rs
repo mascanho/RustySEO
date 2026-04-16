@@ -51,7 +51,6 @@ pub struct Settings {
     /// Maximum time a URL can be pending before considered stalled (seconds)
     pub max_pending_time: u64,
     /// Threashold for table download switch from memory to sqlite excel export
-    pub table_download_threshold: usize,
 
     // --- Request / Network ---
     /// Timeout for individual HTTP requests (seconds)
@@ -141,11 +140,8 @@ impl Settings {
             max_delay: 30000,     // Increased from 10000 — gives adaptive system more room
             min_crawl_delay: 500, // Increased from 300
             crawl_timeout: 28800,
-            stall_check_interval: 30,        // SECONDS
-            max_pending_time: 900,           // SECONDS
-            table_download_threshold: 10000, // Past 10K it no longer downloads the table data from
-            // memory, instead it exports it to an excel file from
-            // the DB
+            stall_check_interval: 30, // SECONDS
+            max_pending_time: 900,    // SECONDS
 
             // --- Request / Network ---
             client_timeout: 60,
@@ -775,13 +771,6 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
         settings.min_crawl_delay = val as u64;
-    }
-
-    if let Some(val) = updates
-        .get("table_download_threshold")
-        .and_then(|v| v.as_integer())
-    {
-        settings.table_download_threshold = val as usize;
     }
 
     // Explicit file writing with flush
