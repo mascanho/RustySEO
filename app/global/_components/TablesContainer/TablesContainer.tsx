@@ -148,9 +148,9 @@ export default function Home() {
     // Continuously check if crawlData has grown and sync it every 2s
     const timer = setInterval(() => {
       // Only trigger a re-render if the array size has actually changed significantly
-      // (or we could just use latest state from store)
+      // or if the underlying reference changed (to handle ring buffer cap)
       const currentStored = useGlobalCrawlStore.getState().crawlData;
-      if (debouncedCrawlDataRef.current.length !== currentStored.length) {
+      if (debouncedCrawlDataRef.current !== currentStored) {
         debouncedCrawlDataRef.current = currentStored;
         setRenderTick((t) => t + 1);
       }
@@ -227,7 +227,7 @@ export default function Home() {
       };
 
       // Immediate fetch check This is important to avoid unnecessary re-renders
-      let shouldFetchImmediate = true;
+      let shouldFetchImmediate = false;
       if (activeTab === "images" && aggregatedData.images.length === 0)
         shouldFetchImmediate = true;
       else if (
