@@ -181,11 +181,11 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           state.visitedUrls.add(r.url);
         }
 
-        // Live-feed ring buffer: keep only the most recent 10,000 rows in the JS heap.
+        // Live-feed ring buffer: keep only the most recent 1,500 rows in the JS heap.
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
-        const MAX_CRAWL_ROWS = 10_000;
+        const MAX_CRAWL_ROWS = 1_500;
         const combined = state.crawlData.concat(newResults);
         const capped = combined.length > MAX_CRAWL_ROWS
           ? combined.slice(combined.length - MAX_CRAWL_ROWS)
@@ -255,7 +255,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        const MAX_CRAWL_ROWS = 10_000;
+        const MAX_CRAWL_ROWS = 1_500;
         let newCrawlData = state.crawlData.concat([result]);
         
         if (newCrawlData.length > MAX_CRAWL_ROWS) {
@@ -489,7 +489,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
                 if (state.visitedUrls) state.visitedUrls.add(update.result.url);
                 newCrawlData = state.crawlData.concat([update.result]);
                 
-                const MAX_CRAWL_ROWS = 10_000;
+                const MAX_CRAWL_ROWS = 1_500;
                 if (newCrawlData.length > MAX_CRAWL_ROWS) {
                   newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
                 }
