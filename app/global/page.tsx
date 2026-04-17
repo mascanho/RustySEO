@@ -43,7 +43,6 @@ export default function Page() {
 
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const {
-    crawlData,
     setDomainCrawlLoading,
     clearDomainCrawlData,
     addDomainCrawlResult,
@@ -128,8 +127,9 @@ export default function Page() {
 
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
-      if (crawlData?.length) {
-        crawledLinks.push(crawlData.length);
+      const currentCrawlData = useGlobalCrawlStore.getState().crawlData;
+      if (currentCrawlData?.length) {
+        crawledLinks.push(currentCrawlData.length);
         setCrawlSessionTotalArray(crawledLinks);
       } else {
         crawledLinks.push(0);
@@ -249,7 +249,7 @@ export default function Page() {
   }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
-  const crawlDataLength = crawlData.length;
+  const crawlDataLength = useGlobalCrawlStore.getState().crawlData.length;
 
   // POWERBI eMBED HANDLING FROM LOCALSTORAGE
   useEffect(() => {

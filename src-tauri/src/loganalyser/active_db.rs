@@ -186,6 +186,24 @@ fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) 
         "Email" => ("(LOWER(referer) LIKE 'mail.%' OR LOWER(referer) LIKE '%email%')".to_string(), vec![]),
         "News" => ("LOWER(referer) LIKE 'news.%'".to_string(), vec![]),
         "Blog" => ("LOWER(referer) LIKE 'blog.%'".to_string(), vec![]),
+        "Other" => {
+            let patterns = [
+                "google.com", "google.co", "bing.com", "yahoo.com", 
+                "duckduckgo.com", "baidu.com", "yandex.com", "yandex.ru", 
+                "facebook.com", "fb.com", "twitter.com", "x.com", 
+                "linkedin.com", "instagram.com", "pinterest.com", "reddit.com", 
+                "tiktok.com", "github.com", "youtube.com", "stackoverflow.com", 
+                "medium.com", "wordpress.com", "blogger.com", "quora.com", 
+                "vimeo.com", "wikipedia.org", "amazon.com", "ebay.com", 
+                "etsy.com", "shopify.com", "localhost", "127.0.0.1", "::1"
+            ];
+            let mut clauses = Vec::new();
+            clauses.push("referer IS NOT NULL AND referer != '' AND referer != '-'".to_string());
+            for p in patterns {
+                clauses.push(format!("LOWER(referer) NOT LIKE '%{}%'", p));
+            }
+            (format!("({})", clauses.join(" AND ")), vec![])
+        },
         other => {
             let pattern = format!("%{}%", other.to_lowercase());
             ("LOWER(referer) LIKE ?".to_string(), vec![pattern.into()])
@@ -232,6 +250,11 @@ fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value
     }
     let not_browser = not_browser_clauses.join(" AND ");
 
+    let not_android = "LOWER(user_agent) NOT LIKE '%android%'";
+    let not_ios = "(LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%' AND LOWER(user_agent) NOT LIKE '%ipod%')";
+    let not_windows = "LOWER(user_agent) NOT LIKE '%windows%'";
+    let not_macos = "LOWER(user_agent) NOT LIKE '%mac os%'";
+
     match cat {
         // 1. Bots
         "Googlebot" => ("LOWER(user_agent) LIKE '%googlebot%'".to_string(), vec![]),
@@ -272,10 +295,10 @@ fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value
 
         // 4. Devices/OS (Exclude Bots, Tools, and Browsers)
         "Android Browser" => (format!("(LOWER(user_agent) LIKE '%android%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "iOS Browser" => (format!("((LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "Windows" => (format!("(LOWER(user_agent) LIKE '%windows%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "macOS" => (format!("(LOWER(user_agent) LIKE '%mac os%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "Linux" => (format!("(LOWER(user_agent) LIKE '%linux%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "iOS Browser" => (format!("((LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android), vec![]),
+        "Windows" => (format!("(LOWER(user_agent) LIKE '%windows%' AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios), vec![]),
+        "macOS" => (format!("(LOWER(user_agent) LIKE '%mac os%' AND {} AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios, not_windows), vec![]),
+        "Linux" => (format!("(LOWER(user_agent) LIKE '%linux%' AND {} AND {} AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios, not_windows, not_macos), vec![]),
 
         // 5. Specials
         "Unknown/Empty" => ("(user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown')".to_string(), vec![]),
@@ -1159,7 +1182,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         for (p, cat) in ref_patterns {
             case_parts.push(format!("WHEN LOWER(referer) LIKE '%{}%' THEN '{}'", p, cat));
         }
-        case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%') THEN 'Local/Internal'".to_string());
+        case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%') THEN 'Local/Internal'".to_string());
 
         let query = format!(
             "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",

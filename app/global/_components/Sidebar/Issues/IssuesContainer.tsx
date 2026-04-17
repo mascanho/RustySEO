@@ -117,8 +117,7 @@ const IssueRow = React.memo(({ item, isSelected, onClick }) => (
 IssueRow.displayName = "IssueRow";
 
 const IssuesContainer = () => {
-  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
-  const [debouncedCrawlData, setDebouncedCrawlData] = React.useState(crawlData);
+  const [debouncedCrawlData, setDebouncedCrawlData] = React.useState(() => useGlobalCrawlStore.getState().crawlData);
 
   React.useEffect(() => {
     // Instead of a timeout that gets constantly cancelled by fast crawlData updates,
@@ -272,7 +271,7 @@ const IssuesContainer = () => {
     setIssuesData(issueDataMap[issueName] || []);
   }, [setIssueRow, setIssuesView, setGenericChart, setFix, setIssuesData, issueDataMap]);
 
-  if (!crawlData || crawlData.length === 0) {
+  if (!debouncedCrawlData || debouncedCrawlData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 h-full opacity-50 dark:text-white">
         <IconAlertCircle size={48} className="mb-2 text-gray-300 dark:text-gray-600" />

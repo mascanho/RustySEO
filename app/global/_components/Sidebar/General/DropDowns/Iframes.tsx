@@ -12,20 +12,30 @@ interface IframeData {
 }
 
 const Iframes: React.FC = () => {
-  // Use a selector to only subscribe to `crawlData` changes
-  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const [debouncedCrawlData, setDebouncedCrawlData] = React.useState(() => useGlobalCrawlStore.getState().crawlData);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      const currentStored = useGlobalCrawlStore.getState().crawlData;
+      setDebouncedCrawlData((prev) => {
+        if (prev !== currentStored) return currentStored;
+        return prev;
+      });
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Memoize the calculation of total iframes
   const totalIframes = useMemo(() => {
-    if (!Array.isArray(crawlData)) {
-      console.error("crawlData is not an array:", crawlData);
+    if (!Array.isArray(debouncedCrawlData)) {
+      console.error("crawlData is not an array:", debouncedCrawlData);
       return 0;
     }
 
-    return crawlData.reduce((acc, item: CrawlDataItem) => {
+    return debouncedCrawlData.reduce((acc, item: CrawlDataItem) => {
       return acc + (item?.iframe?.length || 0);
     }, 0);
-  }, [crawlData]);
+  }, [debouncedCrawlData]);
 
   // Memoize the data to display
   const iframeData = useMemo<IframeData[]>(

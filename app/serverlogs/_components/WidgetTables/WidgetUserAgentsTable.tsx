@@ -587,19 +587,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     setStatusFilter([]);
     setCrawlerTypeFilter([]);
     // Reset user agent category filter based on segment
-    if (
-      segment &&
-      segment !== "all" &&
-      availableUserAgentCategories.length > 0
-    ) {
-      const category = availableUserAgentCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setUserAgentCategoryFilter([category]);
-      } else {
-        setUserAgentCategoryFilter([]);
-      }
+    if (segment && segment !== "all") {
+      setUserAgentCategoryFilter([segment]);
     } else {
       setUserAgentCategoryFilter([]);
     }

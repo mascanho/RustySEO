@@ -43,7 +43,6 @@ const chartConfig = {
 
 function OverviewChart() {
   const {
-    crawlData,
     javascript,
     css,
     domainCrawlLoading,
@@ -53,6 +52,7 @@ function OverviewChart() {
     streamedTotalPages,
     totalUrlsCrawled,
   } = useGlobalCrawlStore();
+  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
   const [failed4xxCount, setFailed4xxCount] = useState<number>(0);
@@ -60,15 +60,15 @@ function OverviewChart() {
 
   // Calculate crawled and queued pages
   const crawledPages = useMemo(() => {
-    return streamedCrawledPages || crawlData?.length || 0;
-  }, [streamedCrawledPages, crawlData]);
+    return streamedCrawledPages || crawlDataLength || 0;
+  }, [streamedCrawledPages, crawlDataLength]);
 
   const queuedPages = useMemo(() => {
     // During crawl: total - crawled, After crawl: 0
-    const total = streamedTotalPages || crawlData?.length || 0;
-    const crawled = streamedCrawledPages || crawlData?.length || 0;
+    const total = streamedTotalPages || crawlDataLength || 0;
+    const crawled = streamedCrawledPages || crawlDataLength || 0;
     return Math.max(0, total - crawled);
-  }, [streamedTotalPages, streamedCrawledPages, crawlData]);
+  }, [streamedTotalPages, streamedCrawledPages, crawlDataLength]);
 
   // Debounced update function
   const debouncedUpdate = useCallback(
@@ -181,7 +181,7 @@ function OverviewChart() {
       setSessionCrawls(0);
       setTotalCrawlPages([]);
     }
-  }, [domainCrawlLoading, crawlData]);
+  }, [domainCrawlLoading, crawlDataLength]);
 
   // Memoized label renderer
   const renderLabel = useCallback(
@@ -204,7 +204,7 @@ function OverviewChart() {
               className="text-3xl dark:fill-white text-white font-bold dark:text-white"
             >
               {/* Use backend progress count (not crawlData.length which is capped at 10K in memory) */}
-              {streamedCrawledPages || crawlData?.length || 0}
+              {streamedCrawledPages || crawlDataLength || 0}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -218,7 +218,7 @@ function OverviewChart() {
       }
       return null;
     },
-    [streamedCrawledPages, crawlData],
+    [streamedCrawledPages, crawlDataLength],
   );
 
   return (
@@ -263,7 +263,7 @@ function OverviewChart() {
         <div className="flex items-center gap-3 font-medium leading-none">
           With a total of{" "}
           {totalPagesCrawledInSession +
-            (streamedTotalPages || crawlData.length || 0)}{" "}
+            (streamedTotalPages || crawlDataLength || 0)}{" "}
           pages found
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>
