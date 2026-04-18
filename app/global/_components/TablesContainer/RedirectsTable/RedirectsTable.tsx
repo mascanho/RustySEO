@@ -456,42 +456,25 @@ const RedirectsTable = ({
   const { setInlinks, setOutlinks, setSelectedTableURL } = useDataActions();
 
   const handleDownload = useCallback(async () => {
-    if (!rows.length) {
-      toast.error("No data to download");
-      return;
-    }
-
-    if (rows.length > 3000) {
-      toast.info("Getting your data ready...");
-      await exportSEODataCSV(rows);
-    } else {
-      setIsGeneratingExcel(true);
-      try {
-        const fileBuffer = await invoke("create_excel_main_table", {
-          data: rows,
-        });
-
-        setIsGeneratingExcel(false);
-        const filePath = await save({
-          filters: [
-            {
-              name: "Excel File",
-              extensions: ["xlsx"],
-            },
-          ],
-          defaultPath: `RustySEO-${tabName}.xlsx`,
-        });
-
-        if (filePath) {
-          await writeFile(filePath, new Uint8Array(fileBuffer as any));
-          toast.success("Excel file saved successfully!");
-        }
-      } catch (error) {
-        console.error("Error generating or saving Excel file:", error);
-        setIsGeneratingExcel(false);
+    toast.info("Exporting directly from Database...");
+    setIsGeneratingExcel(true);
+    try {
+      const fileBuffer = await invoke("export_redirects_to_excel_command");
+      setIsGeneratingExcel(false);
+      const filePath = await save({
+        filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+        defaultPath: `RustySEO-${tabName}.xlsx`,
+      });
+      if (filePath) {
+        await writeFile(filePath, new Uint8Array(fileBuffer as any));
+        toast.success("Excel Database Export completed!");
       }
+    } catch (error) {
+      console.error("Error generating Excel export:", error);
+      setIsGeneratingExcel(false);
+      toast.error("Failed to export data");
     }
-  }, [rows, tabName, setIsGeneratingExcel]);
+  }, [tabName, setIsGeneratingExcel]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;

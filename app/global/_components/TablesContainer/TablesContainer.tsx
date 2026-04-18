@@ -62,7 +62,9 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
+  const selectedTableURL = useGlobalCrawlStore(
+    (state) => state.selectedTableURL,
+  );
   const issuesView = useCrawlStore((state) => state.issuesView);
   const issuesData = useCrawlStore((state) => state.issuesData);
   const { setIssuesView, setGenericChart, setDeepCrawlTab } = useCrawlStore(
@@ -71,7 +73,7 @@ export default function Home() {
       setGenericChart: state.setGenericChart,
       setDeepCrawlTab: state.setDeepCrawlTab,
     }),
-    shallow
+    shallow,
   );
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
@@ -141,7 +143,9 @@ export default function Home() {
   );
   // Use a ref to avoid duplicating the entire crawlData array in memory.
   // We use an interval to periodically sync the render state.
-  const debouncedCrawlDataRef = useRef(useGlobalCrawlStore.getState().crawlData);
+  const debouncedCrawlDataRef = useRef(
+    useGlobalCrawlStore.getState().crawlData,
+  );
   const [, setRenderTick] = useState(0);
 
   useEffect(() => {
@@ -263,7 +267,10 @@ export default function Home() {
       // Prevent massive JSON payloads crossing the IPC bridge during large crawls
       const isScaleTooLargeForLive = totalUrlsCrawled > 2000;
 
-      if (shouldFetchImmediate || (!isFinishedDeepCrawl && !isScaleTooLargeForLive)) {
+      if (
+        shouldFetchImmediate ||
+        (!isFinishedDeepCrawl && !isScaleTooLargeForLive)
+      ) {
         await fetchForTab();
       }
     };
@@ -483,15 +490,24 @@ export default function Home() {
               value="internalLinks"
               className="flex-grow overflow-hidden"
             >
-              <LinksTable tabName={"All Links"} rows={filteredInternalLinks} />
+              <LinksTable
+                tabName={"Internal Links"}
+                rows={filteredInternalLinks}
+              />
             </TabsContent>
 
+            {/*EXTERNAL LINKS*/}
             <TabsContent
               value="externalLinks"
               className="flex-grow overflow-hidden"
             >
-              <LinksTable tabName={"All Links"} rows={filteredExternalLinks} />
+              <LinksTable
+                tabName={"External Links"}
+                rows={filteredExternalLinks}
+              />
             </TabsContent>
+
+            {/*IMAGES*/}
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable
                 tabName={"All Images"}
@@ -506,7 +522,7 @@ export default function Home() {
             {/* CORE WEB VITALS TABLe */}
             <TabsContent value="cwv" className="flex-grow overflow-hidden">
               <CoreWebVitalsTable
-                tabName={"AllData"}
+                tabName={"CoreWebVitals"}
                 rows={
                   aggregatedData?.cwv?.length > 0
                     ? aggregatedData.cwv
@@ -523,11 +539,12 @@ export default function Home() {
               />
             </TabsContent>
 
+            {/*REDIRECTS*/}
             <TabsContent
               value="redirects"
               className="flex-grow overflow-hidden"
             >
-              <RedirectsTable tabName={"AllData"} rows={filteredRedirects} />
+              <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} />
             </TabsContent>
             <TabsContent value="files" className="flex-grow overflow-hidden">
               <FilesTable tabName={"All Files"} rows={filteredFilesArr} />

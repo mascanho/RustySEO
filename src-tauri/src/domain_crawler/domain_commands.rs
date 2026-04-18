@@ -199,3 +199,117 @@ pub async fn get_crawl_total_count_command(search: Option<String>) -> Result<i64
     let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
     db.get_crawl_total_count(search).await.map_err(|e| e.to_string())
 }
+
+// EXPORT DATA DIRECTLY FROM DATABASE - BYPASS FRONTEND MEMORY LIMITS
+
+#[tauri::command]
+pub async fn export_images_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let images_data = db.get_aggregated_crawl_data("images".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match images_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_images_excel(data)
+        }
+        _ => Err("Invalid data format for images".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_keywords_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let keywords_data = db.get_aggregated_crawl_data("keywords".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match keywords_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_keywords_excel(data)
+        }
+        _ => Err("Invalid data format for keywords".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_redirects_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let redirects_data = db.get_aggregated_crawl_data("redirects".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match redirects_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_redirects_excel(data)
+        }
+        _ => Err("Invalid data format for redirects".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_internal_links_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let links_data = db.get_aggregated_crawl_data("internal_links".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match links_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_links_table_excel(data)
+        }
+        _ => Err("Invalid data format for internal links".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_external_links_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let links_data = db.get_aggregated_crawl_data("external_links".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match links_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_links_table_excel(data)
+        }
+        _ => Err("Invalid data format for external links".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_scripts_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let scripts_data = db.get_aggregated_crawl_data("scripts".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match scripts_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_excel_two_cols(data)
+        }
+        _ => Err("Invalid data format for scripts".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_files_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let files_data = db.get_aggregated_crawl_data("files".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match files_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_files_excel(data)
+        }
+        _ => Err("Invalid data format for files".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn export_cwv_to_excel_command() -> Result<Vec<u8>, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let cwv_data = db.get_aggregated_crawl_data("cwv".to_string()).await
+        .map_err(|e| e.to_string())?;
+    
+    match cwv_data {
+        Value::Array(data) => {
+            crate::domain_crawler::excel::create_xlsx::generate_cwv_excel(data)
+        }
+        _ => Err("Invalid data format for CWV".to_string()),
+    }
+}

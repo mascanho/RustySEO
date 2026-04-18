@@ -710,7 +710,9 @@ impl Database {
                         .map(|a| Value::from(a.len()))
                         .unwrap_or(Value::from(0)),
                     "had_redirect": data.get("had_redirect").cloned().unwrap_or(Value::Bool(false)),
+                    "redirect_url": data.get("redirect_url").cloned().unwrap_or(Value::Null),
                     "redirect_count": data.get("redirect_count").cloned().unwrap_or(Value::from(0)),
+                    "redirection_type": data.get("redirection_type").cloned().unwrap_or(Value::Null),
                     "https": data.get("https").cloned().unwrap_or(Value::Bool(false)),
                     "meta_robots": data.get("meta_robots").cloned().unwrap_or(Value::Null),
                     "canonicals": data.get("canonicals").cloned().unwrap_or(Value::Null),

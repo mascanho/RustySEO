@@ -52,7 +52,9 @@ function OverviewChart() {
     streamedTotalPages,
     totalUrlsCrawled,
   } = useGlobalCrawlStore();
-  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
+  const crawlDataLength = useGlobalCrawlStore(
+    (state) => state.crawlData.length,
+  );
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
   const [failed4xxCount, setFailed4xxCount] = useState<number>(0);
@@ -264,7 +266,7 @@ function OverviewChart() {
           With a total of{" "}
           {totalPagesCrawledInSession +
             (streamedTotalPages || crawlDataLength || 0)}{" "}
-          pages found
+          pages discovered
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>
       </CardFooter>

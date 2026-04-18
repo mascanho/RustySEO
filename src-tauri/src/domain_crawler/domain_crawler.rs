@@ -57,6 +57,7 @@ pub async fn crawl_domain(
     let selected_user_agent = user_agents.choose(&mut rand::rng()).cloned()
         .unwrap_or_else(|| "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string());
 
+
     let client = Client::builder()
         .cookie_store(true)
         .user_agent(&selected_user_agent)
@@ -65,6 +66,8 @@ pub async fn crawl_domain(
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
+
+
 
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
@@ -435,6 +438,9 @@ pub async fn crawl_domain(
 
     // Final cleanup and status report
     {
+
+
+
         let state_guard = state.lock().await;
         tracing::info!("Crawl completed - Final stats:");
         tracing::info!("  Total URLs discovered: {}", state_guard.total_urls);
