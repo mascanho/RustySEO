@@ -42,19 +42,15 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function OverviewChart() {
-  const {
-    javascript,
-    css,
-    domainCrawlLoading,
-    setStreamedTotalPages,
-    setStreamedCrawledPages,
-    streamedCrawledPages,
-    streamedTotalPages,
-    totalUrlsCrawled,
-  } = useGlobalCrawlStore();
-  const crawlDataLength = useGlobalCrawlStore(
-    (state) => state.crawlData.length,
-  );
+  const javascript = useGlobalCrawlStore((state) => state.javascript);
+  const css = useGlobalCrawlStore((state) => state.css);
+  const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
+  const setStreamedTotalPages = useGlobalCrawlStore((state) => state.setStreamedTotalPages);
+  const setStreamedCrawledPages = useGlobalCrawlStore((state) => state.setStreamedCrawledPages);
+  const streamedCrawledPages = useGlobalCrawlStore((state) => state.streamedCrawledPages);
+  const streamedTotalPages = useGlobalCrawlStore((state) => state.streamedTotalPages);
+  const totalUrlsCrawled = useGlobalCrawlStore((state) => state.totalUrlsCrawled);
+  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
   const [failed4xxCount, setFailed4xxCount] = useState<number>(0);

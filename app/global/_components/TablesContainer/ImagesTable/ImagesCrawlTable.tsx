@@ -396,7 +396,7 @@ const ImagesCrawlTable = ({
     row: null,
     cell: null,
   });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
+    const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
 
   const filterTableURL = (arr: { url: string }[], url: string) => {
     if (!arr || arr.length === 0) return [];

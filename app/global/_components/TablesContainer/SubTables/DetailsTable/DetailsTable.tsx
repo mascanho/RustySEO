@@ -4,7 +4,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const DetailsTable = ({ data, height }) => {
   const tableBodyRef = useRef(null);
-  const { favicon } = useGlobalCrawlStore();
+    const favicon = useGlobalCrawlStore((state) => state.favicon);
 
   useEffect(() => {
     const handleScroll = () => {

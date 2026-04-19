@@ -90,7 +90,7 @@ const Footer = () => {
   const pathname = usePathname();
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
-  const { crawlerType } = useGlobalCrawlStore();
+    const crawlerType = useGlobalCrawlStore((state) => state.crawlerType);
   const { setTasksNumber } = useGlobalConsoleStore();
   const [logSorage, setLogStorage] = useState<boolean>(false);
   const { setStoringLogs, storingLogs } = useServerLogsStore();

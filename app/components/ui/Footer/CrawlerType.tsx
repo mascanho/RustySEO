@@ -19,7 +19,8 @@ const CRAWLER_TYPES = {
 };
 
 const CrawlerType = () => {
-  const { crawlerType, setCrawlerType } = useCrawlStore();
+    const crawlerType = useCrawlStore((state) => state.crawlerType);
+  const setCrawlerType = useCrawlStore((state) => state.setCrawlerType);
   const { setCrawler } = useGlobalConsoleStore();
   const { triggerRefresh } = useSettingsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const ImagesTable = ({ height }: { height: number }) => {
-  const { selectedTableURL } = useGlobalCrawlStore();
+    const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
   const [selectedImage, setSelectedImage] = useState<
     [string, string, number, string] | null
   >(null);

@@ -20,7 +20,7 @@ interface Section {
 }
 
 const H2 = () => {
-  const { crawlData } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array

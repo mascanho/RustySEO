@@ -22,7 +22,7 @@ import { invoke } from "@tauri-apps/api/core";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 export default function CustomSearchSelector({ close }) {
-  const { setCrawlerType } = useGlobalCrawlStore();
+    const setCrawlerType = useGlobalCrawlStore((state) => state.setCrawlerType);
   const { setCrawler } = useGlobalConsoleStore();
   const [activeTab, setActiveTab] = useState("html");
   const [isMinimized, setIsMinimized] = useState(false);

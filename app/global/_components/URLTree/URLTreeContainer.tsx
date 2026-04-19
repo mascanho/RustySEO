@@ -23,7 +23,7 @@ interface TreeNode {
 }
 
 const URLTreeContainer = () => {
-  const { crawlData } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
 
   const { treeData, stats } = useMemo(() => {
     if (!crawlData || crawlData.length === 0)

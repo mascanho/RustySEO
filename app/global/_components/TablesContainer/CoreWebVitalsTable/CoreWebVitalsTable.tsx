@@ -338,8 +338,9 @@ const CoreWebVitalsTable = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
-  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
-    useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
+  const setIssuesView = useGlobalCrawlStore((state) => state.setIssuesView);
 
   const handleDownload = async () => {
     toast.info("Exporting directly from Database...");
@@ -369,7 +370,7 @@ const CoreWebVitalsTable = ({
     row: null,
     cell: null,
   });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
+    const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
 
   const filterTableURL = (
     arr: { url: string }[],

@@ -6,16 +6,14 @@ import { Badge } from "@mantine/core";
 import { debounce } from "lodash";
 
 const FooterLoader = () => {
-  const {
-    streamedCrawledPages,
-    streamedTotalPages,
-    setStreamedCrawledPages,
-    setStreamedTotalPages,
-    setTotalUrlsCrawled,
-    domainCrawlLoading,
-    isFinishedDeepCrawl,
-    setFinishedDeepCrawl,
-  } = useCrawlStore();
+  const streamedCrawledPages = useCrawlStore((state) => state.streamedCrawledPages);
+  const streamedTotalPages = useCrawlStore((state) => state.streamedTotalPages);
+  const setStreamedCrawledPages = useCrawlStore((state) => state.setStreamedCrawledPages);
+  const setStreamedTotalPages = useCrawlStore((state) => state.setStreamedTotalPages);
+  const setTotalUrlsCrawled = useCrawlStore((state) => state.setTotalUrlsCrawled);
+  const domainCrawlLoading = useCrawlStore((state) => state.domainCrawlLoading);
+  const isFinishedDeepCrawl = useCrawlStore((state) => state.isFinishedDeepCrawl);
+  const setFinishedDeepCrawl = useCrawlStore((state) => state.setFinishedDeepCrawl);
   
   const crawlDataLength = useCrawlStore((state) => state.crawlData.length);
 

@@ -4,19 +4,19 @@ import React, { useMemo, useState, useCallback, memo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Schema = () => {
-  const domainCrawlData = useGlobalCrawlStore();
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
   // Memoize calculations to avoid recalculating on every render
   const totalPages = useMemo(
-    () => domainCrawlData?.crawlData?.length || 0,
-    [domainCrawlData?.crawlData],
+    () => crawlData?.length || 0,
+    [crawlData],
   );
 
   const hasPageSchema = useMemo(
     () =>
-      domainCrawlData?.crawlData?.filter((item) => item?.schema)?.length || 0,
-    [domainCrawlData?.crawlData],
+      crawlData?.filter((item) => item?.schema)?.length || 0,
+    [crawlData],
   );
 
   const missingPageSchema = useMemo(
@@ -26,11 +26,11 @@ const Schema = () => {
 
   const totalSchemasFound = useMemo(
     () =>
-      domainCrawlData?.crawlData?.reduce(
+      crawlData?.reduce(
         (acc, item) => acc + (item.schema ? 1 : 0),
         0,
       ) || 0,
-    [domainCrawlData?.crawlData],
+    [crawlData],
   );
 
   // Memoize summaryData to avoid recalculating on every render

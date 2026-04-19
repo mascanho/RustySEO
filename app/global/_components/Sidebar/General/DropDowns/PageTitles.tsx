@@ -9,7 +9,7 @@ interface CrawlDataItem {
 }
 
 const PageTitles: React.FC = () => {
-  const domainCrawlData = useGlobalCrawlStore();
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const [counts, setCounts] = useState({ all: 0, long: 0, empty: 0, short: 0 });
   const [totalPages, setTotalPages] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -17,9 +17,9 @@ const PageTitles: React.FC = () => {
 
   // Update the ref with the latest data whenever domainCrawlData changes
   useEffect(() => {
-    crawlDataRef.current = domainCrawlData?.crawlData || [];
+    crawlDataRef.current = crawlData || [];
     processDataDebounced();
-  }, [domainCrawlData]);
+  }, [crawlData]);
 
   // Debounce the processing logic
   const processDataDebounced = useMemo(

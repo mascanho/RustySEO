@@ -42,17 +42,15 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("first");
 
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const {
-    setDomainCrawlLoading,
-    clearDomainCrawlData,
-    addDomainCrawlResult,
-    setSelectedTableURL,
-    setIssuesData,
-    setFinishedDeepCrawl,
-    setCrawlSessionTotalArray,
-    setRobotsBlocked,
-    setFavicon,
-  } = useGlobalCrawlStore();
+  const setDomainCrawlLoading = useGlobalCrawlStore((state) => state.setDomainCrawlLoading);
+  const clearDomainCrawlData = useGlobalCrawlStore((state) => state.clearDomainCrawlData);
+  const addDomainCrawlResult = useGlobalCrawlStore((state) => state.addDomainCrawlResult);
+  const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
+  const setIssuesData = useGlobalCrawlStore((state) => state.setIssuesData);
+  const setFinishedDeepCrawl = useGlobalCrawlStore((state) => state.setFinishedDeepCrawl);
+  const setCrawlSessionTotalArray = useGlobalCrawlStore((state) => state.setCrawlSessionTotalArray);
+  const setRobotsBlocked = useGlobalCrawlStore((state) => state.setRobotsBlocked);
+  const setFavicon = useGlobalCrawlStore((state) => state.setFavicon);
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();

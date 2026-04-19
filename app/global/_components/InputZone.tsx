@@ -22,7 +22,9 @@ interface InputZoneProps {
 
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const [url, setUrl] = useState("");
-  const { domainCrawlLoading, crawlData, favicon } = useGlobalCrawlStore();
+    const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const favicon = useGlobalCrawlStore((state) => state.favicon);
   const [historyUrls, setHistoryUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isFocused, setIsFocused] = useState(false);

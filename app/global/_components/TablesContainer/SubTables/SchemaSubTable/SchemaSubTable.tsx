@@ -22,7 +22,7 @@ const customTheme = {
 };
 
 const SchemaSubTable = ({ height }) => {
-  const { selectedTableURL } = useGlobalCrawlStore();
+    const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
 
   // Extract the schema data from the selected URL
   const schemaData = selectedTableURL[0]?.schema;

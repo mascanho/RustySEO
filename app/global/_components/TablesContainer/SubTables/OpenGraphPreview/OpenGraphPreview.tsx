@@ -8,7 +8,7 @@ interface OpenGraphPreviewProps {
 }
 
 const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ height }) => {
-  const { selectedTableURL } = useGlobalCrawlStore();
+    const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
   const [activeTab, setActiveTab] = useState("facebook");
 
   if (!selectedTableURL?.[0]) {

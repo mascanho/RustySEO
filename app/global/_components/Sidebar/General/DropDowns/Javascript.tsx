@@ -5,7 +5,8 @@ import { debounce } from "lodash";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Javascript: React.FC = React.memo(() => {
-  const { crawlData, setJavascript } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setJavascript = useGlobalCrawlStore((state) => state.setJavascript);
   const [isOpen, setIsOpen] = React.useState(false); // State to track if details are open
 
   // Calculate external and inline scripts using Sets to avoid duplicates

@@ -25,17 +25,16 @@ const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [crawlHistory, setCrawlHistory] = useState<DeepCrawlHistory[]>([]);
   const [error, setError] = useState<string | null>(null); // Add error state for UI feedback
-  const {
-    crawlData,
-    domainCrawlLoading,
-    issues,
-    summary,
-    crawlSessionTotalArray,
-  } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
+  const issues = useGlobalCrawlStore((state) => state.issues);
+  const summary = useGlobalCrawlStore((state) => state.summary);
+  const crawlSessionTotalArray = useGlobalCrawlStore((state) => state.crawlSessionTotalArray);
   const [crawlCompleted, setCrawlCompleted] = useState<boolean>(false);
 
   // Read streamed progress from the Zustand store (updated centrally by FooterLoader)
-  const { streamedCrawledPages, streamedTotalPages } = useGlobalCrawlStore();
+    const streamedCrawledPages = useGlobalCrawlStore((state) => state.streamedCrawledPages);
+  const streamedTotalPages = useGlobalCrawlStore((state) => state.streamedTotalPages);
 
   // Derived values from the store — no duplicate listener needed
   const crawledPages = streamedCrawledPages || 0;

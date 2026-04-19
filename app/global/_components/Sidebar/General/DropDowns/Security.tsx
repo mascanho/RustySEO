@@ -20,7 +20,8 @@ interface Section {
 }
 
 const Security = () => {
-  const { crawlData, setSecurityData } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setSecurityData = useGlobalCrawlStore((state) => state.setSecurityData);
   const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array

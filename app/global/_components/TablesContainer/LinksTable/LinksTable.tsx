@@ -393,7 +393,8 @@ const LinksTable = ({
     headerTitles.map(() => true),
   );
   const [statusFilter, setStatusFilter] = useState("all");
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
   const startXRef = useRef(0);
 
   const handleMouseDown = useCallback(

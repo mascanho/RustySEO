@@ -334,7 +334,8 @@ const TableCrawlJs = ({
     cell: null,
   });
 
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
 
   // Dynamically adjust ID column width based on the number of rows
   useEffect(() => {

@@ -23,7 +23,8 @@ interface Section {
 }
 
 const URLinfo = () => {
-  const { crawlData, setUrlData } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setUrlData = useGlobalCrawlStore((state) => state.setUrlData);
   const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array

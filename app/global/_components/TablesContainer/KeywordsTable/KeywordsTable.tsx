@@ -334,7 +334,8 @@ const KeywordsTable = ({
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<boolean[]>([]);
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
   const startXRef = useRef(0);
 
   const maxKeywords = useMemo(() => {

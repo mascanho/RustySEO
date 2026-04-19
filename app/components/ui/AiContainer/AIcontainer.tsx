@@ -42,9 +42,7 @@ const AIcontainer = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isThinking, setIsThinking] = useState(false);
-  const crawlStore = useCrawlStore();
-  const logAnalysisStore = useLogAnalysisStore();
-  const issuesData = crawlStore.issuesData || [];
+  const issuesData = useCrawlStore((state) => state.issuesData);
 
   const pathname = usePathname();
 
@@ -119,6 +117,7 @@ const AIcontainer = () => {
     setInput("");
     setIsThinking(true);
 
+    const crawlStore = useCrawlStore.getState();
     const context = buildRustyAiContext(
       pathname,
       pageSpeedStore,

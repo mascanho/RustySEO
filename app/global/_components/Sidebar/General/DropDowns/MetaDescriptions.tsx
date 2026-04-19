@@ -19,7 +19,7 @@ interface Section {
 }
 
 const MetaDescription = () => {
-  const { crawlData } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const [counts, setCounts] = useState<DescriptionCounts>({
     all: 0,
     empty: 0,

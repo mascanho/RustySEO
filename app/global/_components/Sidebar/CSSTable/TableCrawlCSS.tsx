@@ -353,7 +353,8 @@ const TableCrawlCSS = ({
     cell: null,
   });
 
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
   const startXRef = useRef(0);
 
   const calculatedIdWidth = useMemo(() => {

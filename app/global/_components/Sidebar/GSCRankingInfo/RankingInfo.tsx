@@ -121,7 +121,7 @@ const QueryRow = ({ item, index, selectedTableURL, credentials }) => {
 
 const RankingInfo = () => {
   const { items } = useRankinInfoStore();
-  const { selectedTableURL } = useGlobalCrawlStore();
+    const selectedTableURL = useGlobalCrawlStore((state) => state.selectedTableURL);
   const [error, setError] = useState(null);
   const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
 
