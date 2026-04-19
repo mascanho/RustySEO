@@ -363,6 +363,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
           if (!pageData) {
              console.warn(`Could not find or fetch data for URL: ${url}`);
+             setters.setSelectedTableURL([]);
+             setters.setInlinks([]);
+             setters.setOutlinks([]);
              return;
           }
 

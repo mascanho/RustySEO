@@ -292,7 +292,7 @@ const TableRow = memo(
               handleCellClick(
                 index,
                 item.originalIndex,
-                item.cell.toString(),
+                item.cell?.toString?.() || "",
                 row,
               )
             }

@@ -658,7 +658,8 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
 
     // For stability, we MUST limit the "all" logs to a sane number.
     // Returning millions of logs via IPC will crash the app.
-    let max_logs = 10000;
+    // Reduced from 10000 to 1000 to strictly prevent WebKit EXC_BREAKPOINT JS Core crashes.
+    let max_logs = 1000;
     let query = format!(
         "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT {}",
         where_sql, order_sql, max_logs
@@ -1537,7 +1538,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
         WHERE {}
         GROUP BY path, crawler_type, user_agent
         ORDER BY frequency DESC
-        LIMIT 10000
+        LIMIT 1000
     ",
         where_sql
     );
