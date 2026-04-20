@@ -57,7 +57,7 @@
         "width": 1800,
         "height": 800,
         "decorations": true,
-        "useHttpsScheme": true,
+        "useHttpsScheme": false,
         "dragDropEnabled": true
       }
     ],
@@ -66,4 +66,3 @@
     }
   }
 }
-

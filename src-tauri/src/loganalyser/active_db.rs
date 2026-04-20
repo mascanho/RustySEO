@@ -1642,3 +1642,129 @@ pub fn reclassify_all_segments() -> Result<(), String> {
     println!("All entries re-classified based on new taxonomies.");
     Ok(())
 }
+
+/// Export all logs from the active database directly to an Excel file.
+/// This runs entirely on the backend, avoiding IPC serialization limits.
+#[tauri::command]
+pub fn export_active_logs_excel(
+    file_path: String,
+    include_gsc: bool,
+) -> Result<usize, String> {
+    use rust_xlsxwriter::{Workbook, Format};
+
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    
+    // Optional: create a bold format for headers
+    let header_format = Format::new().set_bold();
+
+    // Write header row
+    let mut headers = vec![
+        "IP", "Country", "Browser", "Timestamp", "Method", "Path",
+        "Segment", "Taxonomy", "File Type", "Status Code", "Response Size",
+        "User Agent", "Referer", "Crawler Type", "Is Crawler", "Verified", "Filename",
+    ];
+    if include_gsc {
+        headers.extend_from_slice(&["Position", "Clicks", "Impressions", "CTR", "GSC URL"]);
+    }
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet.write_string_with_format(0, col as u16, *header, &header_format)
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Query all rows (no LIMIT) ordered by timestamp
+    let query = "SELECT ip, country, browser, timestamp, method, path, \
+                 segment, taxonomy, file_type, status, response_size, \
+                 user_agent, referer, crawler_type, is_crawler, verified, filename, \
+                 position, clicks, impressions, ctr, gsc_url \
+                 FROM active_parsed_logs ORDER BY timestamp ASC";
+
+    let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+    let mut rows = stmt.query([]).map_err(|e| e.to_string())?;
+    let mut total_exported: usize = 0;
+    let mut row_idx = 1;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let ip: String = row.get::<_, Option<String>>(0).unwrap_or(None).unwrap_or_default();
+        let country: String = row.get::<_, Option<String>>(1).unwrap_or(None).unwrap_or_default();
+        let browser: String = row.get::<_, Option<String>>(2).unwrap_or(None).unwrap_or_default();
+        let timestamp: String = row.get::<_, Option<String>>(3).unwrap_or(None).unwrap_or_default();
+        let method: String = row.get::<_, Option<String>>(4).unwrap_or(None).unwrap_or_default();
+        let path: String = row.get::<_, Option<String>>(5).unwrap_or(None).unwrap_or_default();
+        let segment: String = row.get::<_, Option<String>>(6).unwrap_or(None).unwrap_or_default();
+        let taxonomy: String = row.get::<_, Option<String>>(7).unwrap_or(None).unwrap_or_default();
+        let file_type: String = row.get::<_, Option<String>>(8).unwrap_or(None).unwrap_or_default();
+        let status: i64 = row.get::<_, Option<i64>>(9).unwrap_or(None).unwrap_or(0);
+        let response_size: i64 = row.get::<_, Option<i64>>(10).unwrap_or(None).unwrap_or(0);
+        let user_agent: String = row.get::<_, Option<String>>(11).unwrap_or(None).unwrap_or_default();
+        let referer: String = row.get::<_, Option<String>>(12).unwrap_or(None).unwrap_or("-".to_string());
+        let crawler_type: String = row.get::<_, Option<String>>(13).unwrap_or(None).unwrap_or_default();
+        let is_crawler: bool = row.get::<_, Option<bool>>(14).unwrap_or(None).unwrap_or(false);
+        let verified: bool = row.get::<_, Option<bool>>(15).unwrap_or(None).unwrap_or(false);
+        let filename: String = row.get::<_, Option<String>>(16).unwrap_or(None).unwrap_or_default();
+
+        // Format response size for human readability
+        let response_size_str = if response_size < 1024 {
+            format!("{} B", response_size)
+        } else if response_size < 1024 * 1024 {
+            format!("{:.1} KB", response_size as f64 / 1024.0)
+        } else {
+            format!("{:.1} MB", response_size as f64 / (1024.0 * 1024.0))
+        };
+
+        let row_values = vec![
+            ip, country, browser, timestamp, method, path,
+            segment, taxonomy, file_type, status.to_string(), response_size_str,
+            user_agent, referer, crawler_type, 
+            if is_crawler { "true".to_string() } else { "false".to_string() },
+            if verified { "true".to_string() } else { "false".to_string() },
+            filename,
+        ];
+
+        let mut col_idx = 0;
+        for val in &row_values {
+            worksheet.write_string(row_idx, col_idx, val).map_err(|e| e.to_string())?;
+            col_idx += 1;
+        }
+
+        if include_gsc {
+            let position: String = row.get::<_, Option<i32>>(17)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let clicks: String = row.get::<_, Option<i32>>(18)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let impressions: String = row.get::<_, Option<i32>>(19)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let ctr: String = row.get::<_, Option<f64>>(20)
+                .unwrap_or(None)
+                .map(|v| format!("{:.2}%", v * 100.0))
+                .unwrap_or_default();
+            let gsc_url: String = row.get::<_, Option<String>>(21)
+                .unwrap_or(None)
+                .unwrap_or_default();
+
+            worksheet.write_string(row_idx, col_idx, &position).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &clicks).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &impressions).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &ctr).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &gsc_url).map_err(|e| e.to_string())?;
+        }
+
+        row_idx += 1;
+        total_exported += 1;
+    }
+
+    workbook.save(&file_path).map_err(|e| e.to_string())?;
+
+    Ok(total_exported)
+}

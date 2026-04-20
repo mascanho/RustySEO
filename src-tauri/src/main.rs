@@ -347,6 +347,7 @@ async fn main() {
             loganalyser::active_db::get_bot_paths_aggregated,
             loganalyser::active_db::get_path_aggregations_page,
             loganalyser::active_db::reclassify_all_segments,
+            loganalyser::active_db::export_active_logs_excel,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

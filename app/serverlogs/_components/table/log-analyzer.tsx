@@ -94,6 +94,7 @@ import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "./utils/FetchMatchGSC";
+import { invoke } from "@tauri-apps/api/core";
 
 export function LogAnalyzer() {
   const entries = useLogAnalysisStore((state) => state.entries);
@@ -390,55 +391,15 @@ export function LogAnalyzer() {
     setUrlAgentFilter("url");
   }, []);
 
-  const exportCSV = useCallback(async () => {
-    // 1. Define headers
-    let headers = [
-      "IP",
-      "Country",
-      "Browser",
-      "Timestamp",
-      "Method",
-      "Path",
-      "Taxonomy",
-      "File Type",
-      "Status Code",
-      "Response Size",
-      "User Agent",
-      "Referer",
-      "Bot/Human",
-      "Google Verified",
-    ];
-
-    if (ExcelLoaded) {
-      headers = [...headers, "Position", "Clicks", "Impressions", "CTR"];
-    }
-
-    // 2. Prepare data
-    const dataToExport = entries;
-
-    // 3. Robust CSV sanitizer
-    const sanitizeForCSV = (value: any): string => {
-      if (value === null || value === undefined) return "";
-
-      // Convert to string and normalize
-      let str = String(value)
-        .replace(/"/g, '""') // Escape existing quotes
-        .replace(/\r?\n/g, " ") // Replace newlines with spaces
-        .replace(/,/g, ";") // Replace commas with semicolons
-        .trim();
-
-      return `"${str}"`; // Always wrap in quotes
-    };
-
+  const exportExcel = useCallback(async () => {
     try {
-      // 4. Create file with BOM for Excel
+      // 1. Show save dialog to get file path
       const filePath = await save({
-        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
-        filters: [{ name: "CSV", extensions: ["csv"] }],
+        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.xlsx`,
+        filters: [{ name: "Excel", extensions: ["xlsx"] }],
       });
 
       if (!filePath) {
-        setIsExporting(false);
         toast.error("Export cancelled.");
         return;
       }
@@ -446,70 +407,20 @@ export function LogAnalyzer() {
       // Set the loader spinning
       setIsExporting(true);
 
-      // 5. Write UTF-8 BOM and headers
-      await writeTextFile(
+      // 2. Call the backend to export ALL data directly from SQLite to Excel
+      //    This bypasses IPC serialization entirely — no row limits
+      const totalExported = await invoke<number>("export_active_logs_excel", {
         filePath,
-        "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
-        {
-          encoding: "utf8",
-        },
-      );
-
-      // 6. Process data in batches with validation
-      const batchSize = 10000;
-      for (let i = 0; i < dataToExport.length; i += batchSize) {
-        let batchContent = "";
-        const batch = dataToExport.slice(i, i + batchSize);
-
-        for (const log of batch) {
-          if (!log) continue; // Skip null or undefined log entries
-
-          let row = [
-            sanitizeForCSV(log.ip ?? ""),
-            sanitizeForCSV(log.country ?? ""),
-            sanitizeForCSV(log.browser ?? ""),
-            sanitizeForCSV(log.timestamp ?? ""),
-            sanitizeForCSV(log.method ?? ""),
-            sanitizeForCSV(log.path ?? ""),
-            sanitizeForCSV(log.taxonomy ?? ""),
-            sanitizeForCSV(log.file_type ?? ""),
-            sanitizeForCSV(log.status ?? ""),
-            sanitizeForCSV(formatResponseSize(log.response_size)),
-            sanitizeForCSV(log.user_agent ?? ""),
-            sanitizeForCSV(log.referer || "-"),
-            sanitizeForCSV(log.crawler_type ?? ""),
-            sanitizeForCSV(log.verified ? "true" : "false"),
-          ];
-
-          if (ExcelLoaded) {
-            row = [
-              ...row,
-              sanitizeForCSV(log.position ?? ""),
-              sanitizeForCSV(log.clicks ?? ""),
-              sanitizeForCSV(log.impressions ?? ""),
-              sanitizeForCSV(log.ctr ? `${(log.ctr * 100).toFixed(2)}%` : ""),
-            ];
-          }
-
-          // Validate column count
-          const expectedColumnCount = ExcelLoaded ? 18 : 14;
-          if (row.length !== expectedColumnCount) {
-            console.error("Invalid row detected:", log);
-            continue;
-          }
-
-          batchContent += row.join(",") + "\r\n";
-        }
-
-        await writeTextFile(filePath, batchContent, {
-          append: true,
-          encoding: "utf8",
-        });
-      }
+        includeGsc: ExcelLoaded,
+      });
 
       setIsExporting(false);
-      toast.success("CSV exported successfully!");
-      message("CSV exported successfully!");
+      toast.success(
+        `Excel exported successfully! (${totalExported.toLocaleString()} rows)`,
+      );
+      message(
+        `Excel exported successfully! (${totalExported.toLocaleString()} rows)`,
+      );
     } catch (error) {
       setIsExporting(false);
       console.error("Export failed:", error);
@@ -517,7 +428,7 @@ export function LogAnalyzer() {
         error instanceof Error ? error.message : String(error);
       toast.error(`Export failed: ${errorMessage}`);
     }
-  }, [entries, formatResponseSize, ExcelLoaded]);
+  }, [ExcelLoaded]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
@@ -1015,7 +926,7 @@ export function LogAnalyzer() {
 
             <Button
               variant="outline"
-              onClick={exportCSV}
+              onClick={exportExcel}
               disabled={isExporting}
               className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
             >
@@ -1027,7 +938,7 @@ export function LogAnalyzer() {
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  Export CSV
+                  Export Excel
                 </>
               )}
             </Button>
