@@ -391,12 +391,12 @@ export function LogAnalyzer() {
     setUrlAgentFilter("url");
   }, []);
 
-  const exportExcel = useCallback(async () => {
+  const exportCSV = useCallback(async () => {
     try {
       // 1. Show save dialog to get file path
       const filePath = await save({
-        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.xlsx`,
-        filters: [{ name: "Excel", extensions: ["xlsx"] }],
+        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
       if (!filePath) {
@@ -407,19 +407,19 @@ export function LogAnalyzer() {
       // Set the loader spinning
       setIsExporting(true);
 
-      // 2. Call the backend to export ALL data directly from SQLite to Excel
+      // 2. Call the backend to export ALL data directly from SQLite to CSV
       //    This bypasses IPC serialization entirely — no row limits
-      const totalExported = await invoke<number>("export_active_logs_excel", {
+      const totalExported = await invoke<number>("export_active_logs_csv", {
         filePath,
         includeGsc: ExcelLoaded,
       });
 
       setIsExporting(false);
       toast.success(
-        `Excel exported successfully! (${totalExported.toLocaleString()} rows)`,
+        `CSV exported successfully! (${totalExported.toLocaleString()} rows)`,
       );
       message(
-        `Excel exported successfully! (${totalExported.toLocaleString()} rows)`,
+        `CSV exported successfully! (${totalExported.toLocaleString()} rows)`,
       );
     } catch (error) {
       setIsExporting(false);
@@ -926,7 +926,7 @@ export function LogAnalyzer() {
 
             <Button
               variant="outline"
-              onClick={exportExcel}
+              onClick={exportCSV}
               disabled={isExporting}
               className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
             >
@@ -938,7 +938,7 @@ export function LogAnalyzer() {
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  Export Excel
+                  Export CSV
                 </>
               )}
             </Button>
