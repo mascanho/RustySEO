@@ -20,7 +20,6 @@ import {
   useSelectedProject,
 } from "@/store/logFilterStore";
 import { useLogAnalysisStore } from "@/store/ServerLogsStore";
-import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import {
@@ -444,12 +443,9 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                           {loadingProjects[
                                             `${projectName}-${action}`
                                           ] ? (
-                                            <Spinner
-                                              className="h-2 w-2 text-gray-500 dark:text-brand-bright"
-                                              bg-gray-200
-                                            />
+                                            <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-brand-bright" />
                                           ) : action === "replace" ? (
-                                            <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                            <TbReplace className="h-4 w-4 text-gray-500 dark:text-brand-bright" />
                                           ) : (
                                             <IoIosAddCircleOutline className="h-4 w-4 text-xl text-gray-500 dark:text-brand-bright" />
                                           )}
