@@ -94,9 +94,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   // State management
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // Separate loading flag for the right "Assigned Logs" column so the left
-  // project list remains interactive while log data is being fetched.
-  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState(new Set());
   const [DBprojects, setDBprojects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState<
@@ -131,43 +128,26 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       });
   }, []);
 
-  // Optimized project fetching - Stage 1: only project names (fast)
+  // Optimized project fetching
   const handleGetAllProjects = useCallback(async () => {
     setIsLoading(true);
     try {
-      const projects = await invoke("get_all_projects_command");
-      setAllProjects(projects);
+      const allProjects = await invoke("get_all_projects_command");
+      setAllProjects(allProjects);
+
+      const allProjData = await Promise.all(
+        allProjects.map((proj) =>
+          invoke("get_logs_by_project_name_command", { project: proj.name }),
+        ),
+      );
+
+      setDBprojects(allProjData);
     } catch (error) {
       toast.error(String(error));
     } finally {
       setIsLoading(false);
     }
   }, [setAllProjects]);
-
-  // Stage 2: load assigned logs per-project, sequentially after paint
-  const handleLoadProjectLogs = useCallback(async (projects: any[]) => {
-    if (!projects || projects.length === 0) {
-      setDBprojects([]);
-      return;
-    }
-    setIsLoadingLogs(true);
-    try {
-      const results: any[] = [];
-      for (const proj of projects) {
-        const logs = await invoke("get_logs_by_project_name_command", {
-          project: proj.name,
-        });
-        results.push(logs);
-        // Yield to the renderer between each IPC call so the UI stays responsive
-        await new Promise((r) => setTimeout(r, 0));
-      }
-      setDBprojects(results);
-    } catch (error) {
-      toast.error(String(error));
-    } finally {
-      setIsLoadingLogs(false);
-    }
-  }, []);
 
   // Project creation
   const handleCreateProject = useCallback(
@@ -223,21 +203,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     });
   }, []);
 
-  // Initial data load: Stage 1 (project names) fires immediately on mount.
-  // Stage 2 (assigned logs) fires after allProjects is populated, deferred by
-  // one animation frame so the skeleton renders before any IPC calls begin.
+  // Initial data load
   useEffect(() => {
     handleGetAllProjects();
   }, [handleGetAllProjects]);
-
-  useEffect(() => {
-    if (allProjects.length === 0) return;
-    // Defer to next frame so the skeleton in the right column paints first
-    const raf = requestAnimationFrame(() => {
-      handleLoadProjectLogs(allProjects);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [allProjects, handleLoadProjectLogs]);
 
   // Log level color
   const getLogLevelColor = useCallback((level: string) => {
@@ -441,7 +410,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                   Assigned Logs
                 </h3>
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[29rem] overflow-y-auto">
-                  {isLoadingLogs ? (
+                  {isLoading ? (
                     <SkeletonLoader />
                   ) : DBprojects.some((group) => group.length > 0) ? (
                     DBprojects.map((projectGroup, index) => {
@@ -591,14 +560,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       <CardFooter className="flex justify-end mt-8">
         <div className="flex gap-2">
           <Button
-            onClick={async () => {
-              await handleGetAllProjects();
-            }}
+            onClick={handleGetAllProjects}
             variant="secondary"
-            disabled={isLoading || isLoadingLogs}
+            disabled={isLoading}
             className="rounded-none"
           >
-            {isLoading || isLoadingLogs ? (
+            {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : null}
             Refresh
