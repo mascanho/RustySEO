@@ -20,7 +20,7 @@ import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { IoReload, IoTrashBin } from "react-icons/io5";
 import { toast } from "sonner";
 import { Tooltip } from "react-tooltip";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { FaRegTrashCan } from "react-icons/fa6";
 import ProjectsDBManager from "./LogsDBprojectsManager";
 import GSCuploadManager from "./GSCuploadManager";
@@ -33,7 +33,7 @@ function UploadButton() {
   const [gscOpen, setGscOpen] = useState(false);
   const [logsFromDB, setLogsFromDB] = useState(false);
   const { setStoredLogsFromDBStore } = useServerLogsStore();
-  const { resetAll } = useLogAnalysis();
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const { setServerLogsStore, setUploadedLogFiles, reset } =
     useServerLogsStore();
 

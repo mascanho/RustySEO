@@ -366,6 +366,7 @@ async fn main() {
             loganalyser::database::get_all_projects_command,
             loganalyser::database::delete_project_command,
             loganalyser::database::get_logs_by_project_name_for_processing_command,
+            loganalyser::database::process_project_logs_directly_command,
             get_system,
             get_log_file_upload_size_command,
             get_project_chunk_size_command,

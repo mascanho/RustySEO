@@ -412,3 +412,54 @@ pub fn delete_project_command(id: i32) {
         .conn
         .execute("DELETE FROM projects WHERE id = ?1", params![id]);
 }
+
+/// Process logs from a saved project directly in Rust — no IPC round-trip.
+///
+/// This replaces the old flow where raw log text was:
+///   1. Read from serverlog.db in Rust
+///   2. Serialized and emitted to JS via IPC
+///   3. Accumulated in a JS array (OOM risk)
+///   4. Sent back to Rust via IPC for parsing (double serialization)
+///
+/// Now: DB → parse in Rust → active_logs.db → emit overview only.
+#[tauri::command]
+pub fn process_project_logs_directly_command(
+    project: String,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let db = Database::new("serverlog.db")
+        .map_err(|e| format!("Database initialization failed: {}", e))?;
+
+    let mut stmt = db
+        .conn
+        .prepare("SELECT filename, log FROM server_logs WHERE project = ?1")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let mut log_contents: Vec<(String, String)> = Vec::new();
+    let mut rows = stmt
+        .query(params![project.as_str()])
+        .map_err(|e| format!("Query execution failed: {}", e))?;
+
+    while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
+        let filename: String = row
+            .get(0)
+            .map_err(|e| format!("Failed to get filename: {}", e))?;
+        let log_text: String = row
+            .get(1)
+            .map_err(|e| format!("Failed to get log text: {}", e))?;
+        log_contents.push((filename, log_text));
+    }
+
+    if log_contents.is_empty() {
+        return Err("No logs found for this project".to_string());
+    }
+
+    println!(
+        "Processing {} log file(s) for project '{}' directly (no IPC round-trip)",
+        log_contents.len(),
+        project
+    );
+
+    let data = LogInput { log_contents };
+    analyse_log(data, app)
+}

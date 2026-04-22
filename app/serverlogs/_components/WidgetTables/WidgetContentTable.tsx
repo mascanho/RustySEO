@@ -67,7 +67,7 @@ import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -140,12 +140,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");

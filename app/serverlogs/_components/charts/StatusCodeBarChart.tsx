@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -44,7 +44,9 @@ const chartConfig = {
 export function StatusCodeBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { statusTimelineData, fetchStatusAggregations, activeFilters } = useLogAnalysis();
+  const statusTimelineData = useLogAnalysisStore((state) => state.statusTimelineData);
+  const fetchStatusAggregations = useLogAnalysisStore((state) => state.fetchStatusAggregations);
+  const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   React.useEffect(() => {
     fetchStatusAggregations(viewMode, activeFilters);

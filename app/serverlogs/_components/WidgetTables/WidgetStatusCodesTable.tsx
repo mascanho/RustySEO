@@ -67,7 +67,7 @@ import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { Loader2 } from "lucide-react";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -287,12 +287,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
   const {
     credentials,
     data: GSCdata,

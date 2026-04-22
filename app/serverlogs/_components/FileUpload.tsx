@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { getOS } from "../util";
 import { listen } from "@tauri-apps/api/event";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
@@ -49,7 +49,7 @@ export function FileUpload({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
-  const { setLogData } = useLogAnalysis();
+  const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const [progress, setProgress] = useState({
     current: 0,
     total: 0,

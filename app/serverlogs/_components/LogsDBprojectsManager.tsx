@@ -19,9 +19,8 @@ import {
   useProjectsLogs,
   useSelectedProject,
 } from "@/store/logFilterStore";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
-import { listen } from "@tauri-apps/api/event";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import {
@@ -102,7 +101,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
   // Global store
   const { allProjects, setAllProjects } = useAllProjects();
-  const { setLogData, resetAll } = useLogAnalysis();
+  const setLogData = useLogAnalysisStore((state) => state.setLogData);
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
@@ -233,22 +233,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         return;
       }
 
-      // Initialize listeners and logs array
-      const allLogs: LogResult[] = [];
-      let unlistenBatch: () => void;
-      let unlistenComplete: () => void;
-
       try {
-        // Setup listeners
-        [unlistenBatch, unlistenComplete] = await Promise.all([
-          listen<LogResult[]>("project-logs-batch", (event) => {
-            allLogs.push(...event.payload);
-          }),
-          listen<void>("project-logs-complete", () => {
-            console.log("Streaming complete. Final count:", allLogs.length);
-          }),
-        ]);
-
         // Set loading state once
         setLoadingProjects((prev) => ({
           ...prev,
@@ -256,20 +241,20 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           [`${projectName}-${action}`]: true,
         }));
 
-        toast.info(`Processing logs for ${projectName}...`);
-
-        // Start streaming
-        await invoke("get_logs_by_project_name_for_processing_command", {
-          project: projectName,
-        });
-
-        // Process logs
+        // Clear active DB and store state if replacing
         if (action === "replace") {
           resetAll();
           await invoke("clear_active_db_command");
         }
 
-        await processLogs(allLogs);
+        toast.info(`Processing logs for ${projectName}...`);
+
+        // Process directly in Rust — no IPC round-trip of raw log text.
+        // Raw text stays in Rust: serverlog.db → parse → active_logs.db → emit overview only.
+        await invoke("process_project_logs_directly_command", {
+          project: projectName,
+        });
+
         toast.success(`Project ${projectName} processed successfully`);
       } catch (err) {
         console.error("Processing failed:", err);
@@ -280,8 +265,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         );
       } finally {
         // Cleanup
-        unlistenBatch?.();
-        unlistenComplete?.();
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: false,
@@ -289,30 +272,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         }));
       }
     },
-    [resetAll, toast],
+    [resetAll],
   );
-
-  // Memoize processLogs if it's used elsewhere
-  const processLogs = useCallback(async (logData: LogResult[]) => {
-    const CHUNK_SIZE = await invoke("get_project_chunk_size_command");
-
-    for (let i = 0; i < logData.length; i += CHUNK_SIZE) {
-      const chunk = logData.slice(i, i + CHUNK_SIZE);
-      try {
-        await invoke<LogAnalysisResult>("check_logs_command", {
-          data: {
-            log_contents: chunk.map((item) => [item.project, item.log]),
-          },
-          storingLogs: false,
-          project: "",
-        });
-        await new Promise((resolve) => setTimeout(resolve, 2));
-      } catch (error) {
-        console.error("Failed to process chunk:", error);
-        throw error;
-      }
-    }
-  }, []);
 
   // ##############################################
   //

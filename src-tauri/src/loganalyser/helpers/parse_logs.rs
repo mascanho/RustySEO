@@ -619,15 +619,14 @@ pub fn parse_log_entries<F>(log: &str, mut f: F)
 where
     F: FnMut(LogEntry),
 {
-    let re = Regex::new(r#"(?x)
-        ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
-        "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path
-        (\d{3})\s+(\d+)\s+                                                # Status and response size
-        "([^"]*)"\s+                                                      # Referer
-        "([^"]*)"                                                         # User agent
-    "#).expect("Invalid regex pattern");
+    // Use the static compiled regex — avoid recompiling on every call
+    let re = &*LOG_REGEX;
 
-    println!("Log contains {} lines", log.lines().count());
+    // Acquire taxonomy lock ONCE for the entire batch instead of 3× per line
+    let sorted_taxonomies = match SORTED_TAXONOMIES.lock() {
+        Ok(guard) => guard,
+        Err(_) => return,
+    };
 
     for (i, line) in log.lines().enumerate() {
         let line = line.trim();
@@ -663,11 +662,8 @@ where
             // Use the new unified verification function
             let verified = is_verified_crawler(&ip, &crawler_type);
 
-            let position = gsc_log::gsc_position_match(path);
-            let clicks = gsc_log::gsc_clicks_match(path);
-            let impressions = gsc_log::gsc_impressions_match(path);
-            let gsc_url = gsc_log::get_matching_url(path);
-            let ctr = gsc_log::gsc_ctr_match(path);
+            // Consolidated GSC lookup — single lock, single normalization
+            let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
 
             f(LogEntry {
                 ip,
@@ -688,9 +684,9 @@ where
                 browser,
                 file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
                 verified,
-                segment: classify_segment_name(path),
-                segment_match: classify_segment_match(path),
-                taxonomy: classify_taxonomy(path),
+                segment: classify_segment_name_internal(path, &sorted_taxonomies),
+                segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
+                taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
             });
         }
     }

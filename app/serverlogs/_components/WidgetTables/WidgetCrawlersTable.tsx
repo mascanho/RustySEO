@@ -72,7 +72,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
-import { useLogAnalysis, BotPathDetail } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore, BotPathDetail } from "@/store/ServerLogsStore";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
@@ -142,12 +142,10 @@ interface WidgetTableProps {
 }
 
 const WidgetTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   // State definitions
   const [searchTerm, setSearchTerm] = useState<string>("");
