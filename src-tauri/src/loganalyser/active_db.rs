@@ -9,17 +9,6 @@ lazy_static::lazy_static! {
 }
 
 pub fn init_active_db() -> Result<(), String> {
-    // Guard: if connection already exists, skip re-initialization.
-    // This preserves the SQLite page cache (PRAGMA cache_size) between command calls.
-    // Previously this function recreated the connection on every invocation, discarding
-    // the warm cache and re-applying all PRAGMAs/DDL statements unnecessarily.
-    {
-        let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-        if lock.is_some() {
-            return Ok(());
-        }
-    }
-
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
 
@@ -35,9 +24,7 @@ pub fn init_active_db() -> Result<(), String> {
         "
         PRAGMA synchronous = OFF;
         PRAGMA journal_mode = MEMORY;
-        -- Increase cache to ~100 MB so GROUP BY temp tables stay in RAM for large datasets
-        PRAGMA cache_size = -102400;
-        PRAGMA temp_store = MEMORY;
+        PRAGMA cache_size = 10000;
 
         CREATE TABLE IF NOT EXISTS active_parsed_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,10 +57,6 @@ pub fn init_active_db() -> Result<(), String> {
         CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
         CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
         CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
-        -- Composite index used by get_path_aggregations_page GROUP BY/ORDER BY
-        CREATE INDEX IF NOT EXISTS idx_path_agg ON active_parsed_logs(path, crawler_type, user_agent);
-        -- Plain path index used by COUNT(DISTINCT path) pagination count
-        CREATE INDEX IF NOT EXISTS idx_path ON active_parsed_logs(path);
         ",
     )
     .map_err(|e| e.to_string())?;
@@ -1426,15 +1409,14 @@ pub fn get_path_aggregations_page(
 
     let (where_sql, params_vec) = build_where_clause(&filters);
 
-    // 1. Get counts using cheap indexed queries.
-    // Previously used GROUP BY path,crawler_type,user_agent subquery which is O(n) on 8M rows
-    // and creates a massive temp table, causing crashes. Now we use:
-    //   - COUNT(DISTINCT path)  → uses idx_path, fast index scan
-    //   - COUNT(*)              → fast row count via idx_* or table scan
-    // total_unique_paths drives pagination; it now counts unique paths (not unique path+ua+ct
-    // tuples) which is the more user-meaningful number and avoids the expensive subquery.
+    // 1. Get accurate counts
     let count_query = format!(
-        "SELECT COUNT(DISTINCT path), COUNT(*) FROM active_parsed_logs WHERE {}",
+        "SELECT COUNT(*), SUM(freq) FROM (
+            SELECT COUNT(*) as freq 
+            FROM active_parsed_logs 
+            WHERE {} 
+            GROUP BY path, crawler_type, user_agent
+        )",
         where_sql
     );
     let (total_unique_paths, total_hits): (u32, u64) = conn
@@ -1475,7 +1457,7 @@ pub fn get_path_aggregations_page(
             MAX(method) as m,
             MAX(verified) as v,
             MAX(ip) as ip_addr,
-            SUBSTR(GROUP_CONCAT(DISTINCT CASE WHEN LENGTH(referer) > 100 THEN SUBSTR(referer,1,100) ELSE referer END), 1, 500) as ref_str,
+            GROUP_CONCAT(DISTINCT referer) as ref_str,
             MAX(browser) as br,
             MAX(country) as c
         FROM active_parsed_logs
@@ -1549,7 +1531,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
             MAX(method) as m,
             MAX(verified) as v,
             MAX(ip) as ip_addr,
-            SUBSTR(GROUP_CONCAT(DISTINCT CASE WHEN LENGTH(referer) > 100 THEN SUBSTR(referer,1,100) ELSE referer END), 1, 500) as ref_str,
+            GROUP_CONCAT(DISTINCT referer) as ref_str,
             MAX(browser) as br,
             MAX(country) as c
         FROM active_parsed_logs
