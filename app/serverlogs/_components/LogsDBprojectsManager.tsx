@@ -238,14 +238,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       }
 
       try {
-        // Set loading state once
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: true,
           [`${projectName}-${action}`]: true,
         }));
 
-        // Clear active DB and store state if replacing
         if (action === "replace") {
           resetAll();
           await invoke("clear_active_db_command");
@@ -253,8 +251,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
         toast.info(`Processing logs for ${projectName}...`);
 
-        // Process directly in Rust — no IPC round-trip of raw log text.
-        // Raw text stays in Rust: serverlog.db → parse → active_logs.db → emit overview only.
         await invoke("process_project_logs_directly_command", {
           project: projectName,
         });
@@ -268,11 +264,55 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           </section>,
         );
       } finally {
-        // Cleanup
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: false,
           [`${projectName}-${action}`]: false,
+        }));
+      }
+    },
+    [resetAll],
+  );
+
+  const processSingleLog = useCallback(
+    async (
+      logId: number,
+      projectName: string,
+      action: "append" | "replace",
+    ) => {
+      try {
+        const loadingKey = `log-${logId}-${action}`;
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [loadingKey]: true,
+        }));
+
+        if (action === "replace") {
+          resetAll();
+          await invoke("clear_active_db_command");
+        }
+
+        toast.info(`Processing single log...`);
+
+        await invoke("process_single_log_from_db_command", {
+          logId,
+          project: projectName,
+          action,
+        });
+
+        toast.success("Log processed successfully");
+      } catch (err) {
+        console.error("Processing failed:", err);
+        toast.error(
+          <section className="w-full">
+            {err instanceof Error ? err.message : String(err)}
+          </section>,
+        );
+      } finally {
+        const loadingKey = `log-${logId}-${action}`;
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [loadingKey]: false,
         }));
       }
     },
@@ -496,9 +536,81 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                         {formatTimestamp(log.date)}
                                       </p>
                                     </div>
-                                    <div className="flex items-center ">
-                                      <FaPlus className="h-2 w-2 text-gray-500 dark:text-gray-400 text-xs mr-2" />
-                                      <FaPlus className="h-2 w-2 text-gray-500 dark:text-gray-400 text-xs mr-2" />
+                                    <div className="flex items-center gap-1">
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full dark:text-white"
+                                              onClick={() =>
+                                                processSingleLog(
+                                                  (log as any).id,
+                                                  projectName,
+                                                  "append",
+                                                )
+                                              }
+                                              disabled={
+                                                loadingProjects[
+                                                  `log-${(log as any).id}-append`
+                                                ]
+                                              }
+                                            >
+                                              {loadingProjects[
+                                                `log-${(log as any).id}-append`
+                                              ] ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                              ) : (
+                                                <IoIosAddCircleOutline className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="bottom"
+                                            className="text-xs z-[999999999] mr-24 py-1 px-2"
+                                          >
+                                            Append this log
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full dark:text-white"
+                                              onClick={() =>
+                                                processSingleLog(
+                                                  (log as any).id,
+                                                  projectName,
+                                                  "replace",
+                                                )
+                                              }
+                                              disabled={
+                                                loadingProjects[
+                                                  `log-${(log as any).id}-replace`
+                                                ]
+                                              }
+                                            >
+                                              {loadingProjects[
+                                                `log-${(log as any).id}-replace`
+                                              ] ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                              ) : (
+                                                <TbReplace className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="left"
+                                            className="text-xs z-[99999] mr-0 py-1 px-2"
+                                          >
+                                            Replace with this log
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     </div>
                                   </div>
                                 ))}
