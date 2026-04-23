@@ -20,5 +20,7 @@ pub fn generate_indexing_bots() -> Vec<String> {
         "Sogou News Spider".to_string(),
         "Daumua".to_string(),
         "AppleBot".to_string(),
+        "GPTBot".to_string(),
+        "OpenAI SearchBot".to_string(),
     ]
 }

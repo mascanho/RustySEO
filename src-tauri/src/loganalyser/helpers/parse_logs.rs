@@ -509,6 +509,8 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("applebot", "AppleBot"),
         ("gptbot", "GPTBot"),
         ("chatgpt", "ChatGPT-User"),
+        ("oai-searchbot", "OpenAI SearchBot"),
+        ("oai-adsbot", "OpenAI AdsBot"),
         ("semrush", "Semrush"),
         ("ahrefs", "Ahrefs"),
         ("moz.com", "Moz"),
