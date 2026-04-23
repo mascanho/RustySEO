@@ -8,6 +8,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use settings::settings::delete_config_folders_command;
+use settings::settings::get_indexing_bots_command;
 use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;
 use settings::settings::get_system;
@@ -369,6 +370,7 @@ async fn main() {
             loganalyser::database::process_project_logs_directly_command,
             loganalyser::database::process_single_log_from_db_command,
             get_system,
+            get_indexing_bots_command,
             get_log_file_upload_size_command,
             get_project_chunk_size_command,
             delete_config_folders_command,

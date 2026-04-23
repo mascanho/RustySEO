@@ -10,8 +10,9 @@ use toml;
 use uuid::Uuid;
 
 use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
-use crate::domain_crawler::{self, user_agents};
+use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::settings::utils::indexing_bots::generate_indexing_bots;
 use crate::settings::utils::user_bots::generate_default_user_bots;
 use crate::version::local_version;
 
@@ -110,6 +111,7 @@ pub struct Settings {
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
     pub log_bots: Vec<(String, String)>,
+    pub indexing_bots: Vec<String>,
 
     // --- Integrations ---
     /// Enable PageSpeed Insights bulk fetching
@@ -181,6 +183,7 @@ impl Settings {
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
             log_bots: generate_default_user_bots(),
+            indexing_bots: generate_indexing_bots(),
 
             // --- Integrations ---
             page_speed_bulk: false,
@@ -376,6 +379,11 @@ impl Settings {
         s.push_str("# Log Bots\n");
         let bots = serde_json::to_string(&self.log_bots).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("log_bots = {}\n", bots));
+
+        s.push_str("# Indexing Bots\n");
+        let indexing_bots =
+            serde_json::to_string(&self.indexing_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("indexing_bots = {}\n", indexing_bots));
 
         s.push_str("\n# --- Integrations ---\n");
         s.push_str("# Enable PageSpeed Insights bulk fetching\n");
@@ -752,7 +760,7 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     }
 
     if let Some(val) = updates
-        .get("links_pool_idle_timeout")
+        .get("links_max_idle_per_host")
         .and_then(|v| v.as_integer())
     {
         settings.links_max_idle_per_host = val as usize;
@@ -769,8 +777,27 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.adaptive_crawling = val;
     }
 
-    if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
-        settings.min_crawl_delay = val as u64;
+    if let Some(val) = updates.get("indexing_bots").and_then(|v| v.as_array()) {
+        settings.indexing_bots = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
+    if let Some(val) = updates.get("log_bots").and_then(|v| v.as_array()) {
+        settings.log_bots = val
+            .iter()
+            .filter_map(|v| {
+                if let Some(arr) = v.as_array() {
+                    if arr.len() == 2 {
+                        let display = arr[0].as_str()?.to_string();
+                        let bot = arr[1].as_str()?.to_string();
+                        return Some((display, bot));
+                    }
+                }
+                None
+            })
+            .collect();
     }
 
     // Explicit file writing with flush
@@ -791,6 +818,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .map_err(|e| format!("Failed to flush config: {}", e))?;
 
     Ok(settings)
+}
+
+
+#[tauri::command]
+pub async fn get_indexing_bots_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.indexing_bots)
 }
 
 #[tauri::command]

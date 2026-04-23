@@ -502,8 +502,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                         className="text-xs z-[99999] mr-10 py-1 px-2"
                                       >
                                         {action === "append"
-                                          ? "Append logs"
-                                          : "Replace logs"}
+                                          ? "Append Project"
+                                          : "Replace Project"}
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>

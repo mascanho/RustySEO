@@ -97,6 +97,7 @@ import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAge
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
 import { GrDocumentStore } from "react-icons/gr";
 import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawlersTable";
+import { invoke } from "@tauri-apps/api/core";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -146,7 +147,9 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<string | null>(null);
+  const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<
+    string | null
+  >(null);
   const [openDialogs, setOpenDialogs] = useState({});
 
   const getCrawlerIcon = (crawlerType: string) => {
@@ -227,6 +230,19 @@ export default function WidgetLogs() {
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
+  const [indexingBots, setIndexingBots] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchIndexingBots = async () => {
+      try {
+        const bots = await invoke<string[]>("get_indexing_bots_command");
+        setIndexingBots(bots);
+      } catch (error) {
+        console.error("Failed to fetch indexing bots:", error);
+      }
+    };
+    fetchIndexingBots();
+  }, []);
 
   useEffect(() => {
     const loadTaxonomies = () => {
@@ -319,16 +335,24 @@ export default function WidgetLogs() {
 
   // Prepare Indexing Crawlers data - use pre-aggregated data from widgetAggs
   const indexingCrawlersData = useMemo(() => {
-    if (!widgetAggs?.crawler_types) return [];
+    if (!widgetAggs?.crawler_types || indexingBots.length === 0) return [];
+
+    // Create a set of lowercase bot names from config for fast lookup
+    const botSet = new Set(indexingBots.map((name) => name.toLowerCase()));
+
+    // Create a map for display names (case-insensitive lookup)
+    const displayNameMap = new Map(
+      indexingBots.map((name) => [name.toLowerCase(), name]),
+    );
 
     return Object.entries(widgetAggs.crawler_types)
-      .filter(([name]) => name !== "Human") // Redundant but safe
+      .filter(([name]) => botSet.has(name.toLowerCase()))
       .map(([name, value]) => ({
-        name,
+        name: displayNameMap.get(name.toLowerCase()) || name,
         value,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [widgetAggs]);
+  }, [widgetAggs, indexingBots]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
@@ -639,12 +663,12 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4  ${
+            className={`grid gap-2 w-full max-w-2xl pl-4 pr-2 mb-2 overflow-y-auto max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
               activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-5 max-w-2xl mr-6"
-                : activeTab === "Status Codes"
-                  ? "grid-cols-4 mr-6"
-                  : "grid-cols-4 mr-6"
+                ? "grid-cols-2 md:grid-cols-5 mr-6"
+                : activeTab === "Indexing Crawlers"
+                  ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                  : "grid-cols-2 md:grid-cols-4 mr-6"
             }`}
           >
             {chartData.map((entry, idx) => (
