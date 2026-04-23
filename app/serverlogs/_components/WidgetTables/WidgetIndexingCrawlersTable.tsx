@@ -701,18 +701,67 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
           }
         />
       )}
-      {/* File Type Header */}
-      {fileTypeFilter.length > 0 && (
+      {/* Table Header */}
+      {segment && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                Viewing: {fileTypeFilter.join(", ")} Files
+                Indexing & Crawlers - Viewing:{" "}
+                {segment === "all"
+                  ? "All Segments"
+                  : segment === "Uncategorized"
+                    ? "Uncategorized"
+                    : segment}
+                {fileTypeFilter.length > 0 && ` (${fileTypeFilter.join(", ")})`}
+                {crawlerTypeFilter.length > 0 &&
+                  !fileTypeFilter.length &&
+                  ` (${crawlerTypeFilter.join(", ")})`}
               </h3>
               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                Showing {filteredLogs.length} log entries with{" "}
-                <span className="font-bold">{fileTypeFilter.join(", ")}</span>{" "}
-                file type{fileTypeFilter.length > 1 ? "s" : ""}
+                Showing request activity for{" "}
+                <span className="font-bold">
+                  {segment === "all"
+                    ? "all segments"
+                    : segment === "Uncategorized"
+                      ? "uncategorized"
+                      : segment.toLowerCase()}{" "}
+                  {segment === "all" || segment === "Uncategorized"
+                    ? ""
+                    : "segment"}
+                </span>
+                {fileTypeFilter.length > 0 && (
+                  <>
+                    {" "}
+                    with{" "}
+                    <span className="font-bold">
+                      {fileTypeFilter.join(", ")}
+                    </span>{" "}
+                    file type{fileTypeFilter.length > 1 ? "s" : ""}
+                  </>
+                )}
+                {crawlerTypeFilter.length > 0 && (
+                  <>
+                    {" "}
+                    with{" "}
+                    <span className="font-bold">
+                      {crawlerTypeFilter.join(", ")}
+                    </span>{" "}
+                    crawler{crawlerTypeFilter.length > 1 ? "s" : ""}
+                  </>
+                )}
+                {currentSegmentTaxonomy &&
+                  currentSegmentTaxonomy.paths.length > 0 &&
+                  segment !== "all" &&
+                  segment !== "Uncategorized" && (
+                    <span className="ml-1">
+                      (<span className="font-bold">matches: {""}</span>
+                      {currentSegmentTaxonomy.paths
+                        .map((p) => p.path)
+                        .join(", ")}
+                      )
+                    </span>
+                  )}
               </p>
             </div>
             <Badge
@@ -725,43 +774,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
           </div>
         </div>
       )}
-
-      {/* Segment Header - Only show if segment is selected */}
-      {segment &&
-        segment !== "all" &&
-        currentSegmentTaxonomy &&
-        !fileTypeFilter.length && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                  Viewing: {segment}
-                </h3>
-                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                  Showing request activity for{" "}
-                  <span className="font-bold">{segment.toLowerCase()}</span>
-                  {""} segment
-                  {currentSegmentTaxonomy.paths.length > 0 && (
-                    <span className="ml-1">
-                      (<span className="font-bold">matches: {""}</span>
-                      {currentSegmentTaxonomy.paths
-                        .map((p) => p.path)
-                        .join(", ")}
-                      )
-                    </span>
-                  )}
-                </p>
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
-              >
-                {pathAggregations.total_unique_paths.toLocaleString()} unique
-                paths ({pathAggregations.total_hits.toLocaleString()} hits)
-              </Badge>
-            </div>
-          </div>
-        )}
 
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">

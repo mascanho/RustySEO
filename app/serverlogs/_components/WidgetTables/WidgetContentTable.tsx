@@ -692,7 +692,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                  Viewing:{" "}
+                  Content - Viewing:{" "}
                   {segment === "all"
                     ? "All Segments"
                     : segment === "Uncategorized"
