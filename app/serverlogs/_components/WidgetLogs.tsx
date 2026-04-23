@@ -146,6 +146,8 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
+  const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<string | null>(null);
+  const [openDialogs, setOpenDialogs] = useState({});
 
   const getCrawlerIcon = (crawlerType: string) => {
     const ct = crawlerType.toLowerCase();
@@ -222,8 +224,6 @@ export default function WidgetLogs() {
   const pathAggregations = useLogAnalysisStore(
     (state) => state.pathAggregations,
   );
-  // We use entries from the store but we don't need allFilteredLogs anymore
-  const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
@@ -238,7 +238,6 @@ export default function WidgetLogs() {
             const newMap = {};
             parsed.forEach((tax) => {
               if (tax.paths) {
-                // Ensure paths are in the format expected by PathConfig, accounting for old string format
                 tax.paths.forEach((p) => {
                   const pathString = typeof p === "string" ? p : p.path;
                   if (pathString) {
@@ -256,19 +255,16 @@ export default function WidgetLogs() {
           }
         } catch (e) {
           console.error("Failed to parse taxonomies from localStorage", e);
-          // If parsing fails, clear localStorage and current taxonomies
           localStorage.removeItem("taxonomies");
           setTaxonomyNameMap({});
           setSortedTaxonomyPaths([]);
         }
       } else {
-        // If no stored taxonomies, clear current ones
         setTaxonomyNameMap({});
         setSortedTaxonomyPaths([]);
       }
     };
 
-    // Load taxonomies initially and whenever the custom event fires
     loadTaxonomies();
 
     const handleTaxonomiesUpdate = () => {
@@ -321,13 +317,31 @@ export default function WidgetLogs() {
       .sort((a, b) => b.value - a.value);
   }, [overview]);
 
+  // Prepare Indexing Crawlers data - get all unique crawler types from entries
+  const indexingCrawlersData = useMemo(() => {
+    if (!entries || entries.length === 0) return [];
+
+    const crawlerCounts: Record<string, number> = {};
+    entries.forEach((entry) => {
+      if (entry.crawler_type) {
+        crawlerCounts[entry.crawler_type] = (crawlerCounts[entry.crawler_type] || 0) + (entry.frequency || 1);
+      }
+    });
+
+    return Object.entries(crawlerCounts)
+      .map(([name, value]) => ({
+        name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [entries]);
+
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
     if (!widgetAggs) return {};
 
     const acc: Record<string, { count: number; examples: string[] }> = {};
 
-    // 1. Process category totals from backend (most accurate)
     if (widgetAggs.user_agent_categories) {
       Object.entries(widgetAggs.user_agent_categories).forEach(
         ([cat, count]) => {
@@ -336,7 +350,6 @@ export default function WidgetLogs() {
       );
     }
 
-    // 2. Process specific strings for examples
     if (widgetAggs.user_agents) {
       Object.entries(widgetAggs.user_agents).forEach(([ua, count]) => {
         const cat = categorizeUserAgent(ua);
@@ -344,7 +357,6 @@ export default function WidgetLogs() {
           acc[cat] = { count: 0, examples: [] };
         }
 
-        // If we didn't have accurate totals from backend, accumulate counts here
         if (!widgetAggs.user_agent_categories) {
           acc[cat].count += count;
         }
@@ -364,14 +376,12 @@ export default function WidgetLogs() {
 
     const acc: Record<string, { count: number; referrers: string[] }> = {};
 
-    // 1. Process category totals from backend (most accurate)
     if (widgetAggs.referrer_categories) {
       Object.entries(widgetAggs.referrer_categories).forEach(([cat, count]) => {
         acc[cat] = { count, referrers: [] };
       });
     }
 
-    // 2. Process specific strings for examples
     if (widgetAggs.referrers) {
       Object.entries(widgetAggs.referrers).forEach(([referrer, count]) => {
         const cat = categorizeReferrer(referrer);
@@ -379,7 +389,6 @@ export default function WidgetLogs() {
           acc[cat] = { count: 0, referrers: [] };
         }
 
-        // If we didn't have accurate totals from backend, accumulate counts here
         if (!widgetAggs.referrer_categories) {
           acc[cat].count += count;
         }
@@ -401,9 +410,6 @@ export default function WidgetLogs() {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce(
         (acc, [pathOrName, value]) => {
-          // If the key is 'other', use 'Uncategorized' for display
-          // If the key is already a taxonomy name, keep it.
-          // The taxonomyNameMap is useful if the key was a path, but the backend sends taxonomy names.
           const name =
             pathOrName.toLowerCase() === "other"
               ? "Uncategorized"
@@ -427,7 +433,6 @@ export default function WidgetLogs() {
     }
 
     if (activeTab === "User Agents") {
-      // Convert userAgentData to chart format
       if (!userAgentData) return [];
 
       return Object.entries(userAgentData)
@@ -437,11 +442,10 @@ export default function WidgetLogs() {
           examples: data.examples,
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 20); // Limit to top 20 for readability
+        .slice(0, 20);
     }
 
     if (activeTab === "Referrers") {
-      // Convert referrerData to chart format
       if (!referrerData) return [];
 
       return Object.entries(referrerData)
@@ -451,11 +455,12 @@ export default function WidgetLogs() {
           referrers: data.referrers,
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 20); // Limit to top 20 for readability
+        .slice(0, 20);
     }
 
     // Indexing Crawlers
     if (activeTab === "Indexing Crawlers") {
+      return indexingCrawlersData;
     }
 
     return (
@@ -473,6 +478,7 @@ export default function WidgetLogs() {
           }))
           .sort((a, b) => b.value - a.value),
         "Aggregated Crawlers": crawlerData.length > 0 ? crawlerData : [],
+        "Indexing Crawlers": indexingCrawlersData,
       }[activeTab] || []
     );
   }, [
@@ -484,6 +490,7 @@ export default function WidgetLogs() {
     fileTypeData,
     statusCodeData,
     crawlerData,
+    indexingCrawlersData,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -494,15 +501,6 @@ export default function WidgetLogs() {
     [uploadedLogFiles],
   );
 
-  // if (!overview) {
-  //   return (
-  //     <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
-  //       <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
-  //     </div>
-  //   );
-  // }
-
-  // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() || "0";
 
   const handleOpenChange = (name, isOpen) => {
@@ -683,7 +681,6 @@ export default function WidgetLogs() {
 
                 {/* SINGLE DialogContent with conditional rendering */}
                 <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
-                  {/*<Suspense fallback={<FallbackLoader />}>*/}
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
@@ -883,7 +880,6 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : null}
-                  {/*</Suspense>*/}
                 </DialogContent>
               </Dialog>
             ))}
