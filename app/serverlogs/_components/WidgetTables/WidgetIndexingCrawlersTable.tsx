@@ -27,7 +27,6 @@ import {
   RefreshCw,
   Search,
   FolderTree,
-  User,
 } from "lucide-react";
 import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Input } from "@/components/ui/input";
@@ -106,6 +105,7 @@ interface WidgetTableProps {
   entries: LogEntry[];
   segment: string;
   selectedFileType?: string;
+  selectedCrawlerType?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -188,13 +188,14 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
   entries,
   segment,
   selectedFileType,
+  selectedCrawlerType,
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
   const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [botFilter, setBotFilter] = useState<string | null>("bot");
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -215,6 +216,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
   const [isReady, setIsReady] = useState(false);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
 
   const pathAggregations = useLogAnalysisStore(
     (state) => state.pathAggregations,
@@ -291,32 +293,15 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
           });
         }
 
-        // Fallback to entries just in case
-        if (entries && entries.length > 0) {
-          for (const log of entries) {
-            if (log.file_type && log.file_type.trim() !== "") {
-              types.add(log.file_type);
-            }
-          }
-        }
-
         const sortedTypes = Array.from(types).sort();
         setAvailableFileTypes(sortedTypes);
 
-        if (selectedFileType && sortedTypes.length > 0) {
-          const normalizedSelectedType = selectedFileType.trim();
-          const exactType = sortedTypes.find(
-            (type) =>
-              type.toLowerCase() === normalizedSelectedType.toLowerCase(),
-          );
-
-          if (exactType) {
-            setFileTypeFilter([exactType]);
-          } else if (selectedFileType !== "") {
-            setFileTypeFilter([selectedFileType]);
-          }
-        } else if (selectedFileType) {
+        if (selectedFileType) {
           setFileTypeFilter([selectedFileType]);
+        }
+
+        if (selectedCrawlerType) {
+          setCrawlerTypeFilter([selectedCrawlerType]);
         }
 
         setIsInitialized(true);
@@ -326,12 +311,10 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     };
 
     initialize();
-  }, [entries, selectedFileType, widgetAggs]); // Added selectedFileType to dependencies
+  }, [selectedFileType, selectedCrawlerType, widgetAggs]);
 
   // Precompute entries metadata
   const {
-    oldestEntry,
-    newestEntry,
     elapsedTimeMs,
     uniqueStatusCodes,
     uniqueCrawlerTypes,
@@ -362,45 +345,21 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
       "Uptime",
       "Openai",
       "Claude",
-      "Human",
     ]);
 
-    let oldest = entries && entries.length > 0 ? entries[0] : null;
-    let newest = entries && entries.length > 0 ? entries[0] : null;
-
-    if (entries && entries.length > 0) {
-      for (const log of entries) {
-        if (!data?.log_start_time) {
-          const logTime = new Date(log.timestamp).getTime();
-          const oldestTime = new Date(oldest?.timestamp || 0).getTime();
-          const newestTime = new Date(newest?.timestamp || 0).getTime();
-
-          if (logTime < oldestTime) oldest = log;
-          if (logTime > newestTime) newest = log;
-        }
-
-        if (log.status && !widgetAggs?.status_codes)
-          statusCodes.add(log.status);
-        if (log.crawler_type && log.crawler_type !== "Human")
-          crawlerTypes.add(log.crawler_type);
-      }
-
-      if (!data?.log_start_time && oldest && newest) {
-        elapsedTimeMs = Math.abs(
-          new Date(newest.timestamp).getTime() -
-            new Date(oldest.timestamp).getTime(),
-        );
-      }
+    // Use widgetAggs for more accurate crawler types list
+    if (widgetAggs?.crawler_types) {
+      Object.keys(widgetAggs.crawler_types).forEach(ct => {
+        if (ct !== "Human") crawlerTypes.add(ct);
+      });
     }
 
     return {
-      oldestEntry: oldest,
-      newestEntry: newest,
       elapsedTimeMs,
       uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
       uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
     };
-  }, [entries, isReady, data, widgetAggs]);
+  }, [data, widgetAggs]);
 
   // Function to get taxonomy name for a path (with caching)
   const getTaxonomyForPath = useCallback(
@@ -441,23 +400,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     [taxonomies],
   );
 
-  // Optimized filtered logs with async processing to prevent UI freezing
-  const activeSegmentTaxonomy = useMemo(
-    () =>
-      segment && segment !== "all"
-        ? taxonomies.find((t) => t.name === segment)
-        : null,
-    [segment, taxonomies],
-  );
-
-  const activeSelectedTaxonomyObj = useMemo(
-    () =>
-      selectedTaxonomy !== "all"
-        ? taxonomies.find((t) => t.id === selectedTaxonomy)
-        : null,
-    [selectedTaxonomy, taxonomies],
-  );
-
   const lowerCaseFileFilters = useMemo(
     () => fileTypeFilter.map((ft) => ft.toLowerCase()),
     [fileTypeFilter],
@@ -468,107 +410,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     [debouncedSearchTerm],
   );
 
-  const filterFn = useCallback(
-    (log: LogEntry) => {
-      // 1. Initial Checks (Segment & Taxonomy) - Most restrictive first
-      if (activeSegmentTaxonomy) {
-        let match = false;
-        for (const pathRule of activeSegmentTaxonomy.paths) {
-          if (
-            (pathRule.matchType === "exactMatch" &&
-              log.path === pathRule.path) ||
-            (pathRule.matchType === "contains" &&
-              log.path.includes(pathRule.path))
-          ) {
-            match = true;
-            break;
-          }
-        }
-        if (!match) return false;
-      }
-
-      if (activeSelectedTaxonomyObj) {
-        let match = false;
-        for (const pathRule of activeSelectedTaxonomyObj.paths) {
-          if (
-            (pathRule.matchType === "exactMatch" &&
-              log.path === pathRule.path) ||
-            (pathRule.matchType === "contains" &&
-              log.path.includes(pathRule.path))
-          ) {
-            match = true;
-            break;
-          }
-        }
-        if (!match) return false;
-      }
-
-      // 2. Search (Heavy string ops)
-      if (debouncedSearchTerm) {
-        const matches =
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
-        if (!matches) return false;
-      }
-
-      // 3. File Type
-      if (fileTypeFilter.length > 0) {
-        const logFileType = (log.file_type || "").toLowerCase();
-        if (!lowerCaseFileFilters.includes(logFileType)) return false;
-      }
-
-      // 4. Method
-      if (methodFilter.length > 0) {
-        if (!methodFilter.includes(log.method)) return false;
-      }
-
-      // 5. Bot
-      if (botFilter !== null && botFilter !== "all") {
-        if (log.crawler_type !== botFilter) return false;
-      }
-
-      // 6. Verified
-      if (verifiedFilter !== null) {
-        if (log.verified !== verifiedFilter) return false;
-      }
-
-      // 7. Bot Type
-      if (botTypeFilter !== null) {
-        if (botTypeFilter === "Mobile" && !log.user_agent.includes("Mobile"))
-          return false;
-        if (botTypeFilter === "Desktop" && log.user_agent.includes("Mobile"))
-          return false;
-      }
-
-      // 8. Status
-      if (statusFilter.length > 0) {
-        if (!log.status || !statusFilter.includes(log.status)) return false;
-      }
-
-      // 9. Crawler Type
-      if (crawlerTypeFilter.length > 0) {
-        if (!crawlerTypeFilter.includes(log.crawler_type)) return false;
-      }
-
-      return true;
-    },
-    [
-      activeSegmentTaxonomy,
-      activeSelectedTaxonomyObj,
-      debouncedSearchTerm,
-      lowerCaseSearch,
-      lowerCaseFileFilters,
-      fileTypeFilter,
-      methodFilter,
-      botFilter,
-      verifiedFilter,
-      botTypeFilter,
-      statusFilter,
-      crawlerTypeFilter,
-    ],
-  );
 
   // Main Data Fetcher
   useEffect(() => {
@@ -601,8 +442,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
           fileTypeFilter?.length > 0
             ? fileTypeFilter
             : globalActiveFilters.file_type_filter,
-        bot_filter:
-          botFilter === "all" ? globalActiveFilters.bot_filter : botFilter,
+        bot_filter: "bot", // Force robots only
         bot_type_filter:
           botTypeFilter === "all"
             ? globalActiveFilters.bot_type_filter
@@ -632,7 +472,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     statusFilter,
     methodFilter,
     fileTypeFilter,
-    botFilter,
     botTypeFilter,
     crawlerTypeFilter,
     verifiedFilter,
@@ -643,6 +482,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     fetchPathAggregationsPage,
     taxonomies,
   ]);
+
 
   // Pagination Values
   const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
@@ -672,7 +512,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
   const resetFilters = () => {
     setSearchTerm("");
     setMethodFilter([]);
-    setBotFilter("all");
+    setBotFilter("bot");
     setVerifiedFilter(null);
     setSortConfig({ key: "timestamp", direction: "descending" });
     setExpandedRow(null);
@@ -1140,15 +980,12 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    {crawlerType === "Human" ? (
-                      <User className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-purple-500" />
-                    )}
+                    <Bot className="h-4 w-4 text-purple-500" />
                     <span>{crawlerType}</span>
                   </div>
                 </DropdownMenuCheckboxItem>
               ))}
+
               {uniqueCrawlerTypes.length === 0 && (
                 <div className="px-2 py-2 text-sm text-gray-500">
                   No crawler types available
@@ -1374,11 +1211,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
                             <TableCell width={110} className="max-w-[100px] ">
                               <Badge
                                 variant="outline"
-                                className={
-                                  log.crawler_type !== "Human"
-                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
-                                    : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
-                                }
+                                className="w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
                               >
                                 {log.crawler_type &&
                                 log.crawler_type.length > 12

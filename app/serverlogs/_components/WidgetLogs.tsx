@@ -317,24 +317,18 @@ export default function WidgetLogs() {
       .sort((a, b) => b.value - a.value);
   }, [overview]);
 
-  // Prepare Indexing Crawlers data - get all unique crawler types from entries
+  // Prepare Indexing Crawlers data - use pre-aggregated data from widgetAggs
   const indexingCrawlersData = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
+    if (!widgetAggs?.crawler_types) return [];
 
-    const crawlerCounts: Record<string, number> = {};
-    entries.forEach((entry) => {
-      if (entry.crawler_type) {
-        crawlerCounts[entry.crawler_type] = (crawlerCounts[entry.crawler_type] || 0) + (entry.frequency || 1);
-      }
-    });
-
-    return Object.entries(crawlerCounts)
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => name !== "Human") // Redundant but safe
       .map(([name, value]) => ({
         name,
         value,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [entries]);
+  }, [widgetAggs]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
@@ -772,6 +766,7 @@ export default function WidgetLogs() {
                       data={overview}
                       entries={entries}
                       segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
                       entry?.name,

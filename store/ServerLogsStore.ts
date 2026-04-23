@@ -236,7 +236,9 @@ export interface WidgetAggregations {
   referrers: Record<string, number>;
   user_agent_categories?: Record<string, number>;
   referrer_categories?: Record<string, number>;
+  crawler_types?: Record<string, number>;
 }
+
 
 interface LogAnalysisActions {
   setLogData: (
@@ -349,6 +351,7 @@ const initialState: LogAnalysisState = {
     status_codes: {},
     user_agents: {},
     referrers: {},
+    crawler_types: {},
   },
   pathAggregations: {
     entries: [],
