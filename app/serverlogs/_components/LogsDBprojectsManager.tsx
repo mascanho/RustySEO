@@ -10,7 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { invoke } from "@tauri-apps/api/core";
 import { FixedSizeList as List } from "react-window";
-import { FaCalendarAlt, FaFolder, FaProjectDiagram } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaFolder,
+  FaPlus,
+  FaProjectDiagram,
+} from "react-icons/fa";
 import { SkeletonLoader } from "./SkeletonLoader";
 import type { ProjectEntry } from "@/types/ProjectEntry";
 import { IoPlayCircleOutline } from "react-icons/io5";
@@ -49,12 +54,12 @@ const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   return (
@@ -119,12 +124,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   // Optimized project fetching
@@ -410,10 +415,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   className="h-5 w-5 p-0 pt-[2px] hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
-                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${openDropdowns.has(projectName)
+                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
+                                      openDropdowns.has(projectName)
                                         ? "rotate-180"
                                         : ""
-                                      }`}
+                                    }`}
                                   />
                                 </Button>
                               </div>
@@ -436,7 +442,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                           }
                                           disabled={
                                             loadingProjects[
-                                            `${projectName}-${action}`
+                                              `${projectName}-${action}`
                                             ]
                                           }
                                         >
@@ -489,6 +495,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                       <p className="text-gray-500 dark:text-gray-400 text-[10px]">
                                         {formatTimestamp(log.date)}
                                       </p>
+                                    </div>
+                                    <div className="flex items-center ">
+                                      <FaPlus className="h-2 w-2 text-gray-500 dark:text-gray-400 text-xs mr-2" />
+                                      <FaPlus className="h-2 w-2 text-gray-500 dark:text-gray-400 text-xs mr-2" />
                                     </div>
                                   </div>
                                 ))}
