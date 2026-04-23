@@ -96,6 +96,7 @@ import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
 import { GrDocumentStore } from "react-icons/gr";
+import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawlersTable";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -453,6 +454,10 @@ export default function WidgetLogs() {
         .slice(0, 20); // Limit to top 20 for readability
     }
 
+    // Indexing Crawlers
+    if (activeTab === "Indexing Crawlers") {
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {})
@@ -758,8 +763,15 @@ export default function WidgetLogs() {
                         />
                       </Tabs.Panel>
                     </Tabs>
-                  ) : activeTab === "User Agents" ? (
+                  ) : // USER AGENTS TABLE
+                  activeTab === "User Agents" ? (
                     <WidgetUserAgentsTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                    />
+                  ) : activeTab === "Indexing Crawlers" ? (
+                    <WidgetIndexingCrawlersTable
                       data={overview}
                       entries={entries}
                       segment={entry?.name}
