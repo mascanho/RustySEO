@@ -217,7 +217,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
-
   const pathAggregations = useLogAnalysisStore(
     (state) => state.pathAggregations,
   );
@@ -314,52 +313,49 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
   }, [selectedFileType, selectedCrawlerType, widgetAggs]);
 
   // Precompute entries metadata
-  const {
-    elapsedTimeMs,
-    uniqueStatusCodes,
-    uniqueCrawlerTypes,
-  } = useMemo(() => {
-    let elapsedTimeMs = 0;
+  const { elapsedTimeMs, uniqueStatusCodes, uniqueCrawlerTypes } =
+    useMemo(() => {
+      let elapsedTimeMs = 0;
 
-    // Check if we can use data.log_start_time and data.log_finish_time
-    if (data?.log_start_time && data?.log_finish_time) {
-      elapsedTimeMs = Math.abs(
-        new Date(data.log_finish_time).getTime() -
-          new Date(data.log_start_time).getTime(),
-      );
-    }
+      // Check if we can use data.log_start_time and data.log_finish_time
+      if (data?.log_start_time && data?.log_finish_time) {
+        elapsedTimeMs = Math.abs(
+          new Date(data.log_finish_time).getTime() -
+            new Date(data.log_start_time).getTime(),
+        );
+      }
 
-    const statusCodes = new Set<number>();
-    if (widgetAggs?.status_codes) {
-      Object.keys(widgetAggs.status_codes).forEach((key) =>
-        statusCodes.add(Number(key)),
-      );
-    }
+      const statusCodes = new Set<number>();
+      if (widgetAggs?.status_codes) {
+        Object.keys(widgetAggs.status_codes).forEach((key) =>
+          statusCodes.add(Number(key)),
+        );
+      }
 
-    const crawlerTypes = new Set<string>([
-      "Google",
-      "Bing",
-      "Semrush",
-      "Hrefs",
-      "Moz",
-      "Uptime",
-      "Openai",
-      "Claude",
-    ]);
+      const crawlerTypes = new Set<string>([
+        "Google",
+        "Bing",
+        "Semrush",
+        "Hrefs",
+        "Moz",
+        "Uptime",
+        "Openai",
+        "Claude",
+      ]);
 
-    // Use widgetAggs for more accurate crawler types list
-    if (widgetAggs?.crawler_types) {
-      Object.keys(widgetAggs.crawler_types).forEach(ct => {
-        if (ct !== "Human") crawlerTypes.add(ct);
-      });
-    }
+      // Use widgetAggs for more accurate crawler types list
+      if (widgetAggs?.crawler_types) {
+        Object.keys(widgetAggs.crawler_types).forEach((ct) => {
+          if (ct !== "Human") crawlerTypes.add(ct);
+        });
+      }
 
-    return {
-      elapsedTimeMs,
-      uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
-      uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
-    };
-  }, [data, widgetAggs]);
+      return {
+        elapsedTimeMs,
+        uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
+        uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
+      };
+    }, [data, widgetAggs]);
 
   // Function to get taxonomy name for a path (with caching)
   const getTaxonomyForPath = useCallback(
@@ -409,7 +405,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     () => (debouncedSearchTerm ? debouncedSearchTerm.toLowerCase() : ""),
     [debouncedSearchTerm],
   );
-
 
   // Main Data Fetcher
   useEffect(() => {
@@ -482,7 +477,6 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
     fetchPathAggregationsPage,
     taxonomies,
   ]);
-
 
   // Pagination Values
   const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
@@ -707,7 +701,7 @@ const WidgetIndexingCrawlersTable: React.FC<WidgetTableProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                Indexing & Crawlers - Viewing:{" "}
+                Indexing Crawlers:{" "}
                 {segment === "all"
                   ? "All Segments"
                   : segment === "Uncategorized"

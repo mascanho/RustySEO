@@ -663,7 +663,7 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4 pr-2 mb-2 overflow-y-auto max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
+            className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
               activeTab === "User Agents" || activeTab === "Referrers"
                 ? "grid-cols-2 md:grid-cols-5 mr-6"
                 : activeTab === "Indexing Crawlers"
@@ -677,9 +677,9 @@ export default function WidgetLogs() {
                 open={openDialogs[entry.name] || false}
                 onOpenChange={(isOpen) => handleOpenChange(entry.name, isOpen)}
               >
-                <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75">
+                <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75 outline-none">
                   <div
-                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark overflow-auto"
+                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
                     style={{
                       borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
                       backgroundColor: `${COLORS[idx % COLORS.length]}10`,
