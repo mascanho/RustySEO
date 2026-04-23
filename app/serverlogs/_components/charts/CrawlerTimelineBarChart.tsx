@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -48,7 +48,9 @@ const chartConfig = {
 export function CrawlerTimelineBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { crawlerTimelineData, fetchCrawlerAggregations, activeFilters } = useLogAnalysis();
+  const crawlerTimelineData = useLogAnalysisStore((state) => state.crawlerTimelineData);
+  const fetchCrawlerAggregations = useLogAnalysisStore((state) => state.fetchCrawlerAggregations);
+  const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   React.useEffect(() => {
     fetchCrawlerAggregations(viewMode, activeFilters);

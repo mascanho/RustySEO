@@ -373,7 +373,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
 
         if let Some(mut overview) = overview {
-            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
                 overview.line_count = stats.line_count;
                 overview.unique_ips = stats.unique_ips;
                 overview.unique_user_agents = stats.unique_user_agents;
@@ -580,7 +580,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
     // GET CUMULATIVE STATS FROM DB TO PROVIDE A TRUE "APPEND" EXPERIENCE
     // We'll merge our current segmentation/frequency data with the global stats from DB
-    let cumulative_overview = if let Ok(stats) = get_active_logs_stats() {
+    let cumulative_overview = if let Ok(stats) = get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
         LogAnalysisResult {
             message: "Log analysis completed (cumulative)".to_string(),
             line_count: stats.line_count,
@@ -738,7 +738,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         }
 
         if let Some(mut overview) = overview {
-            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats() {
+            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
                 overview.line_count = stats.line_count;
                 overview.unique_ips = stats.unique_ips;
                 overview.unique_user_agents = stats.unique_user_agents;
@@ -985,7 +985,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
     bot_stats.strip_heavy_data();
 
-    let cumulative_overview = if let Ok(stats) = get_active_logs_stats() {
+    let cumulative_overview = if let Ok(stats) = get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
         LogAnalysisResult {
             message: "Log analysis completed (cumulative)".to_string(),
             line_count: stats.line_count,

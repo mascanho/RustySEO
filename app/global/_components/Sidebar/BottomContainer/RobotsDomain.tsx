@@ -6,7 +6,9 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { arta } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 const RobotsDomain = () => {
-  const { crawlData, setRobots, robots } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setRobots = useGlobalCrawlStore((state) => state.setRobots);
+  const robots = useGlobalCrawlStore((state) => state.robots);
 
   useEffect(() => {
     let unlisten: () => void;

@@ -20,7 +20,8 @@ import MissingTitlesChart from "./_components/charts/MissingTitlesChart";
 import MissingDescriptionsChart from "./_components/charts/MissingDescriptionsChart";
 
 const OverviewBottomSidePanel = () => {
-  const { issuesView, genericChart } = useCrawlStore();
+    const issuesView = useCrawlStore((state) => state.issuesView);
+  const genericChart = useCrawlStore((state) => state.genericChart);
 
   return (
     <Tabs

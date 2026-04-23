@@ -29,7 +29,7 @@ import {
   FolderTree,
   User,
 } from "lucide-react";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -216,13 +216,11 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    widgetAggs,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   const {
     credentials,

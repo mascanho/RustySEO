@@ -10,7 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { invoke } from "@tauri-apps/api/core";
 import { FixedSizeList as List } from "react-window";
-import { FaCalendarAlt, FaFolder, FaProjectDiagram } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaFolder,
+  FaPlus,
+  FaProjectDiagram,
+} from "react-icons/fa";
 import { SkeletonLoader } from "./SkeletonLoader";
 import type { ProjectEntry } from "@/types/ProjectEntry";
 import { IoPlayCircleOutline } from "react-icons/io5";
@@ -19,9 +24,7 @@ import {
   useProjectsLogs,
   useSelectedProject,
 } from "@/store/logFilterStore";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
-import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
-import { listen } from "@tauri-apps/api/event";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import {
@@ -51,12 +54,12 @@ const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   return (
@@ -102,7 +105,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
   // Global store
   const { allProjects, setAllProjects } = useAllProjects();
-  const { setLogData, resetAll } = useLogAnalysis();
+  const setLogData = useLogAnalysisStore((state) => state.setLogData);
+  const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
@@ -120,12 +124,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     return isNaN(date.getTime())
       ? "Invalid Date"
       : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   }, []);
 
   // Optimized project fetching
@@ -233,43 +237,24 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         return;
       }
 
-      // Initialize listeners and logs array
-      const allLogs: LogResult[] = [];
-      let unlistenBatch: () => void;
-      let unlistenComplete: () => void;
-
       try {
-        // Setup listeners
-        [unlistenBatch, unlistenComplete] = await Promise.all([
-          listen<LogResult[]>("project-logs-batch", (event) => {
-            allLogs.push(...event.payload);
-          }),
-          listen<void>("project-logs-complete", () => {
-            console.log("Streaming complete. Final count:", allLogs.length);
-          }),
-        ]);
-
-        // Set loading state once
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: true,
           [`${projectName}-${action}`]: true,
         }));
 
-        toast.info(`Processing logs for ${projectName}...`);
-
-        // Start streaming
-        await invoke("get_logs_by_project_name_for_processing_command", {
-          project: projectName,
-        });
-
-        // Process logs
         if (action === "replace") {
           resetAll();
           await invoke("clear_active_db_command");
         }
 
-        await processLogs(allLogs);
+        toast.info(`Processing logs for ${projectName}...`);
+
+        await invoke("process_project_logs_directly_command", {
+          project: projectName,
+        });
+
         toast.success(`Project ${projectName} processed successfully`);
       } catch (err) {
         console.error("Processing failed:", err);
@@ -279,9 +264,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           </section>,
         );
       } finally {
-        // Cleanup
-        unlistenBatch?.();
-        unlistenComplete?.();
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: false,
@@ -289,30 +271,53 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         }));
       }
     },
-    [resetAll, toast],
+    [resetAll],
   );
 
-  // Memoize processLogs if it's used elsewhere
-  const processLogs = useCallback(async (logData: LogResult[]) => {
-    const CHUNK_SIZE = await invoke("get_project_chunk_size_command");
-
-    for (let i = 0; i < logData.length; i += CHUNK_SIZE) {
-      const chunk = logData.slice(i, i + CHUNK_SIZE);
+  const processSingleLog = useCallback(
+    async (
+      logId: number,
+      projectName: string,
+      action: "append" | "replace",
+    ) => {
       try {
-        await invoke<LogAnalysisResult>("check_logs_command", {
-          data: {
-            log_contents: chunk.map((item) => [item.project, item.log]),
-          },
-          storingLogs: false,
-          project: "",
+        const loadingKey = `log-${logId}-${action}`;
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [loadingKey]: true,
+        }));
+
+        if (action === "replace") {
+          resetAll();
+          await invoke("clear_active_db_command");
+        }
+
+        toast.info(`Processing single log...`);
+
+        await invoke("process_single_log_from_db_command", {
+          logId,
+          project: projectName,
+          action,
         });
-        await new Promise((resolve) => setTimeout(resolve, 2));
-      } catch (error) {
-        console.error("Failed to process chunk:", error);
-        throw error;
+
+        toast.success("Log processed successfully");
+      } catch (err) {
+        console.error("Processing failed:", err);
+        toast.error(
+          <section className="w-full">
+            {err instanceof Error ? err.message : String(err)}
+          </section>,
+        );
+      } finally {
+        const loadingKey = `log-${logId}-${action}`;
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [loadingKey]: false,
+        }));
       }
-    }
-  }, []);
+    },
+    [resetAll],
+  );
 
   // ##############################################
   //
@@ -450,10 +455,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   className="h-5 w-5 p-0 pt-[2px] hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
-                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${openDropdowns.has(projectName)
+                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
+                                      openDropdowns.has(projectName)
                                         ? "rotate-180"
                                         : ""
-                                      }`}
+                                    }`}
                                   />
                                 </Button>
                               </div>
@@ -476,19 +482,16 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                           }
                                           disabled={
                                             loadingProjects[
-                                            `${projectName}-${action}`
+                                              `${projectName}-${action}`
                                             ]
                                           }
                                         >
                                           {loadingProjects[
                                             `${projectName}-${action}`
                                           ] ? (
-                                            <Spinner
-                                              className="h-2 w-2 text-gray-500 dark:text-brand-bright"
-                                              bg-gray-200
-                                            />
+                                            <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-brand-bright" />
                                           ) : action === "replace" ? (
-                                            <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                            <TbReplace className="h-4 w-4 text-gray-500 dark:text-brand-bright" />
                                           ) : (
                                             <IoIosAddCircleOutline className="h-4 w-4 text-xl text-gray-500 dark:text-brand-bright" />
                                           )}
@@ -532,6 +535,82 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                       <p className="text-gray-500 dark:text-gray-400 text-[10px]">
                                         {formatTimestamp(log.date)}
                                       </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full dark:text-white"
+                                              onClick={() =>
+                                                processSingleLog(
+                                                  (log as any).id,
+                                                  projectName,
+                                                  "append",
+                                                )
+                                              }
+                                              disabled={
+                                                loadingProjects[
+                                                  `log-${(log as any).id}-append`
+                                                ]
+                                              }
+                                            >
+                                              {loadingProjects[
+                                                `log-${(log as any).id}-append`
+                                              ] ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                              ) : (
+                                                <IoIosAddCircleOutline className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="bottom"
+                                            className="text-xs z-[999999999] mr-24 py-1 px-2"
+                                          >
+                                            Append this log
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                      <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full dark:text-white"
+                                              onClick={() =>
+                                                processSingleLog(
+                                                  (log as any).id,
+                                                  projectName,
+                                                  "replace",
+                                                )
+                                              }
+                                              disabled={
+                                                loadingProjects[
+                                                  `log-${(log as any).id}-replace`
+                                                ]
+                                              }
+                                            >
+                                              {loadingProjects[
+                                                `log-${(log as any).id}-replace`
+                                              ] ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                              ) : (
+                                                <TbReplace className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent
+                                            side="left"
+                                            className="text-xs z-[99999] mr-0 py-1 px-2"
+                                          >
+                                            Replace with this log
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     </div>
                                   </div>
                                 ))}

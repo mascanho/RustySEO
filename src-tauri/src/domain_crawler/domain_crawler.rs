@@ -9,12 +9,13 @@ use rand::Rng;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
+use dashmap::DashMap;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
@@ -56,6 +57,7 @@ pub async fn crawl_domain(
     let selected_user_agent = user_agents.choose(&mut rand::rng()).cloned()
         .unwrap_or_else(|| "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string());
 
+
     let client = Client::builder()
         .cookie_store(true)
         .user_agent(&selected_user_agent)
@@ -64,6 +66,8 @@ pub async fn crawl_domain(
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
+
+
 
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
@@ -115,8 +119,8 @@ pub async fn crawl_domain(
 
     // Create the global URL status registry — shared between the crawler and the link checker
     // so that URLs already crawled are never re-requested during link checking.
-    let url_status_registry: Arc<RwLock<HashMap<String, u16>>> =
-        Arc::new(RwLock::new(HashMap::new()));
+    // DashMap is used here instead of RwLock<HashMap> to avoid blocking async executor threads.
+    let url_status_registry: Arc<DashMap<String, u16>> = Arc::new(DashMap::with_capacity(4096));
 
     let link_checker = Arc::new(SharedLinkChecker::new(
         &settings,
@@ -434,6 +438,9 @@ pub async fn crawl_domain(
 
     // Final cleanup and status report
     {
+
+
+
         let state_guard = state.lock().await;
         tracing::info!("Crawl completed - Final stats:");
         tracing::info!("  Total URLs discovered: {}", state_guard.total_urls);

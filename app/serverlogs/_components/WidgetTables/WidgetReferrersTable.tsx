@@ -70,7 +70,7 @@ import { toast } from "sonner";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
-import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -229,12 +229,10 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
 
@@ -310,19 +308,10 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
   // Initialize referrer category filter when segment is a referrer category
   useEffect(() => {
-    if (
-      segment &&
-      segment !== "all" &&
-      availableReferrerCategories.length > 0
-    ) {
-      const category = availableReferrerCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setReferrerCategoryFilter([category]);
-      }
+    if (segment && segment !== "all") {
+      setReferrerCategoryFilter([segment]);
     }
-  }, [segment, availableReferrerCategories]);
+  }, [segment]);
 
   // Function to check if a path matches taxonomy criteria
   const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
@@ -536,19 +525,6 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       if (selectedTaxonomy !== "all") {
         activeTaxonomyFilter =
           taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
-      } else if (
-        segment &&
-        segment !== "all" &&
-        segment !== "Uncategorized" &&
-        segment !== "Other"
-      ) {
-        // If segment is a referrer category, we don't treat it as taxonomy
-        const isReferrerCat = availableReferrerCategories.some(
-          (cat) => cat.toLowerCase() === segment.toLowerCase(),
-        );
-        if (!isReferrerCat) {
-          activeTaxonomyFilter = segment;
-        }
       }
 
       // Determine referer_filter from the referrerCategoryFilter or segment
@@ -556,16 +532,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       if (referrerCategoryFilter.length === 1) {
         activeRefererFilter = referrerCategoryFilter[0];
       } else if (segment && segment !== "all") {
-        // If the segment matches a known referrer category, use it as the filter
-        const isReferrerCat = availableReferrerCategories.some(
-          (cat) => cat.toLowerCase() === segment.toLowerCase(),
-        );
-        if (isReferrerCat) {
-          activeRefererFilter =
-            availableReferrerCategories.find(
-              (cat) => cat.toLowerCase() === segment.toLowerCase(),
-            ) || null;
-        }
+        activeRefererFilter = segment;
       }
 
       // Handle special case for Internal Referral
@@ -585,19 +552,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         segment &&
         segment !== "all"
       ) {
-        const isReferrerCat = availableReferrerCategories.some(
-          (cat) => cat.toLowerCase() === segment.toLowerCase(),
-        );
-        if (isReferrerCat) {
-          const cat = availableReferrerCategories.find(
-            (cat) => cat.toLowerCase() === segment.toLowerCase(),
-          );
-          if (cat) {
-            const finalCat =
-              cat === "Internal Referral" && domain ? domain : cat;
-            activeRefererCategories.push(finalCat);
-          }
-        }
+        const finalCat =
+          segment === "Internal Referral" && domain ? domain : segment;
+        activeRefererCategories.push(finalCat);
       }
 
       const activeFilters = {
@@ -682,19 +639,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     setStatusFilter([]);
     setCrawlerTypeFilter([]);
     // Reset referrer category filter based on segment
-    if (
-      segment &&
-      segment !== "all" &&
-      availableReferrerCategories.length > 0
-    ) {
-      const category = availableReferrerCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setReferrerCategoryFilter([category]);
-      } else {
-        setReferrerCategoryFilter([]);
-      }
+    if (segment && segment !== "all") {
+      setReferrerCategoryFilter([segment]);
     } else {
       setReferrerCategoryFilter([]);
     }

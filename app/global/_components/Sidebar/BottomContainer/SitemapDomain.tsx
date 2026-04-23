@@ -6,7 +6,9 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { darkula } from "react-syntax-highlighter/dist/cjs/styles/hljs";
 
 const SitemapDomain = () => {
-  const { crawlData, setSitemaps, sitemaps } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setSitemaps = useGlobalCrawlStore((state) => state.setSitemaps);
+  const sitemaps = useGlobalCrawlStore((state) => state.sitemaps);
   const [sitemapState, setSitemapState] = useState();
 
   useEffect(() => {

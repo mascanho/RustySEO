@@ -181,9 +181,17 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           state.visitedUrls.add(r.url);
         }
 
-        // Use concat instead of spread to avoid O(n) copy per item
-        // concat creates one new array instead of n intermediate arrays
-        return { crawlData: state.crawlData.concat(newResults) };
+        // Live-feed ring buffer: keep only the most recent 1,500 rows in the JS heap.
+        // This is purely for showing crawl activity while the crawl is running.
+        // After crawl completion TablesContainer fetches all data via paginated DB queries,
+        // so no data is ever lost — everything is in SQLite regardless of this cap.
+        const MAX_CRAWL_ROWS = 1_500;
+        const combined = state.crawlData.concat(newResults);
+        const capped = combined.length > MAX_CRAWL_ROWS
+          ? combined.slice(combined.length - MAX_CRAWL_ROWS)
+          : combined;
+
+        return { crawlData: capped };
       }),
     clearDomainCrawlData: () => set({
       crawlData: [],
@@ -247,9 +255,15 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        if (state.visitedUrls) state.visitedUrls.add(result.url);
+        const MAX_CRAWL_ROWS = 1_500;
+        let newCrawlData = state.crawlData.concat([result]);
+        
+        if (newCrawlData.length > MAX_CRAWL_ROWS) {
+          newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+        }
+
         return {
-          crawlData: state.crawlData.concat([result]),
+          crawlData: newCrawlData,
           streamedCrawledPages: crawledPages,
           streamedTotalPages: totalPages,
         };
@@ -334,9 +348,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           const rows = state.crawlData;
 
           let pageData = rows.find((item) => item.url === url);
-          if (!pageData) return;
 
-          // Fetch full data from backend because we only have LightCrawlResult in state
+          // Fetch full data from backend because we may only have LightCrawlResult in state
+          // or the data might not be in the state at all (due to JS heap ring buffer).
           try {
             const { invoke } = await import("@tauri-apps/api/core");
             const fullData = await invoke("get_url_data_command", { url });
@@ -345,6 +359,14 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             }
           } catch (error) {
             console.error("Failed to fetch full URL data:", error);
+          }
+
+          if (!pageData) {
+             console.warn(`Could not find or fetch data for URL: ${url}`);
+             setters.setSelectedTableURL([]);
+             setters.setInlinks([]);
+             setters.setOutlinks([]);
+             return;
           }
 
           setters.setSelectedTableURL([pageData]);
@@ -469,6 +491,11 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
               if (!isDuplicate) {
                 if (state.visitedUrls) state.visitedUrls.add(update.result.url);
                 newCrawlData = state.crawlData.concat([update.result]);
+                
+                const MAX_CRAWL_ROWS = 1_500;
+                if (newCrawlData.length > MAX_CRAWL_ROWS) {
+                  newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+                }
               }
             }
             return {

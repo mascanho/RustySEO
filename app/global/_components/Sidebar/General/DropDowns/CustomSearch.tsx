@@ -18,7 +18,8 @@ interface ExtractorData {
 }
 
 const CustomSearch: React.FC = () => {
-  const { crawlData: domainCrawlData, setCustomSearch } = useGlobalCrawlStore();
+    const domainCrawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setCustomSearch = useGlobalCrawlStore((state) => state.setCustomSearch);
   const [isOpen, setIsOpen] = useState(false);
 
   const crawlData: CrawlDataItem[] = useMemo(

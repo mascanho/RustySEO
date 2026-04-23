@@ -33,7 +33,7 @@ const TreeNodeContextMenu = React.forwardRef<
   TreeNodeContextMenuProps
 >(({ url, label, isPage, children, ...others }, ref) => {
   const [opened, setOpened] = useState(false);
-  const { actions } = useGlobalCrawlStore();
+    const actions = useGlobalCrawlStore((state) => state.actions);
   const { selectURL } = actions.data;
   const { setDeepCrawlTab } = actions.ui;
 

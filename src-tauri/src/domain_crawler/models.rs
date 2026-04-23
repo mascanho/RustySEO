@@ -203,11 +203,53 @@ impl LightCrawlResult {
             Err(_) => (0, 0, 0),
         };
 
+        let mut safe_desc = full.description.clone();
+        if safe_desc.len() > 500 {
+            safe_desc.truncate(500);
+            safe_desc.push_str("...");
+        }
+
+        let mut safe_headings = HashMap::new();
+        for (tag, values) in &full.headings {
+            let safe_vals: Vec<String> = values.iter().take(10).map(|s| {
+                if s.len() > 200 {
+                    let mut truncated = s[..200].to_string();
+                    truncated.push_str("...");
+                    truncated
+                } else {
+                    s.clone()
+                }
+            }).collect();
+            safe_headings.insert(tag.clone(), safe_vals);
+        }
+
+        let mut safe_og = HashMap::new();
+        for (k, v) in &full.opengraph {
+            let mut safe_v = v.clone();
+            if safe_v.len() > 1000 {
+                safe_v.truncate(1000);
+                safe_v.push_str("...");
+            }
+            safe_og.insert(k.clone(), safe_v);
+        }
+
+        let safe_title = full.title.as_ref().map(|titles| {
+            titles.iter().map(|t| {
+                let mut safe_t = t.clone();
+                if safe_t.title.len() > 200 {
+                    let mut tr = safe_t.title[..200].to_string();
+                    tr.push_str("...");
+                    safe_t.title = tr;
+                }
+                safe_t
+            }).collect()
+        });
+
         Self {
             url: full.url.clone(),
-            title: full.title.clone(),
-            description: full.description.clone(),
-            headings: full.headings.clone(),
+            title: safe_title,
+            description: safe_desc,
+            headings: safe_headings,
             status_code: full.status_code,
             word_count: full.word_count,
             response_time: full.response_time,
@@ -222,7 +264,7 @@ impl LightCrawlResult {
             },
             page_size: full.page_size.clone(),
             content_type: full.content_type.clone(),
-            opengraph: full.opengraph.clone(),
+            opengraph: safe_og,
             flesch: full.flesch.as_ref().ok().map(|(s, _)| *s),
             flesch_grade: full.flesch.as_ref().ok().map(|(_, g)| g.clone()),
             text_ratio: full

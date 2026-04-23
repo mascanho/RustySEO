@@ -70,7 +70,7 @@ import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "../table/utils/FetchMatchGSC";
-import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 
 interface LogEntry {
   browser: string;
@@ -215,12 +215,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  const {
-    pathAggregations,
-    fetchPathAggregationsPage,
-    isLoading: isStoreLoading,
-  activeFilters: globalActiveFilters,
-  } = useLogAnalysis();
+  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
 
@@ -284,19 +282,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
 
   // Initialize user agent category filter when segment is a user agent category
   useEffect(() => {
-    if (
-      segment &&
-      segment !== "all" &&
-      availableUserAgentCategories.length > 0
-    ) {
-      const category = availableUserAgentCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setUserAgentCategoryFilter([category]);
-      }
+    if (segment && segment !== "all") {
+      setUserAgentCategoryFilter([segment]);
     }
-  }, [segment, availableUserAgentCategories]);
+  }, [segment]);
 
   // Function to check if a path matches taxonomy criteria
   const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
@@ -509,22 +498,12 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
       let activeTaxonomyFilter = null;
       if (selectedTaxonomy !== "all") {
         activeTaxonomyFilter = taxonomies.find(t => t.id === selectedTaxonomy)?.name || null;
-      } else if (segment && segment !== "all" && segment !== "Uncategorized" && segment !== "Other") {
-        // If segment is a UA category, we don't treat it as taxonomy
-        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
-        if (!isUACat) {
-          activeTaxonomyFilter = segment;
-        }
       }
 
       // Determine user agent category filter
       let activeUACategories = userAgentCategoryFilter;
       if (activeUACategories.length === 0 && segment && segment !== "all") {
-        const isUACat = availableUserAgentCategories.some(cat => cat.toLowerCase() === segment.toLowerCase());
-        if (isUACat) {
-          const cat = availableUserAgentCategories.find(cat => cat.toLowerCase() === segment.toLowerCase());
-          if (cat) activeUACategories = [cat];
-        }
+        activeUACategories = [segment];
       }
 
       const activeFilters = {
@@ -606,19 +585,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     setStatusFilter([]);
     setCrawlerTypeFilter([]);
     // Reset user agent category filter based on segment
-    if (
-      segment &&
-      segment !== "all" &&
-      availableUserAgentCategories.length > 0
-    ) {
-      const category = availableUserAgentCategories.find(
-        (cat) => cat.toLowerCase() === segment.toLowerCase(),
-      );
-      if (category) {
-        setUserAgentCategoryFilter([category]);
-      } else {
-        setUserAgentCategoryFilter([]);
-      }
+    if (segment && segment !== "all") {
+      setUserAgentCategoryFilter([segment]);
     } else {
       setUserAgentCategoryFilter([]);
     }

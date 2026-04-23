@@ -334,7 +334,8 @@ const KeywordsTable = ({
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<boolean[]>([]);
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
   const startXRef = useRef(0);
 
   const maxKeywords = useMemo(() => {
@@ -462,25 +463,50 @@ const KeywordsTable = ({
       toast.error("No data to download");
       return;
     }
-    setIsGeneratingExcel(true);
-    try {
-      const fileBuffer = await invoke("create_keywords_excel_command", {
-        data: rows,
-      });
-      setIsGeneratingExcel(false);
-      const filePath = await save({
-        filters: [{ name: "Excel File", extensions: ["xlsx"] }],
-        defaultPath: `RustySEO-${tabName}.xlsx`,
-      });
-      if (filePath) {
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
+
+    // For large datasets, export directly from database
+    if (rows.length > 1000) {
+      toast.info(
+        "Massive dataset detected. Exporting directly from Database...",
+      );
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("export_keywords_to_excel_command");
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
+          toast.success("Excel Database Export completed!");
+        }
+      } catch (error) {
+        console.error("Error generating massive Excel export:", error);
+        setIsGeneratingExcel(false);
       }
-    } catch (error) {
-      console.error("Error generating Excel file:", error);
-      toast.error("Failed to generate Excel file.");
-    } finally {
-      setIsGeneratingExcel(false);
+    } else {
+      // For small datasets, use frontend data
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("create_keywords_excel_command", {
+          data: rows,
+        });
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer));
+          toast.success("Excel file saved successfully!");
+        }
+      } catch (error) {
+        console.error("Error generating Excel file:", error);
+        toast.error("Failed to generate Excel file.");
+      } finally {
+        setIsGeneratingExcel(false);
+      }
     }
   }, [rows, tabName, setIsGeneratingExcel]);
 

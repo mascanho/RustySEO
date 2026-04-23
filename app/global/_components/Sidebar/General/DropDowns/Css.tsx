@@ -4,7 +4,8 @@ import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Css = () => {
-  const { crawlData, setCss } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setCss = useGlobalCrawlStore((state) => state.setCss);
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
   // Memoize calculations to avoid recalculating on every render

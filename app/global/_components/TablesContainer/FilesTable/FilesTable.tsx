@@ -29,6 +29,9 @@ import useGlobalCrawlStore, {
   useIsGeneratingExcel,
 } from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import { exportFilesDataCSV } from "./generateCSV";
 import ContextTableMenu from "../components/ContextTableMenu";
 
@@ -298,8 +301,37 @@ const FilesTable = ({
   );
 
   const handleDownload = useCallback(async () => {
-    await exportFilesDataCSV(rows);
-  }, [rows]);
+    if (!rows.length) {
+      toast.error("No data to download");
+      return;
+    }
+
+    // For large datasets, export directly from database
+    if (rows.length > 1000) {
+      toast.info(
+        "Massive dataset detected. Exporting directly from Database...",
+      );
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("export_files_to_excel_command");
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-Files.xlsx`,
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
+          toast.success("Excel Database Export completed!");
+        }
+      } catch (error) {
+        console.error("Error generating massive Excel export:", error);
+        setIsGeneratingExcel(false);
+      }
+    } else {
+      // For small datasets, use frontend CSV
+      await exportFilesDataCSV(rows);
+    }
+  }, [rows, setIsGeneratingExcel]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;

@@ -1,7 +1,7 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const DownloadButton = ({ download, loading, setLoading }: any) => {
-    const { isGeneratingExcel } = useGlobalCrawlStore();
+      const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
 
     return (
         <div className="flex justify-center items-center w-fit h-full">

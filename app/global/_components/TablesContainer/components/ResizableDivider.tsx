@@ -16,7 +16,7 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const startYRef = useRef<number | null>(null);
   const startBottomHeightRef = useRef<number | null>(null);
-  const { deepCrawlTab } = useCrawlStore();
+    const deepCrawlTab = useCrawlStore((state) => state.deepCrawlTab);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {

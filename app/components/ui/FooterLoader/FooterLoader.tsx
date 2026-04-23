@@ -6,17 +6,16 @@ import { Badge } from "@mantine/core";
 import { debounce } from "lodash";
 
 const FooterLoader = () => {
-  const {
-    streamedCrawledPages,
-    streamedTotalPages,
-    setStreamedCrawledPages,
-    setStreamedTotalPages,
-    crawlData,
-    setTotalUrlsCrawled,
-    domainCrawlLoading,
-    isFinishedDeepCrawl,
-    setFinishedDeepCrawl,
-  } = useCrawlStore();
+  const streamedCrawledPages = useCrawlStore((state) => state.streamedCrawledPages);
+  const streamedTotalPages = useCrawlStore((state) => state.streamedTotalPages);
+  const setStreamedCrawledPages = useCrawlStore((state) => state.setStreamedCrawledPages);
+  const setStreamedTotalPages = useCrawlStore((state) => state.setStreamedTotalPages);
+  const setTotalUrlsCrawled = useCrawlStore((state) => state.setTotalUrlsCrawled);
+  const domainCrawlLoading = useCrawlStore((state) => state.domainCrawlLoading);
+  const isFinishedDeepCrawl = useCrawlStore((state) => state.isFinishedDeepCrawl);
+  const setFinishedDeepCrawl = useCrawlStore((state) => state.setFinishedDeepCrawl);
+  
+  const crawlDataLength = useCrawlStore((state) => state.crawlData.length);
 
   const [failedPages, setFailedPages] = useState(0);
   // Internal state to track if we've shown the "Complete" message for the current session
@@ -69,23 +68,23 @@ const FooterLoader = () => {
   useEffect(() => {
     if (domainCrawlLoading) {
       setShowComplete(false);
-    } else if (isFinishedDeepCrawl && crawlData.length > 0) {
+    } else if (isFinishedDeepCrawl && crawlDataLength > 0) {
       setShowComplete(true);
     }
-  }, [domainCrawlLoading, isFinishedDeepCrawl, crawlData.length]);
+  }, [domainCrawlLoading, isFinishedDeepCrawl, crawlDataLength]);
 
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
     return showComplete
-      ? crawlData?.length || streamedCrawledPages || 0
+      ? streamedCrawledPages || crawlDataLength || 0
       : streamedCrawledPages || 0;
-  }, [showComplete, crawlData.length, streamedCrawledPages]);
+  }, [showComplete, crawlDataLength, streamedCrawledPages]);
 
   const displayTotal = useMemo(() => {
     return showComplete
-      ? crawlData?.length || streamedTotalPages || 0
+      ? streamedTotalPages || crawlDataLength || 0
       : streamedTotalPages || 0;
-  }, [showComplete, crawlData.length, streamedTotalPages]);
+  }, [showComplete, crawlDataLength, streamedTotalPages]);
 
   // Percentage calculation
   const percentage = useMemo(() => {
@@ -151,7 +150,7 @@ const FooterLoader = () => {
         {(showComplete ||
           (percentage >= 99.9 &&
             !domainCrawlLoading &&
-            crawlData.length > 0)) && (
+            crawlDataLength > 0)) && (
             <Badge
               variant="filled"
               size="xs"

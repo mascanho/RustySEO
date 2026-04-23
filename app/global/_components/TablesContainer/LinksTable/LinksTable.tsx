@@ -35,6 +35,9 @@ import {
   DropdownMenuTrigger as FilterTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FiFilter } from "react-icons/fi";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 
 interface TableCrawlProps {
   rows: Array<any>;
@@ -390,7 +393,8 @@ const LinksTable = ({
     headerTitles.map(() => true),
   );
   const [statusFilter, setStatusFilter] = useState("all");
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
   const startXRef = useRef(0);
 
   const handleMouseDown = useCallback(
@@ -500,12 +504,46 @@ const LinksTable = ({
   }, [debouncedSearch]);
 
   const handleDownload = useCallback(async () => {
-    if (!rows.length) {
-      toast.error("No data to download");
-      return;
+    toast.info("Exporting directly from Database...");
+    setIsGeneratingExcel(true);
+    try {
+      if (tabName === "Internal Links" || tabName === "All Links") {
+        const internalFileBuffer = await invoke(
+          "export_internal_links_to_excel_command",
+        );
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-InternalLinks.xlsx`,
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(internalFileBuffer as any));
+          toast.success("Internal Links Excel Export completed!");
+        }
+      }
+
+      if (tabName === "External Links" || tabName === "All Links") {
+        const externalFileBuffer = await invoke(
+          "export_external_links_to_excel_command",
+        );
+        const externalFilePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-ExternalLinks.xlsx`,
+        });
+        if (externalFilePath) {
+          await writeFile(
+            externalFilePath,
+            new Uint8Array(externalFileBuffer as any),
+          );
+          toast.success("External Links Excel Export completed!");
+        }
+      }
+      setIsGeneratingExcel(false);
+    } catch (error) {
+      console.error("Error generating Excel export:", error);
+      setIsGeneratingExcel(false);
+      toast.error("Failed to export data");
     }
-    await exportLinksCSV(rows);
-  }, [rows]);
+  }, [tabName, setIsGeneratingExcel]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
 

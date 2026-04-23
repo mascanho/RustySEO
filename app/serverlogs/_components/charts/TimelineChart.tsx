@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -36,7 +36,9 @@ const chartConfig = {
 export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
-  const { timelineData, fetchTimelineAggregations, activeFilters } = useLogAnalysis();
+  const timelineData = useLogAnalysisStore((state) => state.timelineData);
+  const fetchTimelineAggregations = useLogAnalysisStore((state) => state.fetchTimelineAggregations);
+  const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   React.useEffect(() => {
     fetchTimelineAggregations(viewMode, activeFilters);

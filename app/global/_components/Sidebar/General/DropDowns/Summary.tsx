@@ -84,7 +84,8 @@ const reducer = (state: State, action: Action): State => {
 };
 
 const Summary: React.FC = () => {
-  const { crawlData, setSummary } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const setSummary = useGlobalCrawlStore((state) => state.setSummary);
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const [isOpen, setIsOpen] = useState(false);

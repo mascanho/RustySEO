@@ -48,14 +48,12 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function MissingTitlesChart() {
-  const {
-    crawlData,
-    javascript,
-    css,
-    domainCrawlLoading,
-    issuesData,
-    issuesView,
-  } = useGlobalCrawlStore();
+    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const javascript = useGlobalCrawlStore((state) => state.javascript);
+  const css = useGlobalCrawlStore((state) => state.css);
+  const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
+  const issuesData = useGlobalCrawlStore((state) => state.issuesData);
+  const issuesView = useGlobalCrawlStore((state) => state.issuesView);
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 

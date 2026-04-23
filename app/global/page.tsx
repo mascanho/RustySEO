@@ -42,30 +42,23 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("first");
 
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const {
-    crawlData,
-    setDomainCrawlLoading,
-    clearDomainCrawlData,
-    addDomainCrawlResult,
-    setSelectedTableURL,
-    setIssuesData,
-    setFinishedDeepCrawl,
-    setCrawlSessionTotalArray,
-    setRobotsBlocked,
-    setFavicon,
-  } = useGlobalCrawlStore();
+  const setDomainCrawlLoading = useGlobalCrawlStore((state) => state.setDomainCrawlLoading);
+  const clearDomainCrawlData = useGlobalCrawlStore((state) => state.clearDomainCrawlData);
+  const addDomainCrawlResult = useGlobalCrawlStore((state) => state.addDomainCrawlResult);
+  const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
+  const setIssuesData = useGlobalCrawlStore((state) => state.setIssuesData);
+  const setFinishedDeepCrawl = useGlobalCrawlStore((state) => state.setFinishedDeepCrawl);
+  const setCrawlSessionTotalArray = useGlobalCrawlStore((state) => state.setCrawlSessionTotalArray);
+  const setRobotsBlocked = useGlobalCrawlStore((state) => state.setRobotsBlocked);
+  const setFavicon = useGlobalCrawlStore((state) => state.setFavicon);
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
 
-
-
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
   const [error, setError] = useState("");
-
-
 
   // Debounced search handler
   const handleSearchChange = useCallback(
@@ -132,8 +125,9 @@ export default function Page() {
 
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
-      if (crawlData?.length) {
-        crawledLinks.push(crawlData.length);
+      const currentCrawlData = useGlobalCrawlStore.getState().crawlData;
+      if (currentCrawlData?.length) {
+        crawledLinks.push(currentCrawlData.length);
         setCrawlSessionTotalArray(crawledLinks);
       } else {
         crawledLinks.push(0);
@@ -147,27 +141,58 @@ export default function Page() {
   useEffect(() => {
     console.log("Initializing crawl event listeners...");
 
+    const buffer = {
+      results: [] as any[],
+      timer: null as any,
+    };
+
+    const flushBuffer = () => {
+      if (buffer.results.length > 0) {
+        // Chunk large flushes to avoid freezing the main thread.
+        // A single concat of 400+ items into a 30K+ array can freeze the UI.
+        const CHUNK_SIZE = 200;
+        const chunks: any[][] = [];
+        for (let i = 0; i < buffer.results.length; i += CHUNK_SIZE) {
+          chunks.push(buffer.results.slice(i, i + CHUNK_SIZE));
+        }
+        buffer.results = [];
+        chunks.forEach((chunk, i) => {
+          setTimeout(() => addDomainCrawlResult(chunk), i * 30);
+        });
+      }
+      buffer.timer = null;
+    };
+
     const unlistenPromise = listen("crawl_result", (event) => {
       // The payload structure is now { results: LightCrawlResult[] } (batched)
-      const payload = event.payload;
+      const payload: any = event.payload;
 
       if (payload && typeof payload === "object") {
         const results = payload.results;
 
         if (Array.isArray(results) && results.length > 0) {
-          addDomainCrawlResult(results);
+          buffer.results.push(...results);
         } else if (payload.result && typeof payload.result === "object") {
-          // Backward compatibility: handle single result
-          addDomainCrawlResult(payload.result);
+          buffer.results.push(payload.result);
+        }
+
+        // Throttle updates to Zustand to prevent memory thrashing
+        // At 40K URLs, Zustand concats are very expensive.
+        if (!buffer.timer) {
+          buffer.timer = setTimeout(flushBuffer, 1500);
         }
       }
     });
 
-
-
     listen("crawl_complete", (event) => {
       console.log("🏁 Crawl complete event received!");
       console.log("🏁 Crawl complete payload:", event.payload);
+
+      // Flush any remaining items immediately
+      if (buffer.timer) {
+        clearTimeout(buffer.timer);
+      }
+      flushBuffer();
 
       // @ts-ignore
       if (event.payload && event.payload.robots_blocked) {
@@ -182,6 +207,12 @@ export default function Page() {
     });
 
     listen("robots_blocked", (event) => {
+      // Flush before setting other status
+      if (buffer.timer) {
+        clearTimeout(buffer.timer);
+      }
+      flushBuffer();
+
       console.log("🚫 Robot Blocked URLs received:", event.payload);
       if (Array.isArray(event.payload)) {
         // @ts-ignore
@@ -204,6 +235,8 @@ export default function Page() {
     console.log("✅ Crawl event listeners registered");
 
     return () => {
+      if (buffer.timer) clearTimeout(buffer.timer);
+      flushBuffer();
       unlistenPromise
         .then((unlisten) => {
           console.log("Cleaning up listeners");
@@ -214,7 +247,7 @@ export default function Page() {
   }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
-  const crawlDataLength = crawlData.length;
+  const crawlDataLength = useGlobalCrawlStore.getState().crawlData.length;
 
   // POWERBI eMBED HANDLING FROM LOCALSTORAGE
   useEffect(() => {
@@ -239,8 +272,6 @@ export default function Page() {
 
     check_psi_status();
   }, []);
-
-
 
   return (
     <main className="flex h-full w-full">

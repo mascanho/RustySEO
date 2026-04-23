@@ -1,8 +1,9 @@
 //! Crawler state management types and structures
 
+use dashmap::DashMap;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Instant;
 use url::Url;
 
@@ -58,7 +59,9 @@ pub struct CrawlerState {
     /// Global URL → HTTP status code registry shared between the crawler and link checker.
     /// Populated by the crawler after fetching each page; read by the link checker to skip
     /// redundant HTTP requests for URLs whose status is already known.
-    pub url_status_registry: Arc<RwLock<HashMap<String, u16>>>,
+    /// Uses DashMap (lock-free concurrent hashmap) to avoid blocking the async executor
+    /// under high concurrency (many simultaneous inserts from 50+ tasks).
+    pub url_status_registry: Arc<DashMap<String, u16>>,
 }
 
 impl CrawlerState {
@@ -78,7 +81,7 @@ impl CrawlerState {
             last_progress_emit: Instant::now(),
             last_result_emit: Instant::now(),
             pending_results: Vec::with_capacity(64),
-            url_status_registry: Arc::new(RwLock::new(HashMap::new())),
+            url_status_registry: Arc::new(DashMap::with_capacity(4096)),
         }
     }
 
@@ -87,7 +90,7 @@ impl CrawlerState {
         self
     }
 
-    pub fn with_url_status_registry(mut self, registry: Arc<RwLock<HashMap<String, u16>>>) -> Self {
+    pub fn with_url_status_registry(mut self, registry: Arc<DashMap<String, u16>>) -> Self {
         self.url_status_registry = registry;
         self
     }

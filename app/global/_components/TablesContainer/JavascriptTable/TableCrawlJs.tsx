@@ -334,7 +334,8 @@ const TableCrawlJs = ({
     cell: null,
   });
 
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
+  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
 
   // Dynamically adjust ID column width based on the number of rows
   useEffect(() => {
@@ -359,12 +360,36 @@ const TableCrawlJs = ({
       return;
     }
 
-    toast.info("Getting your data ready...");
-    try {
-      await exportJsDataCSV(rows);
-    } catch (error) {
-      console.error("Error during export:", error);
-      toast.error("Failed to export data");
+    // For large datasets, export directly from database
+    if (rows.length > 1000) {
+      toast.info(
+        "Massive dataset detected. Exporting directly from Database...",
+      );
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("export_scripts_to_excel_command");
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-JavaScript.xlsx`,
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
+          toast.success("Excel Database Export completed!");
+        }
+      } catch (error) {
+        console.error("Error generating massive Excel export:", error);
+        setIsGeneratingExcel(false);
+      }
+    } else {
+      // For small datasets, use frontend CSV
+      toast.info("Getting your data ready...");
+      try {
+        await exportJsDataCSV(rows);
+      } catch (error) {
+        console.error("Error during export:", error);
+        toast.error("Failed to export data");
+      }
     }
   };
 

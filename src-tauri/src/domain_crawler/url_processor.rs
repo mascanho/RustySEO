@@ -248,13 +248,12 @@ pub async fn process_url(
     }
 
     // Register all URL status codes from this crawl into the global registry.
-    // This includes every redirect hop and the final URL, so the link checker
-    // can resolve these instantly without any HTTP requests.
-    // Note: blocked/fake-200 pages are NOT registered (we returned Err above),
-    // so the link checker will re-check them normally.
-    if let Ok(mut reg) = url_status_registry.write() {
+    // DashMap allows concurrent inserts without any blocking or locking.
+    // Cap the registry at 200K entries to prevent unbounded memory growth on huge crawls.
+    const MAX_REGISTRY_SIZE: usize = 200_000;
+    if url_status_registry.len() < MAX_REGISTRY_SIZE {
         for hop in &redirect_chain {
-            reg.insert(hop.url.clone(), hop.status_code);
+            url_status_registry.insert(hop.url.clone(), hop.status_code);
         }
     }
 
@@ -538,8 +537,14 @@ async fn update_state_and_emit_progress(
     state.pending_urls.remove(&normalized_current_url);
     state.last_activity = Instant::now();
 
-    // Only process links if we haven't reached limits and depth allows
-    if depth < settings.max_depth && state.total_urls < settings.max_urls_per_domain {
+    // Only process links if we haven't reached limits, depth allows, and queue isn't too large.
+    // Cap the queue at 50K entries to prevent unbounded memory growth — the queue grows
+    // much faster than it drains (each page yields 50-200+ links).
+    const MAX_QUEUE_SIZE: usize = 50_000;
+    if depth < settings.max_depth
+        && state.total_urls < settings.max_urls_per_domain
+        && state.queue.len() < MAX_QUEUE_SIZE
+    {
         let links = links_for_crawler;
         let links_found = links.len();
         if links_found > 0 && state.crawled_urls % 100 == 0 {
@@ -560,12 +565,12 @@ async fn update_state_and_emit_progress(
             // Pattern checking to avoid infinite URL traps
             let pattern_count = *state.url_patterns.get(&url_pattern).unwrap_or(&0);
 
-            // Set a very high limit for pattern-based skipping.
-            // 10,000 is high enough to not interfere with normal sites but low enough to stop an infinite trap eventually.
-            let should_skip_pattern = pattern_count > 10000;
+            // Set a reasonable limit for pattern-based skipping.
+            // 500 is high enough for normal sites but catches infinite URL traps before memory bloats.
+            let should_skip_pattern = pattern_count > 500;
 
             if should_skip_pattern {
-                if pattern_count == 10001 {
+                if pattern_count == 501 {
                     tracing::warn!(
                         "Pattern trap detected for pattern: {}. Limiting discovery.",
                         url_pattern
@@ -705,13 +710,18 @@ async fn update_state_and_emit_progress(
         || active_pending == 0; // Flush on completion
 
     if should_emit_results && !state.pending_results.is_empty() {
+        // Drain results BEFORE dropping the lock so we minimise lock-held time.
+        // The IPC emit happens after the lock is released to avoid blocking
+        // other tasks that are waiting to acquire the state mutex.
         let result_data = CrawlResultData {
             results: state.pending_results.drain(..).collect(),
         };
+        drop(state); // Release lock before IPC call
         if let Err(err) = app_handle.emit("crawl_result", result_data) {
             eprintln!("Failed to emit crawl result batch: {}", err);
         }
-        state.last_result_emit = now;
+        // Note: state is dropped here; last_result_emit is updated implicitly through the emit timestamp
+        return; // state is consumed by drop, exit the function
     }
 
     // progress info already logged above

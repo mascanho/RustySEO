@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
-import { debounce } from "lodash";
+import { debounce, throttle } from "lodash";
 import TableCrawl from "./components/TableCrawl";
 import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
 import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
@@ -62,15 +62,19 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { selectedTableURL } = useGlobalCrawlStore();
-  const {
-    crawlData,
-    issuesView,
-    setIssuesView,
-    issuesData,
-    setGenericChart,
-    setDeepCrawlTab,
-  } = useCrawlStore();
+  const selectedTableURL = useGlobalCrawlStore(
+    (state) => state.selectedTableURL,
+  );
+  const issuesView = useCrawlStore((state) => state.issuesView);
+  const issuesData = useCrawlStore((state) => state.issuesData);
+  const { setIssuesView, setGenericChart, setDeepCrawlTab } = useCrawlStore(
+    (state) => ({
+      setIssuesView: state.setIssuesView,
+      setGenericChart: state.setGenericChart,
+      setDeepCrawlTab: state.setDeepCrawlTab,
+    }),
+    shallow,
+  );
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
   const { inlinks, outlinks } = useGlobalCrawlStore(
@@ -81,8 +85,7 @@ export default function Home() {
     shallow,
   );
 
-  // Sync `activeTab` with `deepCrawlTab` when it changes from outside
-  const { deepCrawlTab: storeDeepCrawlTab } = useGlobalCrawlStore();
+  const storeDeepCrawlTab = useGlobalCrawlStore((state) => state.deepCrawlTab);
   useEffect(() => {
     if (storeDeepCrawlTab && storeDeepCrawlTab !== activeTab) {
       setActiveTab(storeDeepCrawlTab);
@@ -131,20 +134,36 @@ export default function Home() {
     };
   }, [debouncedUpdateHeight]);
 
-  const handleResize = useCallback((newBottomHeight: number) => {
-    setBottomTableHeight(newBottomHeight);
-  }, []);
-  const [debouncedCrawlData, setDebouncedCrawlData] = useState(crawlData);
-
-  const debouncedUpdate = useMemo(() => {
-    const baseDelay = crawlData.length > 5000 ? 2000 : 500;
-    return debounce(setDebouncedCrawlData, baseDelay);
-  }, [crawlData.length]); // Recreate only when length changes
+  const handleResize = useMemo(
+    () =>
+      throttle((newBottomHeight: number) => {
+        setBottomTableHeight(newBottomHeight);
+      }, 16),
+    [],
+  );
+  // Use a ref to avoid duplicating the entire crawlData array in memory.
+  // We use an interval to periodically sync the render state.
+  const debouncedCrawlDataRef = useRef(
+    useGlobalCrawlStore.getState().crawlData,
+  );
+  const [, setRenderTick] = useState(0);
 
   useEffect(() => {
-    debouncedUpdate(crawlData);
-    return () => debouncedUpdate.cancel();
-  }, [crawlData, debouncedUpdate]);
+    // Continuously check if crawlData has grown and sync it every 2s
+    const timer = setInterval(() => {
+      // Only trigger a re-render if the array size has actually changed significantly
+      // or if the underlying reference changed (to handle ring buffer cap)
+      const currentStored = useGlobalCrawlStore.getState().crawlData;
+      if (debouncedCrawlDataRef.current !== currentStored) {
+        debouncedCrawlDataRef.current = currentStored;
+        setRenderTick((t) => t + 1);
+      }
+    }, 2000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const debouncedCrawlData = debouncedCrawlDataRef.current;
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
@@ -212,7 +231,7 @@ export default function Home() {
       };
 
       // Immediate fetch check This is important to avoid unnecessary re-renders
-      let shouldFetchImmediate = true;
+      let shouldFetchImmediate = false;
       if (activeTab === "images" && aggregatedData.images.length === 0)
         shouldFetchImmediate = true;
       else if (
@@ -244,7 +263,14 @@ export default function Home() {
       else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
         shouldFetchImmediate = true;
 
-      if (shouldFetchImmediate || !isFinishedDeepCrawl) {
+      const totalUrlsCrawled = useGlobalCrawlStore.getState().totalUrlsCrawled;
+      // Prevent massive JSON payloads crossing the IPC bridge during large crawls
+      const isScaleTooLargeForLive = totalUrlsCrawled > 2000;
+
+      if (
+        shouldFetchImmediate ||
+        (!isFinishedDeepCrawl && !isScaleTooLargeForLive)
+      ) {
         await fetchForTab();
       }
     };
@@ -254,7 +280,7 @@ export default function Home() {
     // Set up polling if crawl is active
     let intervalId = null;
     if (!isFinishedDeepCrawl) {
-      intervalId = setInterval(fetchData, 5000); // Poll every 5 seconds
+      intervalId = setInterval(fetchData, 10000); // Poll every 10 seconds to reduce IPC bottleneck
     }
 
     return () => {
@@ -320,11 +346,11 @@ export default function Home() {
 
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return [];
-    if (!crawlData) {
+    if (!debouncedCrawlData) {
       return [];
     }
 
-    const customSearch = crawlData.filter(
+    const customSearch = debouncedCrawlData.filter(
       (search) => search?.extractor?.html === true,
     );
     return customSearch;
@@ -464,15 +490,24 @@ export default function Home() {
               value="internalLinks"
               className="flex-grow overflow-hidden"
             >
-              <LinksTable tabName={"All Links"} rows={filteredInternalLinks} />
+              <LinksTable
+                tabName={"Internal Links"}
+                rows={filteredInternalLinks}
+              />
             </TabsContent>
 
+            {/*EXTERNAL LINKS*/}
             <TabsContent
               value="externalLinks"
               className="flex-grow overflow-hidden"
             >
-              <LinksTable tabName={"All Links"} rows={filteredExternalLinks} />
+              <LinksTable
+                tabName={"External Links"}
+                rows={filteredExternalLinks}
+              />
             </TabsContent>
+
+            {/*IMAGES*/}
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable
                 tabName={"All Images"}
@@ -487,11 +522,11 @@ export default function Home() {
             {/* CORE WEB VITALS TABLe */}
             <TabsContent value="cwv" className="flex-grow overflow-hidden">
               <CoreWebVitalsTable
-                tabName={"AllData"}
+                tabName={"CoreWebVitals"}
                 rows={
                   aggregatedData?.cwv?.length > 0
                     ? aggregatedData.cwv
-                    : crawlData
+                    : debouncedCrawlData
                 }
               />
             </TabsContent>
@@ -504,11 +539,12 @@ export default function Home() {
               />
             </TabsContent>
 
+            {/*REDIRECTS*/}
             <TabsContent
               value="redirects"
               className="flex-grow overflow-hidden"
             >
-              <RedirectsTable tabName={"AllData"} rows={filteredRedirects} />
+              <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} />
             </TabsContent>
             <TabsContent value="files" className="flex-grow overflow-hidden">
               <FilesTable tabName={"All Files"} rows={filteredFilesArr} />

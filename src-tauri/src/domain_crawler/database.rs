@@ -629,7 +629,161 @@ impl Database {
         })
         .await?
     }
+
+    /// Paginated table query — returns a page of LightCrawlResult-shaped rows from the DB.
+    /// `limit` is the page size, `offset` is the starting row (0-based).
+    /// Only extracts the fields needed by TableCrawl to keep IPC payloads small.
+    pub async fn get_crawl_page(&self, limit: i64, offset: i64, search: Option<String>) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+
+            let like_pattern = search.map(|s| format!("%{}%", s.to_lowercase()));
+
+            let rows_result: Result<Vec<String>, rusqlite::Error> = if let Some(ref pattern) = like_pattern {
+                let mut stmt = conn.prepare("SELECT data FROM domain_crawl WHERE LOWER(data) LIKE ?1 LIMIT ?2 OFFSET ?3")?;
+                let mut rows = Vec::new();
+                for row_res in stmt.query_map(params![pattern, limit, offset], |row| row.get::<_, String>(0))? {
+                    rows.push(row_res?);
+                }
+                Ok(rows)
+            } else {
+                let mut stmt = conn.prepare("SELECT data FROM domain_crawl LIMIT ?1 OFFSET ?2")?;
+                let mut rows = Vec::new();
+                for row_res in stmt.query_map(params![limit, offset], |row| row.get::<_, String>(0))? {
+                    rows.push(row_res?);
+                }
+                Ok(rows)
+            };
+
+            let rows = match rows_result {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("Database query error: {}", e);
+                    return Ok(Value::Array(vec![]));
+                }
+            };
+
+            let mut results = Vec::with_capacity(limit as usize);
+            for data_json in rows {
+                let data: Value = match serde_json::from_str(&data_json) {
+                    Ok(v) => v,
+                    Err(_) => continue,
+                };
+
+                // Extract only the fields TableCrawl needs — keeps IPC payload small
+                let light = serde_json::json!({
+                    "url": data.get("url").cloned().unwrap_or(Value::Null),
+                    "title": data.get("title").cloned().unwrap_or(Value::Null),
+                    "description": data.get("description").cloned().unwrap_or(Value::Null),
+                    "headings": data.get("headings").cloned().unwrap_or(Value::Null),
+                    "status_code": data.get("status_code").cloned().unwrap_or(Value::Null),
+                    "word_count": data.get("word_count").cloned().unwrap_or(Value::Null),
+                    "response_time": data.get("response_time").cloned().unwrap_or(Value::Null),
+                    "mobile": data.get("mobile").cloned().unwrap_or(Value::Null),
+                    "indexability": data.get("indexability").cloned().unwrap_or(Value::Null),
+                    "language": data.get("language").cloned().unwrap_or(Value::Null),
+                    "schema": data.get("schema").and_then(|v| v.as_str()).map(|s| !s.is_empty()).unwrap_or(
+                        data.get("schema").and_then(|v| v.as_bool()).unwrap_or(false)
+                    ),
+                    "url_depth": data.get("url_depth").cloned().unwrap_or(Value::Null),
+                    "cookies_count": data.get("cookies_count").cloned()
+                        .unwrap_or_else(|| {
+                            data.get("cookies").and_then(|c| c.get("Ok"))
+                                .and_then(|arr| arr.as_array())
+                                .map(|a| Value::from(a.len()))
+                                .unwrap_or(Value::from(0))
+                        }),
+                    "page_size": data.get("page_size").cloned().unwrap_or(Value::Null),
+                    "content_type": data.get("content_type").cloned().unwrap_or(Value::Null),
+                    "opengraph": data.get("opengraph").cloned().unwrap_or(Value::Null),
+                    "flesch": data.get("flesch").and_then(|f| f.get("Ok")).and_then(|arr| arr.get(0)).cloned(),
+                    "flesch_grade": data.get("flesch").and_then(|f| f.get("Ok")).and_then(|arr| arr.get(1)).cloned(),
+                    "text_ratio": data.get("text_ratio").and_then(|v| v.as_array())
+                        .and_then(|a| a.first())
+                        .and_then(|o| o.get("text_ratio"))
+                        .cloned(),
+                    "extractor": data.get("extractor").cloned().unwrap_or(Value::Null),
+                    "images_count": data.get("images").and_then(|i| i.get("Ok"))
+                        .and_then(|arr| arr.as_array())
+                        .map(|a| Value::from(a.len()))
+                        .unwrap_or(Value::from(0)),
+                    "had_redirect": data.get("had_redirect").cloned().unwrap_or(Value::Bool(false)),
+                    "redirect_url": data.get("redirect_url").cloned().unwrap_or(Value::Null),
+                    "redirect_count": data.get("redirect_count").cloned().unwrap_or(Value::from(0)),
+                    "redirection_type": data.get("redirection_type").cloned().unwrap_or(Value::Null),
+                    "https": data.get("https").cloned().unwrap_or(Value::Bool(false)),
+                    "meta_robots": data.get("meta_robots").cloned().unwrap_or(Value::Null),
+                    "canonicals": data.get("canonicals").cloned().unwrap_or(Value::Null),
+                    "internal_links_count": data.get("inoutlinks_status_codes")
+                        .and_then(|l| l.get("internal"))
+                        .and_then(|v| v.as_array())
+                        .map(|a| Value::from(a.len()))
+                        .unwrap_or(Value::from(0)),
+                    "external_links_count": data.get("inoutlinks_status_codes")
+                        .and_then(|l| l.get("external"))
+                        .and_then(|v| v.as_array())
+                        .map(|a| Value::from(a.len()))
+                        .unwrap_or(Value::from(0)),
+                });
+
+                results.push(light);
+            }
+
+            Ok(Value::Array(results))
+        })
+        .await?
+    }
+
+    pub async fn get_all_crawl_data(&self) -> Result<Vec<Value>, DatabaseError> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
+            
+            let mut results = Vec::new();
+            let rows = stmt.query_map([], |row| {
+                let data_json: String = row.get(0)?;
+                Ok(data_json)
+            })?;
+            
+            for row in rows {
+                if let Ok(data_json) = row {
+                    if let Ok(data) = serde_json::from_str(&data_json) {
+                        results.push(data);
+                    }
+                }
+            }
+            
+            Ok(results)
+        })
+        .await?
+    }
+
+    /// Returns the total row count (with optional search filter) for pagination controls.
+    pub async fn get_crawl_total_count(&self, search: Option<String>) -> Result<i64, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let count: i64 = if let Some(s) = search {
+                let pattern = format!("%{}%", s.to_lowercase());
+                conn.query_row(
+                    "SELECT COUNT(*) FROM domain_crawl WHERE LOWER(data) LIKE ?1",
+                    params![pattern],
+                    |row| row.get(0),
+                )?
+            } else {
+                conn.query_row("SELECT COUNT(*) FROM domain_crawl", [], |row| row.get(0))?
+            };
+            Ok(count)
+        })
+        .await?
+    }
 }
+
 
 // Helper for file extension check
 fn has_file_extension(url: &str) -> bool {

@@ -115,7 +115,7 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ActiveFilters {
     pub search_term: String,
     pub status_filter: Vec<u16>,
@@ -186,6 +186,24 @@ fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) 
         "Email" => ("(LOWER(referer) LIKE 'mail.%' OR LOWER(referer) LIKE '%email%')".to_string(), vec![]),
         "News" => ("LOWER(referer) LIKE 'news.%'".to_string(), vec![]),
         "Blog" => ("LOWER(referer) LIKE 'blog.%'".to_string(), vec![]),
+        "Other" => {
+            let patterns = [
+                "google.com", "google.co", "bing.com", "yahoo.com", 
+                "duckduckgo.com", "baidu.com", "yandex.com", "yandex.ru", 
+                "facebook.com", "fb.com", "twitter.com", "x.com", 
+                "linkedin.com", "instagram.com", "pinterest.com", "reddit.com", 
+                "tiktok.com", "github.com", "youtube.com", "stackoverflow.com", 
+                "medium.com", "wordpress.com", "blogger.com", "quora.com", 
+                "vimeo.com", "wikipedia.org", "amazon.com", "ebay.com", 
+                "etsy.com", "shopify.com", "localhost", "127.0.0.1", "::1"
+            ];
+            let mut clauses = Vec::new();
+            clauses.push("referer IS NOT NULL AND referer != '' AND referer != '-'".to_string());
+            for p in patterns {
+                clauses.push(format!("LOWER(referer) NOT LIKE '%{}%'", p));
+            }
+            (format!("({})", clauses.join(" AND ")), vec![])
+        },
         other => {
             let pattern = format!("%{}%", other.to_lowercase());
             ("LOWER(referer) LIKE ?".to_string(), vec![pattern.into()])
@@ -232,6 +250,11 @@ fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value
     }
     let not_browser = not_browser_clauses.join(" AND ");
 
+    let not_android = "LOWER(user_agent) NOT LIKE '%android%'";
+    let not_ios = "(LOWER(user_agent) NOT LIKE '%iphone%' AND LOWER(user_agent) NOT LIKE '%ipad%' AND LOWER(user_agent) NOT LIKE '%ipod%')";
+    let not_windows = "LOWER(user_agent) NOT LIKE '%windows%'";
+    let not_macos = "LOWER(user_agent) NOT LIKE '%mac os%'";
+
     match cat {
         // 1. Bots
         "Googlebot" => ("LOWER(user_agent) LIKE '%googlebot%'".to_string(), vec![]),
@@ -272,10 +295,10 @@ fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value
 
         // 4. Devices/OS (Exclude Bots, Tools, and Browsers)
         "Android Browser" => (format!("(LOWER(user_agent) LIKE '%android%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "iOS Browser" => (format!("((LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "Windows" => (format!("(LOWER(user_agent) LIKE '%windows%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "macOS" => (format!("(LOWER(user_agent) LIKE '%mac os%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
-        "Linux" => (format!("(LOWER(user_agent) LIKE '%linux%' AND {} AND {} AND {})", not_bot, not_tool, not_browser), vec![]),
+        "iOS Browser" => (format!("((LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android), vec![]),
+        "Windows" => (format!("(LOWER(user_agent) LIKE '%windows%' AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios), vec![]),
+        "macOS" => (format!("(LOWER(user_agent) LIKE '%mac os%' AND {} AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios, not_windows), vec![]),
+        "Linux" => (format!("(LOWER(user_agent) LIKE '%linux%' AND {} AND {} AND {} AND {} AND {} AND {} AND {})", not_bot, not_tool, not_browser, not_android, not_ios, not_windows, not_macos), vec![]),
 
         // 5. Specials
         "Unknown/Empty" => ("(user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown')".to_string(), vec![]),
@@ -635,7 +658,8 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
 
     // For stability, we MUST limit the "all" logs to a sane number.
     // Returning millions of logs via IPC will crash the app.
-    let max_logs = 10000;
+    // Reduced from 10000 to 1000 to strictly prevent WebKit EXC_BREAKPOINT JS Core crashes.
+    let max_logs = 1000;
     let query = format!(
         "SELECT * FROM active_parsed_logs WHERE {} {} LIMIT {}",
         where_sql, order_sql, max_logs
@@ -1159,7 +1183,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         for (p, cat) in ref_patterns {
             case_parts.push(format!("WHEN LOWER(referer) LIKE '%{}%' THEN '{}'", p, cat));
         }
-        case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%') THEN 'Local/Internal'".to_string());
+        case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%') THEN 'Local/Internal'".to_string());
 
         let query = format!(
             "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
@@ -1183,14 +1207,16 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
 }
 
 #[tauri::command]
-pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
+pub fn get_active_logs_stats(filters: ActiveFilters) -> Result<LogAnalysisResult, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
     // Get total count, crawler count, unique IPs and UAs
     let mut stmt = conn
-        .prepare(
+        .prepare(&format!(
             "
         SELECT
             COUNT(*),
@@ -1201,21 +1227,26 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
             MIN(timestamp),
             MAX(timestamp)
         FROM active_parsed_logs
+        WHERE {}
     ",
-        )
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
 
-    let (total_count, crawler_count, unique_ips, unique_uas, success_count, start_time, end_time): (i64, Option<i64>, i64, i64, Option<i64>, Option<String>, Option<String>) = stmt.query_row([], |row| {
-        Ok((
-            row.get(0)?,
-            row.get(1)?,
-            row.get(2)?,
-            row.get(3)?,
-            row.get(4)?,
-            row.get(5)?,
-            row.get(6)?,
-        ))
-    }).map_err(|e| e.to_string())?;
+    let (total_count, crawler_count, unique_ips, unique_uas, success_count, start_time, end_time): (i64, Option<i64>, i64, i64, Option<i64>, Option<String>, Option<String>) = stmt.query_row(
+        rusqlite::params_from_iter(params_vec.iter()),
+        |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+                row.get(5)?,
+                row.get(6)?,
+            ))
+        }
+    ).map_err(|e| e.to_string())?;
 
     let total_count = total_count as usize;
     let crawler_count = crawler_count.unwrap_or(0) as usize;
@@ -1227,11 +1258,14 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
 
     // Get Status Code Counts
     let mut status_stmt = conn
-        .prepare("SELECT status, COUNT(*) FROM active_parsed_logs GROUP BY status")
+        .prepare(&format!(
+            "SELECT status, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY status",
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
     let mut status_codes = StatusCodeCounts::new();
     let status_rows = status_stmt
-        .query_map([], |row| {
+        .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
             Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
         })
         .map_err(|e| e.to_string())?;
@@ -1247,7 +1281,7 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
 
     // Get Bot Totals using a single SUM(CASE) query for consistency
     let mut bot_stmt = conn
-        .prepare(
+        .prepare(&format!(
             "
         SELECT
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
@@ -1259,8 +1293,10 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
             SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%' OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%' OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
             SUM(CASE WHEN LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%' THEN 1 ELSE 0 END)
         FROM active_parsed_logs
+        WHERE {}
     ",
-        )
+            where_sql
+        ))
         .map_err(|e| e.to_string())?;
 
     let (ggl, bng, sem, ahr, moz, upt, oai, cld): (
@@ -1273,7 +1309,7 @@ pub fn get_active_logs_stats() -> Result<LogAnalysisResult, String> {
         Option<i64>,
         Option<i64>,
     ) = bot_stmt
-        .query_row([], |row| {
+        .query_row(rusqlite::params_from_iter(params_vec.iter()), |row| {
             Ok((
                 row.get(0)?,
                 row.get(1)?,
@@ -1502,7 +1538,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
         WHERE {}
         GROUP BY path, crawler_type, user_agent
         ORDER BY frequency DESC
-        LIMIT 10000
+        LIMIT 1000
     ",
         where_sql
     );
@@ -1606,3 +1642,239 @@ pub fn reclassify_all_segments() -> Result<(), String> {
     println!("All entries re-classified based on new taxonomies.");
     Ok(())
 }
+
+/// Export all logs from the active database directly to an Excel file.
+/// This runs entirely on the backend, avoiding IPC serialization limits.
+#[tauri::command]
+pub fn export_active_logs_excel(
+    file_path: String,
+    include_gsc: bool,
+) -> Result<usize, String> {
+    use rust_xlsxwriter::{Workbook, Format};
+
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    
+    // Optional: create a bold format for headers
+    let header_format = Format::new().set_bold();
+
+    // Write header row
+    let mut headers = vec![
+        "IP", "Country", "Browser", "Timestamp", "Method", "Path",
+        "Segment", "Taxonomy", "File Type", "Status Code", "Response Size",
+        "User Agent", "Referer", "Crawler Type", "Is Crawler", "Verified", "Filename",
+    ];
+    if include_gsc {
+        headers.extend_from_slice(&["Position", "Clicks", "Impressions", "CTR", "GSC URL"]);
+    }
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet.write_string_with_format(0, col as u16, *header, &header_format)
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Query all rows (no LIMIT) ordered by timestamp
+    let query = "SELECT ip, country, browser, timestamp, method, path, \
+                 segment, taxonomy, file_type, status, response_size, \
+                 user_agent, referer, crawler_type, is_crawler, verified, filename, \
+                 position, clicks, impressions, ctr, gsc_url \
+                 FROM active_parsed_logs ORDER BY timestamp ASC";
+
+    let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+    let mut rows = stmt.query([]).map_err(|e| e.to_string())?;
+    let mut total_exported: usize = 0;
+    let mut row_idx = 1;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let ip: String = row.get::<_, Option<String>>(0).unwrap_or(None).unwrap_or_default();
+        let country: String = row.get::<_, Option<String>>(1).unwrap_or(None).unwrap_or_default();
+        let browser: String = row.get::<_, Option<String>>(2).unwrap_or(None).unwrap_or_default();
+        let timestamp: String = row.get::<_, Option<String>>(3).unwrap_or(None).unwrap_or_default();
+        let method: String = row.get::<_, Option<String>>(4).unwrap_or(None).unwrap_or_default();
+        let path: String = row.get::<_, Option<String>>(5).unwrap_or(None).unwrap_or_default();
+        let segment: String = row.get::<_, Option<String>>(6).unwrap_or(None).unwrap_or_default();
+        let taxonomy: String = row.get::<_, Option<String>>(7).unwrap_or(None).unwrap_or_default();
+        let file_type: String = row.get::<_, Option<String>>(8).unwrap_or(None).unwrap_or_default();
+        let status: i64 = row.get::<_, Option<i64>>(9).unwrap_or(None).unwrap_or(0);
+        let response_size: i64 = row.get::<_, Option<i64>>(10).unwrap_or(None).unwrap_or(0);
+        let user_agent: String = row.get::<_, Option<String>>(11).unwrap_or(None).unwrap_or_default();
+        let referer: String = row.get::<_, Option<String>>(12).unwrap_or(None).unwrap_or("-".to_string());
+        let crawler_type: String = row.get::<_, Option<String>>(13).unwrap_or(None).unwrap_or_default();
+        let is_crawler: bool = row.get::<_, Option<bool>>(14).unwrap_or(None).unwrap_or(false);
+        let verified: bool = row.get::<_, Option<bool>>(15).unwrap_or(None).unwrap_or(false);
+        let filename: String = row.get::<_, Option<String>>(16).unwrap_or(None).unwrap_or_default();
+
+        // Format response size for human readability
+        let response_size_str = if response_size < 1024 {
+            format!("{} B", response_size)
+        } else if response_size < 1024 * 1024 {
+            format!("{:.1} KB", response_size as f64 / 1024.0)
+        } else {
+            format!("{:.1} MB", response_size as f64 / (1024.0 * 1024.0))
+        };
+
+        let row_values = vec![
+            ip, country, browser, timestamp, method, path,
+            segment, taxonomy, file_type, status.to_string(), response_size_str,
+            user_agent, referer, crawler_type, 
+            if is_crawler { "true".to_string() } else { "false".to_string() },
+            if verified { "true".to_string() } else { "false".to_string() },
+            filename,
+        ];
+
+        let mut col_idx = 0;
+        for val in &row_values {
+            worksheet.write_string(row_idx, col_idx, val).map_err(|e| e.to_string())?;
+            col_idx += 1;
+        }
+
+        if include_gsc {
+            let position: String = row.get::<_, Option<i32>>(17)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let clicks: String = row.get::<_, Option<i32>>(18)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let impressions: String = row.get::<_, Option<i32>>(19)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let ctr: String = row.get::<_, Option<f64>>(20)
+                .unwrap_or(None)
+                .map(|v| format!("{:.2}%", v * 100.0))
+                .unwrap_or_default();
+            let gsc_url: String = row.get::<_, Option<String>>(21)
+                .unwrap_or(None)
+                .unwrap_or_default();
+
+            worksheet.write_string(row_idx, col_idx, &position).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &clicks).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &impressions).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &ctr).map_err(|e| e.to_string())?; col_idx += 1;
+            worksheet.write_string(row_idx, col_idx, &gsc_url).map_err(|e| e.to_string())?;
+        }
+
+        row_idx += 1;
+        total_exported += 1;
+    }
+
+    workbook.save(&file_path).map_err(|e| e.to_string())?;
+
+    Ok(total_exported)
+}
+
+/// Export all logs from the active database directly to a CSV file.
+/// This runs entirely on the backend, bypassing Excel row limits.
+#[tauri::command]
+pub fn export_active_logs_csv(
+    file_path: String,
+    include_gsc: bool,
+) -> Result<usize, String> {
+    use csv::Writer;
+
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let mut wtr = Writer::from_path(&file_path).map_err(|e| e.to_string())?;
+
+    // Write header row
+    let mut headers = vec![
+        "IP", "Country", "Browser", "Timestamp", "Method", "Path",
+        "Segment", "Taxonomy", "File Type", "Status Code", "Response Size",
+        "User Agent", "Referer", "Crawler Type", "Is Crawler", "Verified", "Filename",
+    ];
+    if include_gsc {
+        headers.extend_from_slice(&["Position", "Clicks", "Impressions", "CTR", "GSC URL"]);
+    }
+    wtr.write_record(&headers).map_err(|e| e.to_string())?;
+
+    // Query all rows
+    let query = "SELECT ip, country, browser, timestamp, method, path, \
+                 segment, taxonomy, file_type, status, response_size, \
+                 user_agent, referer, crawler_type, is_crawler, verified, filename, \
+                 position, clicks, impressions, ctr, gsc_url \
+                 FROM active_parsed_logs ORDER BY timestamp ASC";
+
+    let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+    let mut rows = stmt.query([]).map_err(|e| e.to_string())?;
+    let mut total_exported: usize = 0;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let ip: String = row.get::<_, Option<String>>(0).unwrap_or(None).unwrap_or_default();
+        let country: String = row.get::<_, Option<String>>(1).unwrap_or(None).unwrap_or_default();
+        let browser: String = row.get::<_, Option<String>>(2).unwrap_or(None).unwrap_or_default();
+        let timestamp: String = row.get::<_, Option<String>>(3).unwrap_or(None).unwrap_or_default();
+        let method: String = row.get::<_, Option<String>>(4).unwrap_or(None).unwrap_or_default();
+        let path: String = row.get::<_, Option<String>>(5).unwrap_or(None).unwrap_or_default();
+        let segment: String = row.get::<_, Option<String>>(6).unwrap_or(None).unwrap_or_default();
+        let taxonomy: String = row.get::<_, Option<String>>(7).unwrap_or(None).unwrap_or_default();
+        let file_type: String = row.get::<_, Option<String>>(8).unwrap_or(None).unwrap_or_default();
+        let status: i64 = row.get::<_, Option<i64>>(9).unwrap_or(None).unwrap_or(0);
+        let response_size: i64 = row.get::<_, Option<i64>>(10).unwrap_or(None).unwrap_or(0);
+        let user_agent: String = row.get::<_, Option<String>>(11).unwrap_or(None).unwrap_or_default();
+        let referer: String = row.get::<_, Option<String>>(12).unwrap_or(None).unwrap_or("-".to_string());
+        let crawler_type: String = row.get::<_, Option<String>>(13).unwrap_or(None).unwrap_or_default();
+        let is_crawler: bool = row.get::<_, Option<bool>>(14).unwrap_or(None).unwrap_or(false);
+        let verified: bool = row.get::<_, Option<bool>>(15).unwrap_or(None).unwrap_or(false);
+        let filename: String = row.get::<_, Option<String>>(16).unwrap_or(None).unwrap_or_default();
+
+        let response_size_str = if response_size < 1024 {
+            format!("{} B", response_size)
+        } else if response_size < 1024 * 1024 {
+            format!("{:.1} KB", response_size as f64 / 1024.0)
+        } else {
+            format!("{:.1} MB", response_size as f64 / (1024.0 * 1024.0))
+        };
+
+        let mut row_record = vec![
+            ip, country, browser, timestamp, method, path,
+            segment, taxonomy, file_type, status.to_string(), response_size_str,
+            user_agent, referer, crawler_type,
+            if is_crawler { "true".to_string() } else { "false".to_string() },
+            if verified { "true".to_string() } else { "false".to_string() },
+            filename,
+        ];
+
+        if include_gsc {
+            let position: String = row.get::<_, Option<i32>>(17)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let clicks: String = row.get::<_, Option<i32>>(18)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let impressions: String = row.get::<_, Option<i32>>(19)
+                .unwrap_or(None)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let ctr: String = row.get::<_, Option<f64>>(20)
+                .unwrap_or(None)
+                .map(|v| format!("{:.2}%", v * 100.0))
+                .unwrap_or_default();
+            let gsc_url: String = row.get::<_, Option<String>>(21)
+                .unwrap_or(None)
+                .unwrap_or_default();
+
+            row_record.push(position);
+            row_record.push(clicks);
+            row_record.push(impressions);
+            row_record.push(ctr);
+            row_record.push(gsc_url);
+        }
+
+        wtr.write_record(&row_record).map_err(|e| e.to_string())?;
+        total_exported += 1;
+    }
+
+    wtr.flush().map_err(|e| e.to_string())?;
+    Ok(total_exported)
+}
+

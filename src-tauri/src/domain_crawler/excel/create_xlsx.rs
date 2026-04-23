@@ -57,419 +57,294 @@ pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
 // Generate EXCEL FILE WITH THE DATA FROM THE MAIN TABLE
 
 pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    // println!("Generating Excel with: {:?}", &data);
-
-    // Check if data is empty
     if data.is_empty() {
         return Err("No data to generate Excel".to_string());
     }
 
-    // Define the headers for the table (must match tableLayout.ts exactly)
     let headers = vec![
-        "ID",           // 0
-        "URL",          // 1
-        "Page Title",   // 2
-        "Title Size",   // 3
-        "Description",  // 4
-        "Desc. Size",   // 5
-        "H1",           // 6
-        "H1 Size",      // 7
-        "H2",           // 8
-        "H2 Size",      // 9
-        "Status Code",  // 10
-        "Word Count",   // 11
-        "Text Ratio",   // 12
-        "Flesch Score", // 13
-        "Flesch Grade", // 14
-        "Mobile",       // 15
-        "Meta Robots",  // 16
-        "Content Type", // 17
-        "Indexability", // 18
-        "Language",     // 19
-        "Schema",       // 20
-        "Depth",        // 21
+        "ID",
+        "URL",
+        "Page Title",
+        "Title Size",
+        "Description",
+        "Desc. Size",
+        "H1",
+        "H1 Size",
+        "H2",
+        "H2 Size",
+        "Status Code",
+        "Word Count",
+        "Text Ratio",
+        "Flesch Score",
+        "Flesch Grade",
+        "Mobile",
+        "Meta Robots",
+        "Content Type",
+        "Indexability",
+        "Language",
+        "Schema",
+        "Depth",
+        "Opengraph",
+        "Cookies",
+        "Size",
     ];
 
-    // Create a new workbook and worksheet
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
-    // Define the header format
     let header_format = Format::new()
         .set_bold()
         .set_border(FormatBorder::Thin)
         .set_align(FormatAlign::Center);
 
-    // Write the headers to the worksheet
     for (col_idx, header) in headers.iter().enumerate() {
         worksheet
             .write_with_format(0, col_idx as u16, *header, &header_format)
             .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
     }
 
-    // Write data rows
     for (row_idx, array) in data.iter().enumerate() {
         let obj = match array {
-            Value::Object(obj) => obj,
-            _ => return Err("Invalid JSON structure: expected an array of objects".to_string()),
+            Value::Object(_) => array,
+            _ => continue,
         };
 
-        // Extract and write the URL
-        let url = match obj.get("url").ok_or("Missing 'url' field in JSON object")? {
-            Value::String(s) => s.clone(),
-            _ => return Err("Invalid URL format: expected a string".to_string()),
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 0, &url)
-            .map_err(|e| format!("Failed to write URL at row {}: {}", row_idx + 1, e))?;
-
-        // Extract and write the title
-        let title = match obj
-            .get("title")
-            .ok_or("Missing 'title' field in JSON object")?
-        {
-            Value::Array(arr) => match arr.get(0).ok_or("Title array is empty")? {
-                Value::Object(title_obj) => match title_obj
-                    .get("title")
-                    .ok_or("Missing 'title' field in title object")?
-                {
-                    Value::String(s) => s.clone(),
-                    _ => return Err("Invalid title format: expected a string".to_string()),
-                },
-                _ => return Err("Invalid title format: expected an object".to_string()),
-            },
-            _ => return Err("Invalid title format: expected an array".to_string()),
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 1, &title)
-            .map_err(|e| format!("Failed to write title at row {}: {}", row_idx + 1, e))?;
-
-        // Calculate and write the page title length
-        let title_length = title.len() as u32;
-        worksheet
-            .write((row_idx + 1) as u32, 2, title_length)
-            .map_err(|e| format!("Failed to write title length at row {}: {}", row_idx + 1, e))?;
-
-        // Extract and write the description
-        let description = match obj.get("description") {
-            Some(Value::String(s)) => s.clone(),
-            _ => String::new(), // If description is missing or not a string, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 3, &description)
-            .map_err(|e| format!("Failed to write description at row {}: {}", row_idx + 1, e))?;
-
-        // Calculate and write the description length
-        let description_length = description.len() as u32;
-        worksheet
-            .write((row_idx + 1) as u32, 4, description_length)
-            .map_err(|e| {
-                format!(
-                    "Failed to write description length at row {}: {}",
-                    row_idx + 1,
-                    e
-                )
-            })?;
-
-        // Extract and write the H1
-        let h1 = match obj.get("headings").and_then(|headings| headings.get("h1")) {
-            Some(Value::Array(arr)) if !arr.is_empty() => {
-                match arr.get(0).unwrap() {
-                    Value::String(s) => s.clone(),
-                    _ => String::new(), // If H1 is not a string, write a blank cell
+        // Helper to extract nested values safely
+        let get_val = |path: &[&str]| -> Option<&Value> {
+            let mut curr = obj;
+            for key in path {
+                match curr {
+                    Value::Object(o) => curr = o.get(*key)?,
+                    Value::Array(a) => {
+                        if let Ok(idx) = key.parse::<usize>() {
+                            curr = a.get(idx)?
+                        } else {
+                            return None;
+                        }
+                    }
+                    _ => return None,
                 }
             }
-            _ => String::new(), // If H1 is missing or empty, write a blank cell
+            Some(curr)
         };
-        worksheet
-            .write((row_idx + 1) as u32, 5, &h1)
-            .map_err(|e| format!("Failed to write H1 at row {}: {}", row_idx + 1, e))?;
 
-        // Calculate and write the H1 length
-        let h1_length = if h1.is_empty() {
-            String::new() // Blank cell if H1 is empty
+        let id = (row_idx + 1).to_string();
+        let url = get_val(&["url"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let title = get_val(&["title", "0", "title"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let title_len = get_val(&["title", "0", "title_len"])
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .or_else(|| Some(title.len().to_string()))
+            .unwrap_or_default();
+        let description = get_val(&["description"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let desc_len = if description.is_empty() {
+            String::new()
         } else {
-            h1.len().to_string() // Length of H1 as a string
+            description.len().to_string()
         };
-        worksheet
-            .write((row_idx + 1) as u32, 6, h1_length)
-            .map_err(|e| format!("Failed to write H1 length at row {}: {}", row_idx + 1, e))?;
-
-        // Extract and write the H2
-        let h2 = match obj.get("headings").and_then(|headings| headings.get("h2")) {
-            Some(Value::Array(arr)) if !arr.is_empty() => {
-                match arr.get(0).unwrap() {
-                    Value::String(s) => s.clone(),
-                    _ => String::new(), // If H2 is not a string, write a blank cell
-                }
-            }
-            _ => String::new(), // If H2 is missing or empty, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 7, &h2)
-            .map_err(|e| format!("Failed to write H2 at row {}: {}", row_idx + 1, e))?;
-
-        // Calculate and write the H2 length
-        let h2_length = if h2.is_empty() {
-            String::new() // Blank cell if H2 is empty
+        let h1 = get_val(&["headings", "h1", "0"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let h1_len = if h1.is_empty() {
+            String::new()
         } else {
-            h2.len().to_string() // Length of H2 as a string
+            h1.len().to_string()
         };
-        worksheet
-            .write((row_idx + 1) as u32, 8, h2_length)
-            .map_err(|e| format!("Failed to write H2 length at row {}: {}", row_idx + 1, e))?;
-
-        // Extract and write the status code
-        let status_code = match obj
-            .get("status_code")
-            .ok_or("Missing 'status_code' field in JSON object")?
-        {
-            Value::Number(n) => n.to_string(),
-            _ => return Err("Invalid status code format: expected a number".to_string()),
+        let h2 = get_val(&["headings", "h2", "0"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let h2_len = if h2.is_empty() {
+            String::new()
+        } else {
+            h2.len().to_string()
         };
-        worksheet
-            .write((row_idx + 1) as u32, 9, &status_code)
-            .map_err(|e| format!("Failed to write status code at row {}: {}", row_idx + 1, e))?;
 
-        // Extract and write the word count
-        let word_count = match obj
-            .get("word_count")
-            .ok_or("Missing 'word_count' field in JSON object")?
-        {
-            Value::Number(n) => n.to_string(),
-            _ => return Err("Invalid word count format: expected a number".to_string()),
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 10, &word_count)
-            .map_err(|e| format!("Failed to write word count at row {}: {}", row_idx + 1, e))?;
+        let status_code = get_val(&["status_code"])
+            .and_then(|v| {
+                v.as_i64()
+                    .map(|n| n.to_string())
+                    .or(v.as_str().map(|s| s.to_string()))
+            })
+            .unwrap_or_default();
 
-        // INDEXABILITY
-        let indexability = match obj.get("indexability") {
-            Some(Value::Object(indexability_obj)) => {
-                // Extract the indexability reason if it exists
-                match indexability_obj.get("indexability_reason") {
-                    Some(Value::String(reason)) => reason.clone(),
-                    _ => "Unknown".to_string(), // Default value if reason is missing or not a string
+        let word_count = get_val(&["word_count"])
+            .and_then(|v| {
+                v.as_i64()
+                    .map(|n| n.to_string())
+                    .or(v.as_str().map(|s| s.to_string()))
+            })
+            .unwrap_or_default();
+
+        let text_ratio = get_val(&["text_ratio", "0", "text_ratio"])
+            .and_then(|v| v.as_f64())
+            .or_else(|| get_val(&["text_ratio"]).and_then(|v| v.as_f64()))
+            .map(|v| format!("{:.1}", v))
+            .unwrap_or_default();
+
+        let flesch = get_val(&["flesch", "Ok", "0"])
+            .and_then(|v| v.as_f64())
+            .or_else(|| get_val(&["flesch"]).and_then(|v| v.as_f64()))
+            .map(|v| format!("{:.1}", v))
+            .unwrap_or_default();
+
+        let flesch_grade = get_val(&["flesch", "Ok", "1"])
+            .and_then(|v| v.as_str())
+            .or_else(|| get_val(&["flesch_grade"]).and_then(|v| v.as_str()))
+            .unwrap_or("")
+            .to_string();
+
+        let mobile = match get_val(&["mobile"]) {
+            Some(Value::Bool(b)) => {
+                if *b {
+                    "Yes"
+                } else {
+                    "No"
                 }
             }
-            _ => "Unknown".to_string(), // Default value if indexability is missing or not an object
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 11, &indexability)
-            .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
+            _ => "No",
+        }
+        .to_string();
 
-        // SCHEMA
-        let schema = match obj.get("schema") {
-            Some(Value::Null) => "no".to_string(), // If schema is null, write "no"
-            Some(_) => "yes".to_string(),          // If schema is not null, write "yes"
-            None => "no".to_string(),              // If schema is missing, write "no"
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 12, &schema)
-            .map_err(|e| format!("Failed to write schema at row {}: {}", row_idx + 1, e))?;
+        let meta_robots = get_val(&["meta_robots", "meta_robots", "0"])
+            .and_then(|v| v.as_str())
+            .or_else(|| get_val(&["meta_robots"]).and_then(|v| v.as_str()))
+            .unwrap_or("")
+            .to_string();
 
-        // CANONICALS
-        let canonicals = match obj.get("canonicals") {
-            Some(Value::Array(arr)) if !arr.is_empty() => arr
-                .iter()
-                .filter_map(|v| match v {
-                    Value::String(s) => Some(s.clone()),
-                    _ => None,
-                })
-                .collect::<Vec<String>>()
-                .join(", "),
-            _ => String::new(), // If canonicals is missing or empty, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 13, &canonicals)
-            .map_err(|e| format!("Failed to write canonicals at row {}: {}", row_idx + 1, e))?;
+        let content_type = get_val(&["content_type"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
 
-        // FLESCH SCORE
-        let flesch_score = match obj.get("flesch") {
-            Some(Value::Object(flesch_obj)) => match flesch_obj.get("Ok") {
-                Some(Value::Array(arr)) if arr.len() >= 1 => match &arr[0] {
-                    // Borrow the value here
-                    Value::Number(n) => n.to_string(),
-                    _ => String::new(), // If Flesch score is not a number, write a blank cell
-                },
-                _ => String::new(), // If Flesch score is missing or invalid, write a blank cell
-            },
-            _ => String::new(), // If Flesch object is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 14, &flesch_score)
-            .map_err(|e| format!("Failed to write Flesch score at row {}: {}", row_idx + 1, e))?;
+        let indexability = get_val(&["indexability", "indexability"])
+            .and_then(|v| v.as_f64())
+            .or_else(|| get_val(&["indexability"]).and_then(|v| v.as_f64()))
+            .map(|v| {
+                if v >= 0.5 {
+                    "Indexable"
+                } else {
+                    "Not Indexable"
+                }
+            })
+            .unwrap_or("Not Indexable")
+            .to_string();
 
-        // FLESCH READABILITY
-        let flesch_readability = match obj.get("flesch") {
-            Some(Value::Object(flesch_obj)) => match flesch_obj.get("Ok") {
-                Some(Value::Array(arr)) if arr.len() >= 2 => match &arr[1] {
-                    Value::String(s) => s.clone(),
-                    _ => String::new(), // If Flesch readability is not a string, write a blank cell
-                },
-                _ => String::new(), // If Flesch readability is missing or invalid, write a blank cell
-            },
-            _ => String::new(), // If Flesch object is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 15, &flesch_readability)
-            .map_err(|e| {
-                format!(
-                    "Failed to write Flesch readability at row {}: {}",
-                    row_idx + 1,
-                    e
-                )
-            })?;
+        let language = get_val(&["language"])
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
 
-        // KEYWORDS
-        let keywords = match obj.get("keywords") {
-            Some(Value::Array(arr)) => arr
-                .iter()
-                .filter_map(|v| match v {
-                    Value::Array(kw_arr) if kw_arr.len() >= 1 => match &kw_arr[0] {
-                        Value::String(s) => Some(s.clone()),
-                        _ => None,
-                    },
-                    _ => None,
-                })
-                .collect::<Vec<String>>()
-                .join(", "),
-            _ => String::new(), // If keywords is missing or invalid, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 16, &keywords)
-            .map_err(|e| format!("Failed to write keywords at row {}: {}", row_idx + 1, e))?;
+        let schema = match get_val(&["schema"]) {
+            Some(Value::Bool(b)) => {
+                if *b {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+            Some(Value::String(s)) => {
+                if s.to_lowercase() == "yes" {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+            Some(Value::Null) | None => "No",
+            _ => "Yes",
+        }
+        .to_string();
 
-        // LANGUAGE
-        let language = match obj.get("language") {
-            Some(Value::String(s)) => s.clone(),
-            _ => String::new(), // If language is missing or not a string, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 17, &language)
-            .map_err(|e| format!("Failed to write language at row {}: {}", row_idx + 1, e))?;
+        let url_depth = get_val(&["url_depth"])
+            .and_then(|v| v.as_u64().map(|n| n.to_string()))
+            .unwrap_or_default();
 
-        // META ROBOTS
-        let meta_robots = match obj.get("meta_robots") {
-            Some(Value::Object(meta_robots_obj)) => match meta_robots_obj.get("meta_robots") {
-                Some(Value::Array(arr)) => arr
-                    .iter()
-                    .filter_map(|v| match v {
-                        Value::String(s) => Some(s.clone()),
-                        _ => None,
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", "),
-                _ => String::new(), // If meta_robots is missing or invalid, write a blank cell
-            },
-            _ => String::new(), // If meta_robots object is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 18, &meta_robots)
-            .map_err(|e| format!("Failed to write meta robots at row {}: {}", row_idx + 1, e))?;
+        let opengraph = match get_val(&["opengraph"]) {
+            Some(Value::Bool(b)) => {
+                if *b {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+            Some(Value::Object(o)) => {
+                if !o.is_empty() {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+            _ => "No",
+        }
+        .to_string();
 
-        // MOBILE
-        let mobile = match obj.get("mobile") {
-            Some(Value::Bool(b)) => b.to_string(),
-            _ => String::new(), // If mobile is missing or not a boolean, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 19, &mobile)
-            .map_err(|e| format!("Failed to write mobile at row {}: {}", row_idx + 1, e))?;
+        let cookies = get_val(&["cookies_count"])
+            .and_then(|v| v.as_u64().map(|n| n.to_string()))
+            .or_else(|| {
+                get_val(&["cookies", "Ok"])
+                    .and_then(|v| v.as_array())
+                    .map(|a| a.len().to_string())
+            })
+            .or_else(|| {
+                get_val(&["cookies"])
+                    .and_then(|v| v.as_array())
+                    .map(|a| a.len().to_string())
+            })
+            .unwrap_or("0".to_string());
 
-        // PAGE SIZE (KB)
-        let page_size_kb = match obj.get("page_size") {
-            Some(Value::Array(arr)) if !arr.is_empty() => match &arr[0] {
-                Value::Object(page_size_obj) => match page_size_obj.get("kb") {
-                    Some(Value::Number(n)) => n.to_string(),
-                    _ => String::new(), // If page size is missing or invalid, write a blank cell
-                },
-                _ => String::new(), // If page size object is missing, write a blank cell
-            },
-            _ => String::new(), // If page size array is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 20, &page_size_kb)
-            .map_err(|e| format!("Failed to write page size at row {}: {}", row_idx + 1, e))?;
+        let page_size = get_val(&["page_size", "0", "kb"])
+            .or_else(|| get_val(&["page_size"]))
+            .and_then(|v| {
+                v.as_f64()
+                    .map(|n| n.to_string())
+                    .or(v.as_str().map(|s| s.to_string()))
+            })
+            .map(|v| format!("{} KB", v))
+            .unwrap_or_default();
 
-        // RESPONSE TIME (s)
-        let response_time = match obj.get("response_time") {
-            Some(Value::Number(n)) => n.to_string(),
-            _ => String::new(), // If response time is missing or not a number, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 21, &response_time)
-            .map_err(|e| {
-                format!(
-                    "Failed to write response time at row {}: {}",
-                    row_idx + 1,
-                    e
-                )
-            })?;
+        let row_data = vec![
+            id,
+            url,
+            title,
+            title_len,
+            description,
+            desc_len,
+            h1,
+            h1_len,
+            h2,
+            h2_len,
+            status_code,
+            word_count,
+            text_ratio,
+            flesch,
+            flesch_grade,
+            mobile,
+            meta_robots,
+            content_type,
+            indexability,
+            language,
+            schema,
+            url_depth,
+            opengraph,
+            cookies,
+            page_size,
+        ];
 
-        // TEXT RATIO (%)
-        let text_ratio = match obj.get("text_ratio") {
-            Some(Value::Array(arr)) if !arr.is_empty() => match &arr[0] {
-                Value::Object(text_ratio_obj) => match text_ratio_obj.get("text_ratio") {
-                    Some(Value::Number(n)) => n.to_string(),
-                    _ => String::new(), // If text ratio is missing or invalid, write a blank cell
-                },
-                _ => String::new(), // If text ratio object is missing, write a blank cell
-            },
-            _ => String::new(), // If text ratio array is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 22, &text_ratio)
-            .map_err(|e| format!("Failed to write text ratio at row {}: {}", row_idx + 1, e))?;
-
-        // CONTENT TYPE
-        let content_type = match obj.get("content_type") {
-            Some(Value::String(s)) => s.clone(),
-            _ => String::new(), // If content type is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 23, &content_type)
-            .map_err(|e| format!("Failed to write content type at row {}: {}", row_idx + 1, e))?;
-
-        // INDEXABILITY
-        let indexability = match obj.get("indexability") {
-            Some(Value::Object(indexability_obj)) => match indexability_obj.get("indexability") {
-                Some(Value::Number(_)) => "Indexable".to_string(),
-                _ => "Unknown".to_string(),
-            },
-            _ => "Unknown".to_string(),
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 24, &indexability)
-            .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
-
-        // LANGUAGE
-        let language = match obj.get("language") {
-            Some(Value::String(s)) => s.clone(),
-            _ => String::new(), // If language is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 25, &language)
-            .map_err(|e| format!("Failed to write language at row {}: {}", row_idx + 1, e))?;
-
-        // SCHEMA
-        let schema = match obj.get("schema") {
-            Some(Value::String(s)) => "Yes".to_string(), // If schema exists, write "Yes"
-            _ => "No".to_string(),                       // If schema is missing, write "No"
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 26, &schema)
-            .map_err(|e| format!("Failed to write schema at row {}: {}", row_idx + 1, e))?;
-
-        // DEPTH
-        let url_depth = match obj.get("url_depth") {
-            Some(Value::Number(n)) => n.to_string(),
-            Some(Value::String(s)) => s.clone(),
-            _ => String::new(), // If depth is missing, write a blank cell
-        };
-        worksheet
-            .write((row_idx + 1) as u32, 27, &url_depth)
-            .map_err(|e| format!("Failed to write depth at row {}: {}", row_idx + 1, e))?;
+        for (col_idx, val) in row_data.into_iter().enumerate() {
+            worksheet
+                .write((row_idx + 1) as u32, col_idx as u16, val)
+                .map_err(|e| e.to_string())?;
+        }
     }
 
     // Save workbook to an in-memory buffer
@@ -864,5 +739,314 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
 
     // println!("Excel file successfully created in memory!");
+    Ok(buffer)
+}
+
+// EXTRACT AND PRINT THE DATA FROM THE IMAGES TABLE
+pub fn generate_images_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    let headers = vec!["URL", "Alt Text", "Size", "Type", "Status Code"];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    for (row_idx, value) in data.iter().enumerate() {
+        if let Value::Array(arr) = value {
+            let row_data: Vec<String> = arr
+                .iter()
+                .map(|v| match v {
+                    Value::String(s) => s.clone(),
+                    Value::Number(n) => n.to_string(),
+                    Value::Bool(b) => b.to_string(),
+                    _ => "".to_string(),
+                })
+                .collect();
+
+            for (col_idx, cell) in row_data.iter().enumerate() {
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell)
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+    Ok(buffer)
+}
+
+// EXTRACT AND PRINT THE DATA FROM THE REDIRECTS TABLE
+pub fn generate_redirects_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    let headers = vec![
+        "URL",
+        "Status Code",
+        "Redirect To",
+        "Redirect Count",
+        "Redirect Type",
+    ];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    for (row_idx, value) in data.iter().enumerate() {
+        if let Value::Object(obj) = value {
+            let url = obj
+                .get("url")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let status_code = obj
+                .get("status_code")
+                .and_then(|v| v.as_i64())
+                .map(|n| n.to_string())
+                .unwrap_or_default();
+            let redirect_to = obj
+                .get("redirect_url")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let redirect_count = obj
+                .get("redirect_count")
+                .and_then(|v| v.as_u64())
+                .map(|n| n.to_string())
+                .unwrap_or_default();
+            let redirect_type = obj
+                .get("redirection_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let row_data = vec![url, status_code, redirect_to, redirect_count, redirect_type];
+            for (col_idx, cell) in row_data.iter().enumerate() {
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell)
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+    Ok(buffer)
+}
+
+// EXTRACT AND PRINT THE DATA FROM THE FILES TABLE
+pub fn generate_files_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    let headers = vec!["ID", "URL", "File Type", "Found At"];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    for (row_idx, value) in data.iter().enumerate() {
+        if let Value::Object(obj) = value {
+            let id = (row_idx + 1).to_string();
+            let url = obj
+                .get("url")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let filetype = obj
+                .get("filetype")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let found_at = obj
+                .get("found_at")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let row_data = vec![id, url, filetype, found_at];
+            for (col_idx, cell) in row_data.iter().enumerate() {
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell)
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+    Ok(buffer)
+}
+
+// EXTRACT AND PRINT THE DATA FROM THE CWV TABLE
+pub fn generate_cwv_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    let headers = vec![
+        "#",
+        "URL",
+        "Perf (M)",
+        "Perf (D)",
+        "Acc (M)",
+        "Acc (D)",
+        "BP (M)",
+        "BP (D)",
+        "SEO (M)",
+        "SEO (D)",
+        "Speed Index (M)",
+        "Speed Index (D)",
+        "LCP (M)",
+        "LCP (D)",
+        "CLS (M)",
+        "CLS (D)",
+        "FCP (M)",
+        "FCP (D)",
+        "Interactive (M)",
+        "Interactive (D)",
+        "TBT (M)",
+        "TBT (D)",
+        "Redirects",
+        "TTFB (M)",
+        "TTFB (D)",
+        "DOM Nodes",
+        "Byte Weight (M)",
+        "Byte Weight (D)",
+    ];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    let format_score = |score: Option<&Value>| -> String {
+        match score {
+            Some(Value::Number(n)) => {
+                if let Some(f) = n.as_f64() {
+                    (f * 100.0).round().to_string()
+                } else {
+                    "n/a".to_string()
+                }
+            }
+            _ => "n/a".to_string(),
+        }
+    };
+
+    let get_audit_value = |audit: Option<&Value>| -> String {
+        if let Some(a) = audit {
+            if let Some(Value::String(dv)) = a.get("displayValue") {
+                return dv.clone();
+            }
+            if let Some(Value::Number(nv)) = a.get("numericValue") {
+                if let Some(f) = nv.as_f64() {
+                    return format!("{:.2}", f);
+                }
+            }
+        }
+        "n/a".to_string()
+    };
+
+    for (row_idx, value) in data.iter().enumerate() {
+        if let Value::Object(obj) = value {
+            let id = (row_idx + 1).to_string();
+            let url = obj.get("url").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            
+            let psi_results = obj.get("psi_results");
+            let mobile = psi_results.and_then(|p| p.get("Ok")).and_then(|arr| arr.get(0));
+            let desktop = psi_results.and_then(|p| p.get("Ok")).and_then(|arr| arr.get(1));
+
+            let get_score = |env: Option<&Value>, category: &str| -> String {
+                format_score(env.and_then(|e| e.get("categories")).and_then(|c| c.get(category)).and_then(|cat| cat.get("score")))
+            };
+
+            let get_audit = |env: Option<&Value>, audit_name: &str| -> String {
+                get_audit_value(env.and_then(|e| e.get("audits")).and_then(|a| a.get(audit_name)))
+            };
+
+            let row_data = vec![
+                id,
+                url,
+                get_score(mobile, "performance"),
+                get_score(desktop, "performance"),
+                get_score(mobile, "accessibility"),
+                get_score(desktop, "accessibility"),
+                get_score(mobile, "best-practices"),
+                get_score(desktop, "best-practices"),
+                get_score(mobile, "seo"),
+                get_score(desktop, "seo"),
+                get_audit(mobile, "speed-index"),
+                get_audit(desktop, "speed-index"),
+                get_audit(mobile, "largest-contentful-paint"),
+                get_audit(desktop, "largest-contentful-paint"),
+                get_audit(mobile, "cumulative-layout-shift"),
+                get_audit(desktop, "cumulative-layout-shift"),
+                get_audit(mobile, "first-contentful-paint"),
+                get_audit(desktop, "first-contentful-paint"),
+                get_audit(mobile, "interactive"),
+                get_audit(desktop, "interactive"),
+                get_audit(mobile, "total-blocking-time"),
+                get_audit(desktop, "total-blocking-time"),
+                format_score(mobile.and_then(|m| m.get("audits")).and_then(|a| a.get("redirects")).and_then(|r| r.get("score"))),
+                get_audit(mobile, "server-response-time"),
+                get_audit(desktop, "server-response-time"),
+                get_audit_value(
+                    mobile.and_then(|m| m.get("audits")).and_then(|a| a.get("dom-size-insight").or_else(|| a.get("dom-size")))
+                ),
+                get_audit(mobile, "total-byte-weight"),
+                get_audit(desktop, "total-byte-weight"),
+            ];
+
+            for (col_idx, cell) in row_data.iter().enumerate() {
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell)
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
     Ok(buffer)
 }

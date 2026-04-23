@@ -8,6 +8,8 @@ export const changelogData = [
       "Global: Settings UI",
       "Deep Crawler: Sitemap Discovery & Parsing",
       "Deep Crawler: Improved Performance",
+      "Tool: Log Analyser - Increased number of logs",
+      "Deep Crawler: Table Exports with Backend data processing",
     ],
   },
   {

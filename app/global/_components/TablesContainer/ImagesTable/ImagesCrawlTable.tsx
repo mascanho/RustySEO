@@ -22,6 +22,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+import { useIsGeneratingExcel } from "@/store/GlobalCrawlDataStore";
 
 interface TruncatedCellProps {
   text: string;
@@ -333,36 +334,57 @@ const ImagesCrawlTable = ({
     headerTitles.map(() => true),
   );
 
+  const isGeneratingExcel = useIsGeneratingExcel();
+  const setIsGeneratingExcel = useGlobalCrawlStore(
+    (s) => s.setIsGeneratingExcel,
+  );
+
   const handleDownload = async () => {
-    try {
-      // Call the backend command to generate the Excel file
+    if (!rows.length) {
+      toast.error("No data to download, crawl something first");
+      return;
+    }
 
-      if (!rows.length) {
-        toast.error("No data to download, crawl something first");
-        return;
+    // For large datasets, export directly from database
+    if (rows.length > 1000) {
+      toast.info(
+        "Massive dataset detected. Exporting directly from Database...",
+      );
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("export_images_to_excel_command");
+        setIsGeneratingExcel(false);
+
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
+
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
+          toast.success("Excel Database Export completed!");
+        }
+      } catch (error) {
+        console.error("Error generating massive Excel export:", error);
+        setIsGeneratingExcel(false);
       }
+    } else {
+      // For small datasets, use frontend data
+      try {
+        toast.info("Getting your data ready...");
+        const fileBuffer = await invoke("create_excel", { data: rows });
+        const filePath = await save({
+          filters: [{ name: "Excel File", extensions: ["xlsx"] }],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
 
-      const fileBuffer = await invoke("create_excel", { data: rows });
-
-      // Prompt the user to choose a file path to save the Excel file
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}`, // Default file name
-      });
-
-      if (filePath) {
-        // Convert the Uint8Array to a binary file and save it
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-      } else {
-        console.log("User canceled the save dialog.");
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
+          toast.success("Excel file saved successfully!");
+        }
+      } catch (error) {
+        console.error("Error generating or saving Excel file:", error);
       }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
     }
   };
 
@@ -374,7 +396,7 @@ const ImagesCrawlTable = ({
     row: null,
     cell: null,
   });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
+    const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
 
   const filterTableURL = (arr: { url: string }[], url: string) => {
     if (!arr || arr.length === 0) return [];
@@ -538,7 +560,11 @@ const ImagesCrawlTable = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-3 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white  rounded-r relative"
         />
-        <DownloadButton download={handleDownload} />
+        <DownloadButton
+          download={handleDownload}
+          loading={isGeneratingExcel}
+          setLoading={setIsGeneratingExcel}
+        />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}

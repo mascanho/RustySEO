@@ -108,13 +108,14 @@ const generateLogs = (
   ];
 };
 
+const appStartTime = Date.now();
+
 function UptimeTimer() {
   const [uptime, setUptime] = useState("00:00:00");
-  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
+      const elapsed = Date.now() - appStartTime;
       const hours = Math.floor(elapsed / 3600000)
         .toString()
         .padStart(2, "0");
