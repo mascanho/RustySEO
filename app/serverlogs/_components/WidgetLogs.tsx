@@ -16,14 +16,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  IoLogoGoogle,
-  IoLogoFacebook,
-} from "react-icons/io5";
+import { IoLogoGoogle, IoLogoFacebook } from "react-icons/io5";
 import { SiSemrush } from "react-icons/si";
 import { Link2 } from "lucide-react";
-import { TbBrandBing } from "react-icons/tb";
-import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { TbBrandBing, TbDatabasePlus, TbSpider } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill, RiRobot3Line } from "react-icons/ri";
 import { FaSpider } from "react-icons/fa6";
 import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -93,19 +90,26 @@ import {
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
-import { GiPoliceOfficerHead } from "react-icons/gi";
+import { GiPoliceOfficerHead, GiRobotGolem, GiSpiderWeb } from "react-icons/gi";
 
 import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
+import { GrDocumentStore } from "react-icons/gr";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
-  { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
+  { label: "Aggregated Crawlers", icon: <GiRobotGolem className="w-4 h-4" /> },
   { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
-  { label: "Referrers", icon: <GiHypersonicBolt className="w-3 h-3" /> },
+  { label: "Referrers", icon: <GiHypersonicBolt className="w-4 h-4" /> },
+  {
+    label: "Indexing Crawlers",
+    icon: <TbSpider className="w-4 h-4" />,
+  },
+  { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
+  { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-3" /> },
 ];
 
 const COLORS = [
@@ -141,44 +145,82 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  
+
   const getCrawlerIcon = (crawlerType: string) => {
     const ct = crawlerType.toLowerCase();
     if (ct.includes("google")) {
-      return { icon: <IoLogoGoogle size={18} />, color: "text-blue-600 dark:text-blue-400" };
+      return {
+        icon: <IoLogoGoogle size={18} />,
+        color: "text-blue-600 dark:text-blue-400",
+      };
     }
     if (ct.includes("bing")) {
-      return { icon: <TbBrandBing size={18} />, color: "text-teal-600 dark:text-teal-400" };
+      return {
+        icon: <TbBrandBing size={18} />,
+        color: "text-teal-600 dark:text-teal-400",
+      };
     }
     if (ct.includes("semrush")) {
-      return { icon: <SiSemrush size={16} />, color: "text-orange-600 dark:text-orange-400" };
+      return {
+        icon: <SiSemrush size={16} />,
+        color: "text-orange-600 dark:text-orange-400",
+      };
     }
     if (ct.includes("ahrefs") || ct.includes("hrefs")) {
-      return { icon: <Link2 size={18} />, color: "text-blue-700 dark:text-blue-300" };
+      return {
+        icon: <Link2 size={18} />,
+        color: "text-blue-700 dark:text-blue-300",
+      };
     }
     if (ct.includes("moz")) {
-      return { icon: <RiRobot2Fill size={18} />, color: "text-blue-500 dark:text-blue-400" };
+      return {
+        icon: <RiRobot2Fill size={18} />,
+        color: "text-blue-500 dark:text-blue-400",
+      };
     }
-    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
-      return { icon: <RiOpenaiFill size={18} />, color: "text-emerald-600 dark:text-emerald-400" };
+    if (
+      ct.includes("openai") ||
+      ct.includes("gptbot") ||
+      ct.includes("chatgpt")
+    ) {
+      return {
+        icon: <RiOpenaiFill size={18} />,
+        color: "text-emerald-600 dark:text-emerald-400",
+      };
     }
     if (ct.includes("claude") || ct.includes("anthropic")) {
-      return { icon: <RiOpenaiFill size={18} />, color: "text-amber-700 dark:text-amber-400" };
+      return {
+        icon: <RiOpenaiFill size={18} />,
+        color: "text-amber-700 dark:text-amber-400",
+      };
     }
     if (ct.includes("meta") || ct.includes("facebook")) {
-      return { icon: <IoLogoFacebook size={18} />, color: "text-blue-600 dark:text-blue-400" };
+      return {
+        icon: <IoLogoFacebook size={18} />,
+        color: "text-blue-600 dark:text-blue-400",
+      };
     }
     // Generic bot
     if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
-      return { icon: <FaSpider size={16} />, color: "text-purple-600 dark:text-purple-400" };
+      return {
+        icon: <FaSpider size={16} />,
+        color: "text-purple-600 dark:text-purple-400",
+      };
     }
-    return { icon: <Bot size={18} />, color: "text-gray-500 dark:text-gray-400" };
+    return {
+      icon: <Bot size={18} />,
+      color: "text-gray-500 dark:text-gray-400",
+    };
   };
   const overview = useLogAnalysisStore((state) => state.overview);
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
-  const { entries } = useLogAnalysisStore((state) => ({ entries: state.entries }));
-  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
+  const { entries } = useLogAnalysisStore((state) => ({
+    entries: state.entries,
+  }));
+  const pathAggregations = useLogAnalysisStore(
+    (state) => state.pathAggregations,
+  );
   // We use entries from the store but we don't need allFilteredLogs anymore
   const [openDialogs, setOpenDialogs] = useState({});
   const { uploadedLogFiles } = useServerLogsStore();
@@ -323,11 +365,9 @@ export default function WidgetLogs() {
 
     // 1. Process category totals from backend (most accurate)
     if (widgetAggs.referrer_categories) {
-      Object.entries(widgetAggs.referrer_categories).forEach(
-        ([cat, count]) => {
-          acc[cat] = { count, referrers: [] };
-        },
-      );
+      Object.entries(widgetAggs.referrer_categories).forEach(([cat, count]) => {
+        acc[cat] = { count, referrers: [] };
+      });
     }
 
     // 2. Process specific strings for examples
@@ -420,14 +460,14 @@ export default function WidgetLogs() {
             name: name.toUpperCase(),
             value,
           }))
-          .sort((a, b) => b.value - a.value), // Add this sort
+          .sort((a, b) => b.value - a.value),
         "Status Codes": Object.entries(statusCodeData || {})
           .map(([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
             value,
           }))
-          .sort((a, b) => b.value - a.value), // Add this sort too if you want
-        Crawlers: crawlerData.length > 0 ? crawlerData : [],
+          .sort((a, b) => b.value - a.value),
+        "Aggregated Crawlers": crawlerData.length > 0 ? crawlerData : [],
       }[activeTab] || []
     );
   }, [
@@ -524,10 +564,11 @@ export default function WidgetLogs() {
               <DropdownMenuItem
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
-                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
-                  ? "bg-brand-bright text-white"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
-                  }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
+                  activeTab === tab.label
+                    ? "bg-brand-bright text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                }`}
               >
                 <div
                   className={
@@ -601,12 +642,13 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
-              ? "grid-cols-5 max-w-2xl mr-6"
-              : activeTab === "Status Codes"
-                ? "grid-cols-4 mr-6"
-                : "grid-cols-4 mr-6"
-              }`}
+            className={`grid gap-2 w-full max-w-2xl pl-4  ${
+              activeTab === "User Agents" || activeTab === "Referrers"
+                ? "grid-cols-5 max-w-2xl mr-6"
+                : activeTab === "Status Codes"
+                  ? "grid-cols-4 mr-6"
+                  : "grid-cols-4 mr-6"
+            }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -723,13 +765,15 @@ export default function WidgetLogs() {
                       segment={entry?.name}
                     />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                    entry?.name,
-                  ) ? (
+                      entry?.name,
+                    ) ? (
                     <div className="flex flex-col h-full">
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2 shrink-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}>
+                            <span
+                              className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}
+                            >
                               {getCrawlerIcon(entry.name).icon}
                             </span>
                             <div>
@@ -737,7 +781,8 @@ export default function WidgetLogs() {
                                 Viewing: {entry.name} Bot
                               </h3>
                               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                                Showing request activity and analysis for {entry.name}
+                                Showing request activity and analysis for{" "}
+                                {entry.name}
                               </p>
                             </div>
                           </div>
@@ -746,13 +791,15 @@ export default function WidgetLogs() {
                               variant="outline"
                               className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 whitespace-nowrap text-sm px-3 py-1"
                             >
-                              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+                              {pathAggregations.total_unique_paths.toLocaleString()}{" "}
+                              unique paths
                             </Badge>
                             <Badge
                               variant="outline"
                               className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
                             >
-                              {pathAggregations.total_hits.toLocaleString()} hits
+                              {pathAggregations.total_hits.toLocaleString()}{" "}
+                              hits
                             </Badge>
                             <Badge
                               variant="outline"
@@ -763,40 +810,39 @@ export default function WidgetLogs() {
                           </div>
                         </div>
                       </div>
-                      <Tabs defaultValue="overview" className="h-full mt-4 flex-1 flex flex-col min-h-0">
-
-                      <Tabs.List>
-                        <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
-                      </Tabs.List>
-                      <Tabs.Panel value="overview" className="h-full">
-                        {entry?.name === "Google" && (
-                          <WidgetTable
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Bing" && (
-                          <WidgetTableBing
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Openai" && (
-                          <WidgetTableOpenAi
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Claude" && (
-                          <WidgetTableClaude
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                      </Tabs.Panel>
-                    </Tabs>
+                      <Tabs
+                        defaultValue="overview"
+                        className="h-full mt-4 flex-1 flex flex-col min-h-0"
+                      >
+                        <Tabs.List>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
+                        </Tabs.List>
+                        <Tabs.Panel value="overview" className="h-full">
+                          {entry?.name === "Google" && (
+                            <WidgetTable data={overview} entries={entries} />
+                          )}
+                          {entry?.name === "Bing" && (
+                            <WidgetTableBing
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                          {entry?.name === "Openai" && (
+                            <WidgetTableOpenAi
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                          {entry?.name === "Claude" && (
+                            <WidgetTableClaude
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                        </Tabs.Panel>
+                      </Tabs>
                     </div>
-                  ) : activeTab === "Crawlers" ? (
+                  ) : activeTab === "Aggregated Crawlers" ? (
                     <>
                       <DialogHeader>
                         <DialogTitle>{entry.name} Details</DialogTitle>
@@ -817,7 +863,7 @@ export default function WidgetLogs() {
                                   (sum, item) => sum + item.value,
                                   0,
                                 )) *
-                              100,
+                                100,
                             )}
                             %
                           </span>
