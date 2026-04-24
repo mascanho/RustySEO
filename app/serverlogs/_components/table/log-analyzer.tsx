@@ -176,6 +176,7 @@ export function LogAnalyzer() {
   const [isExporting, setIsExporting] = useState(false);
   const [showIp, setShowIp] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
+  const [showReferer, setShowReferer] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
   const [posColumn, setPosColumn] = useState("position");
@@ -406,6 +407,7 @@ export function LogAnalyzer() {
     });
     setExpandedRow(null);
     setShowAgent(false);
+    setShowReferer(false);
     setUrlAgentFilter("url");
 
     // Clear filtered state
@@ -783,6 +785,7 @@ export function LogAnalyzer() {
                 setUrlAgentFilter(value);
 
                 setShowAgent(value === "agent");
+                setShowReferer(value === "referer");
               }}
             >
               <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
@@ -793,6 +796,8 @@ export function LogAnalyzer() {
                 <SelectItem value="url">Path / URL</SelectItem>
 
                 <SelectItem value="agent">User Agent</SelectItem>
+
+                <SelectItem value="referer">Referer</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1072,7 +1077,7 @@ export function LogAnalyzer() {
                         className="cursor-pointer pl-7"
                         onClick={() => requestSort("path")}
                       >
-                        {showAgent ? "User Agent" : "Path"}
+                        {showAgent ? "User Agent" : showReferer ? "Referer" : "Path"}
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
@@ -1087,7 +1092,7 @@ export function LogAnalyzer() {
 
                       {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
 
-                      {ExcelLoaded && !showAgent && (
+                      {ExcelLoaded && !showAgent && !showReferer && (
                         <TableHead
                           className="w-[50px] text-center cursor-pointer"
                           onClick={cyclePosColumn}
@@ -1122,7 +1127,7 @@ export function LogAnalyzer() {
                         )}
                       </TableHead>
 
-                      {!showAgent && (
+                      {!showAgent && !showReferer && (
                         <TableHead
                           className="w-[80px] cursor-pointer"
                           onClick={() => requestSort("responseSize")}
@@ -1166,6 +1171,8 @@ export function LogAnalyzer() {
                           showIp={showIp}
                           showAgent={showAgent}
                           setShowAgent={setShowAgent}
+                          showReferer={showReferer}
+                          setShowReferer={setShowReferer}
                           logIpMasking={logIpMasking}
                           formatCrawlerType={formatCrawlerType}
                           handleURLClick={handleURLClick}
@@ -1235,6 +1242,8 @@ const LogRow = memo(function LogRow({
   showIp,
   showAgent,
   setShowAgent,
+  showReferer,
+  setShowReferer,
   logIpMasking,
   formatCrawlerType,
   handleURLClick,
@@ -1322,7 +1331,22 @@ const LogRow = memo(function LogRow({
         </TableCell>
 
         <TableCell className="max-w-[100%] truncate mr-2 align-middle">
-          {!showAgent ? (
+          {showReferer ? (
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
+              <span className="absolute">
+                <BadgeInfo
+                  onClick={(e) =>
+                    handleCopyClick(log.referer, e, "Referer")
+                  }
+                  className="text-brand-bright mr-3"
+                  size={14}
+                />
+              </span>
+              <span className="ml-6">
+                {log?.referer || "No referer"}
+              </span>
+            </section>
+          ) : !showAgent ? (
             <section className="max-w-[800px] truncate flex items-center relative">
               <span
                 onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
@@ -1394,7 +1418,7 @@ const LogRow = memo(function LogRow({
         </TableCell>
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
-        {ExcelLoaded && !showAgent && (
+        {ExcelLoaded && !showAgent && !showReferer && (
           <TableCell className="text-center align-middle">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1448,7 +1472,7 @@ const LogRow = memo(function LogRow({
           </Badge>
         </TableCell>
 
-        {!showAgent && (
+        {!showAgent && !showReferer && (
           <TableCell className="align-middle">
             {formatResponseSize(log.response_size)}
           </TableCell>
@@ -1471,65 +1495,110 @@ const LogRow = memo(function LogRow({
         <TableRow>
           <TableCell colSpan={12} className="bg-gray-50 dark:bg-gray-800 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col max-w-5xl">
-                <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <h4 className="font-bold">
-                      {showAgent ? "Path" : "User Agent"}
-                    </h4>
-                    {showAgent ? (
-                      <CopyIcon
-                        className="cursor-pointer hover:scale-105 active:scale-95"
-                        onClick={(e) =>
-                          handleCopyClick(log?.path, e, "URL / PATH")
-                        }
-                        size={12}
-                      />
-                    ) : (
-                      <CopyIcon
-                        className="cursor-pointer hover:scale-105 active:scale-95"
-                        onClick={(e) =>
-                          handleCopyClick(log?.user_agent, e, "User Agent")
-                        }
-                        size={12}
-                      />
-                    )}
-                  </div>
-                  {log.verified && (
-                    <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
-                      <BadgeCheck className="text-blue-700 pr-1" size={18} />
-                      {log?.crawler_type}
+              {showReferer ? (
+                <>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2">
+                      <h4 className="font-bold">Path</h4>
+                      {log?.path && (
+                        <CopyIcon
+                          className="cursor-pointer hover:scale-105 active:scale-95"
+                          onClick={(e) =>
+                            handleCopyClick(log?.path, e, "URL / PATH")
+                          }
+                          size={12}
+                        />
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                  <p className="text-sm font-mono break-all">
-                    {!showAgent ? log.user_agent : log?.path}
-                  </p>
-                </div>
-              </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {log?.path}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2">
+                      <h4 className="font-bold">User Agent</h4>
+                      {log?.user_agent && (
+                        <CopyIcon
+                          className="cursor-pointer hover:scale-105 active:scale-95"
+                          onClick={(e) =>
+                            handleCopyClick(log?.user_agent, e, "User Agent")
+                          }
+                          size={12}
+                        />
+                      )}
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {log.user_agent}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col max-w-5xl">
+                    <div className="flex mb-2 space-x-2 items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <h4 className="font-bold">
+                          {showAgent ? "Path" : "User Agent"}
+                        </h4>
+                        {showAgent ? (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.path, e, "URL / PATH")
+                            }
+                            size={12}
+                          />
+                        ) : (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.user_agent, e, "User Agent")
+                            }
+                            size={12}
+                          />
+                        )}
+                      </div>
+                      {log.verified && (
+                        <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
+                          <BadgeCheck className="text-blue-700 pr-1" size={18} />
+                          {log?.crawler_type}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {showAgent ? log?.path : log.user_agent}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex flex-col">
-                <div className="flex space-x-2 items-center mb-2">
-                  <h4 className="font-bold">Referer</h4>
-                  {log?.referer && (
-                    <CopyIcon
-                      className="cursor-pointer hover:scale-105 active:scale-95"
-                      onClick={(e) =>
-                        handleCopyClick(log?.referer, e, "Referer")
-                      }
-                      size={12}
-                    />
-                  )}
-                </div>
-                <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                  <p className="text-sm break-all">
-                    {log.referer || (
-                      <span className="text-muted-foreground">No referer</span>
-                    )}
-                  </p>
-                </div>
-              </div>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2">
+                      <h4 className="font-bold">Referer</h4>
+                      {log?.referer && (
+                        <CopyIcon
+                          className="cursor-pointer hover:scale-105 active:scale-95"
+                          onClick={(e) =>
+                            handleCopyClick(log?.referer, e, "Referer")
+                          }
+                          size={12}
+                        />
+                      )}
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm break-all">
+                        {log.referer || (
+                          <span className="text-muted-foreground">No referer</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </TableCell>
         </TableRow>
