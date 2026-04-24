@@ -343,19 +343,22 @@ export function LogAnalyzer() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [
-    totalCount,
-    activeSearchTerm,
-    localFilters,
-    currentPage,
-    itemsPerPage,
-  ]);
+  }, [totalCount, activeSearchTerm, localFilters, currentPage, itemsPerPage]);
 
   // Reset to first page when search or filters change (except sorting)
   // We use a separate effect to avoid complex logic in the main fetch effect
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeSearchTerm, statusFilter, methodFilter, fileTypeFilter, botFilter, botTypeFilter, crawlerTypeFilter, verifiedFilter]);
+  }, [
+    activeSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    botTypeFilter,
+    crawlerTypeFilter,
+    verifiedFilter,
+  ]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -1083,7 +1086,11 @@ export function LogAnalyzer() {
                         className="cursor-pointer pl-7"
                         onClick={() => requestSort("path")}
                       >
-                        {showAgent ? "User Agent" : showReferer ? "Referer" : "Path"}
+                        {showAgent
+                          ? "User Agent"
+                          : showReferer
+                            ? "Referer"
+                            : "Path"}
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
@@ -1341,16 +1348,12 @@ const LogRow = memo(function LogRow({
             <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
               <span className="absolute">
                 <BadgeInfo
-                  onClick={(e) =>
-                    handleCopyClick(log.referer, e, "Referer")
-                  }
+                  onClick={(e) => handleCopyClick(log.referer, e, "Referer")}
                   className="text-brand-bright mr-3"
                   size={14}
                 />
               </span>
-              <span className="ml-6">
-                {log?.referer || "No referer"}
-              </span>
+              <span className="ml-6">{log?.referer || "No referer"}</span>
             </section>
           ) : !showAgent ? (
             <section className="max-w-[800px] truncate flex items-center relative">
@@ -1539,9 +1542,7 @@ const LogRow = memo(function LogRow({
                       <DangerIndicator path={log.path} />
                     </div>
                     <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                      <p className="text-sm font-mono break-all">
-                        {log?.path}
-                      </p>
+                      <p className="text-sm font-mono break-all">{log?.path}</p>
                     </div>
                   </div>
                 </>
@@ -1574,7 +1575,10 @@ const LogRow = memo(function LogRow({
                       {showAgent && <DangerIndicator path={log.path} />}
                       {log.verified && (
                         <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
-                          <BadgeCheck className="text-blue-700 pr-1" size={18} />
+                          <BadgeCheck
+                            className="text-blue-700 pr-1"
+                            size={18}
+                          />
                           {log?.crawler_type}
                         </div>
                       )}
@@ -1602,7 +1606,9 @@ const LogRow = memo(function LogRow({
                     <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                       <p className="text-sm break-all">
                         {log.referer || (
-                          <span className="text-muted-foreground">No referer</span>
+                          <span className="text-muted-foreground">
+                            No referer
+                          </span>
                         )}
                       </p>
                     </div>
