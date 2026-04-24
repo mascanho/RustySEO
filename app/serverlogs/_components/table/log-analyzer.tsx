@@ -296,18 +296,18 @@ export function LogAnalyzer() {
 
   const handleSearchClick = () => {
     setActiveSearchTerm(searchInput);
+    setCurrentPage(1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setActiveSearchTerm(searchInput);
+      setCurrentPage(1);
     }
   };
 
   // Fetch logs from DB when filters or page change
   useEffect(() => {
-    if (totalCount === 0 && entries.length === 0) return;
-
     const filters = {
       search_term: activeSearchTerm,
       status_filter: statusFilter,
@@ -344,12 +344,18 @@ export function LogAnalyzer() {
 
     return () => clearTimeout(timeoutId);
   }, [
-    totalCount > 0,
+    totalCount,
     activeSearchTerm,
     localFilters,
     currentPage,
     itemsPerPage,
   ]);
+
+  // Reset to first page when search or filters change (except sorting)
+  // We use a separate effect to avoid complex logic in the main fetch effect
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeSearchTerm, statusFilter, methodFilter, fileTypeFilter, botFilter, botTypeFilter, crawlerTypeFilter, verifiedFilter]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -572,8 +578,8 @@ export function LogAnalyzer() {
                 className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
                 onClick={() => {
                   setSearchInput("");
-
                   setActiveSearchTerm("");
+                  setCurrentPage(1);
                 }}
               />
             )}{" "}
