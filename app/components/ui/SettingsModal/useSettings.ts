@@ -59,6 +59,10 @@ export interface AppSettings {
     log_capacity: number;
     log_project_chunk_size: number;
     log_file_upload_size: number;
+    log_bots: [string, string][];
+    indexing_bots: string[];
+    retrieval_agents: string[];
+    agentic_bots: string[];
 
     // Integrations
     page_speed_bulk: boolean;
