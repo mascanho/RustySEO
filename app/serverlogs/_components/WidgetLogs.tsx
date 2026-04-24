@@ -98,6 +98,7 @@ import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer
 import { GrDocumentStore } from "react-icons/gr";
 import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawlersTable";
 import { WidgetRetrievalAgentsTable } from "./WidgetTables/WidgetRetrievalAgentsTable";
+import { WidgetAgenticBotsTable } from "./WidgetTables/WidgetAgenticBotsTable";
 import { invoke } from "@tauri-apps/api/core";
 
 const tabs = [
@@ -233,6 +234,7 @@ export default function WidgetLogs() {
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
+  const [agenticBots, setAgenticBots] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -254,6 +256,16 @@ export default function WidgetLogs() {
       }
     };
     fetchRetrievalAgents();
+
+    const fetchAgenticBots = async () => {
+      try {
+        const bots = await invoke<string[]>("get_agentic_bots_command");
+        setAgenticBots(bots);
+      } catch (error) {
+        console.error("Failed to fetch agentic bots:", error);
+      }
+    };
+    fetchAgenticBots();
   }, []);
 
   useEffect(() => {
@@ -383,6 +395,24 @@ export default function WidgetLogs() {
       }))
       .sort((a, b) => b.value - a.value);
   }, [widgetAggs, retrievalAgents]);
+
+  // Prepare Agentic Bots data
+  const agenticBotsData = useMemo(() => {
+    if (!widgetAggs?.crawler_types || agenticBots.length === 0) return [];
+
+    const botSet = new Set(agenticBots.map((name) => name.toLowerCase()));
+    const displayNameMap = new Map(
+      agenticBots.map((name) => [name.toLowerCase(), name]),
+    );
+
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => botSet.has(name.toLowerCase()))
+      .map(([name, value]) => ({
+        name: displayNameMap.get(name.toLowerCase()) || name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [widgetAggs, agenticBots]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
@@ -516,6 +546,11 @@ export default function WidgetLogs() {
       return retrievalAgentsData;
     }
 
+    // Agentic Bots
+    if (activeTab === "Agentic Bots") {
+      return agenticBotsData;
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {})
@@ -533,6 +568,7 @@ export default function WidgetLogs() {
         "Aggregated Crawlers": crawlerData.length > 0 ? crawlerData : [],
         "Indexing Crawlers": indexingCrawlersData,
         "Retrieval Agents": retrievalAgentsData,
+        "Agentic Bots": agenticBotsData,
       }[activeTab] || []
     );
   }, [
@@ -546,6 +582,7 @@ export default function WidgetLogs() {
     crawlerData,
     indexingCrawlersData,
     retrievalAgentsData,
+    agenticBotsData,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -831,6 +868,13 @@ export default function WidgetLogs() {
                     />
                   ) : activeTab === "Retrieval Agents" ? (
                     <WidgetRetrievalAgentsTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
+                    />
+                  ) : activeTab === "Agentic Bots" ? (
+                    <WidgetAgenticBotsTable
                       data={overview}
                       entries={entries}
                       segment={entry?.name}

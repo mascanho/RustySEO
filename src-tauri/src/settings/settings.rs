@@ -869,6 +869,12 @@ pub async fn get_retrieval_agents_command() -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+pub async fn get_agentic_bots_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.agentic_bots)
+}
+
+#[tauri::command]
 pub async fn get_project_chunk_size_command() -> Result<usize, String> {
     let settings = load_settings().await?;
     Ok(settings.log_project_chunk_size)
