@@ -15,7 +15,7 @@ export const SettingField = ({
   description,
   children,
 }: SettingFieldProps) => (
-  <div className="flex items-center justify-between py-2 px-1 group max-w-lg">
+  <div className="flex items-center justify-between py-2 px-1 group">
     <div className="flex-1 mr-4 min-w-0">
       <span className="text-[12.5px] font-semibold text-gray-700 dark:text-gray-200 leading-tight block truncate">
         {label}
@@ -113,6 +113,7 @@ interface ArrayInputProps {
   onChange: (val: string[]) => void;
   placeholder?: string;
   suggestions?: string[];
+  compact?: boolean;
 }
 
 export const ArrayInput = ({
@@ -120,10 +121,15 @@ export const ArrayInput = ({
   onChange,
   placeholder = "Add item",
   suggestions = [],
+  compact = false,
 }: ArrayInputProps) => {
   const [text, setText] = React.useState("");
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
+
+  const widthClass = compact ? "max-w-[580px]" : "w-full";
+  const heightClass = compact ? "h-6 text-[10px]" : "h-7";
+  const fontSize = compact ? "text-[9px]" : "text-[10px]";
 
   const handleAdd = () => {
     if (text.trim() && !value.includes(text.trim())) {
@@ -156,9 +162,9 @@ export const ArrayInput = ({
   );
 
   return (
-    <div className="flex flex-col gap-1 w-full overflow-hidden">
+    <div className={`flex flex-col gap-1 ${widthClass} overflow-hidden`}>
       {/* Input Row */}
-      <div className="flex items-center gap-1.5 w-full">
+      <div className="flex items-center gap-1 w-full">
         <div className="relative flex-1 min-w-0">
           <input
             type="text"
@@ -177,20 +183,25 @@ export const ArrayInput = ({
               setTimeout(() => setShowSuggestions(false), 150);
             }}
             placeholder={value.length === 0 ? placeholder : ""}
-            className="w-full h-7 px-2.5 text-[11px] rounded-md border border-gray-200 dark:border-white/20 bg-white dark:bg-white/[0.04] text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-1.5 focus:ring-brand-bright focus:border-brand-bright transition-all"
+            className={`w-full ${heightClass} px-2.5 rounded border border-gray-200 dark:border-white/20 bg-white dark:bg-white/[0.04] text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-bright transition-all ${fontSize}`}
           />
 
           {/* Inline Suggestions Dropdown */}
           {showSuggestions && availableSuggestions.length > 0 && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 p-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-white/20 shadow-lg max-h-[140px] overflow-y-auto">
-              {availableSuggestions.slice(0, 8).map((suggestion, idx) => (
+            <div className="absolute z-50 top-full left-0 right-0 mt-0.5 p-0.5 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-white/20 shadow-lg max-h-24 overflow-y-auto">
+              {(compact
+                ? availableSuggestions.slice(0, 5)
+                : availableSuggestions.slice(0, 8)
+              ).map((suggestion, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => addSuggestion(suggestion)}
-                  className="w-full px-2 py-1 text-left text-[11px] rounded hover:bg-brand-bright/10 hover:text-brand-bright text-gray-700 dark:text-gray-300 transition-colors"
+                  className="w-full px-1.5 py-0.5 text-left rounded hover:bg-brand-bright/10 hover:text-brand-bright text-gray-700 dark:text-gray-300 transition-colors"
                 >
-                  {suggestion}
+                  <span className={compact ? "text-[9px]" : "text-[11px]"}>
+                    {suggestion}
+                  </span>
                 </button>
               ))}
             </div>
@@ -200,30 +211,32 @@ export const ArrayInput = ({
           type="button"
           onClick={handleAdd}
           disabled={!text.trim()}
-          className="h-7 px-2.5 shrink-0 rounded-md bg-brand-bright text-white text-[10px] font-semibold uppercase tracking-wide hover:bg-brand-bright/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className={`shrink-0 rounded bg-brand-bright text-white font-semibold uppercase hover:bg-brand-bright/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all ${compact ? "h-6 px-1.5 text-[9px]" : "h-7 px-2.5 text-[10px]"}`}
         >
           + Add
         </button>
       </div>
 
-      {/* Selected Chips - wrapped, no overflow */}
+      {/* Selected Chips */}
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-1 w-full overflow-hidden">
+        <div className="flex flex-wrap gap-1 w-full overflow-hidden mt-1">
           {value.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 bg-brand-bright/10 dark:bg-brand-bright/20 rounded px-1.5 py-0.5 border border-brand-bright/30 group hover:bg-brand-bright/20 transition-colors shrink-0"
+              className="flex items-center gap-0.5 bg-brand-bright/10 dark:bg-brand-bright/20 rounded px-1 py-0.5 border border-brand-bright/30 group hover:bg-brand-bright/20 transition-colors shrink-0"
             >
-              <span className="text-[10px] text-brand-bright font-medium whitespace-nowrap">
+              <span
+                className={`text-brand-bright font-medium whitespace-nowrap ${compact ? "text-[9px]" : "text-[10px]"}`}
+              >
                 {item}
               </span>
               <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="text-brand-bright/50 hover:text-white hover:bg-red-500 rounded p-0.5 transition-all shrink-0"
+                className="text-brand-bright/50 hover:text-white hover:bg-red-500 rounded transition-all shrink-0"
               >
                 <svg
-                  className="w-3 h-3"
+                  className={compact ? "w-2.5 h-2.5" : "w-3 h-3"}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -243,10 +256,16 @@ export const ArrayInput = ({
 
       {/* Empty State Hint */}
       {value.length === 0 && (
-        <p className="text-[9px] text-gray-400 dark:text-gray-500">
+        <p
+          className={`${compact ? "text-[8px]" : "text-[9px]"} text-gray-400 dark:text-gray-500`}
+        >
           {isFocused
-            ? "Choose from suggestions or type a custom name"
-            : "Start typing to see suggestions"}
+            ? compact
+              ? "Choose or type custom"
+              : "Choose from suggestions or type a custom name"
+            : compact
+              ? "Type to search"
+              : "Start typing to see suggestions"}
         </p>
       )}
     </div>

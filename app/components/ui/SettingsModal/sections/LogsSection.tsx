@@ -140,8 +140,9 @@ const LogsSection = ({ settings, onUpdate }: Props) => (
             <ArrayInput
                 value={settings.indexing_bots || []}
                 onChange={(v) => onUpdate("indexing_bots", v)}
-                placeholder="Type to search suggestions..."
+                placeholder="Search bots..."
                 suggestions={INDEXING_BOTS_SUGGESTIONS}
+                compact
             />
         </SettingField>
 
@@ -157,8 +158,9 @@ const LogsSection = ({ settings, onUpdate }: Props) => (
             <ArrayInput
                 value={settings.retrieval_agents || []}
                 onChange={(v) => onUpdate("retrieval_agents", v)}
-                placeholder="Type to search suggestions..."
+                placeholder="Search agents..."
                 suggestions={RETRIEVAL_AGENTS_SUGGESTIONS}
+                compact
             />
         </SettingField>
 
@@ -174,8 +176,9 @@ const LogsSection = ({ settings, onUpdate }: Props) => (
             <ArrayInput
                 value={settings.agentic_bots || []}
                 onChange={(v) => onUpdate("agentic_bots", v)}
-                placeholder="Type to search suggestions..."
+                placeholder="Search bots..."
                 suggestions={AGENTIC_BOTS_SUGGESTIONS}
+                compact
             />
         </SettingField>
     </div>
