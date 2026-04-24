@@ -707,13 +707,14 @@ export function DangerIndicator({
     config: { bg: "bg-yellow-100", text: "text-yellow-800" },
     backup: { bg: "bg-orange-100", text: "text-orange-800" },
     internal: { bg: "bg-gray-100", text: "text-gray-800" },
+    "potential exploit": { bg: "bg-gray-100", text: "text-gray-800" },
   };
 
   const colors = categoryColors[category || "internal"];
 
   return (
     <span
-      className={`inline-flex items-center ${colors.bg} ${colors.text} text-[9px] px-1.5  rounded-sm mt-0.5 ml-2`}
+      className={`inline-flex items-center ${colors.bg} ${colors.text} text-[9px] px-1.5  rounded-tr-lg rounded-bl-lg mt-0.5 ml-2 py-0`}
       title={showTooltip ? `${label} (${category})` : undefined}
     >
       <Skull size={10} className="mr-0.5" />

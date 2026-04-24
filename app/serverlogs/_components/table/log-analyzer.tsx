@@ -1403,7 +1403,7 @@ const LogRow = memo(function LogRow({
               )}
             </section>
           ) : (
-            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] relative ml-2 flex items-center">
               <span className="absolute">
                 <ImUserTie
                   onClick={(e) =>
@@ -1412,7 +1412,7 @@ const LogRow = memo(function LogRow({
                   className="text-brand-bright mr-1"
                 />{" "}
               </span>
-              <span className="ml-5">{log?.user_agent}</span>
+              <span className="ml-5 break-all">{log?.user_agent}</span>
             </section>
           )}
         </TableCell>
