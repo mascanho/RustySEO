@@ -13,6 +13,7 @@ use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
 use crate::settings::utils::indexing_bots::generate_indexing_bots;
+use crate::settings::utils::retrieval_agents::generate_retrieval_agents;
 use crate::settings::utils::user_bots::generate_default_user_bots;
 use crate::version::local_version;
 
@@ -112,6 +113,7 @@ pub struct Settings {
     pub log_file_upload_size: usize,
     pub log_bots: Vec<(String, String)>,
     pub indexing_bots: Vec<String>,
+    pub retrieval_agents: Vec<String>,
 
     // --- Integrations ---
     /// Enable PageSpeed Insights bulk fetching
@@ -184,6 +186,7 @@ impl Settings {
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
             log_bots: generate_default_user_bots(),
             indexing_bots: generate_indexing_bots(),
+            retrieval_agents: generate_retrieval_agents(),
 
             // --- Integrations ---
             page_speed_bulk: false,
@@ -385,6 +388,11 @@ impl Settings {
             serde_json::to_string(&self.indexing_bots).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("indexing_bots = {}\n", indexing_bots));
 
+        s.push_str("# Retrieval Agents\n");
+        let retrieval_agents =
+            serde_json::to_string(&self.retrieval_agents).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("retrieval_agents = {}\n", retrieval_agents));
+
         s.push_str("\n# --- Integrations ---\n");
         s.push_str("# Enable PageSpeed Insights bulk fetching\n");
         s.push_str(&format!("page_speed_bulk = {}\n", self.page_speed_bulk));
@@ -535,6 +543,7 @@ pub fn print_settings(settings: &Settings) {
     println!("Ngrams: {}", settings.extract_ngrams);
 
     println!("Log Bots: {:#?}", settings.log_bots);
+    println!("Retrival Agents: {:#?}", settings.retrieval_agents);
 
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
     println!("Adaptive Crawling: {}", settings.adaptive_crawling);
@@ -784,6 +793,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
             .collect();
     }
 
+    if let Some(val) = updates.get("retrieval_agents").and_then(|v| v.as_array()) {
+        settings.retrieval_agents = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
     if let Some(val) = updates.get("log_bots").and_then(|v| v.as_array()) {
         settings.log_bots = val
             .iter()
@@ -820,11 +836,16 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     Ok(settings)
 }
 
-
 #[tauri::command]
 pub async fn get_indexing_bots_command() -> Result<Vec<String>, String> {
     let settings = load_settings().await?;
     Ok(settings.indexing_bots)
+}
+
+#[tauri::command]
+pub async fn get_retrieval_agents_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.retrieval_agents)
 }
 
 #[tauri::command]

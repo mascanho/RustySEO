@@ -533,6 +533,21 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("expanse", "Expanse Bot"),
         ("claudebot", "Claude Bot"),
         ("anthropic", "Claude Bot"),
+        ("claude-user", "Claude Bot"),
+        ("google-extended", "Google Extended"),
+        ("google-notebooklm", "Google NotebookLM"),
+        ("google-clouvertexbot", "Google Cloud Vertex"),
+        ("perplexitybot", "Perplexity Bot"),
+        ("perplexity-comet", "Perplexity Bot"),
+        ("duckassistbot", "DuckAssist Bot"),
+        ("meta-externalagent", "Meta Bot"),
+        ("bytespider", "Bytespider"),
+        ("grokbot", "Grok Bot"),
+        ("xai-grok", "Grok Bot"),
+        ("ccbot", "CommonCrawl"),
+        ("firecrawl", "Firecrawl"),
+        ("kadoa", "Kadoa"),
+        ("tavily", "Tavily"),
     ];
 
     // Check for empty or dash user agent first

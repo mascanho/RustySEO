@@ -97,6 +97,7 @@ import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAge
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
 import { GrDocumentStore } from "react-icons/gr";
 import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawlersTable";
+import { WidgetRetrievalAgentsTable } from "./WidgetTables/WidgetRetrievalAgentsTable";
 import { invoke } from "@tauri-apps/api/core";
 
 const tabs = [
@@ -231,6 +232,7 @@ export default function WidgetLogs() {
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
+  const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -242,6 +244,16 @@ export default function WidgetLogs() {
       }
     };
     fetchIndexingBots();
+
+    const fetchRetrievalAgents = async () => {
+      try {
+        const agents = await invoke<string[]>("get_retrieval_agents_command");
+        setRetrievalAgents(agents);
+      } catch (error) {
+        console.error("Failed to fetch retrieval agents:", error);
+      }
+    };
+    fetchRetrievalAgents();
   }, []);
 
   useEffect(() => {
@@ -353,6 +365,24 @@ export default function WidgetLogs() {
       }))
       .sort((a, b) => b.value - a.value);
   }, [widgetAggs, indexingBots]);
+
+  // Prepare Retrieval Agents data
+  const retrievalAgentsData = useMemo(() => {
+    if (!widgetAggs?.crawler_types || retrievalAgents.length === 0) return [];
+
+    const botSet = new Set(retrievalAgents.map((name) => name.toLowerCase()));
+    const displayNameMap = new Map(
+      retrievalAgents.map((name) => [name.toLowerCase(), name]),
+    );
+
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => botSet.has(name.toLowerCase()))
+      .map(([name, value]) => ({
+        name: displayNameMap.get(name.toLowerCase()) || name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [widgetAggs, retrievalAgents]);
 
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
@@ -481,6 +511,11 @@ export default function WidgetLogs() {
       return indexingCrawlersData;
     }
 
+    // Retrieval Agents
+    if (activeTab === "Retrieval Agents") {
+      return retrievalAgentsData;
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {})
@@ -497,6 +532,7 @@ export default function WidgetLogs() {
           .sort((a, b) => b.value - a.value),
         "Aggregated Crawlers": crawlerData.length > 0 ? crawlerData : [],
         "Indexing Crawlers": indexingCrawlersData,
+        "Retrieval Agents": retrievalAgentsData,
       }[activeTab] || []
     );
   }, [
@@ -509,6 +545,7 @@ export default function WidgetLogs() {
     statusCodeData,
     crawlerData,
     indexingCrawlersData,
+    retrievalAgentsData,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -787,6 +824,13 @@ export default function WidgetLogs() {
                     />
                   ) : activeTab === "Indexing Crawlers" ? (
                     <WidgetIndexingCrawlersTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
+                    />
+                  ) : activeTab === "Retrieval Agents" ? (
+                    <WidgetRetrievalAgentsTable
                       data={overview}
                       entries={entries}
                       segment={entry?.name}
