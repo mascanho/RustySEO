@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::settings::utils::agentic_bots::agentic_bots;
 use crate::settings::utils::indexing_bots::generate_indexing_bots;
 use crate::settings::utils::retrieval_agents::generate_retrieval_agents;
 use crate::settings::utils::user_bots::generate_default_user_bots;
@@ -112,8 +113,12 @@ pub struct Settings {
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
     pub log_bots: Vec<(String, String)>,
+    // Normal indexing bots/crawlers
     pub indexing_bots: Vec<String>,
+    // Bots that consume content to feed LLMs
     pub retrieval_agents: Vec<String>,
+    // Agentic crawlers that perform tasks
+    pub agentic_bots: Vec<String>,
 
     // --- Integrations ---
     /// Enable PageSpeed Insights bulk fetching
@@ -187,6 +192,7 @@ impl Settings {
             log_bots: generate_default_user_bots(),
             indexing_bots: generate_indexing_bots(),
             retrieval_agents: generate_retrieval_agents(),
+            agentic_bots: agentic_bots(),
 
             // --- Integrations ---
             page_speed_bulk: false,
@@ -351,6 +357,7 @@ impl Settings {
             self.db_chunk_size_domain_crawler
         ));
 
+        // LOGS STUFF GOES HERE
         s.push_str("\n# --- Logs & File System ---\n");
         s.push_str("# log_batchsize\n");
         s.push_str(&format!("log_batchsize = {}\n", self.log_batchsize));
@@ -392,6 +399,11 @@ impl Settings {
         let retrieval_agents =
             serde_json::to_string(&self.retrieval_agents).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("retrieval_agents = {}\n", retrieval_agents));
+
+        s.push_str("# Agentic Bots\n");
+        let agentic_bots =
+            serde_json::to_string(&self.agentic_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("agentic_bots = {}\n", agentic_bots));
 
         s.push_str("\n# --- Integrations ---\n");
         s.push_str("# Enable PageSpeed Insights bulk fetching\n");
@@ -544,6 +556,7 @@ pub fn print_settings(settings: &Settings) {
 
     println!("Log Bots: {:#?}", settings.log_bots);
     println!("Retrival Agents: {:#?}", settings.retrieval_agents);
+    println!("Agentic Bots: {:#?}", settings.agentic_bots);
 
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
     println!("Adaptive Crawling: {}", settings.adaptive_crawling);
@@ -795,6 +808,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("retrieval_agents").and_then(|v| v.as_array()) {
         settings.retrieval_agents = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
+    if let Some(val) = updates.get("agentic_bots").and_then(|v| v.as_array()) {
+        settings.agentic_bots = val
             .iter()
             .filter_map(|v| v.as_str().map(|s| s.to_string()))
             .collect();
