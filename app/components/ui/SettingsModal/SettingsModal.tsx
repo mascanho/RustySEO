@@ -117,7 +117,7 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-white dark:bg-brand-dark rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
+    <div className="flex flex-col w-full bg-white dark:bg-brand-darker rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
       {/* Header */}
       <header className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
         <div className="flex items-center space-x-3">
