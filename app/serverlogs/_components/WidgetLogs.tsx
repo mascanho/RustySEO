@@ -113,7 +113,7 @@ const tabs = [
     icon: <TbSpider className="w-4 h-4" />,
   },
   { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
-  { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-3" /> },
+  { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -609,7 +609,10 @@ export default function WidgetLogs() {
             <span className="hover:text-brand-bright flex items-center gap-1">
               {formatNumber(totalCount)} entries
               {tableIsFiltered && (
-                <FaFilter className="text-brand-bright text-[10px]" title="Filtered data" />
+                <FaFilter
+                  className="text-brand-bright text-[10px]"
+                  title="Filtered data"
+                />
               )}
             </span>
           </div>
