@@ -12,7 +12,7 @@ use tauri::{AppHandle, Emitter};
 use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
-use crate::loganalyser::helpers::parse_logs::{parse_log_entries, parse_log_line};
+use crate::loganalyser::helpers::parse_logs::{parse_log_entries, parse_log_line, preload_all_ip_ranges_sync};
 use crate::loganalyser::active_db::{get_active_logs_stats, init_active_db, insert_active_logs_batch};
 use crate::settings::settings;
 
@@ -297,6 +297,10 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
     let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
+
+    // PRE-LOAD all bot IP ranges BEFORE starting log parsing
+    // This ensures Google/Bing/OpenAI verification works during parsing
+    crate::loganalyser::helpers::parse_logs::preload_all_ip_ranges_sync();
 
     // Progress reporting thread
     let app_handle_clone = app_handle.clone();
@@ -666,6 +670,9 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     let file_count = file_paths.len();
     let (progress_tx, progress_rx) = mpsc::channel();
     let (entry_tx, entry_rx) = mpsc::sync_channel(10000);
+
+    // PRE-LOAD all bot IP ranges BEFORE starting log parsing
+    preload_all_ip_ranges_sync();
 
     // Progress reporting thread
     let app_handle_clone = app_handle.clone();
