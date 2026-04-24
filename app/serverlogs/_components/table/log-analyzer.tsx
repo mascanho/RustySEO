@@ -1499,25 +1499,6 @@ const LogRow = memo(function LogRow({
                 <>
                   <div className="flex flex-col">
                     <div className="flex space-x-2 items-center mb-2">
-                      <h4 className="font-bold">Path</h4>
-                      {log?.path && (
-                        <CopyIcon
-                          className="cursor-pointer hover:scale-105 active:scale-95"
-                          onClick={(e) =>
-                            handleCopyClick(log?.path, e, "URL / PATH")
-                          }
-                          size={12}
-                        />
-                      )}
-                    </div>
-                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                      <p className="text-sm font-mono break-all">
-                        {log?.path}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex space-x-2 items-center mb-2">
                       <h4 className="font-bold">User Agent</h4>
                       {log?.user_agent && (
                         <CopyIcon
@@ -1532,6 +1513,28 @@ const LogRow = memo(function LogRow({
                     <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                       <p className="text-sm font-mono break-all">
                         {log.user_agent}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2 justify-between">
+                      <div className="flex items-center space-x-1">
+                        <h4 className="font-bold">Path</h4>
+                        {log?.path && (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.path, e, "URL / PATH")
+                            }
+                            size={12}
+                          />
+                        )}
+                      </div>
+                      <DangerIndicator path={log.path} />
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {log?.path}
                       </p>
                     </div>
                   </div>
@@ -1562,6 +1565,7 @@ const LogRow = memo(function LogRow({
                           />
                         )}
                       </div>
+                      {showAgent && <DangerIndicator path={log.path} />}
                       {log.verified && (
                         <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                           <BadgeCheck className="text-blue-700 pr-1" size={18} />
