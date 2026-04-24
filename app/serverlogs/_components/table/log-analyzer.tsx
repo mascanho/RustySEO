@@ -29,6 +29,7 @@ import {
   X,
   CopyIcon,
   KeyRound,
+  Skull,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "./utils/FetchMatchGSC";
+import { DangerIndicator } from "./utils/checkPathForDanger";
 import { invoke } from "@tauri-apps/api/core";
 
 export function LogAnalyzer() {
@@ -1336,6 +1338,7 @@ const LogRow = memo(function LogRow({
                   ? "https://" + domain + log.path
                   : log?.path}
               </span>
+              <DangerIndicator path={log.path} />
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials?.token?.length > 0 && isHovered && (
                 <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
@@ -1638,7 +1641,7 @@ function PaginationControls({
         </PaginationContent>
       </Pagination>
       <div className="flex items-center">
-        <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
+        <span className="flex justify-end text-muted-foreground w-[280px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
           {tableIsFiltered && (
             <FaFilter className="text-red !important text-xs mr-1 pt-1" />
           )}

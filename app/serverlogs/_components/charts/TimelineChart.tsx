@@ -35,9 +35,11 @@ const chartConfig = {
 
 export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
-  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
+  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("daily");
   const timelineData = useLogAnalysisStore((state) => state.timelineData);
-  const fetchTimelineAggregations = useLogAnalysisStore((state) => state.fetchTimelineAggregations);
+  const fetchTimelineAggregations = useLogAnalysisStore(
+    (state) => state.fetchTimelineAggregations,
+  );
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
 
   React.useEffect(() => {
@@ -191,19 +193,19 @@ export function TimelineChart() {
                     const date = new Date(value);
                     return viewMode === "daily"
                       ? date.toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                       : date.toLocaleTimeString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      });
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
+                        });
                   }}
                 />
               }

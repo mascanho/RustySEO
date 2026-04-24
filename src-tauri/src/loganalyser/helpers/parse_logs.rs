@@ -553,6 +553,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("tavily", "Tavily"),
         ("spaziodati", "SpazioDati"),
         ("excon", "Excon"),
+        ("okhttp", "OkHttp"),
     ];
 
     // Check for empty or dash user agent first
