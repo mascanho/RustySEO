@@ -119,7 +119,7 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
   return (
     <div className="flex flex-col w-full bg-white dark:bg-brand-darker rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5  ">
       {/* Header */}
-      <header className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
+      <header className="flex items-center justify-between p-2   border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-brand-bright/10 dark:bg-brand-bright/20 rounded-xl">
             <Settings className="w-5 h-5 text-brand-bright" />
@@ -146,7 +146,7 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
               size="xs"
               className="text-gray-500 dark:text-gray-400 font-medium"
             >
-              Configure crawler behavior and performance
+              Configure RustySEO behavior and performance
             </Text>
           </div>
         </div>
@@ -207,11 +207,11 @@ const SettingsModal = ({ close }: SettingsModalProps) => {
       </div>
 
       {/* Footer */}
-      <div className="px-5 pb-1 pt-2 flex justify-between items-center border-t border-gray-100 dark:border-white/5">
-        <div className="h-px flex-1 bg-gray-100 dark:bg-brand-dark mr-4 opacity-40" />
+      <div className="px-5 pb-1 pt-2 flex justify-end items-center border-t border-gray-100 dark:border-white/5">
+        {/* <div className="h-px flex-1 bg-gray-100 dark:bg-brand-dark mr-4 opacity-40" /> */}
         <Text
           size="xs"
-          className="text-gray-400 dark:text-gray-600 font-mono italic opacity-60"
+          className="text-gray-400 dark:text-gray-600 font-mono italic opacity-60 justify-end"
         >
           RustySEO v{localVersion}
         </Text>

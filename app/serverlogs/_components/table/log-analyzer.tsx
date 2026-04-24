@@ -81,7 +81,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
-import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
+import { FaAngellist, FaApper, FaEye, FaFilter } from "react-icons/fa";
 import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
 import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
@@ -115,6 +115,10 @@ export function LogAnalyzer() {
   const setActiveFilters = useLogAnalysisStore(
     (state) => state.setActiveFilters,
   );
+  const setTableIsFiltered = useLogAnalysisStore(
+    (state) => state.setTableIsFiltered,
+  );
+  const tableIsFiltered = useLogAnalysisStore((state) => state.tableIsFiltered);
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -321,6 +325,18 @@ export function LogAnalyzer() {
       store.setActiveFilters(filters);
       store.fetchWidgetAggregations(filters);
       store.fetchOverviewStats();
+
+      // Check if any filter is active
+      const hasFilter =
+        activeSearchTerm ||
+        statusFilter.length > 0 ||
+        methodFilter.length > 0 ||
+        fileTypeFilter.length > 0 ||
+        botFilter !== "all" ||
+        botTypeFilter !== "all" ||
+        crawlerTypeFilter !== null ||
+        verifiedFilter !== null;
+      store.setTableIsFiltered(!!hasFilter);
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -389,6 +405,10 @@ export function LogAnalyzer() {
     setExpandedRow(null);
     setShowAgent(false);
     setUrlAgentFilter("url");
+
+    // Clear filtered state
+    const store = useLogAnalysisStore.getState();
+    store.setTableIsFiltered(false);
   }, []);
 
   const exportCSV = useCallback(async () => {
@@ -1189,6 +1209,7 @@ export function LogAnalyzer() {
           totalCount={totalCount}
           entries={entries}
           formatedNumber={formatedNumber}
+          tableIsFiltered={tableIsFiltered}
         />
       </div>
     </TooltipProvider>
@@ -1523,6 +1544,7 @@ function PaginationControls({
   totalCount,
   entries,
   formatedNumber,
+  tableIsFiltered,
 }) {
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
   const indexOfLastItem = Math.min(currentPage * itemsPerPage, totalCount);
@@ -1615,8 +1637,11 @@ function PaginationControls({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      <div>
+      <div className="flex items-center">
         <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
+          {tableIsFiltered && (
+            <FaFilter className="text-red !important text-xs mr-1 pt-1" />
+          )}
           {totalCount > 0 ? indexOfFirstItem + 1 : 0}-{indexOfLastItem} of{" "}
           {formatedNumber(totalCount)} logs
         </span>

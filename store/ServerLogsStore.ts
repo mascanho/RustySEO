@@ -177,6 +177,7 @@ interface LogAnalysisState {
   crawlerTimelineData: CrawlerPoint[];
   pathAggregations: PathAggregationsPage;
   botTypes: string[];
+  tableIsFiltered: boolean;
 }
 
 export interface BotPathDetail {
@@ -257,6 +258,7 @@ interface LogAnalysisActions {
   fetchWidgetAggregations: (filters: ActiveFilters) => Promise<void>;
   setActiveFilters: (filters: ActiveFilters) => void;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
+  setTableIsFiltered: (isFiltered: boolean) => void;
   resetFilters: () => void;
   resetAll: () => void;
   setLoading: (isLoading: boolean) => void;
@@ -392,6 +394,7 @@ const initialState: LogAnalysisState = {
   statusTimelineData: [],
   crawlerTimelineData: [],
   botTypes: [],
+  tableIsFiltered: false,
 };
 
 // Helper functions for merging complex objects
@@ -979,6 +982,11 @@ export const useLogAnalysisStore = create<
     setActiveFilters: (filters) =>
       set((state) => {
         state.activeFilters = filters;
+      }),
+
+    setTableIsFiltered: (isFiltered) =>
+      set((state) => {
+        state.tableIsFiltered = isFiltered;
       }),
 
     setTotalCount: (count) =>

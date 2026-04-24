@@ -27,13 +27,13 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
-    
+
     // Also update sorted cache
     let mut sorted = taxonomies.clone();
     sorted.sort_by(|a, b| b.path.len().cmp(&a.path.len()));
     let mut sorted_lock = SORTED_TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *sorted_lock = sorted;
-    
+
     println!("Taxonomies updated and sorted.");
     Ok(())
 }
@@ -80,7 +80,10 @@ fn classify_segment_name_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]
 }
 
 /// Get the match type of the segment based on taxonomy configuration
-fn classify_segment_match_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> Option<String> {
+fn classify_segment_match_internal(
+    path: &str,
+    sorted_taxonomies: &[TaxonomyInfo],
+) -> Option<String> {
     for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
@@ -548,6 +551,8 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("firecrawl", "Firecrawl"),
         ("kadoa", "Kadoa"),
         ("tavily", "Tavily"),
+        ("spaziodati", "SpazioDati"),
+        ("excon", "Excon"),
     ];
 
     // Check for empty or dash user agent first
@@ -624,7 +629,7 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
 
     // Get sorted taxonomies from CACHE - much faster than sorting every line
     let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
-    
+
     Some(LogEntry {
         ip,
         timestamp,

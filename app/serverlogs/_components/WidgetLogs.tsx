@@ -80,7 +80,7 @@ const WidgetStatusCodesTable = lazy(() =>
 
 import { Tabs } from "@mantine/core";
 
-import { FaInfoCircle } from "react-icons/fa";
+import { FaInfoCircle, FaFilter } from "react-icons/fa";
 
 import {
   Popover,
@@ -229,6 +229,7 @@ export default function WidgetLogs() {
   const pathAggregations = useLogAnalysisStore(
     (state) => state.pathAggregations,
   );
+  const tableIsFiltered = useLogAnalysisStore((state) => state.tableIsFiltered);
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
@@ -605,8 +606,11 @@ export default function WidgetLogs() {
       <Popover>
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
-            <span className="hover:text-brand-bright">
+            <span className="hover:text-brand-bright flex items-center gap-1">
               {formatNumber(totalCount)} entries
+              {tableIsFiltered && (
+                <FaFilter className="text-brand-bright text-[10px]" title="Filtered data" />
+              )}
             </span>
           </div>
         </PopoverTrigger>
