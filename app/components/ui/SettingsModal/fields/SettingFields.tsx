@@ -48,28 +48,62 @@ export const NumberInput = ({
   step = 1,
   unit,
   width = "w-[90px]",
-}: NumberInputProps) => (
-  <div className="flex items-center gap-1.5">
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => {
-        const v =
-          step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
-        if (!isNaN(v) && v >= min && v <= max) onChange(v);
-      }}
-      min={min}
-      max={max}
-      step={step}
-      className={`${width} h-7 px-2 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.04] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-brand-bright/50 focus:border-brand-bright/50 transition-all text-right`}
-    />
-    {unit && (
-      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono min-w-[18px]">
-        {unit}
-      </span>
-    )}
-  </div>
-);
+}: NumberInputProps) => {
+  const [localValue, setLocalValue] = React.useState(value.toString());
+
+  React.useEffect(() => {
+    setLocalValue(value.toString());
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    const parsed = step < 1 ? parseFloat(val) : parseInt(val, 10);
+    
+    // Only dispatch onChange immediately if the intermediate value is fully valid
+    if (!isNaN(parsed) && parsed >= min && parsed <= max) {
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    let parsed = step < 1 ? parseFloat(localValue) : parseInt(localValue, 10);
+    
+    if (isNaN(parsed)) {
+      parsed = value; // revert to last valid value if empty or invalid
+    } else {
+      parsed = Math.max(min, Math.min(max, parsed));
+    }
+    
+    setLocalValue(parsed.toString());
+    onChange(parsed);
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        value={localValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.currentTarget.blur();
+          }
+        }}
+        min={min}
+        max={max}
+        step={step}
+        className={`${width} h-7 px-2 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.04] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-brand-bright/50 focus:border-brand-bright/50 transition-all text-right`}
+      />
+      {unit && (
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono min-w-[18px]">
+          {unit}
+        </span>
+      )}
+    </div>
+  );
+};
 
 interface ToggleSwitchProps {
   checked: boolean;

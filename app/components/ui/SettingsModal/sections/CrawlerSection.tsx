@@ -74,7 +74,7 @@ const CrawlerSection = ({ settings, onUpdate }: Props) => (
             <NumberInput
                 value={settings.max_urls_stored}
                 onChange={(v) => onUpdate("max_urls_stored", v)}
-                min={500}
+                min={1}
                 max={20000}
             />
         </SettingField>

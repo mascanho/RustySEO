@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 export interface AppSettings {
     // System
@@ -135,6 +136,22 @@ export function useSettings() {
                         { updates: tomlValue },
                     );
                     setSettings(updated);
+
+                    if (key === "max_urls_stored") {
+                        useGlobalCrawlStore.setState((state) => {
+                            const MAX_CRAWL_ROWS = value as number;
+                            const capped =
+                                state.crawlData.length > MAX_CRAWL_ROWS
+                                    ? state.crawlData.slice(
+                                          state.crawlData.length - MAX_CRAWL_ROWS,
+                                      )
+                                    : state.crawlData;
+                            return {
+                                maxUrlsStored: MAX_CRAWL_ROWS,
+                                crawlData: capped,
+                            };
+                        });
+                    }
                 } catch (err: any) {
                     console.error("Failed to save setting:", err);
                     // Revert on error
