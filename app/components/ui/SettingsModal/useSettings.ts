@@ -12,6 +12,7 @@ export interface AppSettings {
     batch_size: number;
     max_depth: number;
     max_urls_per_domain: number;
+    max_urls_stored: number;
 
     // Timing & Throttling
     adaptive_crawling: boolean;

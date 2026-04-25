@@ -170,7 +170,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         const { invoke } = await import("@tauri-apps/api/core");
         const settings: any = await invoke("get_settings_command");
         if (settings && settings.max_urls_stored) {
-          useGlobalCrawlStore.setState({ maxUrlsStored: settings.max_urls_stored });
+          useGlobalCrawlStore.setState({
+            maxUrlsStored: settings.max_urls_stored,
+          });
+          console.log("Max URLs Stored:", settings.max_urls_stored);
         }
       } catch (error) {
         console.error("Failed to fetch maxUrlsStored:", error);
