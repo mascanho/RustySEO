@@ -60,7 +60,8 @@ interface CrawlStore {
     cwv: any[];
     files: any[];
   };
-  setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
+  setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
+  maxUrlsStored: number;
 
   setDomainCrawlData: (data: PageDetails[]) => void;
   addDomainCrawlResult: (result: PageDetails | PageDetails[]) => void;
@@ -125,7 +126,8 @@ interface CrawlStore {
       setCookies: (cookies: string[]) => void;
       setFavicon: (favicon: string) => void;
       selectURL: (url: string) => void;
-      setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) => void;
+      setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
+      fetchMaxUrlsStored: () => Promise<void>;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -151,29 +153,42 @@ interface CrawlStore {
 // Utility function to create setters dynamically
 const createSetter =
   <T>(key: keyof CrawlStore) =>
-    (value: T) =>
-      useGlobalCrawlStore.setState({ [key]: value } as any);
+  (value: T) =>
+    useGlobalCrawlStore.setState({ [key]: value } as any);
 
 // Create the Zustand store
 const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
   // Common setter functions
   const setters = {
     setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
-    setAggregatedData: (data: Partial<CrawlStore['aggregatedData']>) =>
+    setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) =>
       set((state) => ({
-        aggregatedData: { ...state.aggregatedData, ...data }
+        aggregatedData: { ...state.aggregatedData, ...data },
       })),
+    fetchMaxUrlsStored: async () => {
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        const settings: any = await invoke("get_settings_command");
+        if (settings && settings.max_urls_stored) {
+          useGlobalCrawlStore.setState({ maxUrlsStored: settings.max_urls_stored });
+        }
+      } catch (error) {
+        console.error("Failed to fetch maxUrlsStored:", error);
+      }
+    },
     addDomainCrawlResult: (resultOrBatch: PageDetails | PageDetails[]) =>
       set((state) => {
-        const results = Array.isArray(resultOrBatch) ? resultOrBatch : [resultOrBatch];
+        const results = Array.isArray(resultOrBatch)
+          ? resultOrBatch
+          : [resultOrBatch];
         if (results.length === 0) return state;
 
         if (!state.visitedUrls) {
-          state.visitedUrls = new Set(state.crawlData.map(item => item.url));
+          state.visitedUrls = new Set(state.crawlData.map((item) => item.url));
         }
 
         // Filter to only new URLs
-        const newResults = results.filter(r => !state.visitedUrls.has(r.url));
+        const newResults = results.filter((r) => !state.visitedUrls.has(r.url));
         if (newResults.length === 0) return state;
 
         // Mark all new URLs as visited
@@ -181,33 +196,35 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           state.visitedUrls.add(r.url);
         }
 
-        // Live-feed ring buffer: keep only the most recent 1,500 rows in the JS heap.
+        // Live-feed ring buffer: keep only the most recent rows in the JS heap.
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
-        const MAX_CRAWL_ROWS = 1_500;
+        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
         const combined = state.crawlData.concat(newResults);
-        const capped = combined.length > MAX_CRAWL_ROWS
-          ? combined.slice(combined.length - MAX_CRAWL_ROWS)
-          : combined;
+        const capped =
+          combined.length > MAX_CRAWL_ROWS
+            ? combined.slice(combined.length - MAX_CRAWL_ROWS)
+            : combined;
 
         return { crawlData: capped };
       }),
-    clearDomainCrawlData: () => set({
-      crawlData: [],
-      visitedUrls: new Set(),
-      aggregatedData: {
-        images: [],
-        scripts: [],
-        css: [],
-        internalLinks: [],
-        externalLinks: [],
-        keywords: [],
-        redirects: [],
-        cwv: [],
-        files: [],
-      }
-    }),
+    clearDomainCrawlData: () =>
+      set({
+        crawlData: [],
+        visitedUrls: new Set(),
+        aggregatedData: {
+          images: [],
+          scripts: [],
+          css: [],
+          internalLinks: [],
+          externalLinks: [],
+          keywords: [],
+          redirects: [],
+          cwv: [],
+          files: [],
+        },
+      }),
     setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
     setCrawlerType: createSetter<string>("crawlerType"),
     setIssues: createSetter<string[]>("issues"),
@@ -255,11 +272,13 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        const MAX_CRAWL_ROWS = 1_500;
+        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
         let newCrawlData = state.crawlData.concat([result]);
-        
+
         if (newCrawlData.length > MAX_CRAWL_ROWS) {
-          newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+          newCrawlData = newCrawlData.slice(
+            newCrawlData.length - MAX_CRAWL_ROWS,
+          );
         }
 
         return {
@@ -314,6 +333,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     cookies: [],
     favicon: "",
     visitedUrls: new Set(),
+    maxUrlsStored: 1500,
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -343,6 +363,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setCookies: setters.setCookies,
         setFavicon: setters.setFavicon,
         setAggregatedData: setters.setAggregatedData,
+        fetchMaxUrlsStored: setters.fetchMaxUrlsStored,
         selectURL: async (url: string) => {
           const state = get();
           const rows = state.crawlData;
@@ -362,11 +383,11 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           }
 
           if (!pageData) {
-             console.warn(`Could not find or fetch data for URL: ${url}`);
-             setters.setSelectedTableURL([]);
-             setters.setInlinks([]);
-             setters.setOutlinks([]);
-             return;
+            console.warn(`Could not find or fetch data for URL: ${url}`);
+            setters.setSelectedTableURL([]);
+            setters.setInlinks([]);
+            setters.setOutlinks([]);
+            return;
           }
 
           setters.setSelectedTableURL([pageData]);
@@ -396,7 +417,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           let innerLinksMatched = [];
           try {
             const { invoke } = await import("@tauri-apps/api/core");
-            innerLinksMatched = await invoke("get_incoming_links_command", { targetUrl: url });
+            innerLinksMatched = await invoke("get_incoming_links_command", {
+              targetUrl: url,
+            });
           } catch (error) {
             console.error("Failed to fetch incoming links:", error);
             // Fallback to client-side filtering if command fails (though less reliable)
@@ -408,12 +431,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             });
           }
 
-          console.log('🔍 Inlinks Debug:', {
+          console.log("🔍 Inlinks Debug:", {
             selectedUrl: url,
             normalizedUrl: targetUrlNormalized,
             totalPages: rows.length,
             pagesWithLinksToThisUrl: innerLinksMatched.length,
-            samplePage: innerLinksMatched[0]
+            samplePage: innerLinksMatched[0],
           });
 
           // Extract all internal links that point to the selected URL
@@ -436,9 +459,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             });
           });
 
-          console.log('📊 Inlinks Data:', {
+          console.log("📊 Inlinks Data:", {
             totalInlinks: inlinksData.length,
-            sampleInlink: inlinksData[0]
+            sampleInlink: inlinksData[0],
           });
 
           // Format data to match BOTH InlinksSubTable and InnerLinksDetailsTable expectations
@@ -448,10 +471,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             {
               url,
               inoutlinks_status_codes: {
-                internal: inlinksData
-              }
+                internal: inlinksData,
+              },
             },
-            innerLinksMatched  // Array of pages for InnerLinksDetailsTable
+            innerLinksMatched, // Array of pages for InnerLinksDetailsTable
           ]);
 
           const allOutgoingLinks = [];
@@ -487,14 +510,18 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             if (update.result) {
               const isDuplicate = state.visitedUrls
                 ? state.visitedUrls.has(update.result.url)
-                : state.crawlData.some((item) => item.url === update.result.url);
+                : state.crawlData.some(
+                    (item) => item.url === update.result.url,
+                  );
               if (!isDuplicate) {
                 if (state.visitedUrls) state.visitedUrls.add(update.result.url);
                 newCrawlData = state.crawlData.concat([update.result]);
-                
-                const MAX_CRAWL_ROWS = 1_500;
+
+                const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
                 if (newCrawlData.length > MAX_CRAWL_ROWS) {
-                  newCrawlData = newCrawlData.slice(newCrawlData.length - MAX_CRAWL_ROWS);
+                  newCrawlData = newCrawlData.slice(
+                    newCrawlData.length - MAX_CRAWL_ROWS,
+                  );
                 }
               }
             }

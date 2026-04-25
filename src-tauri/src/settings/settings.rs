@@ -37,6 +37,10 @@ pub struct Settings {
     pub max_depth: usize,
     /// Maximum URLs to crawl per domain
     pub max_urls_per_domain: usize,
+    /// Max URLS to keep in the front End (JS Heap)
+    /// They will always be fetched via sqlite DB
+    /// NOTE: check the GlobalCrawlDataStore
+    pub max_urls_stored: usize,
 
     // --- Timing & Throttling (Adaptive) ---
     /// Enable adaptive crawling speed based on server response
@@ -142,6 +146,7 @@ impl Settings {
             batch_size: 40,
             max_depth: 50,
             max_urls_per_domain: 100000,
+            max_urls_stored: 5000,
 
             // --- Timing & Throttling ---
             adaptive_crawling: true,
@@ -232,6 +237,10 @@ impl Settings {
             "max_urls_per_domain = {}\n",
             self.max_urls_per_domain
         ));
+
+        // MAX URLS STORED IN JS HEAP
+        s.push_str("# Max URLS TO SHOWCASE IN THE FRONTEND, JAvascript HEAP\n");
+        s.push_str(&format!("max_urls_stored = {}\n", self.max_urls_stored));
 
         s.push_str("\n# --- Timing & Throttling (Adaptive) ---\n");
         s.push_str("# Enable adaptive crawling speed based on server response\n");
@@ -516,6 +525,10 @@ pub fn print_settings(settings: &Settings) {
     println!("Batch Size: {}", settings.batch_size);
     println!("DB Batch Size: {}", settings.db_batch_size);
     println!(
+        "Max URLS Stored In front end JS (HEAP): {} ",
+        settings.max_urls_stored
+    );
+    println!(
         "Links Concurrent Requests: {}",
         settings.links_max_concurrent_requests
     );
@@ -610,6 +623,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("max_delay").and_then(|v| v.as_integer()) {
         settings.max_delay = val as u64;
+    }
+
+    if let Some(val) = updates.get("max_urls_stored").and_then(|v| v.as_integer()) {
+        settings.max_urls_stored = val as usize;
     }
 
     if let Some(val) = updates

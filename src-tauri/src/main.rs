@@ -8,11 +8,11 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use settings::settings::delete_config_folders_command;
-use settings::settings::get_indexing_bots_command;
-use settings::settings::get_retrieval_agents_command;
 use settings::settings::get_agentic_bots_command;
+use settings::settings::get_indexing_bots_command;
 use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;
+use settings::settings::get_retrieval_agents_command;
 use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
 use settings::settings::toggle_javascript_rendering;
@@ -387,7 +387,7 @@ async fn main() {
             loganalyser::log_commands::match_gsc_query_command,
             loganalyser::helpers::gsc_log::load_gsc_from_database,
             gsc_auth::start_gsc_auth_server,
-            gsc_auth::exchange_gsc_code
+            gsc_auth::exchange_gsc_code,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
