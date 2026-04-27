@@ -69,6 +69,10 @@ struct Config {
     openai_key: String,
 }
 
+// IF THE SETTINGS FILE NEEDS TO BE
+// REPLACED TO AVOID ERRORS IN THE APP DUE TO BREAKING CHANGES ON THE NEW RELEASE,  SET THIS TO TRUE
+const CHECKS_VERSION: bool = true;
+
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
     println!("Tauri crawl command called with URL: {}", url);
@@ -198,6 +202,16 @@ async fn main() {
             Arc::new(RwLock::new(Settings::default()))
         }
     };
+
+    // IN CASE CONFIG FILE NEEDS TO BE REPLACED FOR THE APP NOT TO GIVE ERRORS DUE TO NEW FEATURES
+    match CHECKS_VERSION {
+        false => {
+            println!("Settings loaded successfully.");
+        }
+        true => {
+            settings::settings::check_and_replace().await;
+        }
+    }
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();

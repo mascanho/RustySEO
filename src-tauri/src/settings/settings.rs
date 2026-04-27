@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::settings::utils;
 use crate::settings::utils::agentic_bots::agentic_bots;
 use crate::settings::utils::indexing_bots::generate_indexing_bots;
 use crate::settings::utils::retrieval_agents::generate_retrieval_agents;
@@ -20,6 +21,8 @@ use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    // CREATED ON
+    pub date_created: String,
     // --- System ---
     /// Current version of the application
     pub version: String,
@@ -136,6 +139,9 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Self {
         Self {
+            // -- CREATED ON
+            date_created: chrono::Utc::now().to_rfc3339(),
+
             // --- System ---
             version: local_version(),
             rustyid: Uuid::new_v4(),
@@ -208,6 +214,9 @@ impl Settings {
 
     pub fn generate_commented_config(&self) -> String {
         let mut s = String::new();
+
+        s.push_str("# --- Created On ---\n");
+        s.push_str(&format!("date_created = {:?}\n", self.date_created));
 
         s.push_str("# --- System ---\n");
         s.push_str("# Current version of the application\n");
@@ -457,6 +466,12 @@ pub async fn load_settings() -> Result<Settings, String> {
     toml::from_str(&contents).map_err(|e| format!("Failed to parse config: {}", e))
 }
 
+pub async fn check_and_replace() {
+    if let Err(e) = utils::config_checker::replace_config_file().await {
+        println!("Warning: Failed to verify or replace the config file: {}", e);
+    }
+}
+
 /// Creates a new config file if it doesn't exist
 pub async fn create_config_file() -> Result<Settings, String> {
     let config_path = Settings::config_path()?;
@@ -510,6 +525,7 @@ pub async fn init_settings() -> Result<Settings, String> {
 
 pub fn print_settings(settings: &Settings) {
     // Use the settings
+    println!("Created at: {}", settings.date_created);
     println!("Version: {}", settings.version);
     println!("Crawl Timeout: {:?}", settings.crawl_timeout);
     println!("Client Timeout: {:?}", settings.client_timeout);
@@ -585,6 +601,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     // Parse updates into a HashMap
     let updates: HashMap<String, toml::Value> =
         toml::from_str(updates).map_err(|e| format!("Failed to parse updates: {}", e))?;
+
+    if let Some(val) = updates.get("date_created").and_then(|v| v.as_str()) {
+        settings.date_created = val.to_string();
+    }
 
     // Apply updates (only fields that were provided)
     if let Some(val) = updates
