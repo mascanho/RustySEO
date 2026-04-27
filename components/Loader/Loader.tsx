@@ -68,14 +68,14 @@ const Loader = () => {
           style={{ opacity: 1 }} // Force immediate opacity
         >
           {/* Subtle Background Glows */}
-          <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
             <motion.div
               animate={{
                 scale: [1, 1.2, 1],
                 opacity: [0.1, 0.15, 0.1],
               }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600 blur-[120px]"
+              className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-blue-600 blur-[120px]"
             />
             <motion.div
               animate={{
@@ -83,7 +83,7 @@ const Loader = () => {
                 opacity: [0.1, 0.12, 0.1],
               }}
               transition={{ duration: 10, repeat: Infinity, ease: "linear", delay: 1 }}
-              className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-indigo-600 blur-[120px]"
+              className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full bg-indigo-600 blur-[120px]"
             />
           </div>
 
