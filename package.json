@@ -112,12 +112,12 @@
     "uuid": "^10.0.0",
     "vaul": "^0.9.1",
     "xlsx": "^0.18.5",
+    "zod": "^3.25.76",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.4.0",
     "@tauri-apps/cli": "^2.4.0",
-    "@tauri-apps/cli-win32-x64-msvc": "^2.8.3",
     "@types/lodash": "^4.17.15",
     "@types/node": "^20",
     "@types/react": "19.1.8",

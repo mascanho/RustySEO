@@ -1,11 +1,8 @@
 //! URL processing logic for the domain crawler
 
-use colored::*;
 use reqwest::Client;
 use scraper::Html;
 use serde_json::Value;
-use std::collections::HashSet;
-use std::io::Write;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
@@ -23,10 +20,8 @@ use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::helpers::{headless_fetch, opengraph, url_depth};
 use crate::domain_crawler::models::Extractor;
-use crate::settings;
 use crate::settings::settings::Settings;
 
-use super::constants::{MAX_DEPTH, MAX_URLS_PER_DOMAIN};
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::cross_origin::analyze_cross_origin_security;
 use super::helpers::flesch_reader::get_flesch_score;
@@ -44,7 +39,7 @@ use super::helpers::{
 };
 use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
-use super::state::{CrawlResultData, CrawlerState, FailedUrl, ProgressData};
+use super::state::{CrawlResultData, CrawlerState, ProgressData};
 
 /// Process a single URL and extract all relevant data
 pub async fn process_url(
@@ -125,27 +120,9 @@ pub async fn process_url(
                 break;
             }
             Ok(Err(e)) => {
-                let mut state = state.lock().await;
-                state.failed_urls.insert(FailedUrl {
-                    url: url.to_string(),
-                    error: e.to_string(),
-                    retries: 0,
-                    depth,
-                    timestamp: Instant::now(),
-                });
-                state.pending_urls.remove(url.as_str());
                 return Err(format!("Failed to fetch {}: {}", url, e));
             }
             Err(_) => {
-                let mut state = state.lock().await;
-                state.failed_urls.insert(FailedUrl {
-                    url: url.to_string(),
-                    error: "Timeout fetching".to_string(),
-                    retries: 0,
-                    depth,
-                    timestamp: Instant::now(),
-                });
-                state.pending_urls.remove(url.as_str());
                 return Err(format!("Timeout fetching {}", url));
             }
         }
@@ -203,46 +180,16 @@ pub async fn process_url(
     let mut body = match response.bytes().await {
         Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
         Err(e) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
-                url: url.to_string(),
-                error: e.to_string(),
-                retries: 0,
-                depth,
-                timestamp: Instant::now(),
-            });
             return Err(format!("Failed to read response body: {}", e));
         }
     };
 
     // Detect 'hidden' errors (200 OK but actually a block/error page)
-    let body_lower = body.to_lowercase();
-    let is_block_page = body_lower.contains("access denied")
-        || body_lower.contains("rate limit")
-        || body_lower.contains("too many requests")
-        || body_lower.contains("forbidden")
-        || body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
-        || body_lower.contains("error 1020") // Cloudflare Access Denied
-        || body_lower.contains("challenge-form") // Cloudflare
-        || body_lower.contains("cloudflare") && body_lower.contains("ray id") // Cloudflare Block
-        || body_lower.contains("one more step") // Cloudflare
-        || body_lower.contains("unusual traffic") // Google/AWS block
-        || body_lower.contains("distilnetworks") // Distil Networks
-        || body_lower.contains("bot detection")
-        || body_lower.contains("please enable js") // Anti-bot
-        || (body.len() < 500 && (body_lower.contains("error") || body_lower.contains("wait") || body_lower.contains("blocked")));
+    let is_block_page = is_rate_limit_or_block_page(&body, status_code);
 
-    if is_block_page && status_code == 200 {
-        let mut state = state.lock().await;
-        state.failed_urls.insert(FailedUrl {
-            url: url.to_string(),
-            error: "Cloudflare/Server Block (Error 1015 or Rate Limit). Please lower 'concurrent_requests' in settings.".to_string(),
-            retries: 0,
-            depth,
-            timestamp: Instant::now(),
-        });
+    if is_block_page {
         return Err(format!(
-            "Blocked/Rate Limited (1015) by server for {}. Try lowering concurrency.",
+            "Blocked/Rate Limited (1015) by server for {}. Crawl will back off and retry.",
             url
         ));
     }
@@ -282,6 +229,13 @@ pub async fn process_url(
             Ok((js_body, js_cookies)) => {
                 if js_body.len() > 200 {
                     body = js_body;
+                }
+                let js_body_is_blocked = is_rate_limit_or_block_page(&body, status_code);
+                if js_body_is_blocked {
+                    return Err(format!(
+                        "Blocked/Rate Limited (1015) by server for {} after JS render. Crawl will back off and retry.",
+                        url
+                    ));
                 }
                 // Merge JS cookies with existing cookies
                 // We use a HashSet (implicitly by iterating) or just append and dedup?
@@ -520,6 +474,30 @@ pub async fn process_url(
     Ok(result)
 }
 
+fn is_rate_limit_or_block_page(body: &str, status_code: u16) -> bool {
+    if matches!(status_code, 403 | 429 | 503) {
+        return true;
+    }
+
+    let body_lower = body.to_lowercase();
+    body_lower.contains("access denied")
+        || body_lower.contains("rate limit")
+        || body_lower.contains("too many requests")
+        || body_lower.contains("error 1015")
+        || body_lower.contains("error 1020")
+        || body_lower.contains("challenge-form")
+        || (body_lower.contains("cloudflare") && body_lower.contains("ray id"))
+        || body_lower.contains("one more step")
+        || body_lower.contains("unusual traffic")
+        || body_lower.contains("distilnetworks")
+        || body_lower.contains("bot detection")
+        || body_lower.contains("please enable js")
+        || (body.len() < 500
+            && (body_lower.contains("error")
+                || body_lower.contains("wait")
+                || body_lower.contains("blocked")))
+}
+
 /// Update crawler state and emit progress after processing a URL
 async fn update_state_and_emit_progress(
     state: &Arc<Mutex<CrawlerState>>,
@@ -586,7 +564,7 @@ async fn update_state_and_emit_progress(
             {
                 // Only increment total_urls when we actually add a new URL
                 let queue_length_before = state.queue.len();
-                
+
                 // Parse the normalized URL back to a Url object for the queue
                 if let Ok(normalized_url_obj) = Url::parse(&normalized_url) {
                     state.queue.push_back((normalized_url_obj, depth + 1));
@@ -662,15 +640,16 @@ async fn update_state_and_emit_progress(
 
     // Adaptive progress throttle based on crawl scale
     let progress_interval_ms = if total_discovered > 20000 {
-        2000  // Very large crawls: emit every 2s
+        2000 // Very large crawls: emit every 2s
     } else if total_discovered > 10000 {
-        1000  // Large crawls: emit every 1s
+        1000 // Large crawls: emit every 1s
     } else {
-        400   // Small crawls: emit every 400ms
+        400 // Small crawls: emit every 400ms
     };
 
-    let should_emit_progress =
-        state.last_progress_emit.elapsed() > Duration::from_millis(progress_interval_ms) || active_pending == 0;
+    let should_emit_progress = state.last_progress_emit.elapsed()
+        > Duration::from_millis(progress_interval_ms)
+        || active_pending == 0;
 
     if should_emit_progress && safe_total_discovered > 0 && !percentage.is_nan() {
         if let Err(err) = app_handle.emit("progress_update", progress) {
@@ -683,7 +662,8 @@ async fn update_state_and_emit_progress(
         if should_emit_progress && (safe_total_discovered == 0 || percentage.is_nan()) {
             tracing::warn!(
                 "Skipping invalid progress update: total_discovered={}, percentage={}",
-                safe_total_discovered, percentage
+                safe_total_discovered,
+                percentage
             );
         }
     }
@@ -696,16 +676,17 @@ async fn update_state_and_emit_progress(
         .push(super::models::LightCrawlResult::from_full(result));
 
     let (batch_interval_ms, batch_size_threshold) = if total_discovered > 20000 {
-        (2000, 400)  // Very large crawls: emit every 2s or 400 items
+        (2000, 400) // Very large crawls: emit every 2s or 400 items
     } else if total_discovered > 10000 {
-        (1500, 200)  // Large crawls: emit every 1.5s or 200 items
+        (1500, 200) // Large crawls: emit every 1.5s or 200 items
     } else if total_discovered > 5000 {
-        (1000, 100)  // Medium crawls: emit every 1s or 100 items
+        (1000, 100) // Medium crawls: emit every 1s or 100 items
     } else {
-        (500, 50)    // Small crawls: emit every 500ms or 50 items
+        (500, 50) // Small crawls: emit every 500ms or 50 items
     };
 
-    let should_emit_results = state.last_result_emit.elapsed() > Duration::from_millis(batch_interval_ms)
+    let should_emit_results = state.last_result_emit.elapsed()
+        > Duration::from_millis(batch_interval_ms)
         || state.pending_results.len() >= batch_size_threshold
         || active_pending == 0; // Flush on completion
 

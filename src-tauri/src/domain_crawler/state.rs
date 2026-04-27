@@ -3,24 +3,37 @@
 use dashmap::DashMap;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::Instant;
 use url::Url;
 
-use super::constants::{MAX_PENDING_TIME, MAX_URLS_PER_DOMAIN};
+use super::constants::MAX_PENDING_TIME;
 use super::database::{Database, DatabaseResults};
 use super::helpers::links_status_code_checker::SharedLinkChecker;
-use super::models::DomainCrawlResults;
 use super::helpers::normalize_url::normalize_url;
+use super::models::DomainCrawlResults;
 
 /// Track failed URLs and retries
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Eq)]
 pub struct FailedUrl {
     pub url: String,
     pub error: String,
     pub retries: usize,
     pub depth: usize,
     pub timestamp: Instant,
+}
+
+impl PartialEq for FailedUrl {
+    fn eq(&self, other: &Self) -> bool {
+        self.url == other.url
+    }
+}
+
+impl Hash for FailedUrl {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.url.hash(state);
+    }
 }
 
 /// Progress tracking structure
@@ -49,13 +62,14 @@ pub struct CrawlerState {
     pub total_urls: usize,
     pub crawled_urls: usize,
     pub db: Option<Database>,
-    pub last_activity: Instant,        // Track last crawling activity
+    pub last_activity: Instant, // Track last crawling activity
     pub url_patterns: HashMap<String, usize>, // Track URL patterns to avoid duplicates
-    pub active_tasks: usize,           // Track number of currently processing tasks
+    pub active_tasks: usize,    // Track number of currently processing tasks
     pub link_checker: Option<Arc<SharedLinkChecker>>,
-    pub last_progress_emit: Instant,   // Track time of last progress emission
-    pub last_result_emit: Instant,     // Track time of last crawl_result batch emission
+    pub last_progress_emit: Instant, // Track time of last progress emission
+    pub last_result_emit: Instant,   // Track time of last crawl_result batch emission
     pub pending_results: Vec<super::models::LightCrawlResult>, // Buffer for batching crawl_result events
+    pub retry_counts: HashMap<String, usize>, // Track transient retry attempts by normalized URL
     /// Global URL → HTTP status code registry shared between the crawler and link checker.
     /// Populated by the crawler after fetching each page; read by the link checker to skip
     /// redundant HTTP requests for URLs whose status is already known.
@@ -81,6 +95,7 @@ impl CrawlerState {
             last_progress_emit: Instant::now(),
             last_result_emit: Instant::now(),
             pending_results: Vec::with_capacity(64),
+            retry_counts: HashMap::new(),
             url_status_registry: Arc::new(DashMap::with_capacity(4096)),
         }
     }
@@ -113,7 +128,13 @@ impl CrawlerState {
     }
 
     /// Add multiple discovered URLs to the queue if they are new
-    pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, max_depth: usize, max_urls: usize) {
+    pub fn add_discovered_urls(
+        &mut self,
+        urls: HashSet<String>,
+        base_url: &Url,
+        _max_depth: usize,
+        max_urls: usize,
+    ) {
         for url_str in urls {
             // Normalize before any checks or queueing
             let normalized_url = normalize_url(&url_str);
@@ -124,13 +145,14 @@ impl CrawlerState {
                     continue;
                 }
 
-                if !self.visited.contains(&normalized_url) 
+                if !self.visited.contains(&normalized_url)
                     && !self.pending_urls.contains_key(&normalized_url)
-                    && self.total_urls < max_urls 
+                    && self.total_urls < max_urls
                 {
                     self.queue.push_back((url.clone(), 0)); // Sitemaps seed at depth 0
                     self.total_urls += 1;
-                    self.pending_urls.insert(normalized_url.clone(), Instant::now());
+                    self.pending_urls
+                        .insert(normalized_url.clone(), Instant::now());
                 }
             }
         }
