@@ -15,21 +15,16 @@ pub async fn fetch_with_exponential_backoff(
     loop {
         let start = Instant::now();
         
-        let mut request_builder = client.get(url);
-
-        // Add some common headers to look more like a browser
-        request_builder = request_builder
-            .header(reqwest::header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-            .header(reqwest::header::ACCEPT_LANGUAGE, "en-US,en;q=0.9")
-            .header(reqwest::header::UPGRADE_INSECURE_REQUESTS, "1")
-            .header(reqwest::header::CACHE_CONTROL, "max-age=0");
+        let request_builder = client.get(url);
 
         match request_builder.send().await {
             Ok(response) => {
                 let duration = start.elapsed().as_secs_f64();
                 let status = response.status();
 
-                if status == reqwest::StatusCode::TOO_MANY_REQUESTS || status == reqwest::StatusCode::SERVICE_UNAVAILABLE {
+                if status == reqwest::StatusCode::TOO_MANY_REQUESTS 
+                    || status == reqwest::StatusCode::SERVICE_UNAVAILABLE 
+                    || status == reqwest::StatusCode::FORBIDDEN {
                     if attempt >= settings.max_retries {
                         return Ok((response, duration));
                     }

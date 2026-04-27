@@ -56,6 +56,7 @@ pub async fn process_url(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
     js_semaphore: Arc<Semaphore>,
+    image_semaphore: Arc<Semaphore>,
 ) -> Result<DomainCrawlResults, String> {
     // Grab the global URL status registry early so we can record our results later.
     // This brief lock just clones the Arc, then drops the state lock immediately.
@@ -217,20 +218,24 @@ pub async fn process_url(
 
     // Detect 'hidden' errors (200 OK but actually a block/error page)
     let body_lower = body.to_lowercase();
-    let is_block_page = body_lower.contains("access denied")
+    let is_block_page = (body.len() < 25000 && (
+        body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
+        || body_lower.contains("error 1020") // Cloudflare Access Denied
+        || body_lower.contains("challenge-form") // Cloudflare
+        || (body_lower.contains("cloudflare") && body_lower.contains("ray id")) // Cloudflare Block
+        || body_lower.contains("distilnetworks") // Distil Networks
+        || body_lower.contains("please enable js") // Anti-bot
+    )) || (body.len() < 2000 && (
+        body_lower.contains("access denied")
         || body_lower.contains("rate limit")
         || body_lower.contains("too many requests")
         || body_lower.contains("forbidden")
-        || body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
-        || body_lower.contains("error 1020") // Cloudflare Access Denied
-        || body_lower.contains("challenge-form") // Cloudflare
-        || body_lower.contains("cloudflare") && body_lower.contains("ray id") // Cloudflare Block
-        || body_lower.contains("one more step") // Cloudflare
+        || body_lower.contains("one more step") // Cloudflare short
         || body_lower.contains("unusual traffic") // Google/AWS block
-        || body_lower.contains("distilnetworks") // Distil Networks
         || body_lower.contains("bot detection")
-        || body_lower.contains("please enable js") // Anti-bot
-        || (body.len() < 500 && (body_lower.contains("error") || body_lower.contains("wait") || body_lower.contains("blocked")));
+        || body_lower.contains("error")
+        || body_lower.contains("blocked")
+    ));
 
     if is_block_page && status_code == 200 {
         let mut state = state.lock().await;
@@ -422,7 +427,7 @@ pub async fn process_url(
                 .await
             }
         },
-        images_selector::fetch_image_details(client, image_urls_for_fetch_clone),
+        images_selector::fetch_image_details(client, image_urls_for_fetch_clone, image_semaphore.clone()),
         async {
             if psi_settings_clone.page_speed_bulk {
                 let url_clone = final_url.clone();

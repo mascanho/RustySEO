@@ -201,11 +201,27 @@ impl DomainTracker {
     }
 
     fn get_delay_for(&self, domain: &str) -> Duration {
-        let delays = self.delays.lock().unwrap();
-        delays
-            .get(domain)
-            .copied()
-            .unwrap_or(Duration::from_millis(self.config.min_delay_ms))
+        let base_delay = {
+            let delays = self.delays.lock().unwrap();
+            delays
+                .get(domain)
+                .copied()
+                .unwrap_or_else(|| Duration::from_millis(self.config.min_delay_ms.max(200))) // Minimum 200ms spacing
+        };
+        
+        let mut last_requests = self.last_request.lock().unwrap();
+        let now = Instant::now();
+        let last_req = last_requests.entry(domain.to_string()).or_insert(now);
+        
+        let target_time = *last_req + base_delay;
+        let wait_time = if now < target_time {
+            target_time.duration_since(now)
+        } else {
+            Duration::from_millis(0)
+        };
+        *last_req = std::cmp::max(now, target_time);
+        
+        wait_time
     }
 
     fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
@@ -269,34 +285,35 @@ pub async fn get_links_status_code_from_settings(
     checker.check_links(links, base_url, page).await
 }
 
-fn build_client(config: &LinkCheckConfig, settings: &Settings, user_agent: Option<String>) -> Client {
+fn build_client(config: &LinkCheckConfig, settings: &Settings, _user_agent: Option<String>) -> Client {
     let mut headers = HeaderMap::new();
-    headers.insert(
-        ACCEPT,
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-            .parse()
-            .unwrap(),
-    );
+    headers.insert(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
     headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
     headers.insert(ACCEPT_ENCODING, "gzip, deflate, br".parse().unwrap());
     headers.insert(CONNECTION, "keep-alive".parse().unwrap());
-    headers.insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+    headers.insert(CACHE_CONTROL, "max-age=0".parse().unwrap());
     headers.insert(DNT, "1".parse().unwrap());
     headers.insert(UPGRADE_INSECURE_REQUESTS, "1".parse().unwrap());
+    headers.insert("Sec-Ch-Ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"".parse().unwrap());
+    headers.insert("Sec-Ch-Ua-Mobile", "?0".parse().unwrap());
+    headers.insert("Sec-Ch-Ua-Platform", "\"Windows\"".parse().unwrap());
+    headers.insert("Sec-Fetch-Dest", "document".parse().unwrap());
+    headers.insert("Sec-Fetch-Mode", "navigate".parse().unwrap());
+    headers.insert("Sec-Fetch-Site", "none".parse().unwrap());
+    headers.insert("Sec-Fetch-User", "?1".parse().unwrap());
+
+    let spoofed_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36".to_string();
 
     Client::builder()
         .timeout(Duration::from_secs(config.request_timeout_secs))
         .connect_timeout(Duration::from_secs(config.connection_timeout_secs))
         .pool_idle_timeout(Duration::from_secs(config.pool_idle_timeout_secs))
         .pool_max_idle_per_host(config.pool_max_idle_per_host)
-        .user_agent(user_agent.unwrap_or_else(|| {
-            settings.user_agents.choose(&mut rand::rng()).cloned().unwrap_or_else(|| {
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string()
-            })
-        }))
+        .user_agent(spoofed_ua)
         .redirect(reqwest::redirect::Policy::limited(5))
         .default_headers(headers)
         .danger_accept_invalid_certs(false)
+        .http1_only()
         .build()
         .expect("Failed to create HTTP client")
 }
