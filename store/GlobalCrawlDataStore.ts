@@ -199,15 +199,20 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           state.visitedUrls.add(r.url);
         }
 
-        // Live-feed ring buffer: keep only the most recent rows in the JS heap.
+        // Max cap: keep only the first MAX_CRAWL_ROWS in the JS heap.
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
         const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
+        
+        if (state.crawlData.length >= MAX_CRAWL_ROWS) {
+          return { crawlData: state.crawlData };
+        }
+
         const combined = state.crawlData.concat(newResults);
         const capped =
           combined.length > MAX_CRAWL_ROWS
-            ? combined.slice(combined.length - MAX_CRAWL_ROWS)
+            ? combined.slice(0, MAX_CRAWL_ROWS)
             : combined;
 
         return { crawlData: capped };
@@ -275,13 +280,15 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
-        let newCrawlData = state.crawlData.concat([result]);
+        if (state.visitedUrls) {
+          state.visitedUrls.add(result.url);
+        }
 
-        if (newCrawlData.length > MAX_CRAWL_ROWS) {
-          newCrawlData = newCrawlData.slice(
-            newCrawlData.length - MAX_CRAWL_ROWS,
-          );
+        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
+        let newCrawlData = state.crawlData;
+
+        if (newCrawlData.length < MAX_CRAWL_ROWS) {
+          newCrawlData = newCrawlData.concat([result]);
         }
 
         return {
@@ -518,13 +525,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
                   );
               if (!isDuplicate) {
                 if (state.visitedUrls) state.visitedUrls.add(update.result.url);
-                newCrawlData = state.crawlData.concat([update.result]);
 
                 const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
-                if (newCrawlData.length > MAX_CRAWL_ROWS) {
-                  newCrawlData = newCrawlData.slice(
-                    newCrawlData.length - MAX_CRAWL_ROWS,
-                  );
+                if (newCrawlData.length < MAX_CRAWL_ROWS) {
+                  newCrawlData = state.crawlData.concat([update.result]);
                 }
               }
             }
