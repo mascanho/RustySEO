@@ -123,7 +123,7 @@ function UploadButton() {
           }
         }}
         data-tooltip-id="download-tooltip"
-        className="bg-orange-500 text-xs h-7 w-7  text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors active:scale-95"
+        className="bg-orange-500 text-xs h-7 w-7  text-white flex justify-center items-center hover:bg-orange-600  active:scale-95"
       >
         <FaDownload size={14} className="text-xs  dark:text-white" />
       </button>

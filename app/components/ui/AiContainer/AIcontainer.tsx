@@ -118,6 +118,7 @@ const AIcontainer = () => {
     setIsThinking(true);
 
     const crawlStore = useCrawlStore.getState();
+    const logAnalysisStore = useLogAnalysisStore.getState();
     const context = buildRustyAiContext(
       pathname,
       pageSpeedStore,
