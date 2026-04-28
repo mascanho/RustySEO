@@ -26,6 +26,7 @@ import ProjectsDBManager from "./LogsDBprojectsManager";
 import GSCuploadManager from "./GSCuploadManager";
 import { SiGooglesearchconsole } from "react-icons/si";
 import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
+import { FaDownload } from "react-icons/fa";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -44,7 +45,9 @@ function UploadButton() {
       setLogsFromDB([]);
       setStoredLogsFromDBStore([]);
       reset();
-      toast.success("All previous logs have been removed from cache and database");
+      toast.success(
+        "All previous logs have been removed from cache and database",
+      );
     } catch (error) {
       console.error("Failed to clear database:", error);
       toast.error("Failed to clear database logs");
@@ -78,6 +81,20 @@ function UploadButton() {
           className="!bg-gray-800 !text-xs"
         />
       </>
+
+      {/* DOWNLOAD DATA BUTTON */}
+      <button
+        data-tooltip-id="download-tooltip"
+        className="bg-purple-500 text-xs h-7 w-7  text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors active:scale-95"
+      >
+        <FaDownload size={14} className="text-xs  dark:text-white" />
+      </button>
+      <Tooltip
+        id="download-tooltip"
+        place="top"
+        content="Download metrics"
+        className="!bg-gray-800 !text-xs"
+      />
 
       {/* Google Search console button */}
 
