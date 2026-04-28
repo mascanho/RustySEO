@@ -27,6 +27,7 @@ import GSCuploadManager from "./GSCuploadManager";
 import { SiGooglesearchconsole } from "react-icons/si";
 import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
 import { FaDownload } from "react-icons/fa";
+import { exportServerLogsExcel } from "./helpers/generateExcel";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -37,6 +38,7 @@ function UploadButton() {
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const { setServerLogsStore, setUploadedLogFiles, reset } =
     useServerLogsStore();
+  const { overview, widgetAggs, timelineData } = useLogAnalysisStore();
 
   const handleClearStoreLogs = async () => {
     try {
@@ -84,8 +86,44 @@ function UploadButton() {
 
       {/* DOWNLOAD DATA BUTTON */}
       <button
+        onClick={async () => {
+          try {
+            // Load taxonomies from localStorage
+            const storedTaxonomies = localStorage.getItem("taxonomies");
+            let taxonomyNameMap = {};
+            if (storedTaxonomies) {
+              const parsed = JSON.parse(storedTaxonomies);
+              if (Array.isArray(parsed)) {
+                parsed.forEach((tax) => {
+                  if (tax.paths) {
+                    tax.paths.forEach((p) => {
+                      const pathString = typeof p === "string" ? p : p.path;
+                      if (pathString) {
+                        taxonomyNameMap[pathString] = tax.name;
+                      }
+                    });
+                  }
+                });
+              }
+            }
+
+            const success = await exportServerLogsExcel({
+              overview,
+              widgetAggs,
+              timelineData,
+              taxonomyNameMap,
+            });
+
+            if (success) {
+              toast.success("Excel report exported successfully");
+            }
+          } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Failed to export Excel report");
+          }
+        }}
         data-tooltip-id="download-tooltip"
-        className="bg-purple-500 text-xs h-7 w-7  text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors active:scale-95"
+        className="bg-orange-500 text-xs h-7 w-7  text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors active:scale-95"
       >
         <FaDownload size={14} className="text-xs  dark:text-white" />
       </button>

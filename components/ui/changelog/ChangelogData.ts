@@ -1,5 +1,11 @@
 export const changelogData = [
   {
+    version: "0.3.9",
+    date: "2026-05-28",
+    type: "feature",
+    changes: ["Tool: Log Analyser - Totals CSV Download"],
+  },
+  {
     version: "0.3.8",
     date: "2026-04-28",
     type: "feature",
