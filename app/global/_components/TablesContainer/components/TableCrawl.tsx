@@ -407,9 +407,7 @@ const TableCrawl = ({
 
     //NOTE: Here sets the exporting state threshold to switch to excel and backend export.
     if (totalUrlsCrawled > 0) {
-      toast.info(
-        "Massive dataset detected. Exporting directly from Database...",
-      );
+      toast.info("Exporting data from database...");
       setIsGeneratingExcel(true);
       try {
         const fileBuffer = await invoke("export_full_crawl_to_excel_command");

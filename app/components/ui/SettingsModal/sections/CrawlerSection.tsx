@@ -67,6 +67,18 @@ const CrawlerSection = ({ settings, onUpdate }: Props) => (
             />
         </SettingField>
 
+        <SettingField
+            label="Live UI Row Limit"
+            description="Max URLs to keep in active memory"
+        >
+            <NumberInput
+                value={settings.max_urls_stored}
+                onChange={(v) => onUpdate("max_urls_stored", v)}
+                min={1}
+                max={20000}
+            />
+        </SettingField>
+
         <SectionHeader
             title="Timing & Throttling"
             icon={<TrendingUp className="w-3.5 h-3.5" />}

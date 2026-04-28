@@ -29,6 +29,7 @@ import {
   X,
   CopyIcon,
   KeyRound,
+  Skull,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
-import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
+import { FaAngellist, FaApper, FaEye, FaFilter } from "react-icons/fa";
 import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
 import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
@@ -94,6 +95,7 @@ import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
 import FetchMatchGSC from "./utils/FetchMatchGSC";
+import { DangerIndicator } from "./utils/checkPathForDanger";
 import { invoke } from "@tauri-apps/api/core";
 
 export function LogAnalyzer() {
@@ -115,6 +117,10 @@ export function LogAnalyzer() {
   const setActiveFilters = useLogAnalysisStore(
     (state) => state.setActiveFilters,
   );
+  const setTableIsFiltered = useLogAnalysisStore(
+    (state) => state.setTableIsFiltered,
+  );
+  const tableIsFiltered = useLogAnalysisStore((state) => state.tableIsFiltered);
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -170,6 +176,7 @@ export function LogAnalyzer() {
   const [isExporting, setIsExporting] = useState(false);
   const [showIp, setShowIp] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
+  const [showReferer, setShowReferer] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
   const [posColumn, setPosColumn] = useState("position");
@@ -289,18 +296,18 @@ export function LogAnalyzer() {
 
   const handleSearchClick = () => {
     setActiveSearchTerm(searchInput);
+    setCurrentPage(1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setActiveSearchTerm(searchInput);
+      setCurrentPage(1);
     }
   };
 
   // Fetch logs from DB when filters or page change
   useEffect(() => {
-    if (totalCount === 0 && entries.length === 0) return;
-
     const filters = {
       search_term: activeSearchTerm,
       status_filter: statusFilter,
@@ -321,15 +328,36 @@ export function LogAnalyzer() {
       store.setActiveFilters(filters);
       store.fetchWidgetAggregations(filters);
       store.fetchOverviewStats();
+
+      // Check if any filter is active
+      const hasFilter =
+        activeSearchTerm ||
+        statusFilter.length > 0 ||
+        methodFilter.length > 0 ||
+        fileTypeFilter.length > 0 ||
+        botFilter !== "all" ||
+        botTypeFilter !== "all" ||
+        crawlerTypeFilter !== null ||
+        verifiedFilter !== null;
+      store.setTableIsFiltered(!!hasFilter);
     }, 300);
 
     return () => clearTimeout(timeoutId);
+  }, [totalCount, activeSearchTerm, localFilters, currentPage, itemsPerPage]);
+
+  // Reset to first page when search or filters change (except sorting)
+  // We use a separate effect to avoid complex logic in the main fetch effect
+  useEffect(() => {
+    setCurrentPage(1);
   }, [
-    totalCount > 0,
     activeSearchTerm,
-    localFilters,
-    currentPage,
-    itemsPerPage,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    botTypeFilter,
+    crawlerTypeFilter,
+    verifiedFilter,
   ]);
 
   // GET THE domain from the local storage
@@ -388,7 +416,12 @@ export function LogAnalyzer() {
     });
     setExpandedRow(null);
     setShowAgent(false);
+    setShowReferer(false);
     setUrlAgentFilter("url");
+
+    // Clear filtered state
+    const store = useLogAnalysisStore.getState();
+    store.setTableIsFiltered(false);
   }, []);
 
   const exportCSV = useCallback(async () => {
@@ -548,8 +581,8 @@ export function LogAnalyzer() {
                 className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
                 onClick={() => {
                   setSearchInput("");
-
                   setActiveSearchTerm("");
+                  setCurrentPage(1);
                 }}
               />
             )}{" "}
@@ -761,6 +794,7 @@ export function LogAnalyzer() {
                 setUrlAgentFilter(value);
 
                 setShowAgent(value === "agent");
+                setShowReferer(value === "referer");
               }}
             >
               <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
@@ -771,6 +805,8 @@ export function LogAnalyzer() {
                 <SelectItem value="url">Path / URL</SelectItem>
 
                 <SelectItem value="agent">User Agent</SelectItem>
+
+                <SelectItem value="referer">Referer</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1050,7 +1086,11 @@ export function LogAnalyzer() {
                         className="cursor-pointer pl-7"
                         onClick={() => requestSort("path")}
                       >
-                        {showAgent ? "User Agent" : "Path"}
+                        {showAgent
+                          ? "User Agent"
+                          : showReferer
+                            ? "Referer"
+                            : "Path"}
 
                         {sortConfig?.key === "path" && (
                           <ChevronDown
@@ -1065,7 +1105,7 @@ export function LogAnalyzer() {
 
                       {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
 
-                      {ExcelLoaded && !showAgent && (
+                      {ExcelLoaded && !showAgent && !showReferer && (
                         <TableHead
                           className="w-[50px] text-center cursor-pointer"
                           onClick={cyclePosColumn}
@@ -1100,7 +1140,7 @@ export function LogAnalyzer() {
                         )}
                       </TableHead>
 
-                      {!showAgent && (
+                      {!showAgent && !showReferer && (
                         <TableHead
                           className="w-[80px] cursor-pointer"
                           onClick={() => requestSort("responseSize")}
@@ -1144,6 +1184,8 @@ export function LogAnalyzer() {
                           showIp={showIp}
                           showAgent={showAgent}
                           setShowAgent={setShowAgent}
+                          showReferer={showReferer}
+                          setShowReferer={setShowReferer}
                           logIpMasking={logIpMasking}
                           formatCrawlerType={formatCrawlerType}
                           handleURLClick={handleURLClick}
@@ -1189,6 +1231,7 @@ export function LogAnalyzer() {
           totalCount={totalCount}
           entries={entries}
           formatedNumber={formatedNumber}
+          tableIsFiltered={tableIsFiltered}
         />
       </div>
     </TooltipProvider>
@@ -1212,6 +1255,8 @@ const LogRow = memo(function LogRow({
   showIp,
   showAgent,
   setShowAgent,
+  showReferer,
+  setShowReferer,
   logIpMasking,
   formatCrawlerType,
   handleURLClick,
@@ -1299,7 +1344,18 @@ const LogRow = memo(function LogRow({
         </TableCell>
 
         <TableCell className="max-w-[100%] truncate mr-2 align-middle">
-          {!showAgent ? (
+          {showReferer ? (
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
+              <span className="absolute">
+                <BadgeInfo
+                  onClick={(e) => handleCopyClick(log.referer, e, "Referer")}
+                  className="text-brand-bright mr-3"
+                  size={14}
+                />
+              </span>
+              <span className="ml-6">{log?.referer || "No referer"}</span>
+            </section>
+          ) : !showAgent ? (
             <section className="max-w-[800px] truncate flex items-center relative">
               <span
                 onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
@@ -1315,6 +1371,7 @@ const LogRow = memo(function LogRow({
                   ? "https://" + domain + log.path
                   : log?.path}
               </span>
+              <DangerIndicator path={log.path} />
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials?.token?.length > 0 && isHovered && (
                 <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
@@ -1355,7 +1412,7 @@ const LogRow = memo(function LogRow({
               )}
             </section>
           ) : (
-            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] relative ml-2 flex items-center">
               <span className="absolute">
                 <ImUserTie
                   onClick={(e) =>
@@ -1364,13 +1421,13 @@ const LogRow = memo(function LogRow({
                   className="text-brand-bright mr-1"
                 />{" "}
               </span>
-              <span className="ml-5">{log?.user_agent}</span>
+              <span className="ml-5 break-all">{log?.user_agent}</span>
             </section>
           )}
         </TableCell>
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
-        {ExcelLoaded && !showAgent && (
+        {ExcelLoaded && !showAgent && !showReferer && (
           <TableCell className="text-center align-middle">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1424,7 +1481,7 @@ const LogRow = memo(function LogRow({
           </Badge>
         </TableCell>
 
-        {!showAgent && (
+        {!showAgent && !showReferer && (
           <TableCell className="align-middle">
             {formatResponseSize(log.response_size)}
           </TableCell>
@@ -1447,65 +1504,117 @@ const LogRow = memo(function LogRow({
         <TableRow>
           <TableCell colSpan={12} className="bg-gray-50 dark:bg-gray-800 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col max-w-5xl">
-                <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <h4 className="font-bold">
-                      {showAgent ? "Path" : "User Agent"}
-                    </h4>
-                    {showAgent ? (
-                      <CopyIcon
-                        className="cursor-pointer hover:scale-105 active:scale-95"
-                        onClick={(e) =>
-                          handleCopyClick(log?.path, e, "URL / PATH")
-                        }
-                        size={12}
-                      />
-                    ) : (
-                      <CopyIcon
-                        className="cursor-pointer hover:scale-105 active:scale-95"
-                        onClick={(e) =>
-                          handleCopyClick(log?.user_agent, e, "User Agent")
-                        }
-                        size={12}
-                      />
-                    )}
-                  </div>
-                  {log.verified && (
-                    <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
-                      <BadgeCheck className="text-blue-700 pr-1" size={18} />
-                      {log?.crawler_type}
+              {showReferer ? (
+                <>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2">
+                      <h4 className="font-bold">User Agent</h4>
+                      {log?.user_agent && (
+                        <CopyIcon
+                          className="cursor-pointer hover:scale-105 active:scale-95"
+                          onClick={(e) =>
+                            handleCopyClick(log?.user_agent, e, "User Agent")
+                          }
+                          size={12}
+                        />
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                  <p className="text-sm font-mono break-all">
-                    {!showAgent ? log.user_agent : log?.path}
-                  </p>
-                </div>
-              </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {log.user_agent}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2 justify-between">
+                      <div className="flex items-center space-x-1">
+                        <h4 className="font-bold">Path</h4>
+                        {log?.path && (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.path, e, "URL / PATH")
+                            }
+                            size={12}
+                          />
+                        )}
+                      </div>
+                      <DangerIndicator path={log.path} />
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">{log?.path}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col max-w-5xl">
+                    <div className="flex mb-2 space-x-2 items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <h4 className="font-bold">
+                          {showAgent ? "Path" : "User Agent"}
+                        </h4>
+                        {showAgent ? (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.path, e, "URL / PATH")
+                            }
+                            size={12}
+                          />
+                        ) : (
+                          <CopyIcon
+                            className="cursor-pointer hover:scale-105 active:scale-95"
+                            onClick={(e) =>
+                              handleCopyClick(log?.user_agent, e, "User Agent")
+                            }
+                            size={12}
+                          />
+                        )}
+                      </div>
+                      {showAgent && <DangerIndicator path={log.path} />}
+                      {log.verified && (
+                        <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
+                          <BadgeCheck
+                            className="text-blue-700 pr-1"
+                            size={18}
+                          />
+                          {log?.crawler_type}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm font-mono break-all">
+                        {showAgent ? log?.path : log.user_agent}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex flex-col">
-                <div className="flex space-x-2 items-center mb-2">
-                  <h4 className="font-bold">Referer</h4>
-                  {log?.referer && (
-                    <CopyIcon
-                      className="cursor-pointer hover:scale-105 active:scale-95"
-                      onClick={(e) =>
-                        handleCopyClick(log?.referer, e, "Referer")
-                      }
-                      size={12}
-                    />
-                  )}
-                </div>
-                <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                  <p className="text-sm break-all">
-                    {log.referer || (
-                      <span className="text-muted-foreground">No referer</span>
-                    )}
-                  </p>
-                </div>
-              </div>
+                  <div className="flex flex-col">
+                    <div className="flex space-x-2 items-center mb-2">
+                      <h4 className="font-bold">Referer</h4>
+                      {log?.referer && (
+                        <CopyIcon
+                          className="cursor-pointer hover:scale-105 active:scale-95"
+                          onClick={(e) =>
+                            handleCopyClick(log?.referer, e, "Referer")
+                          }
+                          size={12}
+                        />
+                      )}
+                    </div>
+                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                      <p className="text-sm break-all">
+                        {log.referer || (
+                          <span className="text-muted-foreground">
+                            No referer
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </TableCell>
         </TableRow>
@@ -1523,6 +1632,7 @@ function PaginationControls({
   totalCount,
   entries,
   formatedNumber,
+  tableIsFiltered,
 }) {
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
   const indexOfLastItem = Math.min(currentPage * itemsPerPage, totalCount);
@@ -1615,8 +1725,11 @@ function PaginationControls({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      <div>
-        <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
+      <div className="flex items-center">
+        <span className="flex justify-end text-muted-foreground w-[280px] flex-nowrap dark:text-white/50 text-right pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
+          {tableIsFiltered && (
+            <FaFilter className="text-red !important text-xs mr-1 pt-1" />
+          )}
           {totalCount > 0 ? indexOfFirstItem + 1 : 0}-{indexOfLastItem} of{" "}
           {formatedNumber(totalCount)} logs
         </span>

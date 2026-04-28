@@ -1,20 +1,25 @@
 export const changelogData = [
   {
     version: "0.3.8",
-    date: "2025-03-21",
+    date: "2026-04-28",
     type: "feature",
     changes: [
       "Global: Bug fixes and improvements",
-      "Global: Settings UI",
+      "Global: Settings GUI",
       "Deep Crawler: Sitemap Discovery & Parsing",
       "Deep Crawler: Improved Performance",
       "Tool: Log Analyser - Increased number of logs",
+      "Tool: Log Analyser - Agentic Bot Detection & Segmentation",
+      "Tool: Log Analyser - GUI Improvements",
+      "Tool: Log Analyser - Sensitive Data Detection",
       "Deep Crawler: Table Exports with Backend data processing",
+      "Deep Crawler: Fixed 1015 too many requests bug",
+      "Deep Crawler: UI Improvements",
     ],
   },
   {
     version: "0.3.7",
-    date: "2025-02-21",
+    date: "2026-02-21",
     type: "feature",
     changes: [
       "Global: Better context to Rusty AI",
@@ -40,7 +45,7 @@ export const changelogData = [
   },
   {
     version: "0.3.6",
-    date: "2025-01-31",
+    date: "2026-01-31",
     type: "feature",
     changes: [
       "Global: Bug fixes and improvements",

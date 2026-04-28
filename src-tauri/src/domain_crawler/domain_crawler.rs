@@ -4,9 +4,10 @@
 //! the entire crawling process. The actual URL processing is delegated to
 //! the `url_processor` module.
 
-use dashmap::DashMap;
 use rand::seq::IndexedRandom;
+use rand::Rng;
 use reqwest::Client;
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -14,12 +15,13 @@ use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
+use dashmap::DashMap;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
-use crate::domain_crawler::helpers::normalize_url::normalize_url;
-use crate::domain_crawler::helpers::robots;
+use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::domain_crawler::helpers::sitemap;
+use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::AppState;
 
 use super::database::{self, Database, DatabaseError};
@@ -52,17 +54,33 @@ pub async fn crawl_domain(
     let adaptive_crawling = settings.adaptive_crawling;
     let min_crawl_delay = settings.min_crawl_delay;
 
-    let selected_user_agent = user_agents.choose(&mut rand::rng()).cloned()
-        .unwrap_or_else(|| "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".to_string());
+    let selected_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36".to_string();
+
+    let mut default_headers = reqwest::header::HeaderMap::new();
+    default_headers.insert(reqwest::header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
+    default_headers.insert(reqwest::header::ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
+    default_headers.insert("Sec-Ch-Ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"".parse().unwrap());
+    default_headers.insert("Sec-Ch-Ua-Mobile", "?0".parse().unwrap());
+    default_headers.insert("Sec-Ch-Ua-Platform", "\"Windows\"".parse().unwrap());
+    default_headers.insert("Sec-Fetch-Dest", "document".parse().unwrap());
+    default_headers.insert("Sec-Fetch-Mode", "navigate".parse().unwrap());
+    default_headers.insert("Sec-Fetch-Site", "none".parse().unwrap());
+    default_headers.insert("Sec-Fetch-User", "?1".parse().unwrap());
+    default_headers.insert(reqwest::header::UPGRADE_INSECURE_REQUESTS, "1".parse().unwrap());
+    default_headers.insert(reqwest::header::CACHE_CONTROL, "max-age=0".parse().unwrap());
 
     let client = Client::builder()
         .cookie_store(true)
         .user_agent(&selected_user_agent)
+        .default_headers(default_headers)
+        .http1_only() // Bypasses Cloudflare's strict HTTP/2 reqwest fingerprinting
         .timeout(Duration::from_secs(client_timeout))
         .connect_timeout(Duration::from_secs(client_connect_timeout))
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
+
+
 
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
@@ -130,7 +148,7 @@ pub async fn crawl_domain(
     {
         let normalized_base = normalize_url(base_url.as_str());
         let normalized_url_obj = Url::parse(&normalized_base).unwrap_or_else(|_| base_url.clone());
-
+        
         let mut state_guard = state.lock().await;
         state_guard.queue.push_back((normalized_url_obj, 0)); // Start at depth 0
         state_guard.total_urls = 1;
@@ -209,10 +227,13 @@ pub async fn crawl_domain(
         None
     };
 
+
     let semaphore = Arc::new(Semaphore::new(concurrent_requests));
     let js_semaphore = Arc::new(Semaphore::new(js_concurrency));
+    let image_semaphore = Arc::new(Semaphore::new(std::cmp::min(concurrent_requests, 50)));
     // Initialize adaptive delay with base_delay
     let current_atomic_delay = Arc::new(AtomicU64::new(base_delay));
+    let global_last_request = Arc::new(tokio::sync::Mutex::new(Instant::now()));
     // Track when the crawler should pause due to rate limiting (epoch millis)
     let rate_limit_cooldown_until = Arc::new(AtomicU64::new(0));
 
@@ -269,10 +290,7 @@ pub async fn crawl_domain(
             let cooldown_until = rate_limit_cooldown_until.load(Ordering::Relaxed);
             if now_epoch_ms < cooldown_until {
                 let wait_ms = cooldown_until - now_epoch_ms;
-                tracing::info!(
-                    "Rate limit cooldown active. Pausing new tasks for {}ms",
-                    wait_ms
-                );
+                tracing::info!("Rate limit cooldown active. Pausing new tasks for {}ms", wait_ms);
                 drop(state_guard);
                 sleep(Duration::from_millis(wait_ms.min(5000))).await;
                 continue;
@@ -313,35 +331,83 @@ pub async fn crawl_domain(
             let app_handle_clone = app_handle.clone();
             let semaphore_clone = semaphore.clone();
             let js_semaphore_clone = js_semaphore.clone();
+            let image_semaphore_clone = image_semaphore.clone();
             let db_tx_clone = db_tx.clone();
             let settings_clone = settings.clone();
             let current_atomic_delay_clone = current_atomic_delay.clone();
             let rate_limit_cooldown_clone = rate_limit_cooldown_until.clone();
+            let global_last_request_clone = global_last_request.clone();
 
             tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
 
-                // Calculate delay logic
-                let delay = if adaptive_crawling {
-                    let current_val = current_atomic_delay_clone.load(Ordering::Relaxed);
-                    // Add +/- 20% jitter
-                    let jitter_range = current_val as f32 * 0.2;
-                    let jitter = if jitter_range > 0.0 {
-                        rand::random_range(-jitter_range..jitter_range) as i64
-                    } else {
-                        0
-                    };
-                    (current_val as i64 + jitter).max(0) as u64
-                } else {
-                    if base_delay < max_delay {
-                        rand::random_range(base_delay..max_delay)
-                    } else {
-                        base_delay
+                loop {
+                    // 1. Wait out any active cooldown FIRST
+                    loop {
+                        let now_ms = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_millis() as u64;
+                        let cooldown = rate_limit_cooldown_clone.load(Ordering::Relaxed);
+                        if now_ms < cooldown {
+                            let wait_ms = cooldown - now_ms;
+                            sleep(Duration::from_millis(wait_ms.min(5000))).await;
+                        } else {
+                            break;
+                        }
                     }
-                };
 
-                if delay > 0 {
-                    sleep(Duration::from_millis(delay)).await;
+                    // 2. Compute dynamic delay right before firing to ensure it has the latest changes
+                    let delay = if adaptive_crawling {
+                        let current_val = current_atomic_delay_clone.load(Ordering::Relaxed);
+                        // Add +/- 20% jitter
+                        let jitter_range = current_val as f32 * 0.2;
+                        let jitter = if jitter_range > 0.0 {
+                            rand::random_range(-jitter_range..jitter_range) as i64
+                        } else {
+                            0
+                        };
+                        (current_val as i64 + jitter).max(0) as u64
+                    } else {
+                        if base_delay < max_delay {
+                            rand::random_range(base_delay..max_delay)
+                        } else {
+                            base_delay
+                        }
+                    };
+
+                    // 3. Apply the strict global stagger (minimum 50ms stagger even if delay = 0)
+                    let effective_delay = std::cmp::max(delay, 50);
+
+                    let global_delay = {
+                        let mut last_req = global_last_request_clone.lock().await;
+                        let now = Instant::now();
+                        let target_time = *last_req + Duration::from_millis(effective_delay);
+                        let wait_time = if now < target_time {
+                            target_time.duration_since(now)
+                        } else {
+                            Duration::from_millis(0)
+                        };
+                        *last_req = std::cmp::max(now, target_time);
+                        wait_time
+                    };
+
+                    if global_delay > Duration::from_millis(0) {
+                        sleep(global_delay).await;
+                    }
+
+                    // 4. Double-check if another task triggered a cooldown while we slept!
+                    // If true, we loop back to the top to wait it out, and then RE-STAGGER to avoid a burst.
+                    let now_ms = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis() as u64;
+                    let cooldown = rate_limit_cooldown_clone.load(Ordering::Relaxed);
+                    if now_ms < cooldown {
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
 
                 let url_str = url.to_string();
@@ -354,6 +420,7 @@ pub async fn crawl_domain(
                     &app_handle_clone,
                     &settings_clone,
                     js_semaphore_clone,
+                    image_semaphore_clone,
                 )
                 .await;
 
@@ -364,22 +431,18 @@ pub async fn crawl_domain(
                             // Backoff aggressively using fetch_max to avoid race conditions
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
                             let jitter = rand::random_range(1000..3000);
-                            let new_val = (current.saturating_mul(2).saturating_add(jitter))
-                                .min(max_delay)
-                                .max(5000);
+                            let new_val = (current.saturating_mul(2).saturating_add(jitter)).min(max_delay).max(5000); 
                             // Use fetch_max so concurrent 429s only increase, never decrease
                             current_atomic_delay_clone.fetch_max(new_val, Ordering::Relaxed);
-
+                            
                             // Set a global cooldown to pause new task spawning
                             let cooldown_ms = new_val.min(30000); // Max 30s cooldown
                             let cooldown_until = std::time::SystemTime::now()
                                 .duration_since(std::time::UNIX_EPOCH)
                                 .unwrap_or_default()
-                                .as_millis()
-                                as u64
-                                + cooldown_ms;
+                                .as_millis() as u64 + cooldown_ms;
                             rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
-
+                            
                             tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms and pausing new tasks for {}ms", status, new_val, cooldown_ms);
                         } else if status >= 200 && status < 300 {
                             // Speed up (decrease delay) — only decrease by 3% for stability
@@ -396,32 +459,21 @@ pub async fn crawl_domain(
                 } else if adaptive_crawling {
                     // Error case (timeout, network error, or detected block)
                     let current = current_atomic_delay_clone.load(Ordering::Relaxed);
-                    let err_str = result
-                        .as_ref()
-                        .err()
-                        .map(|e| e.to_string())
-                        .unwrap_or_default();
-
-                    if is_block_or_rate_limit_error(&err_str) {
+                    let err_str = result.as_ref().err().map(|e| e.to_string()).unwrap_or_default();
+                    
+                    if err_str.contains("Block") || err_str.contains("Rate Limit") {
                         // Aggressive backoff for detected blocks
-                        let new_val = current
-                            .saturating_mul(2)
-                            .saturating_add(2000)
-                            .min(max_delay)
-                            .max(5000);
-                        current_atomic_delay_clone.fetch_max(new_val, Ordering::Relaxed);
-
+                        let new_val = (current * 2 + 2000).min(max_delay).max(5000);
+                        current_atomic_delay_clone.store(new_val, Ordering::Relaxed);
+                        
+                        let cooldown_ms = new_val.min(30000);
                         let cooldown_until = std::time::SystemTime::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap_or_default()
-                            .as_millis() as u64
-                            + new_val.min(60000);
+                            .as_millis() as u64 + cooldown_ms;
                         rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
-
-                        tracing::warn!(
-                            "Block detected in response content. Increasing adaptive delay to {}ms",
-                            new_val
-                        );
+                        
+                        tracing::warn!("Block detected in response content. Increasing adaptive delay to {}ms and pausing tasks for {}ms", new_val, cooldown_ms);
                     } else {
                         // Standard network error - slow down slightly
                         let new_val = (current + 500).min(max_delay);
@@ -431,42 +483,17 @@ pub async fn crawl_domain(
 
                 let mut state_guard = state_clone.lock().await;
                 state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
-                let normalized_url = normalize_url(&url_str);
-                state_guard.pending_urls.remove(&normalized_url);
+                state_guard.pending_urls.remove(&url_str);
 
                 if let Err(e) = result {
-                    let is_block = is_block_or_rate_limit_error(&e);
-                    let retries = *state_guard.retry_counts.get(&normalized_url).unwrap_or(&0);
-
-                    if adaptive_crawling
-                        && is_block
-                        && retries < settings_clone.max_retries as usize
-                    {
-                        let next_retry = retries + 1;
-                        state_guard
-                            .retry_counts
-                            .insert(normalized_url.clone(), next_retry);
-                        state_guard.queue.push_front((url.clone(), depth));
-                        state_guard
-                            .pending_urls
-                            .insert(normalized_url.clone(), Instant::now());
-                        tracing::warn!(
-                            "Retrying {} after block/rate limit ({}/{})",
-                            url_str,
-                            next_retry,
-                            settings_clone.max_retries
-                        );
-                    } else {
-                        tracing::error!("Failed to process {}: {}", url_str, e);
-                        state_guard.failed_urls.insert(FailedUrl {
-                            url: normalized_url.clone(),
-                            error: e,
-                            retries,
-                            depth,
-                            timestamp: Instant::now(),
-                        });
-                        state_guard.retry_counts.remove(&normalized_url);
-                    }
+                    tracing::error!("Failed to process {}: {}", url_str, e);
+                    state_guard.failed_urls.insert(FailedUrl {
+                        url: url_str,
+                        error: e,
+                        retries: 0,
+                        depth,
+                        timestamp: Instant::now(),
+                    });
                 }
             });
         }
@@ -483,6 +510,9 @@ pub async fn crawl_domain(
 
     // Final cleanup and status report
     {
+
+
+
         let state_guard = state.lock().await;
         tracing::info!("Crawl completed - Final stats:");
         tracing::info!("  Total URLs discovered: {}", state_guard.total_urls);
@@ -565,9 +595,4 @@ pub async fn crawl_domain(
     }
 
     Ok(())
-}
-
-fn is_block_or_rate_limit_error(error: &str) -> bool {
-    let error = error.to_lowercase();
-    error.contains("block") || error.contains("rate limit") || error.contains("1015")
 }

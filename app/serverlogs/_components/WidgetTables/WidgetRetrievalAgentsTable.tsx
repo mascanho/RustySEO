@@ -1,0 +1,1541 @@
+// @ts-nocheck
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
+import {
+  AlertCircle,
+  BadgeCheck,
+  Bot,
+  CheckCircle,
+  ChevronDown,
+  Download,
+  FileAudio,
+  FileCode,
+  FileText,
+  FileType,
+  FileType2,
+  FileVideo,
+  Filter,
+  Image,
+  KeyRound,
+  Loader2,
+  Package,
+  RefreshCw,
+  Search,
+  FolderTree,
+} from "lucide-react";
+import { useLogAnalysisStore } from "@/store/ServerLogsStore";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
+import { CardContent } from "@/components/ui/card";
+import { message, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
+
+interface LogEntry {
+  browser: string;
+  crawler_type: string;
+  file_type: string;
+  frequency: number;
+  ip: string;
+  method: string;
+  referer: string;
+  response_size: number;
+  timestamp: string;
+  user_agent: string;
+  path: string;
+  verified: boolean;
+  status?: number;
+  country?: string;
+  is_crawler?: boolean;
+}
+
+interface Taxonomy {
+  id: string;
+  name: string;
+  paths: Array<{
+    path: string;
+    matchType: "contains" | "exactMatch";
+  }>;
+}
+
+interface WidgetTableProps {
+  data: any;
+  entries: LogEntry[];
+  segment: string;
+  selectedFileType?: string;
+  selectedCrawlerType?: string;
+}
+
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+};
+
+const formatResponseSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatElapsedTime = (ms: number): string => {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
+// Helper function for sorting
+const sortData = (
+  data: LogEntry[],
+  sortConfig: { key: string; direction: "ascending" | "descending" },
+): LogEntry[] => {
+  if (!sortConfig) return data;
+
+  return [...data].sort((a, b) => {
+    const aValue = a[sortConfig.key as keyof LogEntry];
+    const bValue = b[sortConfig.key as keyof LogEntry];
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortConfig.direction === "ascending"
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortConfig.direction === "ascending"
+        ? aValue - bValue
+        : bValue - aValue;
+    }
+
+    if (aValue < bValue) {
+      return sortConfig.direction === "ascending" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === "ascending" ? 1 : -1;
+    }
+    return 0;
+  });
+};
+
+// Debounce hook for search
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const WidgetRetrievalAgentsTable: React.FC<WidgetTableProps> = ({
+  data,
+  entries,
+  segment,
+  selectedFileType,
+  selectedCrawlerType,
+}) => {
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+  const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
+  const [botFilter, setBotFilter] = useState<string | null>("bot");
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>({ key: "timestamp", direction: "descending" });
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [selectedTaxonomy, setSelectedTaxonomy] = useState<string | "all">(
+    "all",
+  );
+  const [statusFilter, setStatusFilter] = useState<number[]>([]);
+  const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const pathAggregations = useLogAnalysisStore(
+    (state) => state.pathAggregations,
+  );
+  const fetchPathAggregationsPage = useLogAnalysisStore(
+    (state) => state.fetchPathAggregationsPage,
+  );
+  const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
+  const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
+  const globalActiveFilters = useLogAnalysisStore(
+    (state) => state.activeFilters,
+  );
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
+
+  // Use deferred rendering to unblock initial paint
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setIsReady(true);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
+  // Use debounced search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Cache for path taxonomy lookups
+  const taxonomyCache = useRef<Map<string, string>>(new Map());
+
+  // Initialize component once
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        // Load from localStorage
+        const tax = localStorage.getItem("taxonomies");
+        if (tax) {
+          try {
+            const parsedTax = JSON.parse(tax);
+            setTaxonomies(parsedTax);
+
+            // Pre-populate taxonomy cache
+            parsedTax.forEach((taxonomy: Taxonomy) => {
+              taxonomy.paths.forEach((pathRule) => {
+                const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
+                taxonomyCache.current.set(cacheKey, taxonomy.name);
+              });
+            });
+          } catch (e) {
+            console.error("Failed to parse taxonomies:", e);
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          const storedDomain = localStorage.getItem("domain");
+          if (storedDomain) {
+            setDomain(storedDomain);
+          }
+
+          const isShowing = localStorage.getItem("showOnTables");
+          if (isShowing === "true") {
+            setShowOnTables(true);
+          }
+        }
+
+        // Get unique file types from widgetAggs instead of entries
+        const types = new Set<string>();
+        if (widgetAggs?.file_types) {
+          Object.keys(widgetAggs.file_types).forEach((type) => {
+            if (type.trim() !== "") types.add(type);
+          });
+        }
+
+        const sortedTypes = Array.from(types).sort();
+        setAvailableFileTypes(sortedTypes);
+
+        if (selectedFileType) {
+          setFileTypeFilter([selectedFileType]);
+        }
+
+        if (selectedCrawlerType) {
+          setCrawlerTypeFilter([selectedCrawlerType]);
+        }
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Initialization error:", error);
+      }
+    };
+
+    initialize();
+  }, [selectedFileType, selectedCrawlerType, widgetAggs]);
+
+  // Precompute entries metadata
+  const { elapsedTimeMs, uniqueStatusCodes, uniqueCrawlerTypes } =
+    useMemo(() => {
+      let elapsedTimeMs = 0;
+
+      // Check if we can use data.log_start_time and data.log_finish_time
+      if (data?.log_start_time && data?.log_finish_time) {
+        elapsedTimeMs = Math.abs(
+          new Date(data.log_finish_time).getTime() -
+            new Date(data.log_start_time).getTime(),
+        );
+      }
+
+      const statusCodes = new Set<number>();
+      if (widgetAggs?.status_codes) {
+        Object.keys(widgetAggs.status_codes).forEach((key) =>
+          statusCodes.add(Number(key)),
+        );
+      }
+
+      const crawlerTypes = new Set<string>([
+        "Google",
+        "Bing",
+        "Semrush",
+        "Hrefs",
+        "Moz",
+        "Uptime",
+        "Openai",
+        "Claude",
+      ]);
+
+      // Use widgetAggs for more accurate crawler types list
+      if (widgetAggs?.crawler_types) {
+        Object.keys(widgetAggs.crawler_types).forEach((ct) => {
+          if (ct !== "Human") crawlerTypes.add(ct);
+        });
+      }
+
+      return {
+        elapsedTimeMs,
+        uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
+        uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
+      };
+    }, [data, widgetAggs]);
+
+  // Function to get taxonomy name for a path (with caching)
+  const getTaxonomyForPath = useCallback(
+    (path: string): string => {
+      // Check cache first
+      for (const [cacheKey, taxonomyName] of taxonomyCache.current.entries()) {
+        const [taxId, taxPath, matchType] = cacheKey.split("_");
+        const taxonomy = taxonomies.find((t) => t.id === taxId);
+        if (taxonomy) {
+          if (matchType === "exactMatch" && path === taxPath) {
+            return taxonomyName;
+          } else if (matchType === "contains" && path.includes(taxPath)) {
+            return taxonomyName;
+          }
+        }
+      }
+
+      // If not in cache, find and cache it
+      for (const taxonomy of taxonomies) {
+        for (const pathRule of taxonomy.paths) {
+          let matches = false;
+          if (pathRule.matchType === "exactMatch") {
+            matches = path === pathRule.path;
+          } else if (pathRule.matchType === "contains") {
+            matches = path.includes(pathRule.path);
+          }
+
+          if (matches) {
+            const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
+            taxonomyCache.current.set(cacheKey, taxonomy.name);
+            return taxonomy.name;
+          }
+        }
+      }
+
+      return "Uncategorized";
+    },
+    [taxonomies],
+  );
+
+  const lowerCaseFileFilters = useMemo(
+    () => fileTypeFilter.map((ft) => ft.toLowerCase()),
+    [fileTypeFilter],
+  );
+
+  const lowerCaseSearch = useMemo(
+    () => (debouncedSearchTerm ? debouncedSearchTerm.toLowerCase() : ""),
+    [debouncedSearchTerm],
+  );
+
+  // Main Data Fetcher
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const fetchFilteredData = async () => {
+      // Determine taxonomy filter
+      let activeTaxonomyFilter = null;
+      if (selectedTaxonomy !== "all") {
+        activeTaxonomyFilter =
+          taxonomies.find((t) => t.id === selectedTaxonomy)?.name || null;
+      } else if (segment && segment !== "all") {
+        const isTaxonomy = taxonomies.some((t) => t.name === segment);
+        if (isTaxonomy) {
+          activeTaxonomyFilter = segment;
+        }
+      }
+
+      const activeFilters = {
+        search_term: debouncedSearchTerm || globalActiveFilters.search_term,
+        status_filter:
+          statusFilter?.length > 0
+            ? statusFilter
+            : globalActiveFilters.status_filter,
+        method_filter:
+          methodFilter?.length > 0
+            ? methodFilter
+            : globalActiveFilters.method_filter,
+        file_type_filter:
+          fileTypeFilter?.length > 0
+            ? fileTypeFilter
+            : globalActiveFilters.file_type_filter,
+        bot_filter: "bot", // Force robots only
+        bot_type_filter:
+          botTypeFilter === "all"
+            ? globalActiveFilters.bot_type_filter
+            : botTypeFilter,
+        crawler_type_filter:
+          crawlerTypeFilter?.length > 0
+            ? crawlerTypeFilter[0]
+            : globalActiveFilters.crawler_type_filter,
+        verified_filter:
+          verifiedFilter !== null
+            ? verifiedFilter
+            : globalActiveFilters.verified_filter,
+        sort_key: sortConfig?.key || "frequency",
+        sort_dir: sortConfig?.direction || "descending",
+        taxonomy_filter:
+          activeTaxonomyFilter || globalActiveFilters.taxonomy_filter,
+      };
+
+      await fetchPathAggregationsPage(currentPage, itemsPerPage, activeFilters);
+    };
+
+    fetchFilteredData();
+  }, [
+    currentPage,
+    itemsPerPage,
+    debouncedSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botTypeFilter,
+    crawlerTypeFilter,
+    verifiedFilter,
+    sortConfig,
+    segment,
+    selectedTaxonomy,
+    isInitialized,
+    fetchPathAggregationsPage,
+    taxonomies,
+  ]);
+
+  // Pagination Values
+  const { totalPages, currentLogs, indexOfFirstItem } = useMemo(() => {
+    const total = pathAggregations.total_unique_paths || 0;
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const currentLogs = pathAggregations.entries || [];
+    const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+
+    return { totalPages, currentLogs, indexOfFirstItem };
+  }, [pathAggregations, itemsPerPage, currentPage]);
+
+  const isProcessing = isStoreLoading;
+  const filteredLogs = currentLogs; // For backward compatibility with some UI parts
+
+  const requestSort = (key: string) => {
+    let direction: "ascending" | "descending" = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setMethodFilter([]);
+    setBotFilter("bot");
+    setVerifiedFilter(null);
+    setSortConfig({ key: "timestamp", direction: "descending" });
+    setExpandedRow(null);
+    setSelectedTaxonomy("all");
+    setBotTypeFilter(null);
+    setStatusFilter([]);
+    setCrawlerTypeFilter([]);
+    // Reset fileTypeFilter based on selectedFileType
+    if (selectedFileType && availableFileTypes.length > 0) {
+      const exactType = availableFileTypes.find(
+        (type) => type.toLowerCase() === selectedFileType.toLowerCase(),
+      );
+      if (exactType) {
+        setFileTypeFilter([exactType]);
+      } else {
+        setFileTypeFilter([]);
+      }
+    } else {
+      setFileTypeFilter([]);
+    }
+  };
+
+  const exportCSV = async () => {
+    const headers = [
+      "IP",
+      "Timestamp",
+      "Method",
+      "Path",
+      "File Type",
+      "Response Size",
+      "Status Code",
+      "Frequency",
+      "User Agent",
+      "Crawler Type",
+      "Google Verified",
+      "Taxonomy",
+    ];
+
+    // Use filteredLogs directly, it contains LogEntry items
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
+
+    const csvRows = dataToExport.map((log) =>
+      [
+        log.ip || "",
+        log.timestamp || "",
+        log.method || "",
+        showOnTables ? "https://" + domain + log.path : log.path || "",
+        log.file_type || "",
+        log.response_size || "",
+        log.status || "",
+        log.frequency || "",
+        `"${(log.user_agent || "").replace(/"/g, '""')}"`,
+        log.crawler_type || "",
+        log.verified ? "Yes" : "No",
+        getTaxonomyForPath(log.path),
+      ].join(","),
+    );
+
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
+
+    try {
+      const filePath = await save({
+        defaultPath: `RustySEO - ${fileTypeFilter.length === 1 ? fileTypeFilter[0] : "File Types"} - ${segment || "All"} - URLs -${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case "HTML":
+        return <FileCode className="text-blue-500 mt-[3px]" size={12} />;
+      case "Image":
+        return <Image className="text-green-500 mt-[3px]" size={12} />;
+      case "Video":
+        return <FileVideo className="text-purple-500 mt-[3px]" size={12} />;
+      case "Audio":
+        return <FileAudio className="text-yellow-500 mt-[3px]" size={12} />;
+      case "PHP":
+        return <FileCode className="text-indigo-500 mt-[3px]" size={12} />;
+      case "TXT":
+        return <FileType className="text-gray-500 mt-[3px]" size={12} />;
+      case "CSS":
+        return <FileCode className="text-pink-500 mt-[3px]" size={12} />;
+      case "JS":
+        return <FileCode className="text-yellow-600 mt-3px" size={12} />;
+      case "Document":
+        return <FileText className="text-red-500 mt-3px" size={12} />;
+      case "Archive":
+        return <Package className="text-orange-500 mt-[3px]" size={12} />;
+      case "Font":
+        return <FileType2 className="text-teal-500 mt-[3px]" size={12} />;
+      case "Unknown":
+        return <AlertCircle className="text-gray-400 mt-[3px]" size={12} />;
+      default:
+        return <FileCode className="text-gray-400 mt-[3px]" size={12} />;
+    }
+  };
+
+  // Pre-calculate timings once
+  const elapsedHours = useMemo(() => {
+    return elapsedTimeMs > 0 ? elapsedTimeMs / (1000 * 60 * 60) : 0;
+  }, [elapsedTimeMs]);
+
+  // Helper to calculate details on the fly for a single log entry (optimized)
+  const getLogDetails = useCallback(
+    (log: LogEntry) => {
+      const frequency = log.frequency || 1;
+
+      let timings = {
+        elapsedTime: formatElapsedTime(elapsedTimeMs),
+        frequency: {
+          total: frequency,
+          perHour: "0.00",
+          perMinute: "0.00/minute",
+          perSecond: "0.00/second",
+        },
+      };
+
+      if (elapsedHours > 0) {
+        const perHour = (frequency / elapsedHours).toFixed(1);
+        const perMinute = (frequency / (elapsedTimeMs / (1000 * 60))).toFixed(
+          2,
+        );
+        const perSecond = (frequency / (elapsedTimeMs / 1000)).toFixed(2);
+
+        timings = {
+          elapsedTime: formatElapsedTime(elapsedTimeMs),
+          frequency: {
+            total: frequency,
+            perHour: perHour,
+            perMinute: `${perMinute}/minute`,
+            perSecond: `${perSecond}/second`,
+          },
+        };
+      }
+
+      return { timings };
+    },
+    [elapsedTimeMs, elapsedHours],
+  );
+
+  // Get current segment taxonomy for display
+  const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
+
+  if (!isReady || !isInitialized || (isProcessing && entries.length > 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[650px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Processing logs...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            This may take a moment for large datasets
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 h-full pb-0 -mb-4">
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
+      {/* Table Header */}
+      {segment && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-blue-800 dark:text-blue-300">
+                Retrieval Agents:{" "}
+                {segment === "all"
+                  ? "All Segments"
+                  : segment === "Uncategorized"
+                    ? "Uncategorized"
+                    : segment}
+                {fileTypeFilter.length > 0 && ` (${fileTypeFilter.join(", ")})`}
+                {crawlerTypeFilter.length > 0 &&
+                  !fileTypeFilter.length &&
+                  ` (${crawlerTypeFilter.join(", ")})`}
+              </h3>
+              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                Showing request activity for{" "}
+                <span className="font-bold">
+                  {segment === "all"
+                    ? "all segments"
+                    : segment === "Uncategorized"
+                      ? "uncategorized"
+                      : segment.toLowerCase()}{" "}
+                  {segment === "all" || segment === "Uncategorized"
+                    ? ""
+                    : "segment"}
+                </span>
+                {fileTypeFilter.length > 0 && (
+                  <>
+                    {" "}
+                    with{" "}
+                    <span className="font-bold">
+                      {fileTypeFilter.join(", ")}
+                    </span>{" "}
+                    file type{fileTypeFilter.length > 1 ? "s" : ""}
+                  </>
+                )}
+                {crawlerTypeFilter.length > 0 && (
+                  <>
+                    {" "}
+                    with{" "}
+                    <span className="font-bold">
+                      {crawlerTypeFilter.join(", ")}
+                    </span>{" "}
+                    crawler{crawlerTypeFilter.length > 1 ? "s" : ""}
+                  </>
+                )}
+                {currentSegmentTaxonomy &&
+                  currentSegmentTaxonomy.paths.length > 0 &&
+                  segment !== "all" &&
+                  segment !== "Uncategorized" && (
+                    <span className="ml-1">
+                      (<span className="font-bold">matches: {""}</span>
+                      {currentSegmentTaxonomy.paths
+                        .map((p) => p.path)
+                        .join(", ")}
+                      )
+                    </span>
+                  )}
+              </p>
+            </div>
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+            >
+              {pathAggregations.total_unique_paths.toLocaleString()} unique
+              paths ({pathAggregations.total_hits.toLocaleString()} hits)
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
+        <div className="relative w-full mr-1">
+          <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search by IP, path, user agent, or referer..."
+            className="pl-8 w-full dark:text-white dark:bg-brand-darker"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-1 gap-1">
+          {/* Taxonomy Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
+              >
+                <FolderTree className="h-4 w-4" />
+                Segment
+                {selectedTaxonomy !== "all" && (
+                  <Badge variant="secondary" className="ml-1">
+                    {taxonomies.find((t) => t.id === selectedTaxonomy)?.name}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] w-[200px]"
+            >
+              <DropdownMenuLabel>Filter by Segment</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                checked={selectedTaxonomy === "all"}
+                onCheckedChange={() => setSelectedTaxonomy("all")}
+              >
+                All Segments
+              </DropdownMenuCheckboxItem>
+              {taxonomies.map((taxonomy) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={taxonomy.id}
+                  checked={selectedTaxonomy === taxonomy.id}
+                  onCheckedChange={(checked) => {
+                    setSelectedTaxonomy(checked ? taxonomy.id : "all");
+                  }}
+                >
+                  {taxonomy.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* File Type Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
+              >
+                <Filter className="h-4 w-4" />
+                File Type
+                {fileTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {fileTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
+            >
+              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableFileTypes.map((fileType) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={fileType}
+                  checked={fileTypeFilter.some(
+                    (ft) => ft.toLowerCase() === fileType.toLowerCase(),
+                  )}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      // Add the exact type from availableFileTypes
+                      setFileTypeFilter([...fileTypeFilter, fileType]);
+                    } else {
+                      // Remove by case-insensitive comparison
+                      setFileTypeFilter(
+                        fileTypeFilter.filter(
+                          (m) => m.toLowerCase() !== fileType.toLowerCase(),
+                        ),
+                      );
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    {getFileIcon(fileType)}
+                    <span>{fileType}</span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+              {availableFileTypes.length === 0 && (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  No file types available
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Status Code Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Status
+                {statusFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {statusFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+            >
+              <DropdownMenuLabel>Filter by Status Code</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {uniqueStatusCodes.map((statusCode) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={statusCode}
+                  checked={statusFilter.includes(statusCode)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setStatusFilter([...statusFilter, statusCode]);
+                    } else {
+                      setStatusFilter(
+                        statusFilter.filter((code) => code !== statusCode),
+                      );
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        statusCode >= 200 && statusCode < 300
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
+                      }`}
+                    />
+                    <span>{statusCode}</span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+              {uniqueStatusCodes.length === 0 && (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  No status codes available
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Crawler Type Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+              >
+                <Bot className="h-4 w-4" />
+                Crawler
+                {crawlerTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {crawlerTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-scroll -right-32 absolute"
+            >
+              <DropdownMenuLabel>Filter by Crawler Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {uniqueCrawlerTypes.map((crawlerType) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={crawlerType}
+                  checked={crawlerTypeFilter.includes(crawlerType)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setCrawlerTypeFilter([...crawlerTypeFilter, crawlerType]);
+                    } else {
+                      setCrawlerTypeFilter(
+                        crawlerTypeFilter.filter(
+                          (type) => type !== crawlerType,
+                        ),
+                      );
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-purple-500" />
+                    <span>{crawlerType}</span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+
+              {uniqueCrawlerTypes.length === 0 && (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  No crawler types available
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="outline"
+            onClick={resetFilters}
+            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Reset
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
+
+      <div
+        style={{
+          height: "calc(100vh - 40vh)",
+          maxHeight: "calc(100vh - 40vh)",
+          overflowX: "hidden",
+        }}
+        className="px-1"
+      >
+        <CardContent className="p-0 h-full overflow-hidden">
+          <div className="rounded-md border dark:border-brand-dark h-full">
+            <div className="relative w-full h-full overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px] text-center">#</TableHead>
+                    <TableHead
+                      className="cursor-pointer w-[190px]"
+                      onClick={() => requestSort("timestamp")}
+                    >
+                      Timestamp
+                      {sortConfig?.key === "timestamp" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => requestSort("path")}
+                    >
+                      Path
+                      {sortConfig?.key === "path" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => requestSort("file_type")}
+                    >
+                      File Type
+                      {sortConfig?.key === "file_type" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead>Segment</TableHead>
+                    <TableHead
+                      className="cursor-pointer text-center w-20"
+                      onClick={() => requestSort("response_size")}
+                    >
+                      Size
+                      {sortConfig?.key === "response_size" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer text-center"
+                      onClick={() => requestSort("status")}
+                    >
+                      Status
+                      {sortConfig?.key === "status" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead>Crawler Type</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentLogs.length > 0 ? (
+                    currentLogs.map((log, index) => {
+                      // Calculate details only for visible rows
+                      const { timings } = getLogDetails(log);
+
+                      return (
+                        <React.Fragment
+                          key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
+                        >
+                          <TableRow
+                            className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                            onClick={() =>
+                              setExpandedRow(
+                                expandedRow === index ? null : index,
+                              )
+                            }
+                            onMouseEnter={() => setHoveredRow(index)}
+                            onMouseLeave={() => setHoveredRow(null)}
+                          >
+                            <TableCell className="font-medium text-center max-w-[40px] align-middle">
+                              {indexOfFirstItem + index + 1}
+                            </TableCell>
+                            <TableCell className="min-w-[150px] align-middle">
+                              {formatDate(log.timestamp)}
+                            </TableCell>
+                            <TableCell className="truncate max-w-[400px] align-middle">
+                              <span className="flex items-start truncate">
+                                <span
+                                  onClick={(e) =>
+                                    handleCopyClick(log?.path, e, "URL / PATH")
+                                  }
+                                  className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
+                                >
+                                  {getFileIcon(log.file_type || "Unknown")} {""}
+                                </span>
+                                <span
+                                  onClick={(click) =>
+                                    handleURLClick(log?.path, click)
+                                  }
+                                  className="hover:underline"
+                                >
+                                  {showOnTables && domain
+                                    ? "https://" + domain + log.path
+                                    : log?.path}
+                                </span>
+                                {credentials?.token?.length > 0 && (
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
+                              </span>
+                            </TableCell>
+                            <TableCell className="min-w-[30px] truncate align-middle">
+                              <Badge variant="outline">
+                                {log.file_type || "Unknown"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="min-w-[100px] align-middle">
+                              <Badge variant="secondary" className="text-xs">
+                                {getTaxonomyForPath(log.path)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center align-middle">
+                              {formatResponseSize(log.response_size)}
+                            </TableCell>
+                            <TableCell className="text-center align-middle">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  log.status
+                                    ? log.status >= 200 && log.status < 300
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                      : log.status >= 300 && log.status < 400
+                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                        : log.status >= 400 && log.status < 500
+                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                          : log.status >= 500
+                                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                            : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                }
+                              >
+                                {log.status || "N/A"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell width={110} className="max-w-[100px] ">
+                              <Badge
+                                variant="outline"
+                                className="w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
+                              >
+                                {log.crawler_type &&
+                                log.crawler_type.length > 12
+                                  ? log.crawler_type.trim().slice(0, 15)
+                                  : log.crawler_type || "Unknown"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                          {expandedRow === index && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={9}
+                                className="bg-gray-50 dark:bg-gray-800 p-4"
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Left Column */}
+                                  <div className="flex flex-col max-w-[70rem] w-full">
+                                    <div className="flex mb-2 space-x-2 items-center justify-between">
+                                      <h4 className="font-bold">Details</h4>
+                                      {log.verified && (
+                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                          <BadgeCheck
+                                            size={18}
+                                            className="text-blue-800 pr-1 dark:text-blue-900"
+                                          />
+                                          {log?.crawler_type}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                      <div className="space-y-2 text-sm">
+                                        <div>
+                                          <span className="font-semibold">
+                                            IP:
+                                          </span>{" "}
+                                          {log.ip}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Method:
+                                          </span>{" "}
+                                          {log.method}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            User Agent:
+                                          </span>{" "}
+                                          <span
+                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                            onClick={(click) =>
+                                              handleCopyClick(
+                                                log.user_agent,
+                                                click,
+                                                "User Agent",
+                                              )
+                                            }
+                                          >
+                                            {log.user_agent}
+                                          </span>
+                                        </div>
+                                        {log.referer && (
+                                          <div>
+                                            <span className="font-semibold">
+                                              Referer:
+                                            </span>{" "}
+                                            <span className="font-mono text-xs break-all">
+                                              {log.referer}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Right Column */}
+                                  <div className="flex flex-col">
+                                    <h4 className="mb-2 font-bold">
+                                      Frequency Analysis
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                      <div className="space-y-2 text-sm">
+                                        <div>
+                                          <span className="font-semibold">
+                                            Total Hits:
+                                          </span>{" "}
+                                          {log.frequency || 1}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Hour:
+                                          </span>{" "}
+                                          {timings?.frequency?.perHour}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Minute:
+                                          </span>{" "}
+                                          {timings?.frequency?.perMinute}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Second:
+                                          </span>{" "}
+                                          {timings?.frequency?.perSecond}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Taxonomy Information */}
+                                  <div className="md:col-span-2">
+                                    <h4 className="mb-2 font-bold">
+                                      Taxonomy Information
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                      <div className="flex items-center gap-4">
+                                        <div>
+                                          <span className="font-semibold">
+                                            Category:
+                                          </span>
+                                          <Badge
+                                            variant="secondary"
+                                            className="ml-2"
+                                          >
+                                            {getTaxonomyForPath(log.path)}
+                                          </Badge>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Matching Rules:
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {taxonomies
+                                              .find(
+                                                (tax) =>
+                                                  tax.name ===
+                                                  getTaxonomyForPath(log.path),
+                                              )
+                                              ?.paths.map((pathRule, idx) => (
+                                                <Badge
+                                                  key={idx}
+                                                  variant="outline"
+                                                  className="text-xs"
+                                                >
+                                                  {pathRule.path} (
+                                                  {pathRule.matchType})
+                                                </Badge>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Response Codes Section */}
+                                  <div className="md:col-span-2">
+                                    <h4 className="mb-2 font-bold">
+                                      Response Code Details
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                      <div className="flex items-center justify-center">
+                                        <div className="text-center">
+                                          <Badge
+                                            variant="outline"
+                                            className={
+                                              log.status
+                                                ? log.status >= 200 &&
+                                                  log.status < 300
+                                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
+                                                  : log.status >= 300 &&
+                                                      log.status < 400
+                                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
+                                                    : log.status >= 400 &&
+                                                        log.status < 500
+                                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
+                                                      : log.status >= 500
+                                                        ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
+                                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                            }
+                                          >
+                                            Status: {log.status || "N/A"}
+                                          </Badge>
+                                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                            This individual request returned
+                                            status code {log.status}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center h-24">
+                        {fileTypeFilter.length > 0
+                          ? `No log entries found for ${fileTypeFilter.join(", ")} file type${fileTypeFilter.length > 1 ? "s" : ""}. Available types: ${availableFileTypes.join(", ")}`
+                          : segment && segment !== "all"
+                            ? `No log entries found for ${segment}`
+                            : "No log entries found."}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </div>
+
+      <div
+        className="flex items-center justify-between w-full"
+        style={{ marginTop: "0.2em" }}
+      >
+        <div className="flex items-center -mt-2 ml-1">
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => setItemsPerPage(Number(value))}
+          >
+            <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
+              <SelectValue placeholder="100" />
+            </SelectTrigger>
+            <SelectContent className="z-[9999999999]">
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="100"
+              >
+                100
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="500"
+              >
+                500
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="1000"
+              >
+                1000
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Pagination className="text-xs">
+          <PaginationContent style={{ marginTop: "-5px" }}>
+            <PaginationItem className="cursor-pointer">
+              <PaginationPrevious
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50 text-xs"
+                    : "text-xs"
+                }
+              />
+            </PaginationItem>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum = i + 1;
+
+              if (totalPages > 5) {
+                if (currentPage > 3 && currentPage <= totalPages - 2) {
+                  pageNum = currentPage - 2 + i;
+                } else if (currentPage > totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                }
+              }
+
+              return (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    className="cursor-pointer h-6"
+                    onClick={() => setCurrentPage(pageNum)}
+                    isActive={currentPage === pageNum}
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <>
+                <PaginationItem className="cursor-pointer">
+                  <PaginationEllipsis />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              </>
+            )}
+
+            <PaginationItem className="cursor-pointer">
+              <PaginationNext
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+  );
+};
+
+export { WidgetRetrievalAgentsTable };

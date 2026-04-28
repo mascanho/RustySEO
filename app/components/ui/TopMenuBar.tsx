@@ -508,6 +508,7 @@ const TopMenuBar = () => {
         onClose={closeSettings}
         centered
         padding={0}
+        overlayOpacity={1}
         radius="lg"
         withCloseButton={false}
         styles={{

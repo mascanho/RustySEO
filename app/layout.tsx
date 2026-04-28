@@ -90,7 +90,6 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <section className="mb-[6.3rem]">
-            <Loader />
             <TopMenuBar />
             <ChatBar />
           </section>
@@ -100,6 +99,7 @@ export default function RootLayout({
             {pathname === "/ppc" ? "" : <Toaster />}
           </main>
           <Footer />
+          <Loader />
         </MantineProvider>
       </body>
     </html>

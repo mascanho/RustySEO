@@ -8,8 +8,11 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use settings::settings::delete_config_folders_command;
+use settings::settings::get_agentic_bots_command;
+use settings::settings::get_indexing_bots_command;
 use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;
+use settings::settings::get_retrieval_agents_command;
 use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
 use settings::settings::toggle_javascript_rendering;
@@ -65,6 +68,10 @@ struct Config {
     page_speed_key: String,
     openai_key: String,
 }
+
+// IF THE SETTINGS FILE NEEDS TO BE
+// REPLACED TO AVOID ERRORS IN THE APP DUE TO BREAKING CHANGES ON THE NEW RELEASE,  SET THIS TO TRUE
+const CHECKS_VERSION: bool = true;
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
@@ -195,6 +202,16 @@ async fn main() {
             Arc::new(RwLock::new(Settings::default()))
         }
     };
+
+    // IN CASE CONFIG FILE NEEDS TO BE REPLACED FOR THE APP NOT TO GIVE ERRORS DUE TO NEW FEATURES
+    match CHECKS_VERSION {
+        false => {
+            println!("Settings loaded successfully.");
+        }
+        true => {
+            settings::settings::check_and_replace().await;
+        }
+    }
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
@@ -369,6 +386,9 @@ async fn main() {
             loganalyser::database::process_project_logs_directly_command,
             loganalyser::database::process_single_log_from_db_command,
             get_system,
+            get_indexing_bots_command,
+            get_retrieval_agents_command,
+            get_agentic_bots_command,
             get_log_file_upload_size_command,
             get_project_chunk_size_command,
             delete_config_folders_command,
@@ -381,7 +401,7 @@ async fn main() {
             loganalyser::log_commands::match_gsc_query_command,
             loganalyser::helpers::gsc_log::load_gsc_from_database,
             gsc_auth::start_gsc_auth_server,
-            gsc_auth::exchange_gsc_code
+            gsc_auth::exchange_gsc_code,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

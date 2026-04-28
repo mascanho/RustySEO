@@ -55,6 +55,7 @@ export default function Page() {
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
+  const fetchMaxUrlsStored = useGlobalCrawlStore((state) => state.actions.data.fetchMaxUrlsStored);
 
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
@@ -94,6 +95,8 @@ export default function Page() {
       setIsGlobalCrawling(true);
       setFinishedDeepCrawl(false);
       setIsFinishedDeepCrawl(false);
+
+      await fetchMaxUrlsStored();
 
       const result = await invoke("domain_crawl_command", { domain: url });
       // console.log("%cCrawl Result:", "color: red;", result);

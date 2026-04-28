@@ -23,7 +23,7 @@ import {
   IoEarthSharp,
 } from "react-icons/io5";
 import { PiGooglePodcastsLogo } from "react-icons/pi";
-import { SiAskfm, SiBrave, SiDuckduckgo, SiEcosia } from "react-icons/si";
+import { SiBrave, SiDuckduckgo, SiEcosia } from "react-icons/si";
 import { toast } from "sonner";
 import { DiYahooSmall } from "react-icons/di";
 import { LiaKeySolid } from "react-icons/lia";
@@ -79,7 +79,7 @@ export default function ContextTableMenu({ children, data }) {
     },
     {
       name: "Ask",
-      icon: <SiAskfm className="mr-2" />,
+      icon: <GoSearch className="mr-2" />,
       url: `https://www.ask.com/web?q=${data}`,
     },
     {

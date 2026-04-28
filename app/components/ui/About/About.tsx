@@ -138,7 +138,7 @@ const About: React.FC<{ close: () => void }> = ({ close }) => {
                 color="brand-bright"
                 radius="xl"
                 size="sm"
-                className="hover:bg-brand-bright/10"
+                className="hover:bg-brand-bright/10 dark:text-white"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </ActionIcon>

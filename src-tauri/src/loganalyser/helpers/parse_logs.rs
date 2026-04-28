@@ -15,7 +15,7 @@ use crate::loganalyser::helpers::modeling::{
     BingBotRanges, IpVerificationError, LogEntry, OpenAIBotRanges, TaxonomyInfo,
 };
 
-use super::google_ip_fetcher::get_google_ip_ranges;
+use super::google_ip_fetcher::{get_google_ip_ranges, get_google_ip_ranges_sync};
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
@@ -27,13 +27,13 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
-    
+
     // Also update sorted cache
     let mut sorted = taxonomies.clone();
     sorted.sort_by(|a, b| b.path.len().cmp(&a.path.len()));
     let mut sorted_lock = SORTED_TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *sorted_lock = sorted;
-    
+
     println!("Taxonomies updated and sorted.");
     Ok(())
 }
@@ -80,7 +80,10 @@ fn classify_segment_name_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]
 }
 
 /// Get the match type of the segment based on taxonomy configuration
-fn classify_segment_match_internal(path: &str, sorted_taxonomies: &[TaxonomyInfo]) -> Option<String> {
+fn classify_segment_match_internal(
+    path: &str,
+    sorted_taxonomies: &[TaxonomyInfo],
+) -> Option<String> {
     for taxonomy in sorted_taxonomies {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
@@ -122,34 +125,46 @@ pub fn classify_segment_match(path: &str) -> Option<String> {
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
-static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+// Use Vec<IpNet> for direct containment checks (same as Bing/OpenAI)
+static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<IpNet>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[tauri::command]
 pub async fn fetch_google_ip_ranges() -> Result<Vec<String>, String> {
     {
         let ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
         if !ranges.is_empty() {
-            return Ok(ranges.clone());
+            // Return string representation for compatibility
+            return Ok(ranges.iter().map(|n| n.to_string()).collect());
         }
     }
 
-    let fetched_ranges = get_google_ip_ranges().await.map_err(|e| e.to_string())?;
+    // Fetch raw strings from Google API
+    let fetched_strings = get_google_ip_ranges().await.map_err(|e| e.to_string())?;
+
+    // Parse and store as IpNet for efficient lookups
+    let parsed_networks: Vec<IpNet> = fetched_strings
+        .iter()
+        .filter_map(|cidr| IpNet::from_str(cidr).ok())
+        .collect();
 
     {
         let mut ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
-        *ranges = fetched_ranges.clone();
+        *ranges = parsed_networks;
     }
 
-    Ok(fetched_ranges)
+    Ok(fetched_strings)
 }
 
 fn is_google_verified(ip: &str) -> Result<bool, IpVerificationError> {
     let ip_addr = IpAddr::from_str(ip)?;
     let ranges = GOOGLE_IP_RANGES.lock().unwrap();
 
-    for cidr in ranges.iter() {
-        let net = IpNet::from_str(cidr)
-            .map_err(|_| IpVerificationError::InvalidCidr(ipnet::PrefixLenError))?;
+    if ranges.is_empty() {
+        println!("WARNING: Google IP ranges are empty! Call fetch function first.");
+        return Ok(false);
+    }
+
+    for net in ranges.iter() {
         if net.contains(&ip_addr) {
             return Ok(true);
         }
@@ -221,6 +236,37 @@ fn is_bing_verified(ip: &str) -> Result<bool, IpVerificationError> {
     }
 
     Ok(false)
+}
+
+/// Synchronous version for Bing IP ranges
+fn get_bing_ip_ranges_sync() -> Result<Vec<String>, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client
+        .get("https://www.bing.com/toolbox/bingbot.json")
+        .header("User-Agent", "RustySEO-Bot-Verifier/1.0")
+        .send()
+        .map_err(|e| e.to_string())?;
+
+    let bing_ranges = response
+        .json::<BingBotRanges>()
+        .map_err(|e| e.to_string())?;
+
+    let mut range_strings = Vec::new();
+
+    for prefix in &bing_ranges.prefixes {
+        if let Some(ipv4_prefix) = &prefix.ipv4_prefix {
+            range_strings.push(ipv4_prefix.clone());
+        }
+        if let Some(ipv6_prefix) = &prefix.ipv6_prefix {
+            range_strings.push(ipv6_prefix.clone());
+        }
+    }
+
+    Ok(range_strings)
 }
 
 // Store the actual OpenAI ranges for DIFFERENT bot types
@@ -337,20 +383,53 @@ fn is_openai_gptbot_verified(ip: &str) -> Result<bool, IpVerificationError> {
     verify_ip_against_ranges(ip, &OPENAI_GPTBOT_RANGES, "GPTBot")
 }
 
-// Helper function for verification
-fn verify_ip_against_ranges(
+/// Synchronous version to fetch all OpenAI ranges
+fn get_openai_all_ranges_sync() -> Result<Vec<String>, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let mut all_ranges = Vec::new();
+
+    let urls = [
+        "https://openai.com/searchbot.json",
+        "https://openai.com/chatgpt-user.json",
+        "https://openai.com/gptbot.json",
+    ];
+
+    for url in urls {
+        let response = client
+            .get(url)
+            .header("User-Agent", "RustySEO-Bot-Verifier/1.0")
+            .send()
+            .map_err(|e| e.to_string())?;
+
+        let openai_ranges = response
+            .json::<OpenAIBotRanges>()
+            .map_err(|e| e.to_string())?;
+
+        for prefix in &openai_ranges.prefixes {
+            if let Some(ipv4_prefix) = &prefix.ipv4_prefix {
+                all_ranges.push(ipv4_prefix.clone());
+            }
+            if let Some(ipv6_prefix) = &prefix.ipv6_prefix {
+                all_ranges.push(ipv6_prefix.clone());
+            }
+        }
+    }
+
+    Ok(all_ranges)
+}
+
+// Helper function for verification using a pre-locked snapshot
+fn verify_ip_against_ranges_snapshot(
     ip: &str,
-    storage: &Lazy<Mutex<Vec<IpNet>>>,
-    bot_type: &str,
+    ranges: &[IpNet],
 ) -> Result<bool, IpVerificationError> {
     let ip_addr = IpAddr::from_str(ip)?;
-    let ranges = storage.lock().unwrap();
 
     if ranges.is_empty() {
-        println!(
-            "WARNING: {} IP ranges are empty! Call fetch function first.",
-            bot_type
-        );
         return Ok(false);
     }
 
@@ -360,35 +439,62 @@ fn verify_ip_against_ranges(
         }
     }
 
-    println!(
-        "✗ UNVERIFIED: IP {} not found in {} official ranges",
-        ip, bot_type
-    );
     Ok(false)
+}
+
+// Helper function for verification (standalone version)
+fn verify_ip_against_ranges(
+    ip: &str,
+    storage: &Lazy<Mutex<Vec<IpNet>>>,
+    _bot_type: &str,
+) -> Result<bool, IpVerificationError> {
+    let ranges = storage.lock().unwrap_or_else(|g| g.into_inner());
+    verify_ip_against_ranges_snapshot(ip, &ranges)
+}
+
+struct CrawlerIpSnapshot {
+    google: Vec<IpNet>,
+    bing: Vec<IpNet>,
+    openai_searchbot: Vec<IpNet>,
+    openai_chatgpt: Vec<IpNet>,
+    openai_gptbot: Vec<IpNet>,
+}
+
+impl CrawlerIpSnapshot {
+    fn new() -> Self {
+        Self {
+            google: GOOGLE_IP_RANGES.lock().unwrap_or_else(|g| g.into_inner()).clone(),
+            bing: BING_IP_RANGES.lock().unwrap_or_else(|g| g.into_inner()).clone(),
+            openai_searchbot: OPENAI_SEARCHBOT_RANGES.lock().unwrap_or_else(|g| g.into_inner()).clone(),
+            openai_chatgpt: OPENAI_CHATGPT_USER_RANGES.lock().unwrap_or_else(|g| g.into_inner()).clone(),
+            openai_gptbot: OPENAI_GPTBOT_RANGES.lock().unwrap_or_else(|g| g.into_inner()).clone(),
+        }
+    }
+}
+
+/// Check if an IP is from any verified search engine using a snapshot
+fn is_verified_crawler_snapshot(ip: &str, crawler_type: &str, snapshot: &CrawlerIpSnapshot) -> bool {
+    let crawler_lower = crawler_type.to_lowercase();
+
+    if crawler_lower.contains("google") {
+        verify_ip_against_ranges_snapshot(ip, &snapshot.google).unwrap_or(false)
+    } else if crawler_lower.contains("bing") {
+        verify_ip_against_ranges_snapshot(ip, &snapshot.bing).unwrap_or(false)
+    } else if crawler_lower == "chatgpt-user" || crawler_lower.contains("chatgpt") {
+        verify_ip_against_ranges_snapshot(ip, &snapshot.openai_chatgpt).unwrap_or(false)
+    } else if crawler_lower == "gptbot" {
+        verify_ip_against_ranges_snapshot(ip, &snapshot.openai_gptbot).unwrap_or(false)
+    } else if crawler_lower.contains("openai") || crawler_lower.contains("oai-searchbot") {
+        verify_ip_against_ranges_snapshot(ip, &snapshot.openai_searchbot).unwrap_or(false)
+    } else {
+        false
+    }
 }
 
 /// Check if an IP is from any verified search engine
 fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
-    let crawler_lower = crawler_type.to_lowercase();
-
-    let result = if crawler_lower.contains("google") {
-        is_google_verified(ip).unwrap_or(false)
-    } else if crawler_lower.contains("bing") {
-        is_bing_verified(ip).unwrap_or(false)
-    } else if crawler_lower == "chatgpt-user" || crawler_lower.contains("chatgpt") {
-        // Specifically check ChatGPT-User against its own ranges
-        is_openai_chatgpt_user_verified(ip).unwrap_or(false)
-    } else if crawler_lower == "gptbot" {
-        // Specifically check GPTBot against its own ranges
-        is_openai_gptbot_verified(ip).unwrap_or(false)
-    } else if crawler_lower.contains("openai") || crawler_lower.contains("oai-searchbot") {
-        // Check OpenAI SearchBot
-        is_openai_searchbot_verified(ip).unwrap_or(false)
-    } else {
-        false
-    };
-
-    result
+    let snapshot = CrawlerIpSnapshot::new();
+    is_verified_crawler_snapshot(ip, crawler_type, &snapshot)
 }
 
 fn detect_file_type(path: &str) -> Option<String> {
@@ -489,8 +595,28 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("google-extended", "Google Extended"),
         ("bingbot", "Bing"),
         ("googleimageproxy", "Goog. Img Proxy"),
+        ("yandex", "Yandex"),
+        ("baiduspider", "Baidu"),
+        ("duckduckgo", "DuckDuckGo"),
+        ("sogou", "Sogou"),
+        ("exabot", "Exabot"),
+        ("petalbot", "PetalBot"),
+        ("yeti", "Naver Yeti"),
+        ("seznambot", "Seznam Bot"),
+        ("coccocbot", "CocCoc Bot"),
+        ("mail.ru_bot", "Mail.RU Bot"),
+        ("qwantify", "Qwantify"),
+        ("mojeekbot", "MojeekBot"),
+        ("ia_archiver", "Alexa Crawler"),
+        ("archive.org_bot", "Archive.org Bot"),
+        ("commoncrawl", "CommonCrawl"),
+        ("sogou news spider", "Sogou News Spider"),
+        ("daumua", "Daumua"),
+        ("applebot", "AppleBot"),
         ("gptbot", "GPTBot"),
         ("chatgpt", "ChatGPT-User"),
+        ("oai-searchbot", "OpenAI SearchBot"),
+        ("oai-adsbot", "OpenAI AdsBot"),
         ("semrush", "Semrush"),
         ("ahrefs", "Ahrefs"),
         ("moz.com", "Moz"),
@@ -513,6 +639,24 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("expanse", "Expanse Bot"),
         ("claudebot", "Claude Bot"),
         ("anthropic", "Claude Bot"),
+        ("claude-user", "Claude Bot"),
+        ("google-extended", "Google Extended"),
+        ("google-notebooklm", "Google NotebookLM"),
+        ("google-clouvertexbot", "Google Cloud Vertex"),
+        ("perplexitybot", "Perplexity Bot"),
+        ("perplexity-comet", "Perplexity Bot"),
+        ("duckassistbot", "DuckAssist Bot"),
+        ("meta-externalagent", "Meta Bot"),
+        ("bytespider", "Bytespider"),
+        ("grokbot", "Grok Bot"),
+        ("xai-grok", "Grok Bot"),
+        ("ccbot", "CommonCrawl"),
+        ("firecrawl", "Firecrawl"),
+        ("kadoa", "Kadoa"),
+        ("tavily", "Tavily"),
+        ("spaziodati", "SpazioDati"),
+        ("excon", "Excon"),
+        ("okhttp", "OkHttp"),
     ];
 
     // Check for empty or dash user agent first
@@ -589,7 +733,7 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
 
     // Get sorted taxonomies from CACHE - much faster than sorting every line
     let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
-    
+
     Some(LogEntry {
         ip,
         timestamp,
@@ -628,6 +772,9 @@ where
         Err(_) => return,
     };
 
+    // Acquire IP ranges snapshot ONCE for the entire batch instead of locking per line
+    let ip_snapshot = CrawlerIpSnapshot::new();
+
     for (i, line) in log.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() {
@@ -659,8 +806,8 @@ where
             let ip = caps[1].to_string();
             let path = &caps[4];
 
-            // Use the new unified verification function
-            let verified = is_verified_crawler(&ip, &crawler_type);
+            // Use the new unified verification function with snapshot for efficiency
+            let verified = is_verified_crawler_snapshot(&ip, &crawler_type, &ip_snapshot);
 
             // Consolidated GSC lookup — single lock, single normalization
             let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
@@ -802,6 +949,80 @@ pub fn verify_openai_ip(ip: String) -> Vec<String> {
     }
 
     result
+}
+
+/// Pre-load all bot IP ranges synchronously during log analysis start
+/// This ensures ranges are available when parse_log_entries is called
+pub fn preload_all_ip_ranges_sync() {
+    // Check if we already have data to avoid redundant network calls
+    {
+        let google = GOOGLE_IP_RANGES.lock().ok();
+        let bing = BING_IP_RANGES.lock().ok();
+        let openai = OPENAI_SEARCHBOT_RANGES.lock().ok();
+        
+        if let (Some(g), Some(b), Some(o)) = (google, bing, openai) {
+            if !g.is_empty() && !b.is_empty() && !o.is_empty() {
+                println!("All bot IP ranges already loaded, skipping redundant fetch.");
+                return;
+            }
+        }
+    }
+
+    println!("Starting synchronous IP range pre-loading...");
+    
+    // Fetch Google ranges (sync version)
+    match get_google_ip_ranges_sync() {
+        Ok(fetched_strings) => {
+            let parsed_networks: Vec<IpNet> = fetched_strings
+                .iter()
+                .filter_map(|cidr| IpNet::from_str(cidr).ok())
+                .collect();
+            
+            if let Ok(mut ranges) = GOOGLE_IP_RANGES.lock() {
+                *ranges = parsed_networks;
+                println!("Loaded {} Google IP ranges", ranges.len());
+            }
+        },
+        Err(e) => {
+            println!("ERROR: Failed to fetch Google IP ranges: {}", e);
+        }
+    }
+    
+    // Fetch Bing ranges (sync version)
+    if let Ok(range_strings) = get_bing_ip_ranges_sync() {
+        let networks: Vec<IpNet> = range_strings
+            .iter()
+            .filter_map(|cidr| IpNet::from_str(cidr).ok())
+            .collect();
+        
+        if let Ok(mut ranges) = BING_IP_RANGES.lock() {
+            *ranges = networks;
+            println!("Loaded {} Bing IP ranges", ranges.len());
+        }
+    }
+    
+    // Fetch OpenAI ranges (sync version)
+    if let Ok(range_strings) = get_openai_all_ranges_sync() {
+        let networks: Vec<IpNet> = range_strings
+            .iter()
+            .filter_map(|cidr| IpNet::from_str(cidr).ok())
+            .collect();
+        
+        if let Ok(mut ranges) = OPENAI_SEARCHBOT_RANGES.lock() {
+            *ranges = networks.clone();
+            println!("Loaded {} OpenAI SearchBot IP ranges", ranges.len());
+        }
+        if let Ok(mut ranges) = OPENAI_CHATGPT_USER_RANGES.lock() {
+            *ranges = networks.clone();
+            println!("Loaded {} ChatGPT-User IP ranges", ranges.len());
+        }
+        if let Ok(mut ranges) = OPENAI_GPTBOT_RANGES.lock() {
+            *ranges = networks;
+            println!("Loaded {} GPTBot IP ranges", ranges.len());
+        }
+    }
+    
+    println!("Pre-loaded all bot IP ranges successfully");
 }
 
 // Initialize all ranges at startup

@@ -965,6 +965,8 @@ pub struct WidgetAggregations {
     pub user_agent_categories: std::collections::HashMap<String, usize>,
     #[serde(default)]
     pub referrer_categories: std::collections::HashMap<String, usize>,
+    #[serde(default)]
+    pub crawler_types: std::collections::HashMap<String, usize>,
 }
 
 #[tauri::command]
@@ -1203,8 +1205,28 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     }
 
+    // 8. Crawler Types (Robots Only)
+    {
+        let query = format!(
+            "SELECT crawler_type, COUNT(*) FROM active_parsed_logs WHERE {} AND crawler_type != 'Human' AND crawler_type IS NOT NULL AND crawler_type != '' GROUP BY crawler_type",
+            where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+
+        for row in rows {
+            let (ct, count) = row.map_err(|e| e.to_string())?;
+            aggs.crawler_types.insert(ct, count);
+        }
+    }
+
     Ok(aggs)
 }
+
 
 #[tauri::command]
 pub fn get_active_logs_stats(filters: ActiveFilters) -> Result<LogAnalysisResult, String> {

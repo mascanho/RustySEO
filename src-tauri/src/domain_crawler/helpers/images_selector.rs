@@ -80,18 +80,29 @@ async fn fetch_image_size(client: &reqwest::Client, url: &Url) -> Result<(u64, S
 
 /// Extracts image URLs, alt tags, sizes, content types, status codes, and a boolean indicating if width or height is not specified.
 ///
-/// Uses bounded concurrency (buffer_unordered) instead of unbounded join_all
-/// to prevent opening too many sockets simultaneously.
+/// Uses bounded concurrency (buffer_unordered) and a global semaphore
+/// to prevent opening too many sockets simultaneously across all pages.
 pub async fn fetch_image_details(
     client: &reqwest::Client,
     image_urls_and_alts: Vec<(Url, String, bool)>,
+    image_semaphore: std::sync::Arc<tokio::sync::Semaphore>,
 ) -> Result<Vec<(String, String, u64, String, u16, bool)>, String> {
     let client = client.clone();
-    let results: Vec<_> = stream::iter(image_urls_and_alts)
-        .map(|(image_url, alt, is_size_not_specified)| {
+    let results: Vec<_> = stream::iter(image_urls_and_alts.into_iter().enumerate())
+        .map(|(index, (image_url, alt, is_size_not_specified))| {
             let client_ref = client.clone();
+            let semaphore = image_semaphore.clone();
             async move {
+                // Stagger image requests globally to prevent instantaneous bursts (100ms per index offset)
+                // This spreads 50 images across 5 seconds instead of 0 seconds.
+                tokio::time::sleep(tokio::time::Duration::from_millis((index as u64) * 100)).await;
+
                 let url_string = image_url.to_string();
+
+                let _permit = match semaphore.acquire().await {
+                    Ok(p) => p,
+                    Err(_) => return (url_string, alt, 0, String::new(), 0, is_size_not_specified),
+                };
 
                 match fetch_image_size(&client_ref, &image_url).await {
                     Ok((size, content_type, status_code)) => {

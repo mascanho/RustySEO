@@ -7,8 +7,35 @@ import {
     SettingField,
     NumberInput,
     SectionHeader,
+    ArrayInput,
 } from "../fields/SettingFields";
-import { ScrollText, Upload } from "lucide-react";
+import { ScrollText, Upload, Bot, Database } from "lucide-react";
+import { RiRobot3Line } from "react-icons/ri";
+
+const INDEXING_BOTS_SUGGESTIONS = [
+    "Google Bot", "Bing", "Yandex", "Baidu", "DuckDuckGo", "Sogou",
+    "Exabot", "PetalBot", "Naver Yeti", "Seznam Bot", "CocCoc Bot",
+    "Mail.RU Bot", "Qwantify", "MojeekBot", "Alexa Crawler",
+    "Archive.org Bot", "CommonCrawl", "Sogou News Spider", "Daumua",
+    "AppleBot", "GPTBot", "OpenAI SearchBot",
+];
+
+const RETRIEVAL_AGENTS_SUGGESTIONS = [
+    "GPTBot", "OAI-SearchBot", "ChatGPT-User", "OAI-AdsBot",
+    "ClaudeBot", "Claude-User", "anthropic-ai",
+    "Google-Extended", "Google-NotebookLM", "Google-CloudVertexBot",
+    "PerplexityBot", "Perplexity-Comet", "DuckAssistBot",
+    "Meta-ExternalAgent", "Bytespider", "GrokBot", "xAI-Grok",
+    "CCBot", "Firecrawl", "Kadoa", "Exabot", "Tavily",
+];
+
+const AGENTIC_BOTS_SUGGESTIONS = [
+    "Perplexity-Comet", "OAI-DeepResearch", "YouBot-ARI", "Grok-DeepSearch",
+    "Claude-Researcher", "DuckAssistBot", "ChatGPT-User", "Claude-User",
+    "Gemini-Live-Bot", "Tavily", "Search1api", "JinaBot",
+    "Firecrawl", "Kadoa", "Google-CloudVertexBot", "LangChain-Agent",
+    "AutoGPT-Retrieval",
+];
 
 interface Props {
     settings: AppSettings;
@@ -98,6 +125,60 @@ const LogsSection = ({ settings, onUpdate }: Props) => (
                 min={1}
                 max={500}
                 unit="MB"
+            />
+        </SettingField>
+
+        <SectionHeader
+            title="Indexing Bots"
+            icon={<Bot className="w-3.5 h-3.5" />}
+        />
+
+        <SettingField
+            label="Indexing Bots"
+            description="Bots that index your site (Google, Bing, etc.)"
+        >
+            <ArrayInput
+                value={settings.indexing_bots || []}
+                onChange={(v) => onUpdate("indexing_bots", v)}
+                placeholder="Search bots..."
+                suggestions={INDEXING_BOTS_SUGGESTIONS}
+                compact
+            />
+        </SettingField>
+
+        <SectionHeader
+            title="Retrieval Agents"
+            icon={<Database className="w-3.5 h-3.5" />}
+        />
+
+        <SettingField
+            label="Retrieval Agents"
+            description="Bots that consume content for LLMs"
+        >
+            <ArrayInput
+                value={settings.retrieval_agents || []}
+                onChange={(v) => onUpdate("retrieval_agents", v)}
+                placeholder="Search agents..."
+                suggestions={RETRIEVAL_AGENTS_SUGGESTIONS}
+                compact
+            />
+        </SettingField>
+
+        <SectionHeader
+            title="Agentic Bots"
+            icon={<RiRobot3Line className="w-3.5 h-3.5" />}
+        />
+
+        <SettingField
+            label="Agentic Bots"
+            description="AI agents that perform tasks"
+        >
+            <ArrayInput
+                value={settings.agentic_bots || []}
+                onChange={(v) => onUpdate("agentic_bots", v)}
+                placeholder="Search bots..."
+                suggestions={AGENTIC_BOTS_SUGGESTIONS}
+                compact
             />
         </SettingField>
     </div>

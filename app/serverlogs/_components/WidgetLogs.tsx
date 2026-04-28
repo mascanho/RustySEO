@@ -16,14 +16,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  IoLogoGoogle,
-  IoLogoFacebook,
-} from "react-icons/io5";
+import { IoLogoGoogle, IoLogoFacebook } from "react-icons/io5";
 import { SiSemrush } from "react-icons/si";
 import { Link2 } from "lucide-react";
-import { TbBrandBing } from "react-icons/tb";
-import { RiOpenaiFill, RiRobot2Fill } from "react-icons/ri";
+import { TbBrandBing, TbDatabasePlus, TbSpider } from "react-icons/tb";
+import { RiOpenaiFill, RiRobot2Fill, RiRobot3Line } from "react-icons/ri";
 import { FaSpider } from "react-icons/fa6";
 import { useLogAnalysis, useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -83,7 +80,7 @@ const WidgetStatusCodesTable = lazy(() =>
 
 import { Tabs } from "@mantine/core";
 
-import { FaInfoCircle } from "react-icons/fa";
+import { FaInfoCircle, FaFilter } from "react-icons/fa";
 
 import {
   Popover,
@@ -93,19 +90,30 @@ import {
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
-import { GiPoliceOfficerHead } from "react-icons/gi";
+import { GiPoliceOfficerHead, GiRobotGolem, GiSpiderWeb } from "react-icons/gi";
 
 import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
+import { GrDocumentStore } from "react-icons/gr";
+import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawlersTable";
+import { WidgetRetrievalAgentsTable } from "./WidgetTables/WidgetRetrievalAgentsTable";
+import { WidgetAgenticBotsTable } from "./WidgetTables/WidgetAgenticBotsTable";
+import { invoke } from "@tauri-apps/api/core";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
-  { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
+  { label: "Aggregated Crawlers", icon: <GiRobotGolem className="w-4 h-4" /> },
   { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
-  { label: "Referrers", icon: <GiHypersonicBolt className="w-3 h-3" /> },
+  { label: "Referrers", icon: <GiHypersonicBolt className="w-4 h-4" /> },
+  {
+    label: "Indexing Crawlers",
+    icon: <TbSpider className="w-4 h-4" />,
+  },
+  { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
+  { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -141,49 +149,125 @@ const FallbackLoader = () => (
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  
+  const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<
+    string | null
+  >(null);
+  const [openDialogs, setOpenDialogs] = useState({});
+
   const getCrawlerIcon = (crawlerType: string) => {
     const ct = crawlerType.toLowerCase();
     if (ct.includes("google")) {
-      return { icon: <IoLogoGoogle size={18} />, color: "text-blue-600 dark:text-blue-400" };
+      return {
+        icon: <IoLogoGoogle size={18} />,
+        color: "text-blue-600 dark:text-blue-400",
+      };
     }
     if (ct.includes("bing")) {
-      return { icon: <TbBrandBing size={18} />, color: "text-teal-600 dark:text-teal-400" };
+      return {
+        icon: <TbBrandBing size={18} />,
+        color: "text-teal-600 dark:text-teal-400",
+      };
     }
     if (ct.includes("semrush")) {
-      return { icon: <SiSemrush size={16} />, color: "text-orange-600 dark:text-orange-400" };
+      return {
+        icon: <SiSemrush size={16} />,
+        color: "text-orange-600 dark:text-orange-400",
+      };
     }
     if (ct.includes("ahrefs") || ct.includes("hrefs")) {
-      return { icon: <Link2 size={18} />, color: "text-blue-700 dark:text-blue-300" };
+      return {
+        icon: <Link2 size={18} />,
+        color: "text-blue-700 dark:text-blue-300",
+      };
     }
     if (ct.includes("moz")) {
-      return { icon: <RiRobot2Fill size={18} />, color: "text-blue-500 dark:text-blue-400" };
+      return {
+        icon: <RiRobot2Fill size={18} />,
+        color: "text-blue-500 dark:text-blue-400",
+      };
     }
-    if (ct.includes("openai") || ct.includes("gptbot") || ct.includes("chatgpt")) {
-      return { icon: <RiOpenaiFill size={18} />, color: "text-emerald-600 dark:text-emerald-400" };
+    if (
+      ct.includes("openai") ||
+      ct.includes("gptbot") ||
+      ct.includes("chatgpt")
+    ) {
+      return {
+        icon: <RiOpenaiFill size={18} />,
+        color: "text-emerald-600 dark:text-emerald-400",
+      };
     }
     if (ct.includes("claude") || ct.includes("anthropic")) {
-      return { icon: <RiOpenaiFill size={18} />, color: "text-amber-700 dark:text-amber-400" };
+      return {
+        icon: <RiOpenaiFill size={18} />,
+        color: "text-amber-700 dark:text-amber-400",
+      };
     }
     if (ct.includes("meta") || ct.includes("facebook")) {
-      return { icon: <IoLogoFacebook size={18} />, color: "text-blue-600 dark:text-blue-400" };
+      return {
+        icon: <IoLogoFacebook size={18} />,
+        color: "text-blue-600 dark:text-blue-400",
+      };
     }
     // Generic bot
     if (ct.includes("bot") || ct.includes("crawler") || ct.includes("spider")) {
-      return { icon: <FaSpider size={16} />, color: "text-purple-600 dark:text-purple-400" };
+      return {
+        icon: <FaSpider size={16} />,
+        color: "text-purple-600 dark:text-purple-400",
+      };
     }
-    return { icon: <Bot size={18} />, color: "text-gray-500 dark:text-gray-400" };
+    return {
+      icon: <Bot size={18} />,
+      color: "text-gray-500 dark:text-gray-400",
+    };
   };
   const overview = useLogAnalysisStore((state) => state.overview);
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
-  const { entries } = useLogAnalysisStore((state) => ({ entries: state.entries }));
-  const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
-  // We use entries from the store but we don't need allFilteredLogs anymore
-  const [openDialogs, setOpenDialogs] = useState({});
+  const { entries } = useLogAnalysisStore((state) => ({
+    entries: state.entries,
+  }));
+  const pathAggregations = useLogAnalysisStore(
+    (state) => state.pathAggregations,
+  );
+  const tableIsFiltered = useLogAnalysisStore((state) => state.tableIsFiltered);
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
   const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
+  const [indexingBots, setIndexingBots] = useState<string[]>([]);
+  const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
+  const [agenticBots, setAgenticBots] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchIndexingBots = async () => {
+      try {
+        const bots = await invoke<string[]>("get_indexing_bots_command");
+        setIndexingBots(bots);
+      } catch (error) {
+        console.error("Failed to fetch indexing bots:", error);
+      }
+    };
+    fetchIndexingBots();
+
+    const fetchRetrievalAgents = async () => {
+      try {
+        const agents = await invoke<string[]>("get_retrieval_agents_command");
+        setRetrievalAgents(agents);
+      } catch (error) {
+        console.error("Failed to fetch retrieval agents:", error);
+      }
+    };
+    fetchRetrievalAgents();
+
+    const fetchAgenticBots = async () => {
+      try {
+        const bots = await invoke<string[]>("get_agentic_bots_command");
+        setAgenticBots(bots);
+      } catch (error) {
+        console.error("Failed to fetch agentic bots:", error);
+      }
+    };
+    fetchAgenticBots();
+  }, []);
 
   useEffect(() => {
     const loadTaxonomies = () => {
@@ -195,7 +279,6 @@ export default function WidgetLogs() {
             const newMap = {};
             parsed.forEach((tax) => {
               if (tax.paths) {
-                // Ensure paths are in the format expected by PathConfig, accounting for old string format
                 tax.paths.forEach((p) => {
                   const pathString = typeof p === "string" ? p : p.path;
                   if (pathString) {
@@ -213,19 +296,16 @@ export default function WidgetLogs() {
           }
         } catch (e) {
           console.error("Failed to parse taxonomies from localStorage", e);
-          // If parsing fails, clear localStorage and current taxonomies
           localStorage.removeItem("taxonomies");
           setTaxonomyNameMap({});
           setSortedTaxonomyPaths([]);
         }
       } else {
-        // If no stored taxonomies, clear current ones
         setTaxonomyNameMap({});
         setSortedTaxonomyPaths([]);
       }
     };
 
-    // Load taxonomies initially and whenever the custom event fires
     loadTaxonomies();
 
     const handleTaxonomiesUpdate = () => {
@@ -278,13 +358,69 @@ export default function WidgetLogs() {
       .sort((a, b) => b.value - a.value);
   }, [overview]);
 
+  // Prepare Indexing Crawlers data - use pre-aggregated data from widgetAggs
+  const indexingCrawlersData = useMemo(() => {
+    if (!widgetAggs?.crawler_types || indexingBots.length === 0) return [];
+
+    // Create a set of lowercase bot names from config for fast lookup
+    const botSet = new Set(indexingBots.map((name) => name.toLowerCase()));
+
+    // Create a map for display names (case-insensitive lookup)
+    const displayNameMap = new Map(
+      indexingBots.map((name) => [name.toLowerCase(), name]),
+    );
+
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => botSet.has(name.toLowerCase()))
+      .map(([name, value]) => ({
+        name: displayNameMap.get(name.toLowerCase()) || name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [widgetAggs, indexingBots]);
+
+  // Prepare Retrieval Agents data
+  const retrievalAgentsData = useMemo(() => {
+    if (!widgetAggs?.crawler_types || retrievalAgents.length === 0) return [];
+
+    const botSet = new Set(retrievalAgents.map((name) => name.toLowerCase()));
+    const displayNameMap = new Map(
+      retrievalAgents.map((name) => [name.toLowerCase(), name]),
+    );
+
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => botSet.has(name.toLowerCase()))
+      .map(([name, value]) => ({
+        name: displayNameMap.get(name.toLowerCase()) || name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [widgetAggs, retrievalAgents]);
+
+  // Prepare Agentic Bots data
+  const agenticBotsData = useMemo(() => {
+    if (!widgetAggs?.crawler_types || agenticBots.length === 0) return [];
+
+    const botSet = new Set(agenticBots.map((name) => name.toLowerCase()));
+    const displayNameMap = new Map(
+      agenticBots.map((name) => [name.toLowerCase(), name]),
+    );
+
+    return Object.entries(widgetAggs.crawler_types)
+      .filter(([name]) => botSet.has(name.toLowerCase()))
+      .map(([name, value]) => ({
+        name: displayNameMap.get(name.toLowerCase()) || name,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [widgetAggs, agenticBots]);
+
   // Prepare User Agents Data
   const userAgentData = useMemo(() => {
     if (!widgetAggs) return {};
 
     const acc: Record<string, { count: number; examples: string[] }> = {};
 
-    // 1. Process category totals from backend (most accurate)
     if (widgetAggs.user_agent_categories) {
       Object.entries(widgetAggs.user_agent_categories).forEach(
         ([cat, count]) => {
@@ -293,7 +429,6 @@ export default function WidgetLogs() {
       );
     }
 
-    // 2. Process specific strings for examples
     if (widgetAggs.user_agents) {
       Object.entries(widgetAggs.user_agents).forEach(([ua, count]) => {
         const cat = categorizeUserAgent(ua);
@@ -301,7 +436,6 @@ export default function WidgetLogs() {
           acc[cat] = { count: 0, examples: [] };
         }
 
-        // If we didn't have accurate totals from backend, accumulate counts here
         if (!widgetAggs.user_agent_categories) {
           acc[cat].count += count;
         }
@@ -321,16 +455,12 @@ export default function WidgetLogs() {
 
     const acc: Record<string, { count: number; referrers: string[] }> = {};
 
-    // 1. Process category totals from backend (most accurate)
     if (widgetAggs.referrer_categories) {
-      Object.entries(widgetAggs.referrer_categories).forEach(
-        ([cat, count]) => {
-          acc[cat] = { count, referrers: [] };
-        },
-      );
+      Object.entries(widgetAggs.referrer_categories).forEach(([cat, count]) => {
+        acc[cat] = { count, referrers: [] };
+      });
     }
 
-    // 2. Process specific strings for examples
     if (widgetAggs.referrers) {
       Object.entries(widgetAggs.referrers).forEach(([referrer, count]) => {
         const cat = categorizeReferrer(referrer);
@@ -338,7 +468,6 @@ export default function WidgetLogs() {
           acc[cat] = { count: 0, referrers: [] };
         }
 
-        // If we didn't have accurate totals from backend, accumulate counts here
         if (!widgetAggs.referrer_categories) {
           acc[cat].count += count;
         }
@@ -360,9 +489,6 @@ export default function WidgetLogs() {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce(
         (acc, [pathOrName, value]) => {
-          // If the key is 'other', use 'Uncategorized' for display
-          // If the key is already a taxonomy name, keep it.
-          // The taxonomyNameMap is useful if the key was a path, but the backend sends taxonomy names.
           const name =
             pathOrName.toLowerCase() === "other"
               ? "Uncategorized"
@@ -386,7 +512,6 @@ export default function WidgetLogs() {
     }
 
     if (activeTab === "User Agents") {
-      // Convert userAgentData to chart format
       if (!userAgentData) return [];
 
       return Object.entries(userAgentData)
@@ -396,11 +521,10 @@ export default function WidgetLogs() {
           examples: data.examples,
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 20); // Limit to top 20 for readability
+        .slice(0, 20);
     }
 
     if (activeTab === "Referrers") {
-      // Convert referrerData to chart format
       if (!referrerData) return [];
 
       return Object.entries(referrerData)
@@ -410,7 +534,22 @@ export default function WidgetLogs() {
           referrers: data.referrers,
         }))
         .sort((a, b) => b.value - a.value)
-        .slice(0, 20); // Limit to top 20 for readability
+        .slice(0, 20);
+    }
+
+    // Indexing Crawlers
+    if (activeTab === "Indexing Crawlers") {
+      return indexingCrawlersData;
+    }
+
+    // Retrieval Agents
+    if (activeTab === "Retrieval Agents") {
+      return retrievalAgentsData;
+    }
+
+    // Agentic Bots
+    if (activeTab === "Agentic Bots") {
+      return agenticBotsData;
     }
 
     return (
@@ -420,14 +559,17 @@ export default function WidgetLogs() {
             name: name.toUpperCase(),
             value,
           }))
-          .sort((a, b) => b.value - a.value), // Add this sort
+          .sort((a, b) => b.value - a.value),
         "Status Codes": Object.entries(statusCodeData || {})
           .map(([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
             value,
           }))
-          .sort((a, b) => b.value - a.value), // Add this sort too if you want
-        Crawlers: crawlerData.length > 0 ? crawlerData : [],
+          .sort((a, b) => b.value - a.value),
+        "Aggregated Crawlers": crawlerData.length > 0 ? crawlerData : [],
+        "Indexing Crawlers": indexingCrawlersData,
+        "Retrieval Agents": retrievalAgentsData,
+        "Agentic Bots": agenticBotsData,
       }[activeTab] || []
     );
   }, [
@@ -439,6 +581,9 @@ export default function WidgetLogs() {
     fileTypeData,
     statusCodeData,
     crawlerData,
+    indexingCrawlersData,
+    retrievalAgentsData,
+    agenticBotsData,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -449,15 +594,6 @@ export default function WidgetLogs() {
     [uploadedLogFiles],
   );
 
-  // if (!overview) {
-  //   return (
-  //     <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
-  //       <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
-  //     </div>
-  //   );
-  // }
-
-  // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() || "0";
 
   const handleOpenChange = (name, isOpen) => {
@@ -470,8 +606,14 @@ export default function WidgetLogs() {
       <Popover>
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
-            <span className="hover:text-brand-bright">
+            <span className="hover:text-brand-bright flex items-center gap-1">
               {formatNumber(totalCount)} entries
+              {tableIsFiltered && (
+                <FaFilter
+                  className="text-brand-bright text-[10px]"
+                  title="Filtered data"
+                />
+              )}
             </span>
           </div>
         </PopoverTrigger>
@@ -524,10 +666,11 @@ export default function WidgetLogs() {
               <DropdownMenuItem
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
-                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${activeTab === tab.label
-                  ? "bg-brand-bright text-white"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
-                  }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-[9px] uppercase tracking-wider font-bold cursor-pointer rounded-lg transition-colors ${
+                  activeTab === tab.label
+                    ? "bg-brand-bright text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-brand-bright dark:hover:text-white hover:text-white "
+                }`}
               >
                 <div
                   className={
@@ -601,12 +744,13 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4  ${activeTab === "User Agents" || activeTab === "Referrers"
-              ? "grid-cols-5 max-w-2xl mr-6"
-              : activeTab === "Status Codes"
-                ? "grid-cols-4 mr-6"
-                : "grid-cols-4 mr-6"
-              }`}
+            className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
+              activeTab === "User Agents" || activeTab === "Referrers"
+                ? "grid-cols-2 md:grid-cols-5 mr-6"
+                : activeTab === "Indexing Crawlers"
+                  ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                  : "grid-cols-2 md:grid-cols-4 mr-6"
+            }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -614,9 +758,9 @@ export default function WidgetLogs() {
                 open={openDialogs[entry.name] || false}
                 onOpenChange={(isOpen) => handleOpenChange(entry.name, isOpen)}
               >
-                <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75">
+                <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75 outline-none">
                   <div
-                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark overflow-auto"
+                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
                     style={{
                       borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
                       backgroundColor: `${COLORS[idx % COLORS.length]}10`,
@@ -636,7 +780,6 @@ export default function WidgetLogs() {
 
                 {/* SINGLE DialogContent with conditional rendering */}
                 <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
-                  {/*<Suspense fallback={<FallbackLoader />}>*/}
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
@@ -716,20 +859,44 @@ export default function WidgetLogs() {
                         />
                       </Tabs.Panel>
                     </Tabs>
-                  ) : activeTab === "User Agents" ? (
+                  ) : // USER AGENTS TABLE
+                  activeTab === "User Agents" ? (
                     <WidgetUserAgentsTable
                       data={overview}
                       entries={entries}
                       segment={entry?.name}
                     />
+                  ) : activeTab === "Indexing Crawlers" ? (
+                    <WidgetIndexingCrawlersTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
+                    />
+                  ) : activeTab === "Retrieval Agents" ? (
+                    <WidgetRetrievalAgentsTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
+                    />
+                  ) : activeTab === "Agentic Bots" ? (
+                    <WidgetAgenticBotsTable
+                      data={overview}
+                      entries={entries}
+                      segment={entry?.name}
+                      selectedCrawlerType={entry?.name}
+                    />
                   ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                    entry?.name,
-                  ) ? (
+                      entry?.name,
+                    ) ? (
                     <div className="flex flex-col h-full">
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2 shrink-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}>
+                            <span
+                              className={`p-2 rounded-md border bg-white dark:bg-zinc-800/80 dark:border-zinc-700 shadow-sm ${getCrawlerIcon(entry.name).color}`}
+                            >
                               {getCrawlerIcon(entry.name).icon}
                             </span>
                             <div>
@@ -737,7 +904,8 @@ export default function WidgetLogs() {
                                 Viewing: {entry.name} Bot
                               </h3>
                               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                                Showing request activity and analysis for {entry.name}
+                                Showing request activity and analysis for{" "}
+                                {entry.name}
                               </p>
                             </div>
                           </div>
@@ -746,13 +914,15 @@ export default function WidgetLogs() {
                               variant="outline"
                               className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 whitespace-nowrap text-sm px-3 py-1"
                             >
-                              {pathAggregations.total_unique_paths.toLocaleString()} unique paths
+                              {pathAggregations.total_unique_paths.toLocaleString()}{" "}
+                              unique paths
                             </Badge>
                             <Badge
                               variant="outline"
                               className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 whitespace-nowrap text-sm px-3 py-1"
                             >
-                              {pathAggregations.total_hits.toLocaleString()} hits
+                              {pathAggregations.total_hits.toLocaleString()}{" "}
+                              hits
                             </Badge>
                             <Badge
                               variant="outline"
@@ -763,40 +933,39 @@ export default function WidgetLogs() {
                           </div>
                         </div>
                       </div>
-                      <Tabs defaultValue="overview" className="h-full mt-4 flex-1 flex flex-col min-h-0">
-
-                      <Tabs.List>
-                        <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
-                      </Tabs.List>
-                      <Tabs.Panel value="overview" className="h-full">
-                        {entry?.name === "Google" && (
-                          <WidgetTable
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Bing" && (
-                          <WidgetTableBing
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Openai" && (
-                          <WidgetTableOpenAi
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                        {entry?.name === "Claude" && (
-                          <WidgetTableClaude
-                            data={overview}
-                            entries={entries}
-                          />
-                        )}
-                      </Tabs.Panel>
-                    </Tabs>
+                      <Tabs
+                        defaultValue="overview"
+                        className="h-full mt-4 flex-1 flex flex-col min-h-0"
+                      >
+                        <Tabs.List>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
+                        </Tabs.List>
+                        <Tabs.Panel value="overview" className="h-full">
+                          {entry?.name === "Google" && (
+                            <WidgetTable data={overview} entries={entries} />
+                          )}
+                          {entry?.name === "Bing" && (
+                            <WidgetTableBing
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                          {entry?.name === "Openai" && (
+                            <WidgetTableOpenAi
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                          {entry?.name === "Claude" && (
+                            <WidgetTableClaude
+                              data={overview}
+                              entries={entries}
+                            />
+                          )}
+                        </Tabs.Panel>
+                      </Tabs>
                     </div>
-                  ) : activeTab === "Crawlers" ? (
+                  ) : activeTab === "Aggregated Crawlers" ? (
                     <>
                       <DialogHeader>
                         <DialogTitle>{entry.name} Details</DialogTitle>
@@ -817,7 +986,7 @@ export default function WidgetLogs() {
                                   (sum, item) => sum + item.value,
                                   0,
                                 )) *
-                              100,
+                                100,
                             )}
                             %
                           </span>
@@ -825,7 +994,6 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : null}
-                  {/*</Suspense>*/}
                 </DialogContent>
               </Dialog>
             ))}

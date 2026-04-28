@@ -10,13 +10,19 @@ use toml;
 use uuid::Uuid;
 
 use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
-use crate::domain_crawler::{self, user_agents};
+use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::settings::utils;
+use crate::settings::utils::agentic_bots::agentic_bots;
+use crate::settings::utils::indexing_bots::generate_indexing_bots;
+use crate::settings::utils::retrieval_agents::generate_retrieval_agents;
 use crate::settings::utils::user_bots::generate_default_user_bots;
 use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    // CREATED ON
+    pub date_created: String,
     // --- System ---
     /// Current version of the application
     pub version: String,
@@ -34,6 +40,10 @@ pub struct Settings {
     pub max_depth: usize,
     /// Maximum URLs to crawl per domain
     pub max_urls_per_domain: usize,
+    /// Max URLS to keep in the front End (JS Heap)
+    /// They will always be fetched via sqlite DB
+    /// NOTE: check the GlobalCrawlDataStore
+    pub max_urls_stored: usize,
 
     // --- Timing & Throttling (Adaptive) ---
     /// Enable adaptive crawling speed based on server response
@@ -110,6 +120,12 @@ pub struct Settings {
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
     pub log_bots: Vec<(String, String)>,
+    // Normal indexing bots/crawlers
+    pub indexing_bots: Vec<String>,
+    // Bots that consume content to feed LLMs
+    pub retrieval_agents: Vec<String>,
+    // Agentic crawlers that perform tasks
+    pub agentic_bots: Vec<String>,
 
     // --- Integrations ---
     /// Enable PageSpeed Insights bulk fetching
@@ -123,6 +139,9 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Self {
         Self {
+            // -- CREATED ON
+            date_created: chrono::Utc::now().to_rfc3339(),
+
             // --- System ---
             version: local_version(),
             rustyid: Uuid::new_v4(),
@@ -133,6 +152,7 @@ impl Settings {
             batch_size: 40,
             max_depth: 50,
             max_urls_per_domain: 100000,
+            max_urls_stored: 5000,
 
             // --- Timing & Throttling ---
             adaptive_crawling: true,
@@ -181,6 +201,9 @@ impl Settings {
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
             log_bots: generate_default_user_bots(),
+            indexing_bots: generate_indexing_bots(),
+            retrieval_agents: generate_retrieval_agents(),
+            agentic_bots: agentic_bots(),
 
             // --- Integrations ---
             page_speed_bulk: false,
@@ -191,6 +214,9 @@ impl Settings {
 
     pub fn generate_commented_config(&self) -> String {
         let mut s = String::new();
+
+        s.push_str("# --- Created On ---\n");
+        s.push_str(&format!("date_created = {:?}\n", self.date_created));
 
         s.push_str("# --- System ---\n");
         s.push_str("# Current version of the application\n");
@@ -220,6 +246,10 @@ impl Settings {
             "max_urls_per_domain = {}\n",
             self.max_urls_per_domain
         ));
+
+        // MAX URLS STORED IN JS HEAP
+        s.push_str("# Max URLS TO SHOWCASE IN THE FRONTEND, JAvascript HEAP\n");
+        s.push_str(&format!("max_urls_stored = {}\n", self.max_urls_stored));
 
         s.push_str("\n# --- Timing & Throttling (Adaptive) ---\n");
         s.push_str("# Enable adaptive crawling speed based on server response\n");
@@ -345,6 +375,7 @@ impl Settings {
             self.db_chunk_size_domain_crawler
         ));
 
+        // LOGS STUFF GOES HERE
         s.push_str("\n# --- Logs & File System ---\n");
         s.push_str("# log_batchsize\n");
         s.push_str(&format!("log_batchsize = {}\n", self.log_batchsize));
@@ -376,6 +407,21 @@ impl Settings {
         s.push_str("# Log Bots\n");
         let bots = serde_json::to_string(&self.log_bots).unwrap_or_else(|_| "[]".to_string());
         s.push_str(&format!("log_bots = {}\n", bots));
+
+        s.push_str("# Indexing Bots\n");
+        let indexing_bots =
+            serde_json::to_string(&self.indexing_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("indexing_bots = {}\n", indexing_bots));
+
+        s.push_str("# Retrieval Agents\n");
+        let retrieval_agents =
+            serde_json::to_string(&self.retrieval_agents).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("retrieval_agents = {}\n", retrieval_agents));
+
+        s.push_str("# Agentic Bots\n");
+        let agentic_bots =
+            serde_json::to_string(&self.agentic_bots).unwrap_or_else(|_| "[]".to_string());
+        s.push_str(&format!("agentic_bots = {}\n", agentic_bots));
 
         s.push_str("\n# --- Integrations ---\n");
         s.push_str("# Enable PageSpeed Insights bulk fetching\n");
@@ -418,6 +464,12 @@ pub async fn load_settings() -> Result<Settings, String> {
         .await
         .map_err(|e| format!("Failed to read config: {}", e))?;
     toml::from_str(&contents).map_err(|e| format!("Failed to parse config: {}", e))
+}
+
+pub async fn check_and_replace() {
+    if let Err(e) = utils::config_checker::replace_config_file().await {
+        println!("Warning: Failed to verify or replace the config file: {}", e);
+    }
 }
 
 /// Creates a new config file if it doesn't exist
@@ -473,6 +525,7 @@ pub async fn init_settings() -> Result<Settings, String> {
 
 pub fn print_settings(settings: &Settings) {
     // Use the settings
+    println!("Created at: {}", settings.date_created);
     println!("Version: {}", settings.version);
     println!("Crawl Timeout: {:?}", settings.crawl_timeout);
     println!("Client Timeout: {:?}", settings.client_timeout);
@@ -487,6 +540,10 @@ pub fn print_settings(settings: &Settings) {
     println!("Concurrent Requests: {}", settings.concurrent_requests);
     println!("Batch Size: {}", settings.batch_size);
     println!("DB Batch Size: {}", settings.db_batch_size);
+    println!(
+        "Max URLS Stored In front end JS (HEAP): {} ",
+        settings.max_urls_stored
+    );
     println!(
         "Links Concurrent Requests: {}",
         settings.links_max_concurrent_requests
@@ -527,6 +584,8 @@ pub fn print_settings(settings: &Settings) {
     println!("Ngrams: {}", settings.extract_ngrams);
 
     println!("Log Bots: {:#?}", settings.log_bots);
+    println!("Retrival Agents: {:#?}", settings.retrieval_agents);
+    println!("Agentic Bots: {:#?}", settings.agentic_bots);
 
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
     println!("Adaptive Crawling: {}", settings.adaptive_crawling);
@@ -542,6 +601,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     // Parse updates into a HashMap
     let updates: HashMap<String, toml::Value> =
         toml::from_str(updates).map_err(|e| format!("Failed to parse updates: {}", e))?;
+
+    if let Some(val) = updates.get("date_created").and_then(|v| v.as_str()) {
+        settings.date_created = val.to_string();
+    }
 
     // Apply updates (only fields that were provided)
     if let Some(val) = updates
@@ -580,6 +643,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("max_delay").and_then(|v| v.as_integer()) {
         settings.max_delay = val as u64;
+    }
+
+    if let Some(val) = updates.get("max_urls_stored").and_then(|v| v.as_integer()) {
+        settings.max_urls_stored = val as usize;
     }
 
     if let Some(val) = updates
@@ -752,7 +819,7 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     }
 
     if let Some(val) = updates
-        .get("links_pool_idle_timeout")
+        .get("links_max_idle_per_host")
         .and_then(|v| v.as_integer())
     {
         settings.links_max_idle_per_host = val as usize;
@@ -769,8 +836,41 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.adaptive_crawling = val;
     }
 
-    if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
-        settings.min_crawl_delay = val as u64;
+    if let Some(val) = updates.get("indexing_bots").and_then(|v| v.as_array()) {
+        settings.indexing_bots = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
+    if let Some(val) = updates.get("retrieval_agents").and_then(|v| v.as_array()) {
+        settings.retrieval_agents = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
+    if let Some(val) = updates.get("agentic_bots").and_then(|v| v.as_array()) {
+        settings.agentic_bots = val
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+
+    if let Some(val) = updates.get("log_bots").and_then(|v| v.as_array()) {
+        settings.log_bots = val
+            .iter()
+            .filter_map(|v| {
+                if let Some(arr) = v.as_array() {
+                    if arr.len() == 2 {
+                        let display = arr[0].as_str()?.to_string();
+                        let bot = arr[1].as_str()?.to_string();
+                        return Some((display, bot));
+                    }
+                }
+                None
+            })
+            .collect();
     }
 
     // Explicit file writing with flush
@@ -791,6 +891,24 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .map_err(|e| format!("Failed to flush config: {}", e))?;
 
     Ok(settings)
+}
+
+#[tauri::command]
+pub async fn get_indexing_bots_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.indexing_bots)
+}
+
+#[tauri::command]
+pub async fn get_retrieval_agents_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.retrieval_agents)
+}
+
+#[tauri::command]
+pub async fn get_agentic_bots_command() -> Result<Vec<String>, String> {
+    let settings = load_settings().await?;
+    Ok(settings.agentic_bots)
 }
 
 #[tauri::command]
