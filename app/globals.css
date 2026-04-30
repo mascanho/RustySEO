@@ -17,8 +17,34 @@
   /* Add more status codes as needed */
 }
 
-* {
+body {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.not-selectable,
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+}
+
+/* Re-enable selection inside virtualized table bodies. Their scroll
+   containers carry .not-selectable (to keep drag-resize clean), but
+   the actual row content lives in .domainCrawlParent and must remain
+   copyable. */
+.domainCrawlParent,
+.domainCrawlParent *,
+.selectable,
+.selectable * {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 .not-selectable {
