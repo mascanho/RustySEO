@@ -55,6 +55,7 @@ interface TableRowProps {
     cellIndex: number,
     cellContent: string,
   ) => void;
+  onCellDoubleClick: (content: string) => void;
 }
 
 interface ColumnPickerProps {
@@ -192,6 +193,7 @@ const TableRow = ({
   columnVisibility,
   clickedCell,
   handleCellClick,
+  onCellDoubleClick,
 }: TableRowProps) => {
   const rowData = useMemo(
     () => [
@@ -224,14 +226,13 @@ const TableRow = ({
   return useMemo(
     () => (
       <div
-        onClick={() => handleCellClick(index, 0, rowData[0]?.toString() || "")}
         style={{
           display: "grid",
           gridTemplateColumns: visibleItems.map((item) => item.width).join(" "),
           height: "100%",
           alignItems: "center",
         }}
-        className="dark:text-white/50 cursor-pointer not-selectable"
+        className="dark:text-white/50 cursor-pointer not-selectable hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
       >
         {visibleItems.map((item) => (
           <div
@@ -243,6 +244,10 @@ const TableRow = ({
                 item.originalIndex,
                 item.cell?.toString() || "",
               );
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onCellDoubleClick(item.cell?.toString() || "");
             }}
             style={{
               padding: "8px",
@@ -272,7 +277,7 @@ const TableRow = ({
         ))}
       </div>
     ),
-    [visibleItems, index, clickedCell, handleCellClick, isOdd, rowData],
+    [visibleItems, index, clickedCell, handleCellClick, isOdd, rowData, onCellDoubleClick],
   );
 };
 
@@ -430,6 +435,16 @@ const ImagesCrawlTable = ({
 
     // console.log(cellContent, rowIndex, cellIndex);
   };
+
+  const handleCellDoubleClick = useCallback((content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Cell copied to clipboard", {
+        description: content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        position: "bottom-right",
+      });
+    });
+  }, []);
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
@@ -628,6 +643,7 @@ const ImagesCrawlTable = ({
                       columnVisibility={columnVisibility}
                       clickedCell={clickedCell}
                       handleCellClick={handleCellClick}
+                      onCellDoubleClick={handleCellDoubleClick}
                     />
                   </div>
                 );

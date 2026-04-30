@@ -6,6 +6,7 @@ export const changelogData = [
     changes: [
       "Tool: Log Analyser - Totals CSV Download",
       "Tool: Log Analyser - Improved MCP",
+      "Deep Crawler: Ability to copy single cell from tables with double-click",
     ],
   },
   {

@@ -73,6 +73,7 @@ interface TableRowProps {
     cellContent: string,
     row: any,
   ) => void;
+  onCellDoubleClick: (content: string) => void;
 }
 
 interface ColumnPickerProps {
@@ -171,6 +172,7 @@ const TableRow = ({
   columnVisibility,
   clickedCell,
   handleCellClick,
+  onCellDoubleClick,
 }: TableRowProps) => {
   const rowData = useMemo(() => {
     const mobile = row?.psi_results?.Ok?.[0];
@@ -250,11 +252,17 @@ const TableRow = ({
     : "var(--zebra-even, transparent)";
 
   return (
-    <tr style={{ height: "25px", backgroundColor: zebraBackground }}>
+    <tr
+      style={{ height: "25px", backgroundColor: zebraBackground }}
+    >
       {rowData.map((cell, cellIndex) =>
         columnVisibility[cellIndex] ? (
           <td
             key={`cell-${index}-${cellIndex}`}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onCellDoubleClick(cell?.toString() || "");
+            }}
             onClick={() =>
               handleCellClick(index, cellIndex, cell.toString(), row)
             }
@@ -403,6 +411,16 @@ const CoreWebVitalsTable = ({
       setSelectedTableURL(urlData);
     }
   };
+
+  const handleCellDoubleClick = useCallback((content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Cell copied to clipboard", {
+        description: content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        position: "bottom-right",
+      });
+    });
+  }, []);
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
@@ -597,6 +615,7 @@ const CoreWebVitalsTable = ({
                       columnVisibility={columnVisibility}
                       clickedCell={clickedCell}
                       handleCellClick={handleCellClick}
+                      onCellDoubleClick={handleCellDoubleClick}
                     />
                   ))}
 
