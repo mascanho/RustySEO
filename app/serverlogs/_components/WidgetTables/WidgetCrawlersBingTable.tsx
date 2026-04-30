@@ -146,6 +146,7 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
 }) => {
   const pathAggregations = useLogAnalysisStore((state) => state.pathAggregations);
   const fetchPathAggregationsPage = useLogAnalysisStore((state) => state.fetchPathAggregationsPage);
+  const fetchAllPathAggregations = useLogAnalysisStore((state) => state.fetchAllPathAggregations);
   const isStoreLoading = useLogAnalysisStore((state) => state.isLoading);
   const globalActiveFilters = useLogAnalysisStore((state) => state.activeFilters);
   const initialLogs = entries;
@@ -273,7 +274,25 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({
       "Google Verified",
     ];
 
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : initialLogs;
+    const dataToExport = await fetchAllPathAggregations({
+      ...globalActiveFilters,
+      search_term: searchTerm || globalActiveFilters.search_term,
+      status_filter: globalActiveFilters.status_filter,
+      method_filter: methodFilter?.length > 0 ? methodFilter : globalActiveFilters.method_filter,
+      file_type_filter: fileTypeFilter?.length > 0 ? fileTypeFilter : globalActiveFilters.file_type_filter,
+      bot_filter: "bot",
+      bot_type_filter: botTypeFilter === "all" ? globalActiveFilters.bot_type_filter : botTypeFilter,
+      crawler_type_filter: "bing",
+      verified_filter: verifiedFilter !== null ? verifiedFilter : globalActiveFilters.verified_filter,
+      sort_key: sortConfig?.key || "frequency",
+      sort_dir: sortConfig?.direction || "descending",
+      taxonomy_filter: globalActiveFilters.taxonomy_filter,
+    });
+
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.error("No data found to export.");
+      return;
+    }
 
     const csvData = dataToExport.map((log) => [
       log.ip || "",

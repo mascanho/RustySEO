@@ -362,6 +362,7 @@ async fn main() {
             loganalyser::active_db::clear_all_log_data_command,
             loganalyser::active_db::get_distinct_bot_types,
             loganalyser::active_db::get_bot_paths_aggregated,
+            loganalyser::active_db::get_all_path_aggregations,
             loganalyser::active_db::get_path_aggregations_page,
             loganalyser::active_db::reclassify_all_segments,
             loganalyser::active_db::export_active_logs_excel,

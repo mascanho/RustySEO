@@ -1599,6 +1599,88 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
     Ok(results)
 }
 
+#[tauri::command]
+pub fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    let sort_col = match filters.sort_key.as_deref() {
+        Some("frequency") => "frequency",
+        Some("response_size") => "total_size",
+        Some("timestamp") => "newest",
+        Some("status") => "status",
+        Some("path") => "path",
+        _ => "frequency",
+    };
+    let sort_dir = match filters.sort_dir.as_deref() {
+        Some("descending") => "DESC",
+        _ => "ASC",
+    };
+
+    // No LIMIT here because we want all found data for export
+    let query = format!(
+        "
+        SELECT
+            path,
+            COUNT(*) as frequency,
+            SUM(response_size) as total_size,
+            MAX(timestamp) as newest,
+            MIN(timestamp) as oldest,
+            file_type,
+            status,
+            MAX(user_agent) as ua,
+            MAX(crawler_type) as ct,
+            MAX(method) as m,
+            MAX(verified) as v,
+            MAX(ip) as ip_addr,
+            GROUP_CONCAT(DISTINCT referer) as ref_str,
+            MAX(browser) as br,
+            MAX(country) as c
+        FROM active_parsed_logs
+        WHERE {}
+        GROUP BY path, crawler_type, user_agent
+        ORDER BY {} {}
+    ",
+        where_sql, sort_col, sort_dir
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+            Ok(BotPathDetail {
+                path: row.get(0)?,
+                frequency: row.get(1)?,
+                response_size: row.get::<_, u32>(2)? as u64,
+                timestamp: row.get(3)?,
+                file_type: row
+                    .get::<_, Option<String>>(5)?
+                    .unwrap_or_else(|| "Other".to_string()),
+                status: row.get::<_, Option<u16>>(6)?.unwrap_or(200),
+                user_agent: row.get::<_, Option<String>>(7)?.unwrap_or_default(),
+                crawler_type: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                method: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
+                verified: row.get::<_, Option<i32>>(10)?.unwrap_or(0) == 1,
+                ip: row.get::<_, Option<String>>(11)?.unwrap_or_default(),
+                referer: row.get::<_, Option<String>>(12)?.unwrap_or_default(),
+                browser: row.get::<_, Option<String>>(13)?.unwrap_or_default(),
+                country: row.get::<_, Option<String>>(14)?.unwrap_or_default(),
+                is_crawler: true,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row.map_err(|e| e.to_string())?);
+    }
+
+    Ok(results)
+}
+
 use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
 
 #[tauri::command]
