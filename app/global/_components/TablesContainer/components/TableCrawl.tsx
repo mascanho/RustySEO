@@ -533,7 +533,7 @@ const TableCrawl = ({
     initialRect: { width: 1000, height: rowHeight },
     overscan,
     getItemKey: useCallback(
-      (index: number) => filteredRows[index]?.url || index,
+      (index: number) => `${filteredRows[index]?.url || "no-url"}-${index}`,
       [filteredRows],
     ),
   });
