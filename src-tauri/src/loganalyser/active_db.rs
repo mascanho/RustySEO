@@ -1813,6 +1813,7 @@ pub fn get_active_path_aggregations(
     sort_order: Option<String>,
     crawler_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -1836,6 +1837,15 @@ pub fn get_active_path_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR crawler_type LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -1900,6 +1910,7 @@ pub fn get_active_path_status_aggregations(
     sort_order: Option<String>,
     status_filter: Option<u16>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathStatusAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -1919,6 +1930,15 @@ pub fn get_active_path_status_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR CAST(status AS TEXT) LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -1983,6 +2003,7 @@ pub fn get_active_path_method_aggregations(
     sort_order: Option<String>,
     method_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathMethodAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2002,6 +2023,15 @@ pub fn get_active_path_method_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR method LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -2066,6 +2096,7 @@ pub fn get_active_path_user_agent_aggregations(
     sort_order: Option<String>,
     user_agent_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathUserAgentAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2085,6 +2116,15 @@ pub fn get_active_path_user_agent_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR user_agent LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -2149,6 +2189,7 @@ pub fn get_active_path_referer_aggregations(
     sort_order: Option<String>,
     referer_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathRefererAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2168,6 +2209,15 @@ pub fn get_active_path_referer_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR referer LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -2232,6 +2282,7 @@ pub fn get_active_path_browser_aggregations(
     sort_order: Option<String>,
     browser_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathBrowserAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2316,6 +2367,7 @@ pub fn get_active_path_human_aggregations(
     browser_filter: Option<String>,
     country_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathHumanAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2342,6 +2394,16 @@ pub fn get_active_path_human_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR browser LIKE ? OR country LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -2409,6 +2471,7 @@ pub fn get_active_path_verified_aggregations(
     crawler_filter: Option<String>,
     verified_filter: Option<bool>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathVerifiedAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2433,6 +2496,15 @@ pub fn get_active_path_verified_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR crawler_type LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -2498,6 +2570,7 @@ pub fn get_active_path_ip_aggregations(
     sort_order: Option<String>,
     ip_filter: Option<String>,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<ActivePathIPAggregationsPage, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
@@ -2517,6 +2590,15 @@ pub fn get_active_path_ip_aggregations(
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(segment.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR ip LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
 
@@ -3318,6 +3400,7 @@ pub fn export_aggregated_logs_csv(
     file_path: String,
     agg_type: String,
     segment_filter: Option<String>,
+    search_query: Option<String>,
 ) -> Result<usize, String> {
     use csv::Writer;
 
@@ -3383,6 +3466,24 @@ pub fn export_aggregated_logs_csv(
         if !seg.is_empty() {
             clauses.push("segment = ?".to_string());
             params.push(seg.clone().into());
+        }
+    }
+
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            let col = if agg_type == "status" {
+                "CAST(status AS TEXT)"
+            } else if agg_type == "verified" {
+                "crawler_type"
+            } else if agg_type == "human" {
+                "crawler_type"
+            } else {
+                col_name
+            };
+            clauses.push(format!("(path LIKE ? OR {} LIKE ?)", col));
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
         }
     }
     let where_sql = clauses.join(" AND ");

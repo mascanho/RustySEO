@@ -196,35 +196,10 @@ export const AgregatedWidgetContentTable: React.FC<
     }
   };
 
-  const getFilterName = () => {
-    switch (type) {
-      case "status":
-        return "statusFilter";
-      case "method":
-        return "methodFilter";
-      case "useragent":
-        return "userAgentFilter";
-      case "referer":
-        return "refererFilter";
-      case "browser":
-        return "browserFilter";
-      case "verified":
-        return "crawlerFilter";
-      case "ip":
-        return "ipFilter";
-      case "path_analysis":
-      case "human":
-        return "crawlerFilter";
-      default:
-        return "";
-    }
-  };
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const command = getCommandName();
-      const filterName = getFilterName();
 
       const params: any = {
         page,
@@ -232,7 +207,7 @@ export const AgregatedWidgetContentTable: React.FC<
         sortBy: sortConfig.key,
         sortOrder: sortConfig.direction,
         segmentFilter: segment === "all" ? null : segment,
-        [filterName]: searchTerm || null,
+        searchQuery: searchTerm || null,
       };
 
       if (type === "human") {
@@ -307,6 +282,7 @@ export const AgregatedWidgetContentTable: React.FC<
         filePath,
         aggType: type,
         segmentFilter: segment === "all" ? null : segment,
+        searchQuery: searchTerm || null,
       });
 
       await message(`Successfully exported ${totalExported} rows to CSV.`, {
