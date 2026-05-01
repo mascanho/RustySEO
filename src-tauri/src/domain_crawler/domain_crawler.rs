@@ -172,7 +172,7 @@ pub async fn crawl_domain(
 
     let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(db_batch_size);
 
-    let db_handle = if let Ok(database) = db {
+    let db_handle = if let Ok(database) = db.as_ref() {
         let db_pool = database.get_pool();
         let db_batch_size_clone = db_batch_size;
         let handle = tokio::spawn(async move {
@@ -596,6 +596,33 @@ pub async fn crawl_domain(
 
     if let Err(e) = database::clone_batched_crawl_into_persistent_db().await {
         eprintln!("Failed to clone batched crawl into persistent db: {}", e);
+    }
+
+    // --- RECORD HISTORY (Backend-driven) ---
+    if let Ok(db) = &db {
+        match db.get_summary_stats().await {
+            Ok(stats) => {
+                let history_entry = super::db_deep::db::DeepCrawlHistory {
+                    id: 0, // Auto-increment
+                    domain: domain.to_string(),
+                    date: chrono::Local::now().to_rfc3339(),
+                    pages: stats["pages"].as_i64().unwrap_or(0) as i32,
+                    errors: stats["errors"].as_i64().unwrap_or(0) as i32,
+                    status: "completed".to_string(),
+                    total_links: stats["total_links"].as_i64().unwrap_or(0) as i32,
+                    total_internal_links: stats["total_internal_links"].as_i64().unwrap_or(0) as i32,
+                    total_external_links: stats["total_external_links"].as_i64().unwrap_or(0) as i32,
+                    indexable_pages: stats["indexable_pages"].as_i64().unwrap_or(0) as i32,
+                    not_indexable_pages: stats["not_indexable_pages"].as_i64().unwrap_or(0) as i32,
+                };
+                
+                println!("Backend recording history for {}: {:?}", domain, history_entry);
+                if let Err(e) = super::db_deep::db::create_domain_results_history(vec![history_entry]) {
+                    eprintln!("Failed to record history in backend: {}", e);
+                }
+            }
+            Err(e) => eprintln!("Failed to get summary stats for history: {}", e),
+        }
     }
 
     Ok(())

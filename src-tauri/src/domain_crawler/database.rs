@@ -294,6 +294,42 @@ impl Database {
         .await?
     }
 
+    pub async fn get_summary_stats(&self) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+        let stats = tokio::task::spawn_blocking(move || {
+            let conn = pool.get().map_err(|e| DatabaseError::ConnectionError(e.to_string()))?;
+            let mut stmt = conn.prepare(
+                r#"
+                SELECT 
+                    COUNT(*) as pages,
+                    SUM(CAST(json_extract(data, '$.internal_links_count') AS INTEGER)) as internal_links,
+                    SUM(CAST(json_extract(data, '$.external_links_count') AS INTEGER)) as external_links,
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) > 0.5) as indexable,
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) <= 0.5) as not_indexable,
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.status_code') AS INTEGER) >= 400) as errors
+                FROM domain_crawl
+                "#
+            )?;
+
+            let stats = stmt.query_row([], |row| {
+                Ok(serde_json::json!({
+                    "pages": row.get::<_, i64>(0).unwrap_or(0),
+                    "total_internal_links": row.get::<_, i64>(1).unwrap_or(0),
+                    "total_external_links": row.get::<_, i64>(2).unwrap_or(0),
+                    "total_links": row.get::<_, i64>(1).unwrap_or(0) + row.get::<_, i64>(2).unwrap_or(0),
+                    "indexable_pages": row.get::<_, i64>(3).unwrap_or(0),
+                    "not_indexable_pages": row.get::<_, i64>(4).unwrap_or(0),
+                    "errors": row.get::<_, i64>(5).unwrap_or(0),
+                }))
+            })?;
+
+            Ok::<Value, DatabaseError>(stats)
+        })
+        .await??;
+
+        Ok(stats)
+    }
+
     pub async fn get_aggregated_crawl_data(
         &self,
         data_type: String,

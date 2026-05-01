@@ -166,7 +166,12 @@ export default function Page() {
       buffer.timer = null;
     };
 
-    const unlistenPromise = listen("crawl_result", (event) => {
+    let unlistenResult: (() => void) | null = null;
+    let unlistenComplete: (() => void) | null = null;
+    let unlistenBlocked: (() => void) | null = null;
+    let unlistenFavicon: (() => void) | null = null;
+
+    listen("crawl_result", (event) => {
       // The payload structure is now { results: LightCrawlResult[] } (batched)
       const payload: any = event.payload;
 
@@ -180,11 +185,12 @@ export default function Page() {
         }
 
         // Throttle updates to Zustand to prevent memory thrashing
-        // At 40K URLs, Zustand concats are very expensive.
         if (!buffer.timer) {
           buffer.timer = setTimeout(flushBuffer, 1500);
         }
       }
+    }).then((unlisten) => {
+      unlistenResult = unlisten;
     });
 
     listen("crawl_complete", (event) => {
@@ -205,8 +211,15 @@ export default function Page() {
 
       setFinishedDeepCrawl(true);
       setIsFinishedDeepCrawl(true);
-    }).catch((error) => {
-      console.error("Failed to setup crawl_complete listener:", error);
+
+      // Update session storage for totals
+      const totalUrlsCrawled = event.payload?.crawled_urls || 0;
+      const crawledLinks = JSON.parse(sessionStorage.getItem("CrawledLinks") || "[]");
+      crawledLinks.push(totalUrlsCrawled);
+      setCrawlSessionTotalArray(crawledLinks);
+      sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
+    }).then((unlisten) => {
+      unlistenComplete = unlisten;
     });
 
     listen("robots_blocked", (event) => {
@@ -221,33 +234,34 @@ export default function Page() {
         // @ts-ignore
         setRobotsBlocked(event.payload);
       }
-    }).catch((error) => {
-      console.error("Failed to setup robots_blocked listener:", error);
+    }).then((unlisten) => {
+      unlistenBlocked = unlisten;
     });
 
     listen("favicon", (event) => {
-      console.log("🖼 Favicon received:", event.payload);
-      if (Array.isArray(event.payload)) {
-        // @ts-ignore
-        setFavicon(event.payload[1]);
-      }
-    }).catch((error) => {
-      console.error("Failed to setup favicon listener:", error);
+      // @ts-ignore
+      const [domain, url] = event.payload;
+      console.log("🎨 Favicon received:", domain, url);
+      setFavicon(url);
+    }).then((unlisten) => {
+      unlistenFavicon = unlisten;
     });
 
-    console.log("✅ Crawl event listeners registered");
-
     return () => {
+      if (unlistenResult) unlistenResult();
+      if (unlistenComplete) unlistenComplete();
+      if (unlistenBlocked) unlistenBlocked();
+      if (unlistenFavicon) unlistenFavicon();
       if (buffer.timer) clearTimeout(buffer.timer);
-      flushBuffer();
-      unlistenPromise
-        .then((unlisten) => {
-          console.log("Cleaning up listeners");
-          unlisten();
-        })
-        .catch(console.error);
     };
-  }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
+  }, [
+    addDomainCrawlResult,
+    setFinishedDeepCrawl,
+    setIsFinishedDeepCrawl,
+    setCrawlSessionTotalArray,
+    setRobotsBlocked,
+    setFavicon,
+  ]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
   const crawlDataLength = useGlobalCrawlStore.getState().crawlData.length;
