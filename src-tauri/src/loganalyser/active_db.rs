@@ -2305,6 +2305,15 @@ pub fn get_active_path_browser_aggregations(
         }
     }
 
+    if let Some(ref search) = search_query {
+        if !search.is_empty() {
+            clauses.push("(path LIKE ? OR browser LIKE ?)".to_string());
+            let like_term = format!("%{}%", search);
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
+        }
+    }
+
     let where_sql = clauses.join(" AND ");
 
     // Get total count

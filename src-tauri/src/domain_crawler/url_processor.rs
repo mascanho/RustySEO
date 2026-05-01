@@ -201,9 +201,12 @@ pub async fn process_url(
         sleep(Duration::from_millis(500)).await;
     }
 
-    let mut body = match response.bytes().await {
-        Ok(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
-        Err(e) => {
+    let mut body = match tokio::time::timeout(
+        Duration::from_secs(60), // 60s timeout for body download
+        response.bytes()
+    ).await {
+        Ok(Ok(bytes)) => String::from_utf8_lossy(&bytes).into_owned(),
+        Ok(Err(e)) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(FailedUrl {
                 url: url.to_string(),
@@ -212,7 +215,20 @@ pub async fn process_url(
                 depth,
                 timestamp: Instant::now(),
             });
+            state.pending_urls.remove(url.as_str());
             return Err(format!("Failed to read response body: {}", e));
+        }
+        Err(_) => {
+            let mut state = state.lock().await;
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: "Timeout reading body".to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
+            state.pending_urls.remove(url.as_str());
+            return Err(format!("Timeout reading response body from {}", url));
         }
     };
 
@@ -278,9 +294,13 @@ pub async fn process_url(
                 .map_err(|e| e.to_string())?;
 
             // Run blocking Chrome operation
-            task::spawn_blocking(move || headless_fetch::fetch_js_body(&js_url))
-                .await
-                .map_err(|e| e.to_string())?
+            // Run blocking Chrome operation with a timeout
+            tokio::time::timeout(
+                Duration::from_secs(45), // 45s timeout for JS rendering
+                task::spawn_blocking(move || headless_fetch::fetch_js_body(&js_url))
+            ).await
+                .map_err(|e| e.to_string())? // Outer timeout error
+                .map_err(|e| e.to_string())? // Inner spawn_blocking error
         };
 
         match js_fetch_future.await {

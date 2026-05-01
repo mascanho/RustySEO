@@ -250,11 +250,16 @@ pub async fn crawl_domain(
 
             // Check for stalling
             if last_stall_check.elapsed() > Duration::from_secs(stall_check_interval) {
-                if state_guard.crawled_urls == last_crawled_count
+                let stalled = state_guard.crawled_urls == last_crawled_count
                     && state_guard.last_activity.elapsed() > Duration::from_secs(max_pending_time)
-                    && state_guard.is_truly_complete()
-                {
-                    tracing::info!("Crawler appears to be stalled, terminating...");
+                    && state_guard.queue.is_empty();
+
+                if stalled {
+                    tracing::info!(
+                        "Crawler stall detected ({} active tasks hung for >{}s). Terminating crawl...",
+                        state_guard.active_tasks,
+                        max_pending_time
+                    );
                     break;
                 }
                 last_crawled_count = state_guard.crawled_urls;
@@ -318,12 +323,7 @@ pub async fn crawl_domain(
             continue;
         }
 
-        // Increment active tasks
-        {
-            let mut state_guard = state.lock().await;
-            state_guard.active_tasks += to_spawn.len();
-        }
-
+        // The ActiveTaskGuard is created inside the tokio::spawn block to ensure it covers the entire task life
         for (url, depth) in to_spawn {
             let client_clone = client.clone();
             let base_url_clone = base_url.clone();
@@ -339,6 +339,11 @@ pub async fn crawl_domain(
             let global_last_request_clone = global_last_request.clone();
 
             tokio::spawn(async move {
+                let _active_guard = {
+                    let mut state_guard = state_clone.lock().await;
+                    state_guard.active_tasks += 1;
+                    CrawlerState::enter_task(state_clone.clone())
+                };
                 let _permit = semaphore_clone.acquire().await.unwrap();
 
                 loop {
@@ -482,7 +487,6 @@ pub async fn crawl_domain(
                 }
 
                 let mut state_guard = state_clone.lock().await;
-                state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                 state_guard.pending_urls.remove(&url_str);
 
                 if let Err(e) = result {
