@@ -57,7 +57,8 @@ interface AgregatedWidgetContentTableProps {
     | "browser"
     | "verified"
     | "ip"
-    | "path_analysis";
+    | "path_analysis"
+    | "human";
   title: string;
   segment: string;
 }
@@ -188,6 +189,7 @@ export const AgregatedWidgetContentTable: React.FC<
       case "ip":
         return "get_active_path_ip_aggregations";
       case "path_analysis":
+      case "human":
         return "get_active_path_aggregations";
       default:
         return "";
@@ -197,21 +199,22 @@ export const AgregatedWidgetContentTable: React.FC<
   const getFilterName = () => {
     switch (type) {
       case "status":
-        return "status_filter";
+        return "statusFilter";
       case "method":
-        return "method_filter";
+        return "methodFilter";
       case "useragent":
-        return "user_agent_filter";
+        return "userAgentFilter";
       case "referer":
-        return "referer_filter";
+        return "refererFilter";
       case "browser":
-        return "browser_filter";
+        return "browserFilter";
       case "verified":
-        return "crawler_filter";
+        return "crawlerFilter";
       case "ip":
-        return "ip_filter";
+        return "ipFilter";
       case "path_analysis":
-        return "crawler_filter";
+      case "human":
+        return "crawlerFilter";
       default:
         return "";
     }
@@ -223,14 +226,18 @@ export const AgregatedWidgetContentTable: React.FC<
       const command = getCommandName();
       const filterName = getFilterName();
 
-      const params = {
+      const params: any = {
         page,
         limit: itemsPerPage,
-        sort_by: sortConfig.key,
-        sort_order: sortConfig.direction,
-        segment_filter: segment === "all" ? null : segment,
+        sortBy: sortConfig.key,
+        sortOrder: sortConfig.direction,
+        segmentFilter: segment === "all" ? null : segment,
         [filterName]: searchTerm || null,
       };
+
+      if (type === "human") {
+        params.crawlerFilter = "Human";
+      }
 
       const result = await invoke(command, params);
       setData(result.data || []);
@@ -263,6 +270,9 @@ export const AgregatedWidgetContentTable: React.FC<
           break;
         case "path_analysis":
           hits = summary.path_hits;
+          break;
+        case "human":
+          hits = summary.human_hits;
           break;
       }
       setTotalHits(hits || 0);
@@ -404,6 +414,7 @@ export const AgregatedWidgetContentTable: React.FC<
         ];
         break;
       case "path_analysis":
+      case "human":
         specific = [
           {
             key: "crawler_type",
@@ -498,16 +509,17 @@ export const AgregatedWidgetContentTable: React.FC<
       );
     }
     if (key === "crawler_type") {
+      const displayVal = val || (type === "human" ? "Human" : val);
       return (
         <Badge
           variant="outline"
           className={
-            val !== "Human"
+            displayVal !== "Human"
               ? "px-2 py-0.5 text-[10px] bg-red-600 text-white dark:bg-red-400 border-red-200"
               : "px-2 py-0.5 text-[11px] bg-blue-600 text-white border-blue-200"
           }
         >
-          {val}
+          {displayVal}
         </Badge>
       );
     }

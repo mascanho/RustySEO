@@ -14,6 +14,7 @@ import {
   PenBox,
   Loader2,
   MoreHorizontal,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -129,6 +130,7 @@ const tabs = [
   },
   { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
+  { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
   { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
 ];
 
@@ -627,7 +629,7 @@ export default function WidgetLogs() {
           type: "browser",
         },
         {
-          name: "Verified Bots Frequency",
+          name: "Bots Frequency",
           value: data.verified_count || 0,
           type: "verified",
         },
@@ -635,6 +637,11 @@ export default function WidgetLogs() {
           name: "IP Addresses Freqneucy",
           value: data.ip_count || 0,
           type: "ip",
+        },
+        {
+          name: "Human Traffic Frequency",
+          value: data.human_count || 0,
+          type: "human",
         },
       ];
     }
@@ -657,6 +664,13 @@ export default function WidgetLogs() {
         "Indexing Crawlers": indexingCrawlersData,
         "Retrieval Agents": retrievalAgentsData,
         "Agentic Bots": agenticBotsData,
+        "Human Traffic": [
+          {
+            name: "Human Path Frequency",
+            value: trendTotals.human_count || 0,
+            type: "human",
+          },
+        ],
       }[activeTab] || []
     );
   }, [
@@ -1083,7 +1097,7 @@ export default function WidgetLogs() {
                         </div>
                       </div>
                     </>
-                  ) : activeTab === "Trend Totals" ? (
+                  ) : activeTab === "Trend Totals" || activeTab === "Human Traffic" ? (
                     <AgregatedWidgetContentTable
                       type={entry.type}
                       title={entry.name}
