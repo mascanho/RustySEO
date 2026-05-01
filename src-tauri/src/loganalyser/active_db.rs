@@ -3177,3 +3177,114 @@ pub fn export_active_logs_csv(
     Ok(total_exported)
 }
 
+/// Export aggregated logs from a specific table directly to a CSV file.
+#[tauri::command]
+pub fn export_aggregated_logs_csv(
+    file_path: String,
+    agg_type: String,
+    segment_filter: Option<String>,
+) -> Result<usize, String> {
+    use csv::Writer;
+
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let table = match agg_type.as_str() {
+        "status" => "active_path_status_aggregations",
+        "method" => "active_path_method_aggregations",
+        "useragent" => "active_path_user_agent_aggregations",
+        "referer" => "active_path_referer_aggregations",
+        "browser" => "active_path_browser_aggregations",
+        "verified" => "active_path_verified_aggregations",
+        "ip" => "active_path_ip_aggregations",
+        "path_analysis" => "active_path_aggregations",
+        _ => return Err("Invalid aggregation type".to_string()),
+    };
+
+    let col_name = match agg_type.as_str() {
+        "status" => "status",
+        "method" => "method",
+        "useragent" => "user_agent",
+        "referer" => "referer",
+        "browser" => "browser",
+        "verified" => "crawler_type, verified",
+        "ip" => "ip",
+        "path_analysis" => "crawler_type",
+        _ => return Err("Invalid aggregation type".to_string()),
+    };
+
+    let mut wtr = Writer::from_path(&file_path).map_err(|e| e.to_string())?;
+
+    // Write header
+    let mut headers = vec!["Path"];
+    match agg_type.as_str() {
+        "status" => headers.push("Status Code"),
+        "method" => headers.push("Method"),
+        "useragent" => headers.push("User Agent"),
+        "referer" => headers.push("Referer"),
+        "browser" => headers.push("Browser"),
+        "verified" => {
+            headers.push("Crawler Type");
+            headers.push("Verified");
+        },
+        "ip" => headers.push("IP Address"),
+        "path_analysis" => headers.push("Crawler Type"),
+        _ => {},
+    }
+    headers.push("Segment");
+    headers.push("Hits");
+    wtr.write_record(&headers).map_err(|e| e.to_string())?;
+
+    let mut clauses = vec!["1=1".to_string()];
+    let mut params: Vec<rusqlite::types::Value> = Vec::new();
+    if let Some(ref seg) = segment_filter {
+        if !seg.is_empty() {
+            clauses.push("segment = ?".to_string());
+            params.push(seg.clone().into());
+        }
+    }
+    let where_sql = clauses.join(" AND ");
+
+    let query = format!(
+        "SELECT path, {}, segment, hit_count FROM {} WHERE {} ORDER BY hit_count DESC",
+        col_name, table, where_sql
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    let mut rows = stmt.query(rusqlite::params_from_iter(params.iter())).map_err(|e| e.to_string())?;
+    let mut total_exported: usize = 0;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let path: String = row.get(0).map_err(|e| e.to_string())?;
+        
+        let mut record = vec![path];
+        let (segment_idx, hits_idx) = match agg_type.as_str() {
+            "verified" => {
+                record.push(row.get::<_, String>(1).map_err(|e| e.to_string())?);
+                record.push(if row.get::<_, bool>(2).map_err(|e| e.to_string())? { "true".to_string() } else { "false".to_string() });
+                (3, 4)
+            },
+            _ => {
+                match agg_type.as_str() {
+                    "status" => record.push(row.get::<_, i64>(1).map_err(|e| e.to_string())?.to_string()),
+                    _ => record.push(row.get::<_, String>(1).map_err(|e| e.to_string())?),
+                }
+                (2, 3)
+            }
+        };
+
+        let segment: String = row.get(segment_idx).map_err(|e| e.to_string())?;
+        let hits: i64 = row.get(hits_idx).map_err(|e| e.to_string())?;
+
+        record.push(segment);
+        record.push(hits.to_string());
+
+        wtr.write_record(&record).map_err(|e| e.to_string())?;
+        total_exported += 1;
+    }
+
+    wtr.flush().map_err(|e| e.to_string())?;
+    Ok(total_exported)
+}
+

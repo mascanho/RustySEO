@@ -377,6 +377,7 @@ async fn main() {
             loganalyser::active_db::reclassify_all_segments,
             loganalyser::active_db::export_active_logs_excel,
             loganalyser::active_db::export_active_logs_csv,
+            loganalyser::active_db::export_aggregated_logs_csv,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

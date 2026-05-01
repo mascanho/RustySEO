@@ -56,7 +56,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b transition-colors hover:bg-slate-100/50 data-[state=selected]:bg-slate-100 dark:hover:bg-slate-800/50 p-8  dark:data-[state=selected]:bg-slate-800 ",
+      "border-b transition-colors hover:bg-slate-100/50 data-[state=selected]:bg-slate-100 dark:hover:bg-slate-800/50 p-6  dark:data-[state=selected]:bg-slate-800 ",
       className,
     )}
     {...props}
@@ -100,7 +100,10 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-xs text-slate-500 dark:text-slate-400", className)}
+    className={cn(
+      "mt-4 pl-4 text-xs text-slate-500 dark:text-slate-400",
+      className,
+    )}
     {...props}
   />
 ));

@@ -1,0 +1,1186 @@
+    Updating crates.io index
+warning: failed to write cache, path: /Users/mascanho/.cargo/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/go/ve/governor, error: Permission denied (os error 13)
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/Users/mascanho/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.12/Cargo.toml`
+
+Caused by:
+  Permission denied (os error 13)
+    Checking app v0.1.0 (/Users/mascanho/Coding/RustySEO/src-tauri)
+warning: unused import: `Listener`
+  --> src/main.rs:23:22
+   |
+23 | use tauri::{Emitter, Listener, Manager, WindowEvent};
+   |                      ^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:24:5
+   |
+24 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tracing_subscriber::fmt`
+  --> src/main.rs:27:5
+   |
+27 | use tracing_subscriber::fmt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `directories::ProjectDirs`
+ --> src/crawler.rs:2:5
+  |
+2 | use directories::ProjectDirs;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `html5ever::driver::parse_document`
+ --> src/crawler.rs:4:5
+  |
+4 | use html5ever::driver::parse_document;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `SerializeOpts`, `TraversalScope`, and `serialize`
+ --> src/crawler.rs:5:28
+  |
+5 | use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
+  |                            ^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+
+warning: unused imports: `ByteTendril` and `TendrilSink`
+ --> src/crawler.rs:6:26
+  |
+6 | use html5ever::tendril::{ByteTendril, TendrilSink};
+  |                          ^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused imports: `Handle`, `RcDom`, and `SerializableHandle`
+ --> src/crawler.rs:7:25
+  |
+7 | use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
+  |                         ^^^^^^  ^^^^^  ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `rusqlite::Connection`
+  --> src/crawler.rs:11:5
+   |
+11 | use rusqlite::Connection;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde::de::Error`
+  --> src/crawler.rs:14:5
+   |
+14 | use serde::de::Error;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::Value`
+  --> src/crawler.rs:16:5
+   |
+16 | use serde_json::Value;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Instant`
+  --> src/crawler.rs:18:5
+   |
+18 | use std::time::Instant;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `File`, `env`, `io::Write`, and `self`
+  --> src/crawler.rs:21:5
+   |
+21 |     env,
+   |     ^^^
+22 |     fs::{self, File},
+   |          ^^^^  ^^^^
+23 |     io::Write,
+   |     ^^^^^^^^^
+
+warning: unused imports: `io` and `vec`
+  --> src/crawler.rs:26:11
+   |
+26 | use std::{io, vec};
+   |           ^^  ^^^
+
+warning: unused import: `NaiveDateTime`
+ --> src/crawler/db.rs:1:14
+  |
+1 | use chrono::{NaiveDateTime, Utc};
+  |              ^^^^^^^^^^^^^
+
+warning: unused import: `rusqlite::types::Value`
+ --> src/crawler/db/models.rs:1:5
+  |
+1 | use rusqlite::types::Value;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `google_sheets4::api::Response`
+ --> src/crawler/libs.rs:3:5
+  |
+3 | use google_sheets4::api::Response;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Connection`
+ --> src/crawler/libs.rs:7:16
+  |
+7 | use rusqlite::{Connection, Result};
+  |                ^^^^^^^^^^
+
+warning: unused import: `std::fmt::format`
+  --> src/crawler/libs.rs:12:5
+   |
+12 | use std::fmt::format;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `ProcessStatus`
+  --> src/crawler/libs.rs:14:27
+   |
+14 | use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
+   |                           ^^^^^^^^^^^^^
+
+warning: unused import: `tauri::Config`
+  --> src/crawler/libs.rs:15:5
+   |
+15 | use tauri::Config;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `toml::de::Error as TomlError`
+  --> src/crawler/libs.rs:22:5
+   |
+22 | use toml::de::Error as TomlError;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `refresh_links_table`
+  --> src/crawler/libs.rs:24:32
+   |
+24 | use crate::crawler::db::{self, refresh_links_table};
+   |                                ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::server`
+  --> src/crawler/libs.rs:25:5
+   |
+25 | use crate::server;
+   |     ^^^^^^^^^^^^^
+
+warning: type `audits` should have an upper camel case name
+   --> src/crawler.rs:171:12
+    |
+171 | pub struct audits {
+    |            ^^^^^^ help: convert the identifier to upper camel case: `Audits`
+    |
+    = note: `#[warn(non_camel_case_types)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: unused import: `Result as RusqliteResult`
+ --> src/domain_crawler/database.rs:4:36
+  |
+4 | use rusqlite::{params, Connection, Result as RusqliteResult};
+  |                                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::settings`
+  --> src/domain_crawler/database.rs:14:5
+   |
+14 | use crate::settings;
+   |     ^^^^^^^^^^^^^^^
+
+warning: unused imports: `Arc`, `RwLock`, and `collections::HashMap`
+ --> src/domain_crawler/domain_commands.rs:2:5
+  |
+2 |     collections::HashMap,
+  |     ^^^^^^^^^^^^^^^^^^^^
+3 |     sync::{Arc, RwLock},
+  |            ^^^  ^^^^^^
+
+warning: unused import: `rust_xlsxwriter::XlsxError`
+ --> src/domain_crawler/domain_commands.rs:6:5
+  |
+6 | use rust_xlsxwriter::XlsxError;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `settings::settings::Settings`
+ --> src/domain_crawler/domain_commands.rs:9:45
+  |
+9 | use crate::{domain_crawler::domain_crawler, settings::settings::Settings, AppState};
+  |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `Differential`, `analyse_diffs`, and `models::DomainCrawlResults`
+  --> src/domain_crawler/domain_commands.rs:12:22
+   |
+12 |     database::{self, analyse_diffs, DiffAnalysis, Differential},
+   |                      ^^^^^^^^^^^^^                ^^^^^^^^^^^^
+...
+17 |     models::DomainCrawlResults,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `rand::Rng`
+ --> src/domain_crawler/domain_crawler.rs:8:5
+  |
+8 | use rand::Rng;
+  |     ^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+  --> src/domain_crawler/domain_crawler.rs:10:5
+   |
+10 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `get_domain_robots`
+  --> src/domain_crawler/domain_crawler.rs:22:52
+   |
+22 | use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
+   |                                                    ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `workbook` and `worksheet`
+ --> src/domain_crawler/excel/create_xlsx.rs:1:23
+  |
+1 | use rust_xlsxwriter::{workbook, worksheet, Format, FormatAlign, FormatBorder, Workbook};
+  |                       ^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `Arc`
+ --> src/domain_crawler/extractors/html.rs:3:17
+  |
+3 | use std::sync::{Arc, Mutex};
+  |                 ^^^
+
+warning: unused imports: `Html` and `Selector`
+ --> src/domain_crawler/helpers/check_html_page.rs:1:15
+  |
+1 | use scraper::{Html, Selector};
+  |               ^^^^  ^^^^^^^^
+
+warning: unused import: `rand::seq::IndexedRandom`
+ --> src/domain_crawler/helpers/fetch_with_exponential.rs:4:5
+  |
+4 | use rand::seq::IndexedRandom;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Selector`
+ --> src/domain_crawler/helpers/keyword_selector.rs:3:45
+  |
+3 | use scraper::{node::Node, ElementRef, Html, Selector};
+  |                                             ^^^^^^^^
+
+warning: unused import: `rand::seq::IndexedRandom`
+ --> src/domain_crawler/helpers/links_status_code_checker.rs:7:5
+  |
+7 | use rand::seq::IndexedRandom;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `JoinError` and `JoinHandle`
+  --> src/domain_crawler/helpers/links_status_code_checker.rs:17:19
+   |
+17 | use tokio::task::{JoinError, JoinHandle};
+   |                   ^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `user_agents`
+  --> src/domain_crawler/helpers/links_status_code_checker.rs:20:75
+   |
+20 | use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
+   |                                                                           ^^^^^^^^^^^
+
+warning: unused import: `reqwest::StatusCode`
+ --> src/domain_crawler/models.rs:3:5
+  |
+3 | use reqwest::StatusCode;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::crawler::libs::LinkStatus`
+ --> src/domain_crawler/models.rs:8:5
+  |
+8 | use crate::crawler::libs::LinkStatus;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `page_speed::model::LighthouseResult` and `pdf_selector::PdfLinks`
+  --> src/domain_crawler/models.rs:16:9
+   |
+16 |         pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+17 |     },
+18 |     page_speed::model::LighthouseResult,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `LighthouseResult` and `PsiResponse`
+ --> src/domain_crawler/page_speed/bulk.rs:2:41
+  |
+2 |     domain_crawler::page_speed::model::{LighthouseResult, PsiResponse},
+  |                                         ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused import: `MAX_URLS_PER_DOMAIN`
+  --> src/domain_crawler/state.rs:10:42
+   |
+10 | use super::constants::{MAX_PENDING_TIME, MAX_URLS_PER_DOMAIN};
+   |                                          ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `colored::*`
+ --> src/domain_crawler/url_processor.rs:3:5
+  |
+3 | use colored::*;
+  |     ^^^^^^^^^^
+
+warning: unused import: `std::collections::HashSet`
+ --> src/domain_crawler/url_processor.rs:7:5
+  |
+7 | use std::collections::HashSet;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::io::Write`
+ --> src/domain_crawler/url_processor.rs:8:5
+  |
+8 | use std::io::Write;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `crate::settings`
+  --> src/domain_crawler/url_processor.rs:26:5
+   |
+26 | use crate::settings;
+   |     ^^^^^^^^^^^^^^^
+
+warning: unused imports: `MAX_DEPTH` and `MAX_URLS_PER_DOMAIN`
+  --> src/domain_crawler/url_processor.rs:29:24
+   |
+29 | use super::constants::{MAX_DEPTH, MAX_URLS_PER_DOMAIN};
+   |                        ^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Result as SqlResult`
+ --> src/downloads/csv.rs:3:28
+  |
+3 | use rusqlite::{Connection, Result as SqlResult};
+  |                            ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `error::Error`
+ --> src/downloads/csv.rs:4:11
+  |
+4 | use std::{error::Error, fs, path::Path};
+  |           ^^^^^^^^^^^^
+
+warning: unused import: `Connection`
+ --> src/downloads/excel.rs:2:16
+  |
+2 | use rusqlite::{Connection, Result};
+  |                ^^^^^^^^^^
+
+warning: unused import: `Worksheet`
+ --> src/downloads/excel.rs:3:33
+  |
+3 | use rust_xlsxwriter::{Workbook, Worksheet};
+  |                                 ^^^^^^^^^
+
+warning: unused import: `std::fs`
+ --> src/globals/actions.rs:4:5
+  |
+4 | use std::fs;
+  |     ^^^^^^^
+
+warning: unused import: `crate::crawler::libs::ApiKeys`
+ --> src/commands.rs:7:5
+  |
+7 | use crate::crawler::libs::ApiKeys;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::crawler::libs::ClarityData`
+ --> src/commands.rs:8:5
+  |
+8 | use crate::crawler::libs::ClarityData;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::image_converter::converter`
+  --> src/commands.rs:12:5
+   |
+12 | use crate::image_converter::converter;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::machine_learning::keyword_frequency`
+  --> src/commands.rs:13:5
+   |
+13 | use crate::machine_learning::keyword_frequency;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashSet`
+  --> src/commands.rs:18:5
+   |
+18 | use std::collections::HashSet;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::error::Error`
+  --> src/commands.rs:19:5
+   |
+19 | use std::error::Error;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `self`
+  --> src/commands.rs:21:15
+   |
+21 | use std::io::{self, BufWriter, Write};
+   |               ^^^^
+
+warning: unused import: `std::path::PathBuf`
+  --> src/commands.rs:22:5
+   |
+22 | use std::path::PathBuf;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tauri::command`
+  --> src/commands.rs:23:5
+   |
+23 | use tauri::command;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused import: `tauri_plugin_shell::ShellExt`
+  --> src/commands.rs:24:5
+   |
+24 | use tauri_plugin_shell::ShellExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `toml`
+  --> src/commands.rs:25:5
+   |
+25 | use toml;
+   |     ^^^^
+
+warning: unused import: `serde_json::json`
+ --> src/gemini.rs:5:5
+  |
+5 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `genai::utils::print_chat_stream`
+ --> src/genai.rs:4:5
+  |
+4 | use genai::utils::print_chat_stream;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `ElementRef`, `Html`, and `Selector`
+ --> src/genai.rs:5:15
+  |
+5 | use scraper::{ElementRef, Html, Selector};
+  |               ^^^^^^^^^^  ^^^^  ^^^^^^^^
+
+warning: unused imports: `Deserialize` and `Serialize`
+ --> src/genai.rs:6:13
+  |
+6 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `std::io::Write`
+ --> src/genai.rs:8:5
+  |
+8 | use std::io::Write;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `PkceCodeVerifier`
+ --> src/gsc.rs:3:49
+  |
+3 |     ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, TokenResponse,
+  |                                                 ^^^^^^^^^^^^^^^^
+
+warning: unused imports: `URL_SAFE` and `alphabet::STANDARD`
+ --> src/image_converter/converter.rs:2:5
+  |
+2 |     alphabet::STANDARD,
+  |     ^^^^^^^^^^^^^^^^^^
+3 |     engine::general_purpose::{self, URL_SAFE},
+  |                                     ^^^^^^^^
+
+warning: unused import: `codecs::png::FilterType`
+ --> src/image_converter/converter.rs:6:13
+  |
+6 | use image::{codecs::png::FilterType, ImageFormat, ImageOutputFormat};
+  |             ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tauri::Manager`
+ --> src/image_converter/converter.rs:8:5
+  |
+8 | use tauri::Manager;
+  |     ^^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around function argument
+  --> src/image_converter/converter.rs:57:8
+   |
+57 |     Ok((results))
+   |        ^       ^
+   |
+   = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+   |
+57 -     Ok((results))
+57 +     Ok(results )
+   |
+
+warning: unused import: `chrono::NaiveDateTime`
+ --> src/loganalyser/analyser.rs:1:5
+  |
+1 | use chrono::NaiveDateTime;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `log_commands::check_logs_command`
+ --> src/loganalyser/database.rs:8:42
+  |
+8 |     loganalyser::{analyser::analyse_log, log_commands::check_logs_command},
+  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `LogAnalysisResult`
+  --> src/loganalyser/database.rs:12:23
+   |
+12 | use super::analyser::{LogAnalysisResult, LogInput};
+   |                       ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `rusqlite::Connection`
+ --> src/loganalyser/helpers/gsc_log.rs:2:5
+  |
+2 | use rusqlite::Connection;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, `info`, and `warn`
+ --> src/loganalyser/helpers/gsc_query_match.rs:3:15
+  |
+3 | use tracing::{debug, error, info, warn};
+  |               ^^^^^  ^^^^^  ^^^^  ^^^^
+
+warning: unused import: `IpAddr`
+ --> src/loganalyser/helpers/modeling.rs:3:32
+  |
+3 | use std::net::{AddrParseError, IpAddr};
+  |                                ^^^^^^
+
+warning: unused imports: `Deserialize` and `Serialize`
+ --> src/loganalyser/helpers/parse_logs.rs:6:13
+  |
+6 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `self`
+ --> src/loganalyser/helpers/parse_logs.rs:7:15
+  |
+7 | use std::io::{self};
+  |               ^^^^
+
+warning: unused import: `AddrParseError`
+ --> src/loganalyser/helpers/parse_logs.rs:8:16
+  |
+8 | use std::net::{AddrParseError, IpAddr};
+  |                ^^^^^^^^^^^^^^
+
+warning: unused import: `Emitter`
+  --> src/loganalyser/helpers/parse_logs.rs:11:13
+   |
+11 | use tauri::{Emitter, Manager};
+   |             ^^^^^^^
+
+warning: unused import: `gsc_position_match`
+  --> src/loganalyser/helpers/parse_logs.rs:13:50
+   |
+13 | use crate::loganalyser::helpers::gsc_log::{self, gsc_position_match};
+   |                                                  ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `analyser::LogResult`
+ --> src/loganalyser/log_commands.rs:2:5
+  |
+2 |     analyser::LogResult,
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `LogAnalysisResult` and `match_gsc_query`
+ --> src/loganalyser/log_commands.rs:6:53
+  |
+6 |     analyser::{analyse_log, analyse_log_from_paths, LogAnalysisResult, LogInput},
+  |                                                     ^^^^^^^^^^^^^^^^^
+7 |     helpers::gsc_query_match::{self, match_gsc_query, GscDataItem, GscQueryMatch},
+  |                                      ^^^^^^^^^^^^^^^
+
+warning: unused import: `anyhow::Error`
+  --> src/loganalyser/log_commands.rs:10:5
+   |
+10 | use anyhow::Error;
+   |     ^^^^^^^^^^^^^
+
+warning: unused imports: `BufRead` and `BufReader`
+  --> src/loganalyser/log_commands.rs:23:23
+   |
+23 |         use std::io::{BufRead, BufReader};
+   |                       ^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `std::fs::File`
+  --> src/loganalyser/log_commands.rs:24:13
+   |
+24 |         use std::fs::File;
+   |             ^^^^^^^^^^^^^
+
+warning: unused import: `Result as SqlResult`
+ --> src/loganalyser/active_db.rs:3:36
+  |
+3 | use rusqlite::{params, Connection, Result as SqlResult};
+  |                                    ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `BotStatsMap`
+    --> src/loganalyser/active_db.rs:2879:23
+     |
+2879 | use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
+     |                       ^^^^^^^^^^^
+
+warning: unused import: `directories::ProjectDirs`
+ --> src/server.rs:5:5
+  |
+5 | use directories::ProjectDirs;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::f64::consts::E`
+ --> src/server.rs:8:5
+  |
+8 | use std::f64::consts::E;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `yup_oauth2::AccessToken`
+  --> src/server.rs:10:5
+   |
+10 | use yup_oauth2::AccessToken;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> src/crawler.rs:245:9
+    |
+245 |     let mut index_type = Vec::new();
+    |         ----^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3259:38
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3259 |         let path: String = row.get(0)?;
+     |                                ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                |
+     |                                this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0599]: no method named `column_count` found for reference `&rusqlite::Row<'_>` in the current scope
+    --> src/loganalyser/active_db.rs:3260:43
+     |
+3260 |         let segment: String = row.get(row.column_count() - 2)?;
+     |                                           ^^^^^^^^^^^^ method not found in `&rusqlite::Row<'_>`
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3260:62
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3260 |         let segment: String = row.get(row.column_count() - 2)?;
+     |                                   ---------------------------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                   |
+     |                                   this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0599]: no method named `column_count` found for reference `&rusqlite::Row<'_>` in the current scope
+    --> src/loganalyser/active_db.rs:3261:37
+     |
+3261 |         let hits: i64 = row.get(row.column_count() - 1)?;
+     |                                     ^^^^^^^^^^^^ method not found in `&rusqlite::Row<'_>`
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3261:56
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3261 |         let hits: i64 = row.get(row.column_count() - 1)?;
+     |                             ---------------------------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                             |
+     |                             this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3265:57
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3265 |             "status" => record.push(row.get::<_, i64>(1)?.to_string()),
+     |                                         ----------------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                         |
+     |                                         this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3266:47
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3266 |             "method" => record.push(row.get(1)?),
+     |                                         ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                         |
+     |                                         this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3267:50
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3267 |             "useragent" => record.push(row.get(1)?),
+     |                                            ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                            |
+     |                                            this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3268:48
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3268 |             "referer" => record.push(row.get(1)?),
+     |                                          ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                          |
+     |                                          this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3269:48
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3269 |             "browser" => record.push(row.get(1)?),
+     |                                          ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                          |
+     |                                          this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3271:39
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3271 |                 record.push(row.get(1)?);
+     |                                 ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                 |
+     |                                 this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3272:53
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3272 |                 record.push(if row.get::<_, bool>(2)? { "true".to_string() } else { "false".to_string() });
+     |                                    -----------------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                    |
+     |                                    this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3274:43
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3274 |             "ip" => record.push(row.get(1)?),
+     |                                     ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                     |
+     |                                     this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+error[E0277]: `?` couldn't convert the error to `std::string::String`
+    --> src/loganalyser/active_db.rs:3275:54
+     |
+3186 | ) -> Result<usize, String> {
+     |      --------------------- expected `std::string::String` because of this
+...
+3275 |             "path_analysis" => record.push(row.get(1)?),
+     |                                                ------^ the trait `std::convert::From<rusqlite::Error>` is not implemented for `std::string::String`
+     |                                                |
+     |                                                this can't be annotated with `?` because it has type `Result<_, rusqlite::Error>`
+     |
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `std::convert::From<T>`:
+               `std::string::String` implements `std::convert::From<&Tendril<UTF8, A>>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_domain::CookieDomain>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&cookie_store::cookie_path::CookiePath>`
+               `std::string::String` implements `std::convert::From<&mut str>`
+               `std::string::String` implements `std::convert::From<&std::string::String>`
+               `std::string::String` implements `std::convert::From<&str>`
+             and 18 others
+
+warning: unused import: `rand::seq::IndexedRandom`
+ --> src/domain_crawler/domain_crawler.rs:7:5
+  |
+7 | use rand::seq::IndexedRandom;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ProcessExt`
+ --> src/settings/settings.rs:6:15
+  |
+6 | use sysinfo::{ProcessExt, System, SystemExt};
+  |               ^^^^^^^^^^
+
+warning: unused import: `rayon::prelude`
+ --> src/loganalyser/analyser.rs:2:5
+  |
+2 | use rayon::prelude::*;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `Manager`
+  --> src/loganalyser/helpers/parse_logs.rs:11:22
+   |
+11 | use tauri::{Emitter, Manager};
+   |                      ^^^^^^^
+
+warning: unused variable: `idioma`
+   --> src/crawler/content.rs:412:5
+    |
+412 |     idioma: &str,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_idioma`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `pais`
+   --> src/crawler/content.rs:413:5
+    |
+413 |     pais: &str,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_pais`
+
+warning: unused variable: `request`
+   --> src/crawler/content.rs:513:13
+    |
+513 |         let request = client.get(&url).headers(headers);
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `result`
+   --> src/crawler/db.rs:566:9
+    |
+566 |     let result = clear_table(table).expect("Failed to clear table");
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
+warning: unused variable: `body`
+   --> src/crawler/libs.rs:130:9
+    |
+130 |     let body = response.text().await?;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_body`
+
+warning: variable `domain` is assigned to, but never used
+   --> src/crawler/libs.rs:617:9
+    |
+617 |     let mut domain = false;
+    |         ^^^^^^^^^^
+    |
+    = note: consider using `_domain` instead
+
+warning: variable `site` is assigned to, but never used
+   --> src/crawler/libs.rs:618:9
+    |
+618 |     let mut site = false;
+    |         ^^^^^^^^
+    |
+    = note: consider using `_site` instead
+
+warning: unused variable: `finish_date`
+   --> src/crawler/libs.rs:621:9
+    |
+621 |     let finish_date = Utc::now().format("%Y-%m-%d").to_string();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_finish_date`
+
+warning: value assigned to `domain` is never read
+   --> src/crawler/libs.rs:701:13
+    |
+701 |             domain = true;
+    |             ^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `site` is never read
+   --> src/crawler/libs.rs:710:13
+    |
+710 |             site = true;
+    |             ^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: unused variable: `page`
+    --> src/crawler/libs.rs:1181:17
+     |
+1181 |             let page = &row["dimensionValues"][0]["value"];
+     |                 ^^^^ help: if this is intentional, prefix it with an underscore: `_page`
+
+warning: unused variable: `body_contents`
+   --> src/crawler.rs:315:17
+    |
+315 |             let body_contents = serialize_element(&body);
+    |                 ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_body_contents`
+
+warning: unused variable: `sitemap_from_url`
+   --> src/crawler.rs:552:9
+    |
+552 |     let sitemap_from_url = match sitemap_future.await {
+    |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sitemap_from_url`
+
+warning: unused variable: `page_url`
+   --> src/domain_crawler/database.rs:605:21
+    |
+605 |                 let page_url = data
+    |                     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_page_url`
+
+warning: unused variable: `urls`
+   --> src/domain_crawler/database.rs:978:33
+    |
+978 | pub async fn check_diff_domains(urls: Vec<String>) -> Result<(), String> {
+    |                                 ^^^^ help: if this is intentional, prefix it with an underscore: `_urls`
+
+warning: unused variable: `user_agents`
+  --> src/domain_crawler/domain_crawler.rs:42:9
+   |
+42 |     let user_agents = settings.user_agents.clone();
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_agents`
+
+warning: unused variable: `i`
+   --> src/domain_crawler/excel/create_xlsx.rs:606:14
+    |
+606 |         for (i, keyword_pair) in keywords.iter().take(10).enumerate() {
+    |              ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: value assigned to `last_error` is never read
+   --> src/domain_crawler/helpers/links_status_code_checker.rs:596:26
+    |
+596 |     let mut last_error = None;
+    |                          ^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: unused variable: `config`
+   --> src/domain_crawler/helpers/links_status_code_checker.rs:263:5
+    |
+263 |     config: LinkCheckConfig,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `settings`
+   --> src/domain_crawler/helpers/links_status_code_checker.rs:288:43
+    |
+288 | fn build_client(config: &LinkCheckConfig, settings: &Settings, _user_agent: Option<String>) -> Client {
+    |                                           ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+
+warning: variable `last_status` is assigned to, but never used
+   --> src/domain_crawler/page_speed/bulk.rs:320:9
+    |
+320 |     let mut last_status = Option::<u16>::None;
+    |         ^^^^^^^^^^^^^^^
+    |
+    = note: consider using `_last_status` instead
+
+warning: value assigned to `last_status` is never read
+   --> src/domain_crawler/page_speed/bulk.rs:347:9
+    |
+347 |         last_status = Some(status.as_u16());
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: value assigned to `last_status` is never read
+   --> src/domain_crawler/page_speed/bulk.rs:337:17
+    |
+337 |                 last_status = None;
+    |                 ^^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: unused variable: `max_depth`
+   --> src/domain_crawler/state.rs:116:82
+    |
+116 |     pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, max_depth: usize, max_urls: usize) {
+    |                                                                                  ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_depth`
+
+warning: variable does not need to be mutable
+  --> src/downloads/excel.rs:21:9
+   |
+21 |     let mut sheet = workbook.add_worksheet();
+   |         ----^^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: unused variable: `db_path`
+  --> src/downloads/excel.rs:12:9
+   |
+12 |     let db_path = "data.db";
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_db_path`
+
+warning: unused variable: `query_response`
+  --> src/gsc.rs:99:9
+   |
+99 |     let query_response: SearchAnalyticsQueryResponse = response
+   |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_query_response`
+
+warning: unused variable: `format`
+  --> src/image_converter/converter.rs:13:5
+   |
+13 |     format: String,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_format`
+
+warning: unused variable: `quality`
+  --> src/image_converter/converter.rs:14:5
+   |
+14 |     quality: u8,
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_quality`
+
+warning: unused variable: `chunk`
+   --> src/loganalyser/analyser.rs:353:29
+    |
+353 |                         let chunk = LogResult {
+    |                             ^^^^^ help: if this is intentional, prefix it with an underscore: `_chunk`
+
+warning: unused variable: `chunk`
+   --> src/loganalyser/analyser.rs:372:17
+    |
+372 |             let chunk = LogResult {
+    |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_chunk`
+
+warning: unused variable: `chunk`
+   --> src/loganalyser/analyser.rs:740:17
+    |
+740 |             let chunk = LogResult {
+    |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_chunk`
+
+warning: unused variable: `log_text`
+   --> src/loganalyser/database.rs:295:17
+    |
+295 |             let log_text: String = row.get(3)?;
+    |                 ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_log_text`
+
+warning: variable does not need to be mutable
+  --> src/loganalyser/active_db.rs:22:9
+   |
+22 |     let mut conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+Some errors have detailed explanations: E0277, E0599.
+For more information about an error, try `rustc --explain E0277`.
+warning: `app` (bin "app") generated 138 warnings
+error: could not compile `app` (bin "app") due to 14 previous errors; 138 warnings emitted
