@@ -267,6 +267,7 @@ interface LogAnalysisActions {
   setTotalCount: (count: number) => void;
   fetchBotPathsAggregated: (filters: ActiveFilters) => Promise<void>;
   fetchPathAggregationsPage: (page: number, limit: number, filters: ActiveFilters) => Promise<void>;
+  fetchAllPathAggregations: (filters: ActiveFilters) => Promise<BotPathDetail[]>;
   fetchOverviewStats: () => Promise<void>;
   fetchTimelineAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
@@ -932,6 +933,19 @@ export const useLogAnalysisStore = create<
       }
     },
 
+    fetchAllPathAggregations: async (filters) => {
+      try {
+        const entries = await invoke<BotPathDetail[]>(
+          "get_all_path_aggregations",
+          { filters }
+        );
+        return entries || [];
+      } catch (error) {
+        console.error("Failed to fetch all path aggregations:", error);
+        return [];
+      }
+    },
+
     fetchTimelineAggregations: async (viewMode, filters) => {
       try {
         const timelineData = await invoke<TimelinePoint[]>(
@@ -1027,6 +1041,7 @@ export const useLogAnalysis = () =>
       fetchBotPathsAggregated: state.fetchBotPathsAggregated,
       pathAggregations: state.pathAggregations,
       fetchPathAggregationsPage: state.fetchPathAggregationsPage,
+      fetchAllPathAggregations: state.fetchAllPathAggregations,
       fetchOverviewStats: state.fetchOverviewStats,
       timelineData: state.timelineData,
       fetchTimelineAggregations: state.fetchTimelineAggregations,

@@ -62,6 +62,7 @@ interface TableRowProps {
   columnVisibility: boolean[];
   clickedRow: number | null;
   handleRowClick: (rowIndex: number) => void;
+  onCellDoubleClick: (content: string) => void;
   keywordColumns: string[];
 }
 
@@ -192,6 +193,7 @@ const TableRow = memo(
     columnVisibility,
     clickedRow,
     handleRowClick,
+    onCellDoubleClick,
     keywordColumns,
   }: TableRowProps) => {
     const isRowClicked = clickedRow === index;
@@ -229,11 +231,19 @@ const TableRow = memo(
           alignItems: "center",
           color: isRowClicked ? "white" : "inherit",
         }}
-        className="dark:text-white/50 cursor-pointer not-selectable"
+        className="dark:text-white/50 cursor-pointer not-selectable hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
       >
         {visibleItems.map((item) => (
           <div
             key={`cell-${index}-${item.originalIndex}`}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              const text =
+                typeof item.cell === "object"
+                  ? `${item.cell.kw} (${item.cell.count})`
+                  : item.cell?.toString() || "";
+              onCellDoubleClick(text);
+            }}
             style={{
               padding: "8px",
               justifyContent:
@@ -334,8 +344,12 @@ const KeywordsTable = ({
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<boolean[]>([]);
-    const isGeneratingExcel = useGlobalCrawlStore((state) => state.isGeneratingExcel);
-  const setIsGeneratingExcel = useGlobalCrawlStore((state) => state.setIsGeneratingExcel);
+  const isGeneratingExcel = useGlobalCrawlStore(
+    (state) => state.isGeneratingExcel,
+  );
+  const setIsGeneratingExcel = useGlobalCrawlStore(
+    (state) => state.setIsGeneratingExcel,
+  );
   const startXRef = useRef(0);
 
   const maxKeywords = useMemo(() => {
@@ -352,11 +366,7 @@ const KeywordsTable = ({
   );
 
   useEffect(() => {
-    const initialWidths = [
-      "60px",
-      "300px",
-      ...keywordColumns.map(() => "150px"),
-    ];
+    const initialWidths = ["60px", "300px", ...keywordColumns.map(() => "150px")];
     const initialAlignments = [
       "center",
       "left",
@@ -426,6 +436,17 @@ const KeywordsTable = ({
 
   const handleRowClick = useCallback((rowIndex: number) => {
     setClickedRow((prev) => (prev === rowIndex ? null : rowIndex));
+  }, []);
+
+  const handleCellDoubleClick = useCallback((content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Cell copied to clipboard", {
+        description:
+          content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        position: "bottom-right",
+      });
+    });
   }, []);
 
   const filteredRows = useMemo(() => {
@@ -587,6 +608,7 @@ const KeywordsTable = ({
                     columnVisibility={columnVisibility}
                     clickedRow={clickedRow}
                     handleRowClick={handleRowClick}
+                    onCellDoubleClick={handleCellDoubleClick}
                     keywordColumns={keywordColumns}
                   />
                 </div>

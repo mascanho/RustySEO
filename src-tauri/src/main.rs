@@ -228,7 +228,7 @@ async fn main() {
             // Clear the active DB & Server logs unconditionally on backend start
             println!("App starting, unconditionally clearing active DB...");
             let _ = loganalyser::active_db::init_active_db();
-            if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+            if let Err(e) = loganalyser::active_db::clear_active_db_internal() {
                 eprintln!("Error clearing active DB on startup: {}", e);
             }
 
@@ -238,7 +238,7 @@ async fn main() {
                     if let WindowEvent::CloseRequested { .. } = event {
                         println!("App closing, clearing active DB...");
                         let _ = loganalyser::active_db::init_active_db();
-                        if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                        if let Err(e) = loganalyser::active_db::clear_active_db_internal() {
                             eprintln!("Error clearing active DB on close: {}", e);
                         }
                     }
@@ -362,10 +362,23 @@ async fn main() {
             loganalyser::active_db::clear_all_log_data_command,
             loganalyser::active_db::get_distinct_bot_types,
             loganalyser::active_db::get_bot_paths_aggregated,
+            loganalyser::active_db::get_all_path_aggregations,
             loganalyser::active_db::get_path_aggregations_page,
+            loganalyser::active_db::get_active_path_aggregations,
+            loganalyser::active_db::get_active_path_status_aggregations,
+            loganalyser::active_db::get_active_path_method_aggregations,
+            loganalyser::active_db::get_active_path_user_agent_aggregations,
+            loganalyser::active_db::get_active_path_referer_aggregations,
+            loganalyser::active_db::get_active_path_browser_aggregations,
+            loganalyser::active_db::get_active_path_verified_aggregations,
+            loganalyser::active_db::get_active_path_ip_aggregations,
+            loganalyser::active_db::get_active_path_human_aggregations,
+            loganalyser::active_db::get_trend_totals_summary,
+            loganalyser::active_db::rebuild_path_aggregations,
             loganalyser::active_db::reclassify_all_segments,
             loganalyser::active_db::export_active_logs_excel,
             loganalyser::active_db::export_active_logs_csv,
+            loganalyser::active_db::export_aggregated_logs_csv,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::check_hostname::reverse_lookup,
             loganalyser::helpers::parse_logs::fetch_all_bot_ranges,

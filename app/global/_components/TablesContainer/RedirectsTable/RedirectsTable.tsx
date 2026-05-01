@@ -87,6 +87,7 @@ interface TableRowProps {
     cellContent: string,
     row: any,
   ) => void;
+  onCellDoubleClick: (content: string) => void;
 }
 
 interface ColumnPickerProps {
@@ -271,6 +272,7 @@ const TableRow = memo(
     columnVisibility,
     clickedCell,
     handleCellClick,
+    onCellDoubleClick,
   }: TableRowProps) => {
     const rowData = useMemo(() => {
       // Determine if there is a loop
@@ -328,11 +330,21 @@ const TableRow = memo(
           alignItems: "center",
           color: isRowClicked ? "white" : "inherit",
         }}
-        className="dark:text-white/50 cursor-pointer not-selectable"
+        className="dark:text-white/50 cursor-pointer not-selectable hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
       >
         {visibleItems.map((item, visibleIdx) => (
           <div
             key={`cell-${index}-${item.originalIndex}`}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              const text =
+                item.originalIndex === 8
+                  ? (item.cell as any[])
+                      ?.map((h) => `${h.url} (${h.status_code})`)
+                      .join(" -> ")
+                  : item.cell?.toString() || "";
+              onCellDoubleClick(text);
+            }}
             onClick={() =>
               handleCellClick(
                 index,
@@ -503,6 +515,17 @@ const RedirectsTable = ({
     [rows, setInlinks, setOutlinks, setSelectedTableURL],
   );
 
+  const handleCellDoubleClick = useCallback((content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Cell copied to clipboard", {
+        description:
+          content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        position: "bottom-right",
+      });
+    });
+  }, []);
+
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -665,6 +688,7 @@ const RedirectsTable = ({
                   columnVisibility={columnVisibility}
                   clickedCell={clickedCell}
                   handleCellClick={handleCellClick}
+                  onCellDoubleClick={handleCellDoubleClick}
                 />
               </div>
             ))

@@ -1,5 +1,12 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import {
   FileText,
   Server,
@@ -7,6 +14,7 @@ import {
   PenBox,
   Loader2,
   MoreHorizontal,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +85,13 @@ const WidgetStatusCodesTable = lazy(() =>
     default: module.WidgetStatusCodesTable,
   })),
 );
+const AgregatedWidgetContentTable = lazy(() =>
+  import("./WidgetTables/AgregatedTables/AgregatedWidgetContentTable").then(
+    (module) => ({
+      default: module.AgregatedWidgetContentTable,
+    }),
+  ),
+);
 
 import { Tabs } from "@mantine/core";
 
@@ -100,6 +115,7 @@ import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawle
 import { WidgetRetrievalAgentsTable } from "./WidgetTables/WidgetRetrievalAgentsTable";
 import { WidgetAgenticBotsTable } from "./WidgetTables/WidgetAgenticBotsTable";
 import { invoke } from "@tauri-apps/api/core";
+import { TbSum } from "react-icons/tb";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -114,6 +130,8 @@ const tabs = [
   },
   { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
+  { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
+  { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -148,7 +166,7 @@ const FallbackLoader = () => (
 );
 
 export default function WidgetLogs() {
-  const [activeTab, setActiveTab] = useState("Filetypes");
+  const [activeTab, setActiveTab] = useState("Trend Totals");
   const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<
     string | null
   >(null);
@@ -236,6 +254,7 @@ export default function WidgetLogs() {
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
   const [agenticBots, setAgenticBots] = useState<string[]>([]);
+  const [trendTotals, setTrendTotals] = useState<any>(null);
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -268,6 +287,29 @@ export default function WidgetLogs() {
     };
     fetchAgenticBots();
   }, []);
+
+  const fetchTrendTotals = useCallback(async () => {
+    try {
+      const summary = await invoke("get_trend_totals_summary");
+      setTrendTotals(summary);
+    } catch (error) {
+      console.error("Failed to fetch trend totals:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (activeTab === "Trend Totals") {
+      fetchTrendTotals();
+      // Poll every 5 seconds while active
+      interval = setInterval(fetchTrendTotals, 5000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTab, fetchTrendTotals]);
 
   useEffect(() => {
     const loadTaxonomies = () => {
@@ -552,6 +594,58 @@ export default function WidgetLogs() {
       return agenticBotsData;
     }
 
+    // Trend Totals
+    if (activeTab === "Trend Totals") {
+      const data = trendTotals || {};
+      return [
+        {
+          name: "URL Path Frequency",
+          value: data.path_count || 0,
+          type: "path_analysis",
+        },
+        {
+          name: "Status Codes Frequency",
+          value: data.status_count || 0,
+          type: "status",
+        },
+        {
+          name: "HTTP Methods Frequency",
+          value: data.method_count || 0,
+          type: "method",
+        },
+        {
+          name: "User Agents Frequency",
+          value: data.user_agent_count || 0,
+          type: "useragent",
+        },
+        {
+          name: "Referrers Frequency",
+          value: data.referer_count || 0,
+          type: "referer",
+        },
+        {
+          name: "Browsers Frequency",
+          value: data.browser_count || 0,
+          type: "browser",
+        },
+        {
+          name: "Bots Frequency",
+          value: data.verified_count || 0,
+          type: "verified",
+        },
+        {
+          name: "IP Addresses Freqneucy",
+          value: data.ip_count || 0,
+          type: "ip",
+        },
+        {
+          name: "Human Traffic Frequency",
+          value: data.human_count || 0,
+          type: "human",
+        },
+      ];
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {})
@@ -570,6 +664,13 @@ export default function WidgetLogs() {
         "Indexing Crawlers": indexingCrawlersData,
         "Retrieval Agents": retrievalAgentsData,
         "Agentic Bots": agenticBotsData,
+        "Human Traffic": [
+          {
+            name: "Human Path Frequency",
+            value: trendTotals.human_count || 0,
+            type: "human",
+          },
+        ],
       }[activeTab] || []
     );
   }, [
@@ -584,6 +685,7 @@ export default function WidgetLogs() {
     indexingCrawlersData,
     retrievalAgentsData,
     agenticBotsData,
+    trendTotals,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -745,11 +847,13 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
-              activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-2 md:grid-cols-5 mr-6"
-                : activeTab === "Indexing Crawlers"
-                  ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
-                  : "grid-cols-2 md:grid-cols-4 mr-6"
+              activeTab === "Trend Totals"
+                ? "grid-cols-2 md:grid-cols-3 mr-6"
+                : activeTab === "User Agents" || activeTab === "Referrers"
+                  ? "grid-cols-2 md:grid-cols-5 mr-6"
+                  : activeTab === "Indexing Crawlers"
+                    ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                    : "grid-cols-2 md:grid-cols-4 mr-6"
             }`}
           >
             {chartData.map((entry, idx) => (
@@ -773,7 +877,7 @@ export default function WidgetLogs() {
                       className="font-medium ml-2"
                       style={{ color: COLORS[idx % COLORS.length] }}
                     >
-                      {entry.value.toLocaleString()}
+                      {(entry.value || 0).toLocaleString()}
                     </span>
                   </div>
                 </DialogTrigger>
@@ -993,6 +1097,12 @@ export default function WidgetLogs() {
                         </div>
                       </div>
                     </>
+                  ) : activeTab === "Trend Totals" || activeTab === "Human Traffic" ? (
+                    <AgregatedWidgetContentTable
+                      type={entry.type}
+                      title={entry.name}
+                      segment="all"
+                    />
                   ) : null}
                 </DialogContent>
               </Dialog>

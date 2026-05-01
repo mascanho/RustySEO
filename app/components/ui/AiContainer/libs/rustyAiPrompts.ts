@@ -34,6 +34,10 @@ export interface RustyAiContext {
         success_rate: string;
         bot_breakdown: string;
         top_pages: string;
+        file_types?: string;
+        status_codes?: string;
+        content_segments?: string;
+        specialized_bots?: string;
     };
 }
 
@@ -74,11 +78,53 @@ export const buildRustyAiContext = (
         };
     } else if (isLogAnalyser) {
         const overview = logAnalysisStore.overview;
-        const botBreakdown = Object.entries(overview.totals.bot_stats || {})
-            .map(([bot, stats]: [string, any]) => `${bot}: ${stats.count || 0}`)
+        const widgetAggs = logAnalysisStore.widgetAggs;
+        const totals = overview.totals || {};
+        
+        // Improve bot breakdown by using individual totals
+        const bots = [
+            { name: 'Google', count: totals.google },
+            { name: 'Bing', count: totals.bing },
+            { name: 'Semrush', count: totals.semrush },
+            { name: 'Hrefs', count: totals.hrefs },
+            { name: 'Moz', count: totals.moz },
+            { name: 'Uptime', count: totals.uptime },
+            { name: 'OpenAI', count: totals.openai },
+            { name: 'Claude', count: totals.claude },
+        ];
+
+        const botBreakdown = bots
+            .filter(b => b.count > 0)
+            .map(b => `${b.name}: ${b.count}`)
+            .join(", ") || "No major search bots detected";
+
+        // Top pages from all traffic (from widgetAggs.content)
+        const topPages = Object.entries(widgetAggs?.content || {})
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .slice(0, 10)
+            .map(([path, count]) => `${path} (${count})`)
             .join(", ");
 
-        const topPages = (overview.totals.google_bot_pages || []).slice(0, 10).join(", ");
+        const fileTypes = Object.entries(widgetAggs?.file_types || {})
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .map(([ext, count]) => `${ext.toUpperCase()}: ${count}`)
+            .join(", ");
+        
+        const statusCodes = Object.entries(widgetAggs?.status_codes || {})
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .map(([code, count]) => `${code}: ${count}`)
+            .join(", ");
+
+        const crawlerTypes = Object.entries(widgetAggs?.crawler_types || {})
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .map(([type, count]) => `${type}: ${count}`)
+            .join(", ");
+
+        // Success rate: if it's already > 1, it's likely a percentage value (0-100)
+        const rawSuccessRate = overview.success_rate || 0;
+        const successRateDisplay = rawSuccessRate > 1 
+            ? `${rawSuccessRate.toFixed(1)}%` 
+            : `${(rawSuccessRate * 100).toFixed(1)}%`;
 
         return {
             mode: 'LogAnalyser',
@@ -86,9 +132,13 @@ export const buildRustyAiContext = (
                 total_lines: overview.line_count,
                 unique_ips: overview.unique_ips,
                 crawler_count: overview.crawler_count,
-                success_rate: `${(overview.success_rate * 100).toFixed(1)}%`,
-                bot_breakdown: botBreakdown || "N/A",
+                success_rate: successRateDisplay,
+                bot_breakdown: botBreakdown,
                 top_pages: topPages || "N/A",
+                file_types: fileTypes || "N/A",
+                status_codes: statusCodes || "N/A",
+                content_segments: "Included in Top Pages", // Content is already paths
+                specialized_bots: crawlerTypes || "N/A",
             }
         };
     } else {

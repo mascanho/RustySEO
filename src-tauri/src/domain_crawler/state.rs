@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::Instant;
+use tokio::sync::Mutex;
 use url::Url;
 
 use super::constants::MAX_PENDING_TIME;
@@ -156,6 +157,26 @@ impl CrawlerState {
                 }
             }
         }
+    }
+
+    /// Enter a new task and return a guard that decrements active_tasks on drop
+    pub fn enter_task(state: Arc<Mutex<Self>>) -> ActiveTaskGuard {
+        ActiveTaskGuard { state }
+    }
+}
+
+/// RAII guard to ensure active_tasks is always decremented
+pub struct ActiveTaskGuard {
+    state: Arc<Mutex<CrawlerState>>,
+}
+
+impl Drop for ActiveTaskGuard {
+    fn drop(&mut self) {
+        let state = self.state.clone();
+        tokio::spawn(async move {
+            let mut state_guard = state.lock().await;
+            state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
+        });
     }
 }
 

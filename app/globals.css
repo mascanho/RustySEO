@@ -47,6 +47,17 @@ button,
   user-select: text;
 }
 
+.not-selectable {
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE/Edge */
+  user-select: none;
+  /* Standard syntax */
+}
+
 h1 {
   font-size: 1rem !important;
 }

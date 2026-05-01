@@ -69,6 +69,7 @@ interface TableRowProps {
     cellIndex: number,
     content: string,
   ) => void;
+  onCellDoubleClick: (content: string) => void;
   calculatedIdWidth: string;
 }
 
@@ -208,6 +209,7 @@ const TableRow = memo(
     columnVisibility,
     clickedCell,
     handleCellClick,
+    onCellDoubleClick,
     calculatedIdWidth,
   }: TableRowProps) => {
     const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
@@ -244,11 +246,15 @@ const TableRow = memo(
           color: isRowClicked ? "white" : "inherit",
           width: "100%",
         }}
-        className="dark:text-white/50 cursor-pointer not-selectable"
+        className="dark:text-white/50 cursor-pointer not-selectable hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
       >
         {visibleItems.map((item) => (
           <div
             key={`cell-${index}-${item.originalIndex}`}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onCellDoubleClick(item.cell?.toString() || "");
+            }}
             onClick={() =>
               handleCellClick(
                 index,
@@ -400,6 +406,16 @@ const TableCrawlCSS = ({
     },
     [],
   );
+
+  const handleCellDoubleClick = useCallback((content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Cell copied to clipboard", {
+        description: content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        position: "bottom-right",
+      });
+    });
+  }, []);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -562,6 +578,7 @@ const TableCrawlCSS = ({
                     columnVisibility={columnVisibility}
                     clickedCell={clickedCell}
                     handleCellClick={handleCellClick}
+                    onCellDoubleClick={handleCellDoubleClick}
                     calculatedIdWidth={calculatedIdWidth}
                   />
                 </div>

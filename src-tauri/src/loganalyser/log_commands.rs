@@ -10,57 +10,80 @@ use crate::uploads::storage;
 use anyhow::Error;
 
 #[tauri::command]
-pub fn check_logs_from_paths_command(
+pub async fn check_logs_from_paths_command(
     file_paths: Vec<String>,
     storing_logs: bool,
     project: String,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    let app = app.clone();
+    let app_handle = app.clone();
+    let file_paths_clone = file_paths.clone();
+    
+    tokio::task::spawn_blocking(move || {
+        // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
+        if storing_logs {
+            use std::io::{BufRead, BufReader};
+            use std::fs::File;
+            use tauri::Emitter;
+            use crate::loganalyser::analyser::ProgressUpdate;
 
-    // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
-    if storing_logs {
-        use std::io::{BufRead, BufReader};
-        use std::fs::File;
-
-        // Create the DB
-        let _ = create_serverlog_db("serverlog.db");
-        
-        for path in &file_paths {
-            let metadata = std::fs::metadata(path).map_err(|e| e.to_string())?;
-            let file_size = metadata.len();
+            // Create the DB
+            let _ = create_serverlog_db("serverlog.db");
+            let total_files = file_paths_clone.len();
             
-            // Safety check: Don't read files larger than 100MB into memory for persistent storage
-            // Analysis still works fine as it uses line-by-line streaming.
-            if file_size > 100 * 1024 * 1024 {
-                println!("Skipping persistent storage for {} ({} bytes) - size exceeds 100MB. Analysis will still proceed.", path, file_size);
-                continue;
-            }
+            for (index, path) in file_paths_clone.iter().enumerate() {
+                let metadata = std::fs::metadata(path).map_err(|e| e.to_string())?;
+                let file_size = metadata.len();
+                
+                let filename = std::path::Path::new(path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or(path)
+                    .to_string();
 
-            let filename = std::path::Path::new(path)
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or(path)
-                .to_string();
-            
-            match std::fs::read_to_string(path) {
-                Ok(content) => {
-                    let data = LogInput { log_contents: vec![(filename, content)] };
-                    add_data_to_serverlog_db("serverlog.db", &data, &project);
-                }
-                Err(e) => {
-                    println!("Warning: Failed to read {} for storage: {}", path, e);
+                // Emit progress for storage phase
+                let _ = app_handle.emit("progress-update", ProgressUpdate {
+                    current_file: index + 1,
+                    total_files,
+                    percentage: 0.0,
+                    filename: filename.clone(),
+                    phase: "storing".to_string(),
+                });
+
+                // Safety check: Don't read files larger than 100MB into memory for persistent storage
+                if file_size > 100 * 1024 * 1024 {
+                    println!("Skipping persistent storage for {} ({} bytes) - size exceeds 100MB.", path, file_size);
                     continue;
                 }
-            }
-        }
-        println!("Stored eligible logs in serverlog.db from paths for project: {}", project);
-    }
 
-    match analyse_log_from_paths(file_paths, app) {
-        Ok(()) => Ok(()),
-        Err(e) => Err(e),
-    }
+                match std::fs::read_to_string(path) {
+                    Ok(content) => {
+                        let data = LogInput { log_contents: vec![(filename.clone(), content)] };
+                        add_data_to_serverlog_db("serverlog.db", &data, &project);
+                    }
+                    Err(e) => {
+                        println!("Warning: Failed to read {} for storage: {}", path, e);
+                        continue;
+                    }
+                }
+
+                // Emit completion for this file's storage
+                let _ = app_handle.emit("progress-update", ProgressUpdate {
+                    current_file: index + 1,
+                    total_files,
+                    percentage: 100.0,
+                    filename: filename.clone(),
+                    phase: "stored".to_string(),
+                });
+            }
+            println!("Stored eligible logs in serverlog.db from paths for project: {}", project);
+        }
+
+        match analyse_log_from_paths(file_paths, app_handle) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
