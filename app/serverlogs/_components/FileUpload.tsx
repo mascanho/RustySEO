@@ -98,13 +98,8 @@ export function FileUpload({
 
         // Update overall progress based on file progress
         if (payload.total_files > 0) {
-          const fileProgress = (payload.current_file - 1) / payload.total_files;
-          const withinFileProgress = payload.phase === "completed" ? 1 / payload.total_files : 0;
-          const pct = Math.min(
-            95,
-            Math.round((fileProgress + withinFileProgress) * 100),
-          );
-          setOverallProgress(pct);
+          // Use the percentage calculated by the backend which accounts for both file count and intra-file bytes
+          setOverallProgress(payload.percentage);
         }
       });
       unlistenProgress = unlistenP;

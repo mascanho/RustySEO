@@ -2571,8 +2571,7 @@ pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
     Ok(bot_types)
 }
 
-#[tauri::command]
-pub fn clear_active_db_command() -> Result<(), String> {
+pub fn clear_active_db_internal() -> Result<(), String> {
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = match lock.as_mut() {
         Some(c) => c,
@@ -2601,10 +2600,16 @@ pub fn clear_active_db_command() -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn clear_active_db_command() -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        clear_active_db_internal()
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 pub fn clear_all_log_data_command() -> Result<(), String> {
     // Only clear the active session logs
-    clear_active_db_command()?;
-    Ok(())
+    clear_active_db_internal()
 }
 
 #[derive(Serialize, Deserialize)]

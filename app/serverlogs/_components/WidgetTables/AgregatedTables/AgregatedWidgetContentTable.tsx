@@ -90,6 +90,72 @@ const getStatusCodeInfo = (statusCode: number) => {
   };
 };
 
+const getBrowserInfo = (browser: string) => {
+  const b = browser.toLowerCase();
+  if (b.includes("chrome"))
+    return {
+      textColor: "text-blue-800 dark:text-blue-200",
+      bgColor: "bg-blue-100 dark:bg-blue-900 border-blue-200",
+    };
+  if (b.includes("firefox"))
+    return {
+      textColor: "text-orange-800 dark:text-orange-200",
+      bgColor: "bg-orange-100 dark:bg-orange-900 border-orange-200",
+    };
+  if (b.includes("safari"))
+    return {
+      textColor: "text-sky-800 dark:text-sky-200",
+      bgColor: "bg-sky-100 dark:bg-sky-900 border-sky-200",
+    };
+  if (b.includes("edge"))
+    return {
+      textColor: "text-teal-800 dark:text-teal-200",
+      bgColor: "bg-teal-100 dark:bg-teal-900 border-teal-200",
+    };
+  if (b.includes("opera"))
+    return {
+      textColor: "text-red-800 dark:text-red-200",
+      bgColor: "bg-red-100 dark:bg-red-900 border-red-200",
+    };
+  return {
+    textColor: "text-slate-800 dark:text-slate-200",
+    bgColor: "bg-slate-100 dark:bg-slate-900 border-slate-200",
+  };
+};
+
+const getMethodInfo = (method: string) => {
+  const m = method.toUpperCase();
+  if (m === "GET")
+    return {
+      textColor: "text-green-800 dark:text-green-200",
+      bgColor: "bg-green-100 dark:bg-green-900 border-green-200",
+    };
+  if (m === "POST")
+    return {
+      textColor: "text-blue-800 dark:text-blue-200",
+      bgColor: "bg-blue-100 dark:bg-blue-900 border-blue-200",
+    };
+  if (m === "PUT")
+    return {
+      textColor: "text-yellow-800 dark:text-yellow-200",
+      bgColor: "bg-yellow-100 dark:bg-yellow-900 border-yellow-200",
+    };
+  if (m === "DELETE")
+    return {
+      textColor: "text-red-800 dark:text-red-200",
+      bgColor: "bg-red-100 dark:bg-red-900 border-red-200",
+    };
+  if (m === "HEAD")
+    return {
+      textColor: "text-purple-800 dark:text-purple-200",
+      bgColor: "bg-purple-100 dark:bg-purple-900 border-purple-200",
+    };
+  return {
+    textColor: "text-slate-800 dark:text-slate-200",
+    bgColor: "bg-slate-100 dark:bg-slate-900 border-slate-200",
+  };
+};
+
 export const AgregatedWidgetContentTable: React.FC<
   AgregatedWidgetContentTableProps
 > = ({ type, title, segment = "all" }) => {
@@ -383,6 +449,28 @@ export const AgregatedWidgetContentTable: React.FC<
         </Badge>
       );
     }
+    if (key === "browser") {
+      const info = getBrowserInfo(val);
+      return (
+        <Badge
+          variant="outline"
+          className={`${info.bgColor} ${info.textColor} text-[10px] uppercase font-bold flex items-center gap-1`}
+        >
+          <Monitor className="w-3 h-3" /> {val}
+        </Badge>
+      );
+    }
+    if (key === "method") {
+      const info = getMethodInfo(val);
+      return (
+        <Badge
+          variant="outline"
+          className={`${info.bgColor} ${info.textColor} text-[10px] uppercase font-bold font-mono`}
+        >
+          {val}
+        </Badge>
+      );
+    }
     if (key === "hit_count") {
       return (
         <span className="font-bold text-brand-bright">
@@ -392,15 +480,15 @@ export const AgregatedWidgetContentTable: React.FC<
     }
     if (key === "path") {
       return (
-        <div className="flex items-center gap-2 max-w-[400px] ml-3">
+        <div className="flex items-center gap-2 ml-3">
           <span
             onClick={(e) => handleCopyClick(val, e, "URL / PATH")}
-            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform shrink-0"
           >
             <FileCode className="text-blue-500 w-3 h-3" />
           </span>
           <span
-            className="font-mono text-xs truncate cursor-pointer hover:underline dark:text-white/80"
+            className="font-mono text-xs break-all cursor-pointer hover:underline dark:text-white/80"
             title={val}
             onClick={(e) => handleURLClick(val, e)}
           >

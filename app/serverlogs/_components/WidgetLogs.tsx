@@ -1,5 +1,12 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import {
   FileText,
   Server,
@@ -78,9 +85,11 @@ const WidgetStatusCodesTable = lazy(() =>
   })),
 );
 const AgregatedWidgetContentTable = lazy(() =>
-  import("./WidgetTables/AgregatedTables/AgregatedWidgetContentTable").then((module) => ({
-    default: module.AgregatedWidgetContentTable,
-  })),
+  import("./WidgetTables/AgregatedTables/AgregatedWidgetContentTable").then(
+    (module) => ({
+      default: module.AgregatedWidgetContentTable,
+    }),
+  ),
 );
 
 import { Tabs } from "@mantine/core";
@@ -155,7 +164,7 @@ const FallbackLoader = () => (
 );
 
 export default function WidgetLogs() {
-  const [activeTab, setActiveTab] = useState("Filetypes");
+  const [activeTab, setActiveTab] = useState("Trend Totals");
   const [selectedIndexingCrawler, setSelectedIndexingCrawler] = useState<
     string | null
   >(null);
@@ -288,13 +297,13 @@ export default function WidgetLogs() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (activeTab === "Trend Totals") {
       fetchTrendTotals();
       // Poll every 5 seconds while active
       interval = setInterval(fetchTrendTotals, 5000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -587,14 +596,46 @@ export default function WidgetLogs() {
     if (activeTab === "Trend Totals") {
       const data = trendTotals || {};
       return [
-        { name: "URL Path Analysis", value: data.path_count || 0, type: "path_analysis" },
-        { name: "Status Codes Breakdown", value: data.status_count || 0, type: "status" },
-        { name: "HTTP Methods Breakdown", value: data.method_count || 0, type: "method" },
-        { name: "User Agents Breakdown", value: data.user_agent_count || 0, type: "useragent" },
-        { name: "Referrers Breakdown", value: data.referer_count || 0, type: "referer" },
-        { name: "Browsers Breakdown", value: data.browser_count || 0, type: "browser" },
-        { name: "Verified Bots Breakdown", value: data.verified_count || 0, type: "verified" },
-        { name: "IP Addresses Breakdown", value: data.ip_count || 0, type: "ip" },
+        {
+          name: "URL Path Frequency",
+          value: data.path_count || 0,
+          type: "path_analysis",
+        },
+        {
+          name: "Status Codes Frequency",
+          value: data.status_count || 0,
+          type: "status",
+        },
+        {
+          name: "HTTP Methods Frequency",
+          value: data.method_count || 0,
+          type: "method",
+        },
+        {
+          name: "User Agents Frequency",
+          value: data.user_agent_count || 0,
+          type: "useragent",
+        },
+        {
+          name: "Referrers Frequency",
+          value: data.referer_count || 0,
+          type: "referer",
+        },
+        {
+          name: "Browsers Frequency",
+          value: data.browser_count || 0,
+          type: "browser",
+        },
+        {
+          name: "Verified Bots Frequency",
+          value: data.verified_count || 0,
+          type: "verified",
+        },
+        {
+          name: "IP Addresses Freqneucy",
+          value: data.ip_count || 0,
+          type: "ip",
+        },
       ];
     }
 

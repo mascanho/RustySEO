@@ -228,7 +228,7 @@ async fn main() {
             // Clear the active DB & Server logs unconditionally on backend start
             println!("App starting, unconditionally clearing active DB...");
             let _ = loganalyser::active_db::init_active_db();
-            if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+            if let Err(e) = loganalyser::active_db::clear_active_db_internal() {
                 eprintln!("Error clearing active DB on startup: {}", e);
             }
 
@@ -238,7 +238,7 @@ async fn main() {
                     if let WindowEvent::CloseRequested { .. } = event {
                         println!("App closing, clearing active DB...");
                         let _ = loganalyser::active_db::init_active_db();
-                        if let Err(e) = loganalyser::active_db::clear_active_db_command() {
+                        if let Err(e) = loganalyser::active_db::clear_active_db_internal() {
                             eprintln!("Error clearing active DB on close: {}", e);
                         }
                     }
