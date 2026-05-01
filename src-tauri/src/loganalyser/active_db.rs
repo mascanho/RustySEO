@@ -310,8 +310,10 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
             let browser_key = (entry.path.clone(), entry.browser.clone(), entry.segment.clone());
             *path_browser_aggs.entry(browser_key).or_insert(0) += 1;
 
-            let verified_key = (entry.path.clone(), entry.crawler_type.clone(), entry.verified, entry.segment.clone());
-            *path_verified_aggs.entry(verified_key).or_insert(0) += 1;
+            if entry.crawler_type != "Human" {
+                let verified_key = (entry.path.clone(), entry.crawler_type.clone(), entry.verified, entry.segment.clone());
+                *path_verified_aggs.entry(verified_key).or_insert(0) += 1;
+            }
 
             let ip_key = (entry.path.clone(), entry.ip.clone(), entry.segment.clone());
             *path_ip_aggs.entry(ip_key).or_insert(0) += 1;
