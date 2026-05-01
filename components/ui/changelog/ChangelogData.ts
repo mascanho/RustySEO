@@ -4,7 +4,7 @@ export const changelogData = [
     date: "2026-05-28",
     type: "feature",
     changes: [
-      "Tool: Log Analyser - Totals CSV Download",
+      "Tool: Log Analyser - Totals Overview CSV Download",
       "Tool: Log Analyser - Improved MCP",
       "Tool: Log Analyser -  Aggregation & Frequency Totals",
       "Tool: Log Analyser - Fixed bug where export was scoped to table page",

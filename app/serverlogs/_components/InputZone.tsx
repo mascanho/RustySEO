@@ -1,9 +1,7 @@
 // @ts-nocheck
 "use client";
 import MenuDrawer from "@/app/components/ui/MenuDrawer";
-import { CiGlobe } from "react-icons/ci";
-import { IoIosClose } from "react-icons/io";
-import React, { useState } from "react";
+import React from "react";
 import UploadButton from "./UploadButton";
 
 interface InputZoneProps {

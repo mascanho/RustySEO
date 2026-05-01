@@ -376,6 +376,7 @@ async fn main() {
             loganalyser::active_db::get_trend_totals_summary,
             loganalyser::active_db::rebuild_path_aggregations,
             loganalyser::active_db::reclassify_all_segments,
+            loganalyser::active_db::export_server_logs_trends_excel,
             loganalyser::active_db::export_active_logs_excel,
             loganalyser::active_db::export_active_logs_csv,
             loganalyser::active_db::export_aggregated_logs_csv,
