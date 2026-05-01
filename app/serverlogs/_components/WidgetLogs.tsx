@@ -587,14 +587,14 @@ export default function WidgetLogs() {
     if (activeTab === "Trend Totals") {
       const data = trendTotals || {};
       return [
-        { name: "URL Path Analysis", value: data.path_hits || 0, type: "path_analysis" },
-        { name: "Status Codes Breakdown", value: data.status_hits || 0, type: "status" },
-        { name: "HTTP Methods Breakdown", value: data.method_hits || 0, type: "method" },
-        { name: "User Agents Breakdown", value: data.user_agent_hits || 0, type: "useragent" },
-        { name: "Referrers Breakdown", value: data.referer_hits || 0, type: "referer" },
-        { name: "Browsers Breakdown", value: data.browser_hits || 0, type: "browser" },
-        { name: "Verified Bots Breakdown", value: data.verified_hits || 0, type: "verified" },
-        { name: "IP Addresses Breakdown", value: data.ip_hits || 0, type: "ip" },
+        { name: "URL Path Analysis", value: data.path_count || 0, type: "path_analysis" },
+        { name: "Status Codes Breakdown", value: data.status_count || 0, type: "status" },
+        { name: "HTTP Methods Breakdown", value: data.method_count || 0, type: "method" },
+        { name: "User Agents Breakdown", value: data.user_agent_count || 0, type: "useragent" },
+        { name: "Referrers Breakdown", value: data.referer_count || 0, type: "referer" },
+        { name: "Browsers Breakdown", value: data.browser_count || 0, type: "browser" },
+        { name: "Verified Bots Breakdown", value: data.verified_count || 0, type: "verified" },
+        { name: "IP Addresses Breakdown", value: data.ip_count || 0, type: "ip" },
       ];
     }
 
@@ -1043,11 +1043,19 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : activeTab === "Trend Totals" ? (
-                    <AgregatedWidgetContentTable
-                      type={entry.type}
-                      title={entry.name}
-                      segment="all"
-                    />
+                    <>
+                      <DialogHeader className="mb-4">
+                        <DialogTitle className="flex items-center gap-2">
+                          <TbSum className="w-5 h-5 text-brand-bright" />
+                          {entry.name} Detailed Analysis
+                        </DialogTitle>
+                      </DialogHeader>
+                      <AgregatedWidgetContentTable
+                        type={entry.type}
+                        title={entry.name}
+                        segment="all"
+                      />
+                    </>
                   ) : null}
                 </DialogContent>
               </Dialog>

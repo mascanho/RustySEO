@@ -73,6 +73,7 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
 }) => {
   const [data, setData] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalHits, setTotalHits] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -125,6 +126,22 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
       const result = await invoke(command, params);
       setData(result.data || []);
       setTotalCount(result.total_count || 0);
+
+      // Fetch summary for the total hits badge
+      const summary = await invoke("get_trend_totals_summary");
+      let hits = 0;
+      switch (type) {
+        case "status": hits = summary.status_hits; break;
+        case "method": hits = summary.method_hits; break;
+        case "useragent": hits = summary.user_agent_hits; break;
+        case "referer": hits = summary.referer_hits; break;
+        case "browser": hits = summary.browser_hits; break;
+        case "verified": hits = summary.verified_hits; break;
+        case "ip": hits = summary.ip_hits; break;
+        case "path_analysis": hits = summary.path_hits; break;
+      }
+      setTotalHits(hits || 0);
+
     } catch (error) {
       console.error(`Failed to fetch ${type} aggregations:`, error);
       toast.error(`Failed to load ${title}`);
@@ -172,10 +189,10 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
     }
 
     return [
-      ...base,
-      ...specific,
-      { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
-      { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> }
+        ...base, 
+        ...specific, 
+        { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
+        { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> }
     ];
   };
 
@@ -250,14 +267,36 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
-    <div className="space-y-4 h-full pb-0 -mb-4">
-      {/* TOOLBAR */}
-      <div className="flex flex-col md:flex-row justify-between -mb-4 p-1 space-y-4 md:space-y-0">
+    <div className="space-y-4">
+      {/* HEADER SECTION - IDENTICAL TO WIDGETCONTENTTABLE */}
+      <div className="bg-slate-50/50 dark:bg-brand-dark/20 p-4 rounded-lg border border-slate-100 dark:border-brand-dark">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+              <LayoutGrid className="w-4 h-4 text-brand-bright" />
+              {title} Breakdown
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-white/50">
+              Detailed analysis of aggregated logs for {title.toLowerCase()} across all segments.
+            </p>
+          </div>
+          <Badge
+            variant="outline"
+            className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+          >
+            {totalCount.toLocaleString()} unique items ({totalHits.toLocaleString()} total hits)
+          </Badge>
+        </div>
+      </div>
+
+      {/* TOOLBAR - IDENTICAL TO WIDGETCONTENTTABLE */}
+      <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={`Filter ${type}...`}
-            className="pl-8 w-full dark:text-white dark:bg-brand-darker dark:border-brand-dark h-10"
+            type="search"
+            placeholder={`Search by path or ${type}...`}
+            className="pl-8 w-full dark:text-white dark:bg-brand-darker dark:border-brand-dark"
             value={searchTerm}
             onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -266,18 +305,18 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-1 gap-1">
             <Button
               variant="outline"
               onClick={resetFilters}
-              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white h-10"
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white w-full"
             >
               <RefreshCw className="h-4 w-4" />
               Reset
             </Button>
             <Button
               variant="outline"
-              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white h-10"
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white w-full"
             >
               <Download className="h-4 w-4" />
               Export
@@ -285,7 +324,7 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
         </div>
       </div>
 
-      {/* TABLE CONTAINER - MATCHING EXACT HEIGHT */}
+      {/* TABLE CONTAINER - IDENTICAL TO WIDGETCONTENTTABLE */}
       <div
         style={{
           height: "calc(100vh - 40vh)",
@@ -327,7 +366,7 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
                       <TableCell colSpan={getColumns().length} className="h-64">
                           <div className="flex flex-col items-center justify-center gap-3">
                               <Loader2 className="w-8 h-8 animate-spin text-brand-bright" />
-                              <p className="text-sm text-slate-500 dark:text-white/50">Loading aggregation data...</p>
+                              <p className="text-sm text-slate-500 dark:text-white/50">Loading data...</p>
                           </div>
                       </TableCell>
                     </TableRow>
@@ -346,7 +385,7 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
                       <TableCell colSpan={getColumns().length} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
                           <LayoutGrid className="w-8 h-8 opacity-20" />
-                          <p className="dark:text-white/50 text-xs">No aggregation data found.</p>
+                          <p className="dark:text-white/50 text-xs">No entries found.</p>
                         </div>
                       </TableCell>
                     </TableRow>
