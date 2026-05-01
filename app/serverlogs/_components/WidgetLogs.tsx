@@ -100,6 +100,7 @@ import { WidgetIndexingCrawlersTable } from "./WidgetTables/WidgetIndexingCrawle
 import { WidgetRetrievalAgentsTable } from "./WidgetTables/WidgetRetrievalAgentsTable";
 import { WidgetAgenticBotsTable } from "./WidgetTables/WidgetAgenticBotsTable";
 import { invoke } from "@tauri-apps/api/core";
+import { TbSum } from "react-icons/tb";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -114,6 +115,7 @@ const tabs = [
   },
   { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
+  { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
 ];
 
 const COLORS = [
