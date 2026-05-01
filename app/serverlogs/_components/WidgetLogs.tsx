@@ -77,6 +77,11 @@ const WidgetStatusCodesTable = lazy(() =>
     default: module.WidgetStatusCodesTable,
   })),
 );
+const AgregatedWidgetContentTable = lazy(() =>
+  import("./WidgetTables/AgregatedTables/AgregatedWidgetContentTable").then((module) => ({
+    default: module.AgregatedWidgetContentTable,
+  })),
+);
 
 import { Tabs } from "@mantine/core";
 
@@ -238,6 +243,7 @@ export default function WidgetLogs() {
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
   const [agenticBots, setAgenticBots] = useState<string[]>([]);
+  const [trendTotals, setTrendTotals] = useState<any>(null);
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -269,7 +275,17 @@ export default function WidgetLogs() {
       }
     };
     fetchAgenticBots();
-  }, []);
+
+    const fetchTrendTotals = async () => {
+      try {
+        const summary = await invoke("get_trend_totals_summary");
+        setTrendTotals(summary);
+      } catch (error) {
+        console.error("Failed to fetch trend totals:", error);
+      }
+    };
+    fetchTrendTotals();
+  }, [activeTab]);
 
   useEffect(() => {
     const loadTaxonomies = () => {
@@ -554,6 +570,21 @@ export default function WidgetLogs() {
       return agenticBotsData;
     }
 
+    // Trend Totals
+    if (activeTab === "Trend Totals") {
+      if (!trendTotals) return [];
+      return [
+        { name: "URL Path Analysis", value: trendTotals.path_count, type: "path_analysis" },
+        { name: "Status Codes Breakdown", value: trendTotals.status_count, type: "status" },
+        { name: "HTTP Methods Breakdown", value: trendTotals.method_count, type: "method" },
+        { name: "User Agents Breakdown", value: trendTotals.user_agent_count, type: "useragent" },
+        { name: "Referrers Breakdown", value: trendTotals.referer_count, type: "referer" },
+        { name: "Browsers Breakdown", value: trendTotals.browser_count, type: "browser" },
+        { name: "Verified Bots Breakdown", value: trendTotals.verified_count, type: "verified" },
+        { name: "IP Addresses Breakdown", value: trendTotals.ip_count, type: "ip" },
+      ];
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {})
@@ -586,6 +617,7 @@ export default function WidgetLogs() {
     indexingCrawlersData,
     retrievalAgentsData,
     agenticBotsData,
+    trendTotals,
   ]);
 
   const totalLogsAnalysed = useMemo(
@@ -747,11 +779,13 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
-              activeTab === "User Agents" || activeTab === "Referrers"
-                ? "grid-cols-2 md:grid-cols-5 mr-6"
-                : activeTab === "Indexing Crawlers"
-                  ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
-                  : "grid-cols-2 md:grid-cols-4 mr-6"
+              activeTab === "Trend Totals"
+                ? "grid-cols-2 md:grid-cols-3 mr-6"
+                : activeTab === "User Agents" || activeTab === "Referrers"
+                  ? "grid-cols-2 md:grid-cols-5 mr-6"
+                  : activeTab === "Indexing Crawlers"
+                    ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                    : "grid-cols-2 md:grid-cols-4 mr-6"
             }`}
           >
             {chartData.map((entry, idx) => (
@@ -995,6 +1029,12 @@ export default function WidgetLogs() {
                         </div>
                       </div>
                     </>
+                  ) : activeTab === "Trend Totals" ? (
+                    <AgregatedWidgetContentTable
+                      type={entry.type}
+                      title={entry.name}
+                      segment="all"
+                    />
                   ) : null}
                 </DialogContent>
               </Dialog>

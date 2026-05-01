@@ -372,6 +372,7 @@ async fn main() {
             loganalyser::active_db::get_active_path_browser_aggregations,
             loganalyser::active_db::get_active_path_verified_aggregations,
             loganalyser::active_db::get_active_path_ip_aggregations,
+            loganalyser::active_db::get_trend_totals_summary,
             loganalyser::active_db::rebuild_path_aggregations,
             loganalyser::active_db::reclassify_all_segments,
             loganalyser::active_db::export_active_logs_excel,

@@ -182,6 +182,38 @@ pub fn init_active_db() -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Default)]
+pub struct TrendTotalsSummary {
+    pub status_count: usize,
+    pub method_count: usize,
+    pub user_agent_count: usize,
+    pub referer_count: usize,
+    pub browser_count: usize,
+    pub verified_count: usize,
+    pub ip_count: usize,
+    pub path_count: usize,
+}
+
+#[tauri::command]
+pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let mut summary = TrendTotalsSummary::default();
+
+    summary.status_count = conn.query_row("SELECT COUNT(*) FROM active_path_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.method_count = conn.query_row("SELECT COUNT(*) FROM active_path_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.user_agent_count = conn.query_row("SELECT COUNT(*) FROM active_path_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.referer_count = conn.query_row("SELECT COUNT(*) FROM active_path_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.browser_count = conn.query_row("SELECT COUNT(*) FROM active_path_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.verified_count = conn.query_row("SELECT COUNT(*) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.ip_count = conn.query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
+
+    Ok(summary)
+}
+
 pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_mut().ok_or("DB not initialized")?;
