@@ -185,13 +185,21 @@ pub fn init_active_db() -> Result<(), String> {
 #[derive(Serialize, Deserialize, Default)]
 pub struct TrendTotalsSummary {
     pub status_count: usize,
+    pub status_hits: usize,
     pub method_count: usize,
+    pub method_hits: usize,
     pub user_agent_count: usize,
+    pub user_agent_hits: usize,
     pub referer_count: usize,
+    pub referer_hits: usize,
     pub browser_count: usize,
+    pub browser_hits: usize,
     pub verified_count: usize,
+    pub verified_hits: usize,
     pub ip_count: usize,
+    pub ip_hits: usize,
     pub path_count: usize,
+    pub path_hits: usize,
 }
 
 #[tauri::command]
@@ -203,13 +211,28 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     let mut summary = TrendTotalsSummary::default();
 
     summary.status_count = conn.query_row("SELECT COUNT(*) FROM active_path_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.status_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.method_count = conn.query_row("SELECT COUNT(*) FROM active_path_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.method_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.user_agent_count = conn.query_row("SELECT COUNT(*) FROM active_path_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.user_agent_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.referer_count = conn.query_row("SELECT COUNT(*) FROM active_path_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.referer_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.browser_count = conn.query_row("SELECT COUNT(*) FROM active_path_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.browser_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.verified_count = conn.query_row("SELECT COUNT(*) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.verified_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.ip_count = conn.query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.ip_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    
     summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
 
     Ok(summary)
 }

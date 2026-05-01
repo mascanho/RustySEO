@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import {
   FileText,
   Server,
@@ -275,17 +275,30 @@ export default function WidgetLogs() {
       }
     };
     fetchAgenticBots();
+  }, []);
 
-    const fetchTrendTotals = async () => {
-      try {
-        const summary = await invoke("get_trend_totals_summary");
-        setTrendTotals(summary);
-      } catch (error) {
-        console.error("Failed to fetch trend totals:", error);
-      }
+  const fetchTrendTotals = useCallback(async () => {
+    try {
+      const summary = await invoke("get_trend_totals_summary");
+      setTrendTotals(summary);
+    } catch (error) {
+      console.error("Failed to fetch trend totals:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (activeTab === "Trend Totals") {
+      fetchTrendTotals();
+      // Poll every 5 seconds while active
+      interval = setInterval(fetchTrendTotals, 5000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
     };
-    fetchTrendTotals();
-  }, [activeTab]);
+  }, [activeTab, fetchTrendTotals]);
 
   useEffect(() => {
     const loadTaxonomies = () => {
@@ -572,16 +585,16 @@ export default function WidgetLogs() {
 
     // Trend Totals
     if (activeTab === "Trend Totals") {
-      if (!trendTotals) return [];
+      const data = trendTotals || {};
       return [
-        { name: "URL Path Analysis", value: trendTotals.path_count, type: "path_analysis" },
-        { name: "Status Codes Breakdown", value: trendTotals.status_count, type: "status" },
-        { name: "HTTP Methods Breakdown", value: trendTotals.method_count, type: "method" },
-        { name: "User Agents Breakdown", value: trendTotals.user_agent_count, type: "useragent" },
-        { name: "Referrers Breakdown", value: trendTotals.referer_count, type: "referer" },
-        { name: "Browsers Breakdown", value: trendTotals.browser_count, type: "browser" },
-        { name: "Verified Bots Breakdown", value: trendTotals.verified_count, type: "verified" },
-        { name: "IP Addresses Breakdown", value: trendTotals.ip_count, type: "ip" },
+        { name: "URL Path Analysis", value: data.path_hits || 0, type: "path_analysis" },
+        { name: "Status Codes Breakdown", value: data.status_hits || 0, type: "status" },
+        { name: "HTTP Methods Breakdown", value: data.method_hits || 0, type: "method" },
+        { name: "User Agents Breakdown", value: data.user_agent_hits || 0, type: "useragent" },
+        { name: "Referrers Breakdown", value: data.referer_hits || 0, type: "referer" },
+        { name: "Browsers Breakdown", value: data.browser_hits || 0, type: "browser" },
+        { name: "Verified Bots Breakdown", value: data.verified_hits || 0, type: "verified" },
+        { name: "IP Addresses Breakdown", value: data.ip_hits || 0, type: "ip" },
       ];
     }
 
@@ -809,7 +822,7 @@ export default function WidgetLogs() {
                       className="font-medium ml-2"
                       style={{ color: COLORS[idx % COLORS.length] }}
                     >
-                      {entry.value.toLocaleString()}
+                      {(entry.value || 0).toLocaleString()}
                     </span>
                   </div>
                 </DialogTrigger>
