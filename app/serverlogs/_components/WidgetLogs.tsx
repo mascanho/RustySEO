@@ -1043,19 +1043,11 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : activeTab === "Trend Totals" ? (
-                    <>
-                      <DialogHeader className="mb-4">
-                        <DialogTitle className="flex items-center gap-2">
-                          <TbSum className="w-5 h-5 text-brand-bright" />
-                          {entry.name} Detailed Analysis
-                        </DialogTitle>
-                      </DialogHeader>
-                      <AgregatedWidgetContentTable
-                        type={entry.type}
-                        title={entry.name}
-                        segment="all"
-                      />
-                    </>
+                    <AgregatedWidgetContentTable
+                      type={entry.type}
+                      title={entry.name}
+                      segment="all"
+                    />
                   ) : null}
                 </DialogContent>
               </Dialog>

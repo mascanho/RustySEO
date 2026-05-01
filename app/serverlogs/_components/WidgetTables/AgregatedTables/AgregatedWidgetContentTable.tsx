@@ -342,10 +342,14 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
                     {getColumns().map((col) => (
                       <TableHead 
                         key={col.key}
-                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10"
+                        className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
+                          col.key !== "path" ? "text-center" : ""
+                        }`}
                         onClick={() => handleSort(col.key)}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${
+                          col.key !== "path" ? "justify-center" : ""
+                        }`}>
                           {col.icon}
                           <span className="text-[10px] uppercase tracking-wider font-bold dark:text-white/70">{col.label}</span>
                           {sortConfig.key === col.key && (
@@ -374,8 +378,13 @@ export const AgregatedWidgetContentTable: React.FC<AgregatedWidgetContentTablePr
                     data.map((item, idx) => (
                       <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-brand-dark/50 border-b dark:border-brand-dark/50 transition-colors">
                         {getColumns().map((col) => (
-                          <TableCell key={col.key} className="py-2">
-                            {renderValue(item, col.key)}
+                          <TableCell 
+                            key={col.key} 
+                            className={`py-2 ${col.key !== "path" ? "text-center" : ""}`}
+                          >
+                            <div className={`flex items-center ${col.key !== "path" ? "justify-center" : ""}`}>
+                                {renderValue(item, col.key)}
+                            </div>
                           </TableCell>
                         ))}
                       </TableRow>
