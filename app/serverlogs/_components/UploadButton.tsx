@@ -27,7 +27,7 @@ import GSCuploadManager from "./GSCuploadManager";
 import { SiGooglesearchconsole } from "react-icons/si";
 import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
 import { FaDownload } from "react-icons/fa";
-import { exportServerLogsExcel } from "./helpers/generateExcel";
+import { save } from "@tauri-apps/plugin-dialog";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -88,38 +88,28 @@ function UploadButton() {
       <button
         onClick={async () => {
           try {
-            // Load taxonomies from localStorage
-            const storedTaxonomies = localStorage.getItem("taxonomies");
-            let taxonomyNameMap = {};
-            if (storedTaxonomies) {
-              const parsed = JSON.parse(storedTaxonomies);
-              if (Array.isArray(parsed)) {
-                parsed.forEach((tax) => {
-                  if (tax.paths) {
-                    tax.paths.forEach((p) => {
-                      const pathString = typeof p === "string" ? p : p.path;
-                      if (pathString) {
-                        taxonomyNameMap[pathString] = tax.name;
-                      }
-                    });
-                  }
-                });
-              }
-            }
-
-            const success = await exportServerLogsExcel({
-              overview,
-              widgetAggs,
-              timelineData,
-              taxonomyNameMap,
+            const { ExcelLoaded } = useServerLogsStore.getState();
+            
+            // 1. Show save dialog to get file path
+            const filePath = await save({
+              defaultPath: `RustySEO_ServerLogs_Report_${new Date().toISOString().slice(0, 10)}.xlsx`,
+              filters: [{ name: "Excel", extensions: ["xlsx"] }],
             });
 
-            if (success) {
-              toast.success("Excel report exported successfully");
-            }
+            if (!filePath) return;
+
+            toast.loading("Generating comprehensive Excel report...", { id: "excel-export" });
+
+            // 2. Call the backend to export ALL data with trends
+            const totalExported = await invoke("export_server_logs_trends_excel", {
+              filePath,
+              includeGsc: ExcelLoaded,
+            });
+
+            toast.success("Trend report exported successfully!", { id: "excel-export" });
           } catch (error) {
             console.error("Export failed:", error);
-            toast.error("Failed to export Excel report");
+            toast.error(`Export failed: ${error}`, { id: "excel-export" });
           }
         }}
         data-tooltip-id="download-tooltip"

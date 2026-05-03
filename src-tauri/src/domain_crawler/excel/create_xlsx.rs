@@ -655,6 +655,7 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     }
 
     let headers = vec![
+        "ID",
         "Anchor Text",
         "Rel",
         "HREF",
@@ -681,8 +682,9 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     // Write data rows
     for (row_idx, value) in data.iter().enumerate() {
         if let Value::Object(map) = value {
+            let id = (row_idx + 1).to_string();
             let anchor = map
-                .get("anchor")
+                .get("anchor_text")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
@@ -694,7 +696,7 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .to_string();
 
             let link = map
-                .get("link")
+                .get("url")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
@@ -725,7 +727,7 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .unwrap_or("")
                 .to_string();
 
-            let values = vec![anchor, rel, link, title, target, status, page];
+            let values = vec![id, anchor, rel, link, title, target, status, page];
             for (col_idx, cell) in values.iter().enumerate() {
                 worksheet
                     .write((row_idx + 1) as u32, col_idx as u16, cell)

@@ -276,6 +276,7 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
         let mut path_browser_aggs: HashMap<(String, String, String), i64> = HashMap::new();
         let mut path_verified_aggs: HashMap<(String, String, bool, String), i64> = HashMap::new();
         let mut path_ip_aggs: HashMap<(String, String, String), i64> = HashMap::new();
+        let mut path_human_aggs: HashMap<(String, String, String, String), i64> = HashMap::new();
 
         for entry in entries {
             stmt.execute(params![
@@ -331,6 +332,16 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
 
             let ip_key = (entry.path.clone(), entry.ip.clone(), entry.segment.clone());
             *path_ip_aggs.entry(ip_key).or_insert(0) += 1;
+
+            if entry.crawler_type == "Human" {
+                let human_key = (
+                    entry.path.clone(), 
+                    entry.browser.clone(), 
+                    entry.country.clone().unwrap_or_else(|| "-".to_string()), 
+                    entry.segment.clone()
+                );
+                *path_human_aggs.entry(human_key).or_insert(0) += 1;
+            }
         }
 
         // Update the aggregation table in bulk
@@ -412,6 +423,16 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
 
         for ((path, ip, segment), count) in path_ip_aggs {
             ip_agg_stmt.execute(params![path, ip, segment, count]).map_err(|e| e.to_string())?;
+        }
+
+        let mut human_agg_stmt = tx.prepare_cached(
+            "INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(path, browser, country, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+        ).map_err(|e| e.to_string())?;
+
+        for ((path, browser, country, segment), count) in path_human_aggs {
+            human_agg_stmt.execute(params![path, browser, country, segment, count]).map_err(|e| e.to_string())?;
         }
     }
     tx.commit().map_err(|e| e.to_string())?;
@@ -2672,6 +2693,9 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
 
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     {
+        tx.execute("UPDATE active_parsed_logs SET is_crawler = (crawler_type != 'Human')", [])
+            .map_err(|e| e.to_string())?;
+
         tx.execute("DELETE FROM active_path_aggregations", [])
             .map_err(|e| e.to_string())?;
 
@@ -2752,6 +2776,19 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
              SELECT path, crawler_type, verified, segment, COUNT(*) 
              FROM active_parsed_logs 
              GROUP BY path, crawler_type, verified, segment",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tx.execute("DELETE FROM active_path_human_aggregations", [])
+            .map_err(|e| e.to_string())?;
+
+        tx.execute(
+            "INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
+             SELECT path, browser, country, segment, COUNT(*) 
+             FROM active_parsed_logs 
+             WHERE crawler_type = 'Human'
+             GROUP BY path, browser, country, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
@@ -3292,6 +3329,116 @@ pub fn export_active_logs_excel(
     workbook.save(&file_path).map_err(|e| e.to_string())?;
 
     Ok(total_exported)
+}
+
+fn add_query_to_sheet(
+    conn: &Connection,
+    workbook: &mut rust_xlsxwriter::Workbook,
+    sheet_name: &str,
+    query: &str,
+    headers: Vec<&str>,
+    header_format: &rust_xlsxwriter::Format,
+) -> Result<(), String> {
+    let mut worksheet = workbook.add_worksheet();
+    // Sheet name must be <= 31 chars
+    let safe_name = if sheet_name.len() > 31 { &sheet_name[..31] } else { sheet_name };
+    worksheet.set_name(safe_name).map_err(|e| e.to_string())?;
+
+    for (col, header) in headers.iter().enumerate() {
+        worksheet.write_string_with_format(0, col as u16, *header, header_format)
+            .map_err(|e| e.to_string())?;
+    }
+
+    let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+    let col_count = stmt.column_count();
+    let mut rows = stmt.query([]).map_err(|e| e.to_string())?;
+    let mut row_idx = 1;
+
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        for col in 0..col_count {
+            if let Ok(val) = row.get::<_, String>(col) {
+                worksheet.write_string(row_idx, col as u16, &val).map_err(|e| e.to_string())?;
+            } else if let Ok(val) = row.get::<_, i64>(col) {
+                worksheet.write_number(row_idx, col as u16, val as f64).map_err(|e| e.to_string())?;
+            } else if let Ok(val) = row.get::<_, f64>(col) {
+                worksheet.write_number(row_idx, col as u16, val).map_err(|e| e.to_string())?;
+            } else if let Ok(val) = row.get::<_, bool>(col) {
+                worksheet.write_boolean(row_idx, col as u16, val).map_err(|e| e.to_string())?;
+            }
+        }
+        row_idx += 1;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn export_server_logs_trends_excel(
+    file_path: String,
+    include_gsc: bool,
+) -> Result<usize, String> {
+    use rust_xlsxwriter::{Workbook, Format};
+
+    init_active_db()?;
+    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let mut workbook = Workbook::new();
+    let header_format = Format::new().set_bold();
+
+    // 1. SUMMARY SHEET
+    let mut worksheet_summary = workbook.add_worksheet();
+    worksheet_summary.set_name("Trends Summary").map_err(|e| e.to_string())?;
+    worksheet_summary.write_string_with_format(0, 0, "Metric", &header_format).map_err(|e| e.to_string())?;
+    worksheet_summary.write_string_with_format(0, 1, "Unique Count", &header_format).map_err(|e| e.to_string())?;
+    worksheet_summary.write_string_with_format(0, 2, "Total Hits", &header_format).map_err(|e| e.to_string())?;
+
+    let metrics = [
+        ("URL Path Frequency", "active_path_aggregations", "path"),
+        ("Status Codes Frequency", "active_path_status_aggregations", "status"),
+        ("HTTP Methods Frequency", "active_path_method_aggregations", "method"),
+        ("User Agents Frequency", "active_path_user_agent_aggregations", "user_agent"),
+        ("Referrers Frequency", "active_path_referer_aggregations", "referer"),
+        ("Browsers Frequency", "active_path_browser_aggregations", "browser"),
+        ("Bots Frequency", "active_path_verified_aggregations", "crawler_type"),
+        ("IP Addresses Frequency", "active_path_ip_aggregations", "ip"),
+        ("Human Traffic Frequency", "active_path_human_aggregations", "path"),
+    ];
+
+    let mut last_row = 0;
+    for (idx, &(label, table, _column)) in metrics.iter().enumerate() {
+        let row = (idx + 1) as u32;
+        last_row = row;
+        let count: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {}", table), [], |r| r.get(0)).unwrap_or(0);
+        let hits: i64 = conn.query_row(&format!("SELECT SUM(hit_count) FROM {}", table), [], |r| r.get(0)).unwrap_or(0);
+        
+        worksheet_summary.write_string(row, 0, label).map_err(|e| e.to_string())?;
+        worksheet_summary.write_number(row, 1, count as f64).map_err(|e| e.to_string())?;
+        worksheet_summary.write_number(row, 2, hits as f64).map_err(|e| e.to_string())?;
+    }
+
+    // Add Total Entries at the bottom
+    let total_logs: i64 = conn.query_row("SELECT COUNT(*) FROM active_parsed_logs", [], |r| r.get(0)).unwrap_or(0);
+    worksheet_summary.write_string(last_row + 2, 0, "TOTAL LOG ENTRIES").map_err(|e| e.to_string())?;
+    worksheet_summary.write_number(last_row + 2, 2, total_logs as f64).map_err(|e| e.to_string())?;
+
+    // 2. TRENDS AGGREGATIONS SHEETS
+    add_query_to_sheet(conn, &mut workbook, "Timeline", "SELECT substr(timestamp, 1, 10) as date, SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END) as human, SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END) as crawler FROM active_parsed_logs GROUP BY date ORDER BY date ASC", vec!["Date", "Human Hits", "Crawler Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "File Types", "SELECT file_type, COUNT(*) as count FROM active_parsed_logs GROUP BY file_type ORDER BY count DESC", vec!["File Type", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Content Segments", "SELECT segment, COUNT(*) as count FROM active_parsed_logs GROUP BY segment ORDER BY count DESC", vec!["Segment", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Path Frequency", "SELECT path, SUM(hit_count) as total_hits, crawler_type, segment FROM active_path_aggregations GROUP BY path, crawler_type, segment ORDER BY total_hits DESC", vec!["Path", "Hits", "Type", "Segment"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Status Codes", "SELECT status, SUM(hit_count) as total_hits FROM active_path_status_aggregations GROUP BY status ORDER BY total_hits DESC", vec!["Status", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Methods", "SELECT method, SUM(hit_count) as total_hits FROM active_path_method_aggregations GROUP BY method ORDER BY total_hits DESC", vec!["Method", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "User Agents", "SELECT user_agent, SUM(hit_count) as total_hits FROM active_path_user_agent_aggregations GROUP BY user_agent ORDER BY total_hits DESC", vec!["User Agent", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Referrers", "SELECT referer, SUM(hit_count) as total_hits FROM active_path_referer_aggregations GROUP BY referer ORDER BY total_hits DESC", vec!["Referer", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Browsers", "SELECT browser, SUM(hit_count) as total_hits FROM active_path_browser_aggregations GROUP BY browser ORDER BY total_hits DESC", vec!["Browser", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Verified Bots", "SELECT crawler_type, SUM(hit_count) as total_hits FROM active_path_verified_aggregations GROUP BY crawler_type ORDER BY total_hits DESC", vec!["Bot", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "IP Addresses", "SELECT ip, SUM(hit_count) as total_hits FROM active_path_ip_aggregations GROUP BY ip ORDER BY total_hits DESC", vec!["IP", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Human Traffic", "SELECT path, browser, country, SUM(hit_count) as total_hits FROM active_path_human_aggregations GROUP BY path, browser, country ORDER BY total_hits DESC", vec!["Path", "Browser", "Country", "Hits"], &header_format)?;
+
+    workbook.save(&file_path).map_err(|e| e.to_string())?;
+    
+    let total_logs: i64 = conn.query_row("SELECT COUNT(*) FROM active_parsed_logs", [], |r| r.get(0)).unwrap_or(0);
+    Ok(total_logs as usize)
 }
 
 /// Export all logs from the active database directly to a CSV file.

@@ -130,7 +130,7 @@ const tabs = [
   },
   { label: "Retrieval Agents", icon: <TbDatabasePlus className="w-4 h-4" /> },
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
-  { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
+  // { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
   { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
 ];
 
@@ -1097,7 +1097,8 @@ export default function WidgetLogs() {
                         </div>
                       </div>
                     </>
-                  ) : activeTab === "Trend Totals" || activeTab === "Human Traffic" ? (
+                  ) : activeTab === "Trend Totals" ||
+                    activeTab === "Human Traffic" ? (
                     <AgregatedWidgetContentTable
                       type={entry.type}
                       title={entry.name}

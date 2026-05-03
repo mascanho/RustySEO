@@ -319,6 +319,9 @@ export default function Home() {
     return aggregatedData.internalLinks.map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
+      rel: link.rel || "",
+      title: link.title || "",
+      target: link.target || "",
       status: link.status || null,
       error: link.error || null,
       page: link.page || "",
@@ -331,6 +334,9 @@ export default function Home() {
     return aggregatedData.externalLinks.map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
+      rel: link.rel || "",
+      title: link.title || "",
+      target: link.target || "",
       status: link.status || null,
       error: link.error || null,
       page: link.page || "",
