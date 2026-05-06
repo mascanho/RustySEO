@@ -211,6 +211,11 @@ pub struct TrendTotalsSummary {
     pub path_hits: usize,
     pub human_hits: usize,
     pub human_count: usize,
+    pub top_paths: Vec<(String, usize)>,
+    pub top_status_codes: Vec<(String, usize)>,
+    pub top_user_agents: Vec<(String, usize)>,
+    pub top_referrers: Vec<(String, usize)>,
+    pub top_browsers: Vec<(String, usize)>,
 }
 
 #[tauri::command]
@@ -247,6 +252,22 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
 
     summary.human_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
     summary.human_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
+
+    // Fetch top 10 frequencies
+    let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_paths = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT status, hit_count FROM active_path_status_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_status_codes = stmt.query_map([], |row| Ok((row.get::<_, i32>(0)?.to_string(), row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT user_agent, hit_count FROM active_path_user_agent_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_user_agents = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT referer, hit_count FROM active_path_referer_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_referrers = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT browser, hit_count FROM active_path_browser_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_browsers = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
 
     Ok(summary)
 }

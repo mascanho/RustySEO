@@ -254,7 +254,8 @@ export default function WidgetLogs() {
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
   const [agenticBots, setAgenticBots] = useState<string[]>([]);
-  const [trendTotals, setTrendTotals] = useState<any>(null);
+  const trendTotals = useLogAnalysisStore((state) => state.trendTotals);
+  const fetchTrendTotals = useLogAnalysisStore((state) => state.fetchTrendTotals);
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -288,14 +289,7 @@ export default function WidgetLogs() {
     fetchAgenticBots();
   }, []);
 
-  const fetchTrendTotals = useCallback(async () => {
-    try {
-      const summary = await invoke("get_trend_totals_summary");
-      setTrendTotals(summary);
-    } catch (error) {
-      console.error("Failed to fetch trend totals:", error);
-    }
-  }, []);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

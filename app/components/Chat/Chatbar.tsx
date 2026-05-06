@@ -3,7 +3,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -108,30 +108,61 @@ const initialMessages: Message[] = [
   },
 ];
 
+const ChatInput = memo(({ onSend }: { onSend: (text: string) => void }) => {
+  const [input, setInput] = useState("");
+
+  const handleSubmit = () => {
+    if (input.trim() === "") return;
+    onSend(input);
+    setInput("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSubmit();
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
+      <div className="flex items-center space-x-2">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Message"
+          className="h-8 flex-1 rounded-sm border-gray-300 bg-white text-sm text-gray-800 focus-visible:ring-blue-500 dark:border-[#444444] dark:bg-[#252525] dark:text-gray-200 dark:focus-visible:ring-blue-400"
+        />
+        <Button
+          size="sm"
+          onClick={handleSubmit}
+          disabled={input.trim() === ""}
+          className="h-8 w-8 rounded-sm bg-blue-600 p-0 hover:bg-blue-700 dark:bg-[#333333] dark:hover:bg-[#444444]"
+        >
+          <Send className="h-4 w-4 dark:text-sky-bright" />
+        </Button>
+      </div>
+    </div>
+  );
+});
+
+ChatInput.displayName = "ChatInput";
+
 export function ChatBar() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [newMessage, setNewMessage] = useState("");
   const { theme } = useTheme();
   const pathname = usePathname();
+  const { visibility, hideChatbar } = useVisibilityStore();
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
-
+  const handleSendMessage = (text: string) => {
     const message: Message = {
       id: `m${Date.now()}`,
-      text: newMessage,
+      text: text,
       timestamp: new Date(),
       senderId: "1", // Current user is Alex
     };
 
     setMessages([...messages, message]);
-    setNewMessage("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSendMessage();
-    }
   };
 
   const formatTime = (date: Date) => {
@@ -145,8 +176,6 @@ export function ChatBar() {
   const getParticipantColor = (participant: Participant) => {
     return theme === "dark" ? participant.color : participant.lightColor;
   };
-
-  const { visibility, hideChatbar } = useVisibilityStore();
 
   return (
     <div
@@ -260,26 +289,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
         </div>
       </ScrollArea>
 
-      {/* Input */}
-      <div className="border-t border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
-        <div className="flex items-center space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message"
-            className="h-8 flex-1 rounded-sm border-gray-300 bg-white text-sm text-gray-800 focus-visible:ring-blue-500 dark:border-[#444444] dark:bg-[#252525] dark:text-gray-200 dark:focus-visible:ring-blue-400"
-          />
-          <Button
-            size="sm"
-            onClick={handleSendMessage}
-            disabled={newMessage.trim() === ""}
-            className="h-8 w-8 rounded-sm bg-blue-600 p-0 hover:bg-blue-700 dark:bg-[#333333] dark:hover:bg-[#444444]"
-          >
-            <Send className="h-4 w-4 dark:text-sky-bright" />
-          </Button>
-        </div>
-      </div>
+      <ChatInput onSend={handleSendMessage} />
     </div>
   );
 }

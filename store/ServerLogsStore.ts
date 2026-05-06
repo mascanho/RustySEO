@@ -178,6 +178,7 @@ interface LogAnalysisState {
   pathAggregations: PathAggregationsPage;
   botTypes: string[];
   tableIsFiltered: boolean;
+  trendTotals: any | null;
 }
 
 export interface BotPathDetail {
@@ -273,6 +274,7 @@ interface LogAnalysisActions {
   fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchCrawlerAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchBotTypes: () => Promise<void>;
+  fetchTrendTotals: () => Promise<void>;
 }
 
 // Default values for new structures
@@ -396,6 +398,7 @@ const initialState: LogAnalysisState = {
   crawlerTimelineData: [],
   botTypes: [],
   tableIsFiltered: false,
+  trendTotals: null,
 };
 
 // Helper functions for merging complex objects
@@ -1007,6 +1010,17 @@ export const useLogAnalysisStore = create<
       set((state) => {
         state.totalCount = count;
       }),
+
+    fetchTrendTotals: async () => {
+      try {
+        const summary = await invoke("get_trend_totals_summary");
+        set((state) => {
+          state.trendTotals = summary;
+        });
+      } catch (error) {
+        console.error("Failed to fetch trend totals:", error);
+      }
+    },
   })),
 );
 
@@ -1049,6 +1063,8 @@ export const useLogAnalysis = () =>
       fetchStatusAggregations: state.fetchStatusAggregations,
       crawlerTimelineData: state.crawlerTimelineData,
       fetchCrawlerAggregations: state.fetchCrawlerAggregations,
+      trendTotals: state.trendTotals,
+      fetchTrendTotals: state.fetchTrendTotals,
     }),
     shallow,
   );
