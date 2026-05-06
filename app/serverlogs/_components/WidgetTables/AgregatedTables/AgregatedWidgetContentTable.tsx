@@ -315,7 +315,8 @@ export const AgregatedWidgetContentTable: React.FC<
   };
 
   const getColumns = () => {
-    const base = [
+    const isGlobal = ["status", "method", "useragent", "referer", "browser"].includes(type);
+    const base = isGlobal ? [] : [
       { key: "path", label: "Path", icon: <LayoutGrid className="w-3 h-3" /> },
     ];
 
@@ -509,6 +510,16 @@ export const AgregatedWidgetContentTable: React.FC<
         </Badge>
       );
     }
+    if (key === "referer") {
+      return (
+        <span
+          className="block dark:text-white/80 text-xs font-mono break-all min-w-[300px] pl-3"
+          title={val}
+        >
+          {val || "-"}
+        </span>
+      );
+    }
     return (
       <span
         className="truncate max-w-[250px] block dark:text-white/70 text-xs"
@@ -602,13 +613,13 @@ export const AgregatedWidgetContentTable: React.FC<
                       <TableHead
                         key={col.key}
                         className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
-                          col.key !== "path" ? "text-center" : ""
+                          col.key !== "path" && col.key !== "referer" ? "text-center" : ""
                         }`}
                         onClick={() => handleSort(col.key)}
                       >
                         <div
                           className={`flex items-center gap-2 mt-2 ${
-                            col.key !== "path" ? "justify-center" : ""
+                            col.key !== "path" && col.key !== "referer" ? "justify-center" : ""
                           }`}
                         >
                           {col.icon}
@@ -650,10 +661,10 @@ export const AgregatedWidgetContentTable: React.FC<
                         {getColumns().map((col) => (
                           <TableCell
                             key={col.key}
-                            className={`py-2 ${col.key !== "path" ? "text-center" : ""}`}
+                            className={`py-2 ${col.key !== "path" && col.key !== "referer" ? "text-center" : ""}`}
                           >
                             <div
-                              className={`flex items-center ${col.key !== "path" ? "justify-center" : ""}`}
+                              className={`flex items-center ${col.key !== "path" && col.key !== "referer" ? "justify-center" : ""}`}
                             >
                               {renderValue(item, col.key)}
                             </div>
