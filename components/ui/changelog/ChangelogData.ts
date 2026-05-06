@@ -10,6 +10,7 @@ export const changelogData = [
       "Tool: Log Analyser - Fixed bug where export was scoped to table page",
       "Deep Crawler: Ability to copy single cell from tables with double-click",
       "Deep Crawler: Fixed bug on History tab tracking the crawls",
+      "Deep Crawler: Backend deduplication of URLs",
       "Deep Crawler: Fixed bug that was causing the crawler to stall on some websites",
     ],
   },

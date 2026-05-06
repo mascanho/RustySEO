@@ -58,15 +58,17 @@ function OverviewChart() {
 
   // Calculate crawled and queued pages
   const crawledPages = useMemo(() => {
-    return streamedCrawledPages || crawlDataLength || 0;
-  }, [streamedCrawledPages, crawlDataLength]);
+    // Always prefer the backend-reported count. crawlDataLength is capped in memory
+    // and will diverge from the real count on large crawls.
+    return streamedCrawledPages || 0;
+  }, [streamedCrawledPages]);
 
   const queuedPages = useMemo(() => {
     // During crawl: total - crawled, After crawl: 0
-    const total = streamedTotalPages || crawlDataLength || 0;
-    const crawled = streamedCrawledPages || crawlDataLength || 0;
+    const total = streamedTotalPages || 0;
+    const crawled = streamedCrawledPages || 0;
     return Math.max(0, total - crawled);
-  }, [streamedTotalPages, streamedCrawledPages, crawlDataLength]);
+  }, [streamedTotalPages, streamedCrawledPages]);
 
   // Debounced update function
   const debouncedUpdate = useCallback(
@@ -87,9 +89,15 @@ function OverviewChart() {
       // Use the backend-reported totals (streamedCrawledPages) as the source of truth.
       // crawlData.length is capped at 10K in memory and must NOT be used as the count here.
       const state = useGlobalCrawlStore.getState();
-      const trueCount = state.streamedCrawledPages || state.crawlData.length;
+      const failedCount = state.crawlData?.filter((p) => {
+        const s = p?.status_code || 0;
+        return s >= 400;
+      }).length || 0;
+      const rawCount = state.streamedCrawledPages || state.crawlData.length;
+      // Use the same succeeded-only count as FooterLoader
+      const trueCount = Math.max(0, rawCount - failedCount);
       setStreamedCrawledPages(trueCount);
-      setStreamedTotalPages(trueCount);
+      setStreamedTotalPages(rawCount);
 
       // Calculate 4XX and 5XX separately from the in-memory crawlData slice
       // (only a subset for large crawls, but gives a reasonable approximation)
@@ -201,8 +209,8 @@ function OverviewChart() {
               style={{ color: "white" }}
               className="text-3xl dark:fill-white text-white font-bold dark:text-white"
             >
-              {/* Use backend progress count (not crawlData.length which is capped at 10K in memory) */}
-              {streamedCrawledPages || crawlDataLength || 0}
+              {/* Always use backend-reported count — crawlDataLength is capped in memory */}
+              {streamedCrawledPages || 0}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -216,7 +224,7 @@ function OverviewChart() {
       }
       return null;
     },
-    [streamedCrawledPages, crawlDataLength],
+    [streamedCrawledPages],
   );
 
   return (
@@ -260,8 +268,7 @@ function OverviewChart() {
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
           With a total of{" "}
-          {totalPagesCrawledInSession +
-            (streamedTotalPages || crawlDataLength || 0)}{" "}
+          {streamedTotalPages || 0}{" "}
           pages discovered
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>

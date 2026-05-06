@@ -556,17 +556,34 @@ async fn update_state_and_emit_progress(
     settings: &Settings,
 ) {
     let mut state = state.lock().await;
-    state.crawled_urls += 1;
+    
     let normalized_current_url = normalize_url(url.as_str());
-    state.visited.insert(normalized_current_url.clone());
+    let normalized_final_url = normalize_url(&result.url);
+    
+    // Insert final_url first to see if it's new
+    let is_new_final = state.visited.insert(normalized_final_url.clone());
+    
+    // Also mark original requested URL as visited
+    if normalized_current_url != normalized_final_url {
+        state.visited.insert(normalized_current_url.clone());
+    }
+    
     state.pending_urls.remove(&normalized_current_url);
     state.last_activity = Instant::now();
 
-    // Only process links if we haven't reached limits, depth allows, and queue isn't too large.
-    // Cap the queue at 50K entries to prevent unbounded memory growth — the queue grows
-    // much faster than it drains (each page yields 50-200+ links).
+    if is_new_final {
+        state.crawled_urls += 1;
+    } else {
+        // We already processed this final URL via another path (e.g. redirect).
+        // Discount it from total_urls so completion percentage remains accurate.
+        state.total_urls = state.total_urls.saturating_sub(1);
+    }
+
+    // Only process links if we haven't reached limits, depth allows, queue isn't too large,
+    // AND this was a newly discovered final page (skip duplicate link extraction).
     const MAX_QUEUE_SIZE: usize = 50_000;
-    if depth < settings.max_depth
+    if is_new_final
+        && depth < settings.max_depth
         && state.total_urls < settings.max_urls_per_domain
         && state.queue.len() < MAX_QUEUE_SIZE
     {
@@ -716,9 +733,11 @@ async fn update_state_and_emit_progress(
     // Buffer results and emit in batches to avoid flooding the IPC bridge.
     // At 40K+ URLs, emitting per-URL would cause ~40K state updates and re-renders.
     // Adaptive thresholds: larger batches at scale to reduce IPC pressure.
-    state
-        .pending_results
-        .push(super::models::LightCrawlResult::from_full(result));
+    if is_new_final {
+        state
+            .pending_results
+            .push(super::models::LightCrawlResult::from_full(result));
+    }
 
     let (batch_interval_ms, batch_size_threshold) = if total_discovered > 20000 {
         (2000, 400)  // Very large crawls: emit every 2s or 400 items
