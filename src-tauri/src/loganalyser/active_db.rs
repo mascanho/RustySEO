@@ -247,14 +247,14 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     summary.ip_count = conn.query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
     summary.ip_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
 
     summary.human_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
     summary.human_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
 
-    // Fetch top 10 frequencies
-    let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    // Fetch top 10 frequencies (excluding Human to match the Path Frequency table)
+    let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations WHERE crawler_type != 'Human' ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
     summary.top_paths = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
 
     let mut stmt = conn.prepare("SELECT status, hit_count FROM active_path_status_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
