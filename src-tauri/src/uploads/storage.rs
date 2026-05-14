@@ -10,6 +10,12 @@ pub struct Storage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ExcelCrawlUpload {
+    pub id: i32,
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ExcelUpload {
     pub id: i32,
     pub date: String,
@@ -29,6 +35,21 @@ impl Storage {
         })
     }
 
+    /// Creates the table if it doesn't exist for GSC data
+    pub fn create_crawl_table(&self) -> Result<(), String> {
+        self.conn
+            .execute(
+                "CREATE TABLE IF NOT EXISTS crawl_excel_upload (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+            )",
+                [],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Creates the table if it doesn't exist for GSC data
     pub fn create_table(&self) -> Result<(), String> {
         self.conn
             .execute(
@@ -190,6 +211,133 @@ impl Storage {
                     clicks: row.get(4)?,
                     impressions: row.get(5)?,
                     ctr: row.get(6)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut result = Vec::new();
+        for row_result in rows {
+            match row_result {
+                Ok(row) => {
+                    result.push(row);
+                }
+                Err(e) => println!("Error reading row: {}", e),
+            }
+        }
+        Ok(result)
+    }
+
+    // -----------------------------------------------------------------------
+    // Crawl-specific equivalents
+    // -----------------------------------------------------------------------
+
+    pub fn clear_crawl_table(&self) -> Result<(), String> {
+        self.conn
+            .execute("DELETE FROM crawl_excel_upload", [])
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    pub fn insert_single_crawl(&self, data: &ExcelCrawlUpload) -> Result<(), String> {
+        self.conn.execute(
+            "INSERT INTO crawl_excel_upload (url) VALUES (?1)",
+            params![data.url],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    pub fn replace_all_crawl_data(&self, data_list: &[ExcelCrawlUpload]) -> Result<usize, String> {
+        self.clear_crawl_table()?;
+
+        let mut count = 0;
+        for data in data_list {
+            self.insert_single_crawl(data)?;
+            count += 1;
+        }
+
+        Ok(count)
+    }
+
+    pub fn replace_all_crawl_data_transaction(
+        &mut self,
+        data_list: &[ExcelCrawlUpload],
+    ) -> Result<usize, String> {
+        let tx = self.conn.transaction().map_err(|e| e.to_string())?;
+
+        tx.execute("DELETE FROM crawl_excel_upload", [])
+            .map_err(|e| e.to_string())?;
+
+        let mut count = 0;
+        for data in data_list {
+            tx.execute(
+                "INSERT INTO crawl_excel_upload (url) VALUES (?1)",
+                params![data.url],
+            )
+            .map_err(|e| e.to_string())?;
+            count += 1;
+        }
+
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(count)
+    }
+
+    pub fn print_crawl_table(&self) -> Result<(), String> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM crawl_excel_upload")
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(ExcelCrawlUpload {
+                    id: row.get(0)?,
+                    url: row.get(1)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut count = 0;
+        for row_result in rows {
+            match row_result {
+                Ok(row) => {
+                    println!("Row {}: {:?}", count, row);
+                    count += 1;
+                }
+                Err(e) => println!("Error reading row: {}", e),
+            }
+        }
+
+        println!("Total rows printed: {}", count);
+        Ok(())
+    }
+
+    pub fn get_crawl_row_count(&self) -> Result<i64, String> {
+        self.conn
+            .query_row("SELECT COUNT(*) FROM crawl_excel_upload", [], |row| {
+                row.get(0)
+            })
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn reset_crawl_table(&self) -> Result<(), String> {
+        self.conn
+            .execute("DROP TABLE IF EXISTS crawl_excel_upload", [])
+            .map_err(|e| e.to_string())?;
+        self.create_crawl_table()
+    }
+
+    pub fn get_all_crawl_data(&self) -> Result<Vec<ExcelCrawlUpload>, String> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM crawl_excel_upload")
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(ExcelCrawlUpload {
+                    id: row.get(0)?,
+                    url: row.get(1)?,
                 })
             })
             .map_err(|e| e.to_string())?;
