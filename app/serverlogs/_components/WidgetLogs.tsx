@@ -132,6 +132,7 @@ const tabs = [
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
   // { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
   { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
+  { label: "Crawl Sync", icon: <TbSum className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -255,7 +256,9 @@ export default function WidgetLogs() {
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
   const [agenticBots, setAgenticBots] = useState<string[]>([]);
   const trendTotals = useLogAnalysisStore((state) => state.trendTotals);
-  const fetchTrendTotals = useLogAnalysisStore((state) => state.fetchTrendTotals);
+  const fetchTrendTotals = useLogAnalysisStore(
+    (state) => state.fetchTrendTotals,
+  );
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -288,8 +291,6 @@ export default function WidgetLogs() {
     };
     fetchAgenticBots();
   }, []);
-
-
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -593,11 +594,6 @@ export default function WidgetLogs() {
       const data = trendTotals || {};
       return [
         {
-          name: "URL Path Frequency",
-          value: data.path_count || 0,
-          type: "path_analysis",
-        },
-        {
           name: "Status Codes Frequency",
           value: data.status_count || 0,
           type: "status",
@@ -636,6 +632,18 @@ export default function WidgetLogs() {
           name: "Human Traffic Frequency",
           value: data.human_count || 0,
           type: "human",
+        },
+      ];
+    }
+
+    // CRAWL SYNC TAB
+    if (activeTab === "Crawl Sync") {
+      const data = trendTotals || {};
+      return [
+        {
+          name: "Orphan Pages",
+          value: data.referer_count || 0,
+          type: "referer",
         },
       ];
     }
@@ -1092,7 +1100,8 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : activeTab === "Trend Totals" ||
-                    activeTab === "Human Traffic" ? (
+                    activeTab === "Human Traffic" ||
+                    activeTab === "Crawl Sync" ? (
                     <AgregatedWidgetContentTable
                       type={entry.type}
                       title={entry.name}

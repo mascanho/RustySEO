@@ -41,7 +41,7 @@ impl Storage {
             .execute(
                 "CREATE TABLE IF NOT EXISTS crawl_excel_upload (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                url TEXT NOT NULL,
+                url TEXT NOT NULL
             )",
                 [],
             )

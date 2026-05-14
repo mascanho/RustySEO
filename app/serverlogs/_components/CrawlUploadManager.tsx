@@ -127,7 +127,7 @@ export default function CrawlUploadManager() {
       setIsProcessing(true);
 
       // Step 1: Save data to database
-      await invoke("save_gsc_data", {
+      await invoke("save_crawl_data", {
         data: filePreview.data,
       });
 
@@ -147,7 +147,7 @@ export default function CrawlUploadManager() {
       }
 
       console.log(selectedSheet, "Selected sheet");
-      await loadGscIntoMemory();
+      await loadCrawlIntoMemory();
 
       toast.success("File processed and loaded successfully");
     } catch (error) {
@@ -157,42 +157,42 @@ export default function CrawlUploadManager() {
       );
 
       const status = false;
-      localStorageHandler(status);
+      localStorageHandler(status, "CrawlExcel");
     } finally {
       setIsProcessing(false);
     }
   }, [filePreview, setFilePreview]);
 
   // Separate function for loading into memory
-  const loadGscIntoMemory = async () => {
+  const loadCrawlIntoMemory = async () => {
     try {
-      const result = await invoke("load_gsc_from_database");
+      const result = await invoke("load_crawl_from_database");
 
       // Handle different response formats
-      let message = "GSC data loaded into memory";
+      let message = "Crawl data loaded into memory";
 
       if (typeof result === "string") {
         message = result;
       } else if (result && result.message === "Loaded") {
-        message = `Loaded ${result.count} GSC entries into memory`;
+        message = `Loaded ${result.count} Crawl entries into memory`;
 
         // Handle the local storage stuff
-        localStorageHandler(result);
+        localStorageHandler(result, "CrawlExcel");
       } else if (typeof result === "number") {
-        message = `Loaded ${result} GSC entries into memory`;
+        message = `Loaded ${result} Crawl entries into memory`;
       } else {
         const status = true;
-        localStorageHandler(status);
+        localStorageHandler(status, "CrawlExcel");
       }
 
       toast.success(message);
       // TODO: Check THis
       setExcelLoaded(true);
-      console.log("GSC memory load successful:", result);
+      console.log("Crawl memory load successful:", result);
 
       return result;
     } catch (error) {
-      console.error("Failed to load GSC into memory:", error);
+      console.error("Failed to load Crawl into memory:", error);
       toast.error(`Failed to load into memory: ${error}`);
       throw error; // Re-throw to be caught by parent
     }
@@ -212,7 +212,7 @@ export default function CrawlUploadManager() {
 
   useEffect(() => {
     // Fix 1: Check for explicit "true" string
-    const storage = localStorage.getItem("GscExcel");
+    const storage = localStorage.getItem("CrawlExcel");
     console.log(storage, "From the local storage Excel");
 
     if (storage === "true") {
@@ -224,7 +224,7 @@ export default function CrawlUploadManager() {
 
     // Fix 2: Add polling for same-tab updates
     const intervalId = setInterval(() => {
-      const currentValue = localStorage.getItem("GscExcel");
+      const currentValue = localStorage.getItem("CrawlExcel");
       if (currentValue === "true") {
         setLocalStorageExcel(true);
       } else {
@@ -234,7 +234,7 @@ export default function CrawlUploadManager() {
 
     // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "GscExcel") {
+      if (e.key === "CrawlExcel") {
         if (e.newValue === "true") {
           setLocalStorageExcel(true);
         } else {
