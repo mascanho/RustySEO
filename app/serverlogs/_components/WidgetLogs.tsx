@@ -645,6 +645,16 @@ export default function WidgetLogs() {
           value: data.referer_count || 0,
           type: "referer",
         },
+        {
+          name: "Dead Content",
+          value: data.referer_count || 0,
+          type: "referer",
+        },
+        {
+          name: "Hidden Endpoints",
+          value: data.referer_count || 0,
+          type: "referer",
+        },
       ];
     }
 
