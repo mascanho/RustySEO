@@ -34,7 +34,7 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
     } else {
       newMatchType = "startsWith";
     }
-    onUpdate({ ...pathConfig, matchType: newMatchType });
+    onUpdate(pathConfig.path, { ...pathConfig, matchType: newMatchType });
   };
 
   const getButtonText = (
@@ -47,7 +47,7 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
 
   const handlePathUpdate = () => {
     if (editedPath.trim() && editedPath !== pathConfig.path) {
-      onUpdate({ ...pathConfig, path: editedPath.trim() });
+      onUpdate(pathConfig.path, { ...pathConfig, path: editedPath.trim() });
     }
     setIsEditing(false);
   };
@@ -188,9 +188,9 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
     onUpdate({ ...taxonomy, paths: updatedPaths });
   };
 
-  const handleUpdatePath = (updatedPathConfig: PathConfig) => {
+  const handleUpdatePath = (oldPath: string, updatedPathConfig: PathConfig) => {
     const updatedPaths = taxonomy.paths.map((p) =>
-      p.path === updatedPathConfig.path ? updatedPathConfig : p,
+      p.path === oldPath ? updatedPathConfig : p,
     );
     onUpdate({ ...taxonomy, paths: updatedPaths });
   };
