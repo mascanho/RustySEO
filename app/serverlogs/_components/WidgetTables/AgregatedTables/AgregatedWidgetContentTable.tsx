@@ -613,13 +613,13 @@ export const AgregatedWidgetContentTable: React.FC<
                       <TableHead
                         key={col.key}
                         className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
-                          col.key !== "path" && col.key !== "referer" ? "text-center" : ""
-                        }`}
+                          !["path", "referer", "status"].includes(col.key) ? "text-center" : ""
+                        } ${col.key === "status" ? "pl-4" : ""}`}
                         onClick={() => handleSort(col.key)}
                       >
                         <div
                           className={`flex items-center gap-2 mt-2 ${
-                            col.key !== "path" && col.key !== "referer" ? "justify-center" : ""
+                            !["path", "referer", "status"].includes(col.key) ? "justify-center" : ""
                           }`}
                         >
                           {col.icon}
@@ -661,10 +661,12 @@ export const AgregatedWidgetContentTable: React.FC<
                         {getColumns().map((col) => (
                           <TableCell
                             key={col.key}
-                            className={`py-2 ${col.key !== "path" && col.key !== "referer" ? "text-center" : ""}`}
+                            className={`py-2 ${!["path", "referer", "status"].includes(col.key) ? "text-center" : ""} ${
+                              col.key === "status" ? "pl-4" : ""
+                            }`}
                           >
                             <div
-                              className={`flex items-center ${col.key !== "path" && col.key !== "referer" ? "justify-center" : ""}`}
+                              className={`flex items-center ${!["path", "referer", "status"].includes(col.key) ? "justify-center" : ""}`}
                             >
                               {renderValue(item, col.key)}
                             </div>
