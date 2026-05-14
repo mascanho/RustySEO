@@ -58,9 +58,12 @@ pub mod loganalyser;
 pub mod server;
 pub mod version;
 
+use std::sync::atomic::{AtomicU8, Ordering};
+
 // Handling the app state
 pub struct AppState {
     pub settings: Arc<RwLock<Settings>>,
+    pub crawl_control: Arc<AtomicU8>,
 }
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -72,6 +75,27 @@ struct Config {
 // IF THE SETTINGS FILE NEEDS TO BE
 // REPLACED TO AVOID ERRORS IN THE APP DUE TO BREAKING CHANGES ON THE NEW RELEASE,  SET THIS TO TRUE
 const CHECKS_VERSION: bool = true;
+
+#[tauri::command]
+async fn pause_crawl_command(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state.crawl_control.store(1, Ordering::Relaxed);
+    tracing::info!("Crawl paused");
+    Ok(())
+}
+
+#[tauri::command]
+async fn resume_crawl_command(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state.crawl_control.store(0, Ordering::Relaxed);
+    tracing::info!("Crawl resumed");
+    Ok(())
+}
+
+#[tauri::command]
+async fn stop_crawl_command(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state.crawl_control.store(2, Ordering::Relaxed);
+    tracing::info!("Crawl stopped");
+    Ok(())
+}
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
@@ -266,8 +290,14 @@ async fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(LinkResult { links: vec![] })
-        .manage(AppState { settings })
+        .manage(AppState {
+            settings,
+            crawl_control: Arc::new(AtomicU8::new(0)),
+        })
         .invoke_handler(tauri::generate_handler![
+            pause_crawl_command,
+            resume_crawl_command,
+            stop_crawl_command,
             crawl,
             fetch_page_speed,
             fetch_google_search_console,

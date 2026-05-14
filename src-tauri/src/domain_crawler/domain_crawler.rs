@@ -37,6 +37,8 @@ pub async fn crawl_domain(
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
     let settings = settings_state.settings.read().await.clone();
+    let crawl_control = settings_state.crawl_control.clone();
+    crawl_control.store(0, Ordering::Relaxed);
 
     // Extract all settings values we need to avoid borrowing issues
     let user_agents = settings.user_agents.clone();
@@ -244,6 +246,16 @@ pub async fn crawl_domain(
     let mut last_log_time = Instant::now();
 
     while state.lock().await.should_continue() {
+        let control_status = crawl_control.load(Ordering::Relaxed);
+        if control_status == 2 {
+            tracing::info!("Crawl stopped by user.");
+            break;
+        }
+        if control_status == 1 {
+            sleep(Duration::from_millis(200)).await;
+            continue;
+        }
+
         let to_spawn = {
             let mut state_guard = state.lock().await;
             state_guard.cleanup_stale_pending();

@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { invoke } from "@tauri-apps/api/core";
 
 interface InputZoneProps {
   handleDomainCrawl: (url: string) => void;
@@ -25,11 +26,32 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
     const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
   const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const favicon = useGlobalCrawlStore((state) => state.favicon);
+  const isPaused = useGlobalCrawlStore((state) => state.isPaused);
+  const isStopped = useGlobalCrawlStore((state) => state.isStopped);
+  const setIsPaused = useGlobalCrawlStore((state) => state.setIsPaused);
+  const setIsStopped = useGlobalCrawlStore((state) => state.setIsStopped);
+
   const [historyUrls, setHistoryUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handlePause = async () => {
+    await invoke("pause_crawl_command");
+    setIsPaused(true);
+  };
+
+  const handleResume = async () => {
+    await invoke("resume_crawl_command");
+    setIsPaused(false);
+  };
+
+  const handleStop = async () => {
+    await invoke("stop_crawl_command");
+    setIsStopped(true);
+    setIsPaused(false);
+  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value.toLowerCase());
@@ -173,27 +195,42 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 )}
               </AnimatePresence>
 
-              <button
-                disabled={domainCrawlLoading || !url.trim()}
-                onClick={handleButtonCrawl}
-                className={cn(
-                  "relative group/btn flex items-center justify-center gap-2 h-6 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:cursor-not-allowed",
-                  domainCrawlLoading
-                    ? "bg-white dark:bg-brand-dark px-4 border border-gray-200 dark:border-white/10 shadow-none text-brand-bright w-14"
-                    : "bg-brand-bright hover:bg-blue-600 text-white shadow-sm border border-brand-bright/20 disabled:opacity-30 disabled:grayscale w-14",
-                )}
-              >
-                {domainCrawlLoading ? (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-brand-bright/10 rounded-full"></div>
-                    <div className="absolute inset-0 border-2 border-t-brand-bright rounded-full animate-spin"></div>
-                  </div>
-                ) : (
-                  <>
-                    <span>CRAWL </span>
-                  </>
-                )}
-              </button>
+              {!domainCrawlLoading ? (
+                <button
+                  disabled={!url.trim()}
+                  onClick={handleButtonCrawl}
+                  className={cn(
+                    "relative group/btn flex items-center justify-center gap-2 h-6 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:cursor-not-allowed",
+                    "bg-brand-bright hover:bg-blue-600 text-white shadow-sm border border-brand-bright/20 disabled:opacity-30 disabled:grayscale w-14"
+                  )}
+                >
+                  <span>CRAWL</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {isPaused ? (
+                    <button
+                      onClick={handleResume}
+                      className="bg-green-500 hover:bg-green-600 text-white h-6 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                    >
+                      Resume
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePause}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white h-6 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                    >
+                      Pause
+                    </button>
+                  )}
+                  <button
+                    onClick={handleStop}
+                    className="bg-rose-500 hover:bg-rose-600 text-white h-6 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                  >
+                    Stop
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -51,6 +51,8 @@ export default function Page() {
   const setCrawlSessionTotalArray = useGlobalCrawlStore((state) => state.setCrawlSessionTotalArray);
   const setRobotsBlocked = useGlobalCrawlStore((state) => state.setRobotsBlocked);
   const setFavicon = useGlobalCrawlStore((state) => state.setFavicon);
+  const setIsPaused = useGlobalCrawlStore((state) => state.setIsPaused);
+  const setIsStopped = useGlobalCrawlStore((state) => state.setIsStopped);
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
@@ -95,6 +97,8 @@ export default function Page() {
       setIsGlobalCrawling(true);
       setFinishedDeepCrawl(false);
       setIsFinishedDeepCrawl(false);
+      setIsPaused(false);
+      setIsStopped(false);
 
       await fetchMaxUrlsStored();
 

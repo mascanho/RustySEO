@@ -11,6 +11,7 @@ export const changelogData = [
       "Deep Crawler: Ability to copy single cell from tables with double-click",
       "Deep Crawler: Fixed bug on History tab tracking the crawls",
       "Deep Crawler: Backend deduplication of URLs",
+      "Deep Crawler: Pause, Resume and Stop crawl controls",
       "Deep Crawler: Fixed bug that was causing the crawler to stall on some websites",
     ],
   },

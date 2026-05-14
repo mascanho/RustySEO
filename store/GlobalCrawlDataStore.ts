@@ -62,6 +62,8 @@ interface CrawlStore {
   };
   setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
   maxUrlsStored: number;
+  isPaused: boolean;
+  isStopped: boolean;
 
   setDomainCrawlData: (data: PageDetails[]) => void;
   addDomainCrawlResult: (result: PageDetails | PageDetails[]) => void;
@@ -140,6 +142,8 @@ interface CrawlStore {
       setFinishedDeepCrawl: (isFinished: boolean) => void;
       setIsExtracting: (isExtracting: boolean) => void;
       setCrawlerType: (type: string) => void;
+      setIsPaused: (isPaused: boolean) => void;
+      setIsStopped: (isStopped: boolean) => void;
     };
     progress: {
       setTotalUrlsCrawled: (total: number) => void;
@@ -262,6 +266,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setRobotsBlocked: createSetter<string[]>("robotsBlocked"),
     setCookies: createSetter<string[]>("cookies"),
     setFavicon: createSetter<string>("favicon"),
+    setIsPaused: createSetter<boolean>("isPaused"),
+    setIsStopped: createSetter<boolean>("isStopped"),
 
     updateStreamingData: (
       result: PageDetails,
@@ -301,6 +307,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
   return {
     // Initial State
+    isPaused: false,
+    isStopped: false,
     crawlData: [],
     aggregatedData: {
       images: [],
@@ -509,6 +517,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setFinishedDeepCrawl: setters.setFinishedDeepCrawl,
         setIsExtracting: setters.setIsExtracting,
         setCrawlerType: setters.setCrawlerType,
+        setIsPaused: setters.setIsPaused,
+        setIsStopped: setters.setIsStopped,
       },
       progress: {
         setTotalUrlsCrawled: setters.setTotalUrlsCrawled,
