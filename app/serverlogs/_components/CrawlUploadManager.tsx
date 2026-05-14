@@ -69,10 +69,8 @@ export default function CrawlUploadManager() {
 
         console.log(wb, "Sheet stuff");
 
-        if ("Pages" in wb.Sheets) {
-          toast.success(
-            "Google Sheets file detected. Please select a sheet to process",
-          );
+        if ("Sheet1" in wb.Sheets) {
+          toast.success("File detected. Please select a sheet to process");
         } else {
           toast.error("No Pages data found in this file");
         }
