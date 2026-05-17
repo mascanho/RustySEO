@@ -239,11 +239,12 @@ impl Storage {
     }
 
     pub fn insert_single_crawl(&self, data: &ExcelCrawlUpload) -> Result<(), String> {
-        self.conn.execute(
-            "INSERT INTO crawl_excel_upload (url) VALUES (?1)",
-            params![data.url],
-        )
-        .map_err(|e| e.to_string())?;
+        self.conn
+            .execute(
+                "INSERT INTO crawl_excel_upload (url) VALUES (?1)",
+                params![data.url],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(())
     }
 
@@ -352,5 +353,19 @@ impl Storage {
             }
         }
         Ok(result)
+    }
+
+    // Check if URL exists in the crawl table
+    pub fn url_exists_in_crawl_table(&self, url: &str) -> Result<bool, String> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM crawl_excel_upload WHERE url = ?1")
+            .map_err(|e| e.to_string())?;
+
+        let count: i64 = stmt
+            .query_row(params![url], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+
+        Ok(count > 0)
     }
 }
