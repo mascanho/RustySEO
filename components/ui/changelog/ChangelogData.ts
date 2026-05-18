@@ -28,6 +28,7 @@ export const changelogData = [
       "Tool: Log Analyser - Agentic Bot Detection & Segmentation",
       "Tool: Log Analyser - GUI Improvements",
       "Tool: Log Analyser - Sensitive Data Detection",
+      "Tool: Log Analyser - Crawl File Upload",
       "Deep Crawler: Table Exports with Backend data processing",
       "Deep Crawler: Fixed 1015 too many requests bug",
       "Deep Crawler: UI Improvements",

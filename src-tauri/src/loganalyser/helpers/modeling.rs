@@ -55,6 +55,7 @@ pub struct LogEntry {
     pub segment: String,
     pub segment_match: Option<String>,
     pub taxonomy: String,
+    pub crawled: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

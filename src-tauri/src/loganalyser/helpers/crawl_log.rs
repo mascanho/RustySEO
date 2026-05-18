@@ -31,46 +31,64 @@ pub fn load_crawl_from_database() -> Result<CrawlMessage, String> {
     let db = Storage::new("crawl_excel.db").map_err(|e| e.to_string())?;
     let crawl_entries = db.get_all_crawl_data().map_err(|e| e.to_string())?;
 
-    let mut cache = CRAWL_CACHE.lock().unwrap();
-    cache.clear();
+    let count = {
+        let mut cache = CRAWL_CACHE.lock().unwrap();
+        cache.clear();
 
-    for entry in crawl_entries {
-        // Normalize the URL when loading into cache
-        let normalized_url = normalize_crawl_path(&entry.url);
-        println!("Loaded Crawl entry: {} -> {}", &entry.url, normalized_url);
+        for entry in crawl_entries {
+            // Normalize the URL when loading into cache
+            let normalized_url = normalize_crawl_path(&entry.url);
+            println!("Loaded Crawl entry: {} -> {}", &entry.url, normalized_url);
 
-        cache.insert(normalized_url);
-    }
+            cache.insert(normalized_url);
+        }
 
-    println!("Loaded {} Crawl entries from database", cache.len());
+        println!("Loaded {} Crawl entries from database", cache.len());
+        cache.len()
+    };
 
     // Update loaded status
-    let mut loaded = CRAWL_LOADED.lock().unwrap();
-    *loaded = true;
+    {
+        let mut loaded = CRAWL_LOADED.lock().unwrap();
+        *loaded = true;
+    }
 
-    match cache.len() {
+    // Synchronize the crawled status in active DB
+    if let Err(e) = crate::loganalyser::active_db::update_crawled_status_from_cache() {
+        println!("Warning: Failed to update crawled status in active DB: {}", e);
+    }
+
+    match count {
         0 => Ok(CrawlMessage {
             message: Message::NotLoaded,
             count: 0,
         }),
         _ => Ok(CrawlMessage {
             message: Message::Loaded,
-            count: cache.len(),
+            count,
         }),
     }
 }
 
 #[tauri::command]
 pub fn unload_crawl_from_memory() -> Result<CrawlMessage, String> {
-    let mut cache = CRAWL_CACHE.lock().unwrap();
-    let count = cache.len();
-    cache.clear();
+    {
+        let mut cache = CRAWL_CACHE.lock().unwrap();
+        cache.clear();
+    }
 
     // Update loaded status
-    let mut loaded = CRAWL_LOADED.lock().unwrap();
-    *loaded = false;
+    {
+        let mut loaded = CRAWL_LOADED.lock().unwrap();
+        *loaded = false;
+    }
 
-    println!("Unloaded {} Crawl entries from memory", count);
+    // Reset crawled status in active DB
+    if let Err(e) = crate::loganalyser::active_db::update_crawled_status_from_cache() {
+        println!("Warning: Failed to reset crawled status in active DB: {}", e);
+    }
+
+    println!("Unloaded Crawl entries from memory");
 
     Ok(CrawlMessage {
         message: Message::NotLoaded,
@@ -80,7 +98,7 @@ pub fn unload_crawl_from_memory() -> Result<CrawlMessage, String> {
 
 /// Normalize path for Crawl matching
 /// This removes protocol, domain, query parameters, fragments, and normalizes slashes
-fn normalize_crawl_path(path: &str) -> String {
+pub fn normalize_crawl_path(path: &str) -> String {
     let mut normalized = path.trim().to_string();
 
     // Convert to lowercase for case-insensitive matching

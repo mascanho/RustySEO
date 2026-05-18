@@ -62,6 +62,27 @@ pub fn init_active_db() -> Result<(), String> {
         }
     }
 
+    // Migration: If active_parsed_logs exists but lacks 'crawled' column, drop transient tables to recreate them with the new schema.
+    let parsed_logs_table_exists: bool = conn.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='active_parsed_logs'",
+        [],
+        |row| Ok(row.get::<_, i32>(0)? > 0),
+    ).unwrap_or(false);
+
+    if parsed_logs_table_exists {
+        let has_crawled: bool = conn.query_row(
+            "SELECT count(*) FROM pragma_table_info('active_parsed_logs') WHERE name='crawled'",
+            [],
+            |row| Ok(row.get::<_, i32>(0)? > 0),
+        ).unwrap_or(false);
+
+        if !has_crawled {
+            println!("Migration: Dropping old active tables to add crawled column.");
+            conn.execute("DROP TABLE IF EXISTS active_parsed_logs", []).map_err(|e| e.to_string())?;
+            conn.execute("DROP TABLE IF EXISTS active_path_aggregations", []).map_err(|e| e.to_string())?;
+        }
+    }
+
     conn.execute_batch(
         "
         PRAGMA synchronous = OFF;
@@ -92,13 +113,15 @@ pub fn init_active_db() -> Result<(), String> {
             segment TEXT,
             segment_match TEXT,
             taxonomy TEXT,
-            filename TEXT
+            filename TEXT,
+            crawled BOOLEAN DEFAULT FALSE
         );
 
         CREATE TABLE IF NOT EXISTS active_path_aggregations (
             path TEXT,
             crawler_type TEXT,
             segment TEXT,
+            crawled BOOLEAN DEFAULT FALSE,
             hit_count INTEGER DEFAULT 0,
             PRIMARY KEY (path, crawler_type, segment)
         ) WITHOUT ROWID;
@@ -206,6 +229,10 @@ pub struct TrendTotalsSummary {
     pub path_hits: usize,
     pub human_hits: usize,
     pub human_count: usize,
+    pub orphan_pages: usize,
+    pub crawled_pages: usize,
+    pub dead_content: usize,
+    pub uncrawled_urls: usize,
     pub top_paths: Vec<(String, usize)>,
     pub top_status_codes: Vec<(String, usize)>,
     pub top_user_agents: Vec<(String, usize)>,
@@ -215,6 +242,11 @@ pub struct TrendTotalsSummary {
 
 #[tauri::command]
 pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
+    // If the crawl is not loaded, try loading it from the database first
+    if !crate::loganalyser::helpers::crawl_log::is_crawl_loaded() {
+        let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
+    }
+
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
@@ -248,6 +280,38 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     summary.human_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
     summary.human_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
 
+    summary.orphan_pages = conn.query_row("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawled = FALSE AND crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
+    summary.crawled_pages = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+        Ok(db) => db.get_crawl_row_count().unwrap_or(0) as usize,
+        Err(_) => 0,
+    };
+    summary.dead_content = conn.query_row("SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE status >= 400", [], |row| row.get(0)).unwrap_or(0);
+    summary.uncrawled_urls = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+        Ok(db) => {
+            let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
+            let mut active_paths = std::collections::HashSet::new();
+            if let Ok(mut stmt) = conn.prepare("SELECT DISTINCT path FROM active_path_aggregations WHERE crawler_type != 'Human'") {
+                if let Ok(mut rows) = stmt.query([]) {
+                    while let Ok(Some(row)) = rows.next() {
+                        if let Ok(p) = row.get::<_, String>(0) {
+                            active_paths.insert(p);
+                        }
+                    }
+                }
+            }
+            
+            let mut count = 0;
+            for entry in crawl_entries {
+                let normalized = crate::loganalyser::helpers::crawl_log::normalize_crawl_path(&entry.url);
+                if !active_paths.contains(&normalized) {
+                    count += 1;
+                }
+            }
+            count
+        }
+        Err(_) => 0,
+    };
+
     // Fetch top 10 frequencies (excluding Human to match the Path Frequency table)
     let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations WHERE crawler_type != 'Human' ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
     summary.top_paths = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
@@ -278,13 +342,13 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
                 "INSERT INTO active_parsed_logs (
                 ip, timestamp, method, path, position, clicks, ctr, impressions, gsc_url,
                 status, user_agent, referer, response_size, country, crawler_type, is_crawler,
-                file_type, browser, verified, segment, segment_match, taxonomy, filename
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                file_type, browser, verified, segment, segment_match, taxonomy, filename, crawled
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             )
             .map_err(|e| e.to_string())?;
 
         // Pre-aggregate the batch in memory to minimize DB hits for the aggregation table
-        let mut path_aggs: HashMap<(String, String, String), i64> = HashMap::new();
+        let mut path_aggs: std::collections::HashMap<(String, String, String, bool), i64> = std::collections::HashMap::new();
         let mut status_aggs: HashMap<(i32, String), i64> = HashMap::new();
         let mut method_aggs: HashMap<(String, String), i64> = HashMap::new();
         let mut ua_aggs: HashMap<(String, String), i64> = HashMap::new();
@@ -318,12 +382,13 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
                 entry.segment,
                 entry.segment_match,
                 entry.taxonomy,
-                entry.filename
+                entry.filename,
+                entry.crawled
             ])
             .map_err(|e| e.to_string())?;
 
             // Track aggregations
-            let key = (entry.path.clone(), entry.crawler_type.clone(), entry.segment.clone());
+            let key = (entry.path.clone(), entry.crawler_type.clone(), entry.segment.clone(), entry.crawled);
             *path_aggs.entry(key).or_insert(0) += 1;
 
             let status_key = (entry.status as i32, entry.segment.clone());
@@ -362,13 +427,13 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
 
         // Update the aggregation table in bulk
         let mut agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_aggregations (path, crawler_type, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, crawler_type, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(path, crawler_type, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count, crawled = excluded.crawled"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, crawler, segment), count) in path_aggs {
-            agg_stmt.execute(params![path, crawler, segment, count]).map_err(|e| e.to_string())?;
+        for ((path, crawler, segment, crawled), count) in path_aggs {
+            agg_stmt.execute(params![path, crawler, segment, crawled, count]).map_err(|e| e.to_string())?;
         }
 
         let mut status_agg_stmt = tx.prepare_cached(
@@ -487,6 +552,8 @@ pub struct ActiveFilters {
     pub user_agent_categories: Vec<String>,
     #[serde(default)]
     pub user_agent_specific: Vec<String>,
+    #[serde(default)]
+    pub crawl_status_filter: Option<String>,
 }
 
 fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
@@ -793,6 +860,17 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
         }
     }
 
+    if let Some(ref crawl_status) = filters.crawl_status_filter {
+        if crawl_status == "orphan" {
+            clauses.push("crawled = FALSE".to_string());
+        } else if crawl_status == "crawled" {
+            clauses.push("crawled = TRUE".to_string());
+        } else if crawl_status == "dead" {
+            // Usually dead means status >= 400
+            clauses.push("status >= 400".to_string());
+        }
+    }
+
     // 2. Specific referrers
     if !filters.referer_specific.is_empty() {
         let mut spec_or_clauses = Vec::new();
@@ -947,6 +1025,7 @@ pub fn get_active_logs_page(
                 segment_match: row.get("segment_match")?,
                 taxonomy: row.get("taxonomy")?,
                 filename: row.get("filename")?,
+                crawled: row.get("crawled")?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -1033,6 +1112,7 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
                 segment_match: row.get("segment_match")?,
                 taxonomy: row.get("taxonomy")?,
                 filename: row.get("filename")?,
+                crawled: row.get("crawled")?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -1846,25 +1926,168 @@ pub fn get_active_path_aggregations(
     crawler_filter: Option<String>,
     segment_filter: Option<String>,
     search_query: Option<String>,
+    crawl_status_filter: Option<String>,
 ) -> Result<ActivePathAggregationsPage, String> {
+    // If the crawl is not loaded, try loading it from the database first
+    if !crate::loganalyser::helpers::crawl_log::is_crawl_loaded() {
+        let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
+    }
+
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    if let Some(ref status) = crawl_status_filter {
+        if status == "crawled" || status == "uncrawled" {
+            let db = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+                Ok(db) => db,
+                Err(e) => return Err(format!("Failed to open crawl DB: {}", e)),
+            };
+            let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
+
+            let mut active_map: std::collections::HashMap<String, Vec<ActivePathAggregation>> = std::collections::HashMap::new();
+            let mut stmt = conn.prepare("SELECT path, crawler_type, segment, hit_count FROM active_path_aggregations").map_err(|e| e.to_string())?;
+            let active_rows = stmt.query_map([], |row| {
+                Ok(ActivePathAggregation {
+                    path: row.get(0)?,
+                    crawler_type: row.get(1)?,
+                    segment: row.get(2)?,
+                    hit_count: row.get(3)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+            for row_res in active_rows {
+                if let Ok(row) = row_res {
+                    active_map.entry(row.path.clone()).or_default().push(row);
+                }
+            }
+
+            let mut all_items = Vec::new();
+            for entry in crawl_entries {
+                let normalized = crate::loganalyser::helpers::crawl_log::normalize_crawl_path(&entry.url);
+                if let Some(active_items) = active_map.get(&normalized) {
+                    if status == "crawled" {
+                        for item in active_items {
+                            all_items.push(ActivePathAggregation {
+                                path: entry.url.clone(), // Use the original uploaded URL!
+                                crawler_type: item.crawler_type.clone(),
+                                segment: item.segment.clone(),
+                                hit_count: item.hit_count,
+                            });
+                        }
+                    }
+                } else {
+                    if status == "crawled" || status == "uncrawled" {
+                        all_items.push(ActivePathAggregation {
+                            path: entry.url.clone(), // Use the original uploaded URL!
+                            crawler_type: "-".to_string(),
+                            segment: "-".to_string(),
+                            hit_count: 0_i64,
+                        });
+                    }
+                }
+            }
+
+            let search_term = search_query.as_ref().map(|s| s.to_lowercase());
+            let segment_term = segment_filter.as_ref().filter(|s| !s.is_empty());
+            let crawler_term = crawler_filter.as_ref().filter(|s| !s.is_empty() && *s != "all");
+
+            let filtered_items: Vec<ActivePathAggregation> = all_items.into_iter().filter(|item| {
+                // Apply search query (matches path or crawler_type)
+                if let Some(ref term) = search_term {
+                    let path_match = item.path.to_lowercase().contains(term);
+                    let crawler_match = item.crawler_type.to_lowercase().contains(term);
+                    if !path_match && !crawler_match {
+                        return false;
+                    }
+                }
+
+                // Apply segment filter
+                if let Some(segment) = segment_term {
+                    if &item.segment != segment {
+                        return false;
+                    }
+                }
+
+                // Apply crawler filter
+                if let Some(crawler) = crawler_term {
+                    if crawler == "Human" {
+                        if item.crawler_type != "Human" {
+                            return false;
+                        }
+                    } else {
+                        if &item.crawler_type != crawler {
+                            return false;
+                        }
+                    }
+                } else {
+                    // Default crawler filter: exclude Human
+                    if item.crawler_type == "Human" {
+                        return false;
+                    }
+                }
+
+                true
+            }).collect();
+
+            let mut sorted_items = filtered_items;
+            let sort_col = sort_by.as_deref().unwrap_or("hit_count");
+            let sort_asc = sort_order.as_deref() == Some("ascending");
+
+            sorted_items.sort_by(|a, b| {
+                let cmp = match sort_col {
+                    "path" => a.path.cmp(&b.path),
+                    "crawler_type" => a.crawler_type.cmp(&b.crawler_type),
+                    "segment" => a.segment.cmp(&b.segment),
+                    "hit_count" => a.hit_count.cmp(&b.hit_count),
+                    _ => a.hit_count.cmp(&b.hit_count),
+                };
+                if sort_asc {
+                    cmp
+                } else {
+                    cmp.reverse()
+                }
+            });
+
+            let total_count = sorted_items.len() as u32;
+            let start_idx = (page.saturating_sub(1) * limit) as usize;
+            let end_idx = std::cmp::min(start_idx + limit as usize, sorted_items.len());
+            let paginated_data = if start_idx < sorted_items.len() {
+                sorted_items[start_idx..end_idx].to_vec()
+            } else {
+                Vec::new()
+            };
+
+            return Ok(ActivePathAggregationsPage {
+                data: paginated_data,
+                total_count,
+            });
+        }
+    }
 
     let mut clauses = vec!["1=1".to_string()];
     let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
     if let Some(ref crawler) = crawler_filter {
-        if !crawler.is_empty() {
+        if !crawler.is_empty() && crawler != "all" {
             clauses.push("crawler_type = ?".to_string());
             params.push(crawler.clone().into());
-        } else {
+        } else if crawler != "Human" && crawler != "all" {
             clauses.push("crawler_type != 'Human'".to_string());
         }
     } else {
         clauses.push("crawler_type != 'Human'".to_string());
     }
-
+    if let Some(ref crawl_status) = crawl_status_filter {
+        if crawl_status == "orphan" {
+            clauses.push("crawled = FALSE".to_string());
+        } else if crawl_status == "crawled" {
+            clauses.push("crawled = TRUE".to_string());
+        } else if crawl_status == "dead" {
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
+        }
+    }
     if let Some(ref segment) = segment_filter {
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
@@ -2696,8 +2919,8 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
             .map_err(|e| e.to_string())?;
 
         tx.execute(
-            "INSERT INTO active_path_aggregations (path, crawler_type, segment, hit_count)
-             SELECT path, crawler_type, segment, COUNT(*) 
+            "INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+             SELECT path, crawler_type, segment, MAX(crawled), COUNT(*) 
              FROM active_parsed_logs 
              GROUP BY path, crawler_type, segment",
             [],
@@ -2799,6 +3022,50 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
+
+pub fn update_crawled_status_from_cache() -> Result<(), String> {
+    init_active_db()?;
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    {
+        // 1. Reset all crawled statuses to FALSE first
+        tx.execute("UPDATE active_parsed_logs SET crawled = FALSE", [])
+            .map_err(|e| e.to_string())?;
+        tx.execute("UPDATE active_path_aggregations SET crawled = FALSE", [])
+            .map_err(|e| e.to_string())?;
+
+        // 2. Query distinct paths to check against crawled data cache
+        let mut stmt = tx.prepare("SELECT DISTINCT path FROM active_parsed_logs").map_err(|e| e.to_string())?;
+        let paths: Vec<String> = stmt.query_map([], |row| row.get(0))
+            .map_err(|e| e.to_string())?
+            .filter_map(Result::ok)
+            .collect();
+
+        // 3. Collect paths that are crawled
+        let mut crawled_paths = Vec::new();
+        for path in paths {
+            if crate::loganalyser::helpers::crawl_log::check_crawl_data_for_path(&path) {
+                crawled_paths.push(path);
+            }
+        }
+
+        // 4. Update the tables for matches
+        if !crawled_paths.is_empty() {
+            let mut stmt_logs = tx.prepare("UPDATE active_parsed_logs SET crawled = TRUE WHERE path = ?").map_err(|e| e.to_string())?;
+            let mut stmt_aggs = tx.prepare("UPDATE active_path_aggregations SET crawled = TRUE WHERE path = ?").map_err(|e| e.to_string())?;
+
+            for path in crawled_paths {
+                let _ = stmt_logs.execute([&path]);
+                let _ = stmt_aggs.execute([&path]);
+            }
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
     init_active_db()?;
@@ -3563,7 +3830,7 @@ pub fn export_aggregated_logs_csv(
         "browser" => "active_browser_aggregations",
         "verified" => "active_path_verified_aggregations",
         "ip" => "active_path_ip_aggregations",
-        "path_analysis" | "human" => "active_path_aggregations",
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => "active_path_aggregations",
         _ => return Err("Invalid aggregation type".to_string()),
     };
 
@@ -3575,7 +3842,7 @@ pub fn export_aggregated_logs_csv(
         "browser" => "browser",
         "verified" => "crawler_type, verified",
         "ip" => "ip",
-        "path_analysis" | "human" => "crawler_type",
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => "crawler_type",
         _ => return Err("Invalid aggregation type".to_string()),
     };
 
@@ -3600,7 +3867,7 @@ pub fn export_aggregated_logs_csv(
             headers.push("Verified");
         },
         "ip" => headers.push("IP Address"),
-        "path_analysis" | "human" => headers.push("Crawler Type"),
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => headers.push("Crawler Type"),
         _ => {},
     }
     headers.push("Segment");
@@ -3611,6 +3878,15 @@ pub fn export_aggregated_logs_csv(
     
     if agg_type == "human" {
         clauses.push("crawler_type = 'Human'".to_string());
+    } else if agg_type == "orphan" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("crawled = FALSE".to_string());
+    } else if agg_type == "crawled" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("crawled = TRUE".to_string());
+    } else if agg_type == "dead" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
     } else if agg_type == "path_analysis" {
         clauses.push("crawler_type != 'Human'".to_string());
     }

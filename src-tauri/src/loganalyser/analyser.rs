@@ -92,6 +92,7 @@ pub struct LogEntry {
     pub segment_match: Option<String>,
     pub taxonomy: Option<String>,
     pub filename: String,
+    pub crawled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -456,6 +457,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 segment_match: e.segment_match.clone(),
                 taxonomy: Some(e.taxonomy),
                 filename: filename.clone(),
+                crawled: e.crawled,
             };
 
             // Track start/finish times
@@ -877,6 +879,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                     segment_match: e.segment_match.clone(),
                     taxonomy: Some(e.taxonomy),
                     filename: filename.clone(),
+                    crawled: e.crawled,
                 };
 
                 // Track start/finish times
@@ -1113,6 +1116,7 @@ pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
                     segment_match: entry.segment_match.clone(),
                     taxonomy: Some(entry.taxonomy.clone()),
                     filename: "".to_string(),
+                    crawled: entry.crawled,
                 });
 
                 // Track unique IPs

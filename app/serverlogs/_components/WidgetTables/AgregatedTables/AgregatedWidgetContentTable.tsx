@@ -58,7 +58,11 @@ interface AgregatedWidgetContentTableProps {
     | "verified"
     | "ip"
     | "path_analysis"
-    | "human";
+    | "human"
+    | "orphan"
+    | "crawled"
+    | "dead"
+    | "uncrawled";
   title: string;
   segment: string;
 }
@@ -190,6 +194,10 @@ export const AgregatedWidgetContentTable: React.FC<
         return "get_active_path_ip_aggregations";
       case "path_analysis":
       case "human":
+      case "orphan":
+      case "crawled":
+      case "dead":
+      case "uncrawled":
         return "get_active_path_aggregations";
       default:
         return "";
@@ -212,6 +220,10 @@ export const AgregatedWidgetContentTable: React.FC<
 
       if (type === "human") {
         params.crawlerFilter = "Human";
+      }
+
+      if (["orphan", "crawled", "dead", "uncrawled"].includes(type)) {
+        params.crawlStatusFilter = type;
       }
 
       const result = await invoke(command, params);
@@ -248,6 +260,18 @@ export const AgregatedWidgetContentTable: React.FC<
           break;
         case "human":
           hits = summary.human_hits;
+          break;
+        case "orphan":
+          hits = summary.orphan_pages;
+          break;
+        case "crawled":
+          hits = summary.crawled_pages;
+          break;
+        case "uncrawled":
+          hits = summary.uncrawled_urls;
+          break;
+        case "dead":
+          hits = summary.dead_content;
           break;
       }
       setTotalHits(hits || 0);
@@ -392,6 +416,9 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
       case "path_analysis":
       case "human":
+      case "orphan":
+      case "crawled":
+      case "dead":
         specific = [
           {
             key: "crawler_type",
@@ -400,6 +427,10 @@ export const AgregatedWidgetContentTable: React.FC<
           },
         ];
         break;
+    }
+
+    if (type === "uncrawled") {
+      return base;
     }
 
     return [

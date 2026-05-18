@@ -295,7 +295,7 @@ export default function WidgetLogs() {
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (activeTab === "Trend Totals") {
+    if (activeTab === "Trend Totals" || activeTab === "Crawl Sync") {
       fetchTrendTotals();
       // Poll every 5 seconds while active
       interval = setInterval(fetchTrendTotals, 5000);
@@ -642,18 +642,23 @@ export default function WidgetLogs() {
       return [
         {
           name: "Orphan Pages",
-          value: data.referer_count || 0,
-          type: "referer",
+          value: data.orphan_pages || 0,
+          type: "orphan",
+        },
+        {
+          name: "Crawled Pages",
+          value: data.crawled_pages || 0,
+          type: "crawled",
+        },
+        {
+          name: "Uncrawled / Uncorked URLs",
+          value: data.uncrawled_urls || 0,
+          type: "uncrawled",
         },
         {
           name: "Dead Content",
-          value: data.referer_count || 0,
-          type: "referer",
-        },
-        {
-          name: "Hidden Endpoints",
-          value: data.referer_count || 0,
-          type: "referer",
+          value: data.dead_content || 0,
+          type: "dead",
         },
       ];
     }
@@ -861,10 +866,10 @@ export default function WidgetLogs() {
             className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
               activeTab === "Trend Totals"
                 ? "grid-cols-2 md:grid-cols-3 mr-6"
-                : activeTab === "User Agents" || activeTab === "Referrers"
-                  ? "grid-cols-2 md:grid-cols-5 mr-6"
-                  : activeTab === "Indexing Crawlers"
-                    ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                : activeTab === "Crawl Sync" || activeTab === "Indexing Crawlers"
+                  ? "grid-cols-2 md:grid-cols-4 mr-6"
+                  : activeTab === "User Agents" || activeTab === "Referrers"
+                    ? "grid-cols-2 md:grid-cols-5 mr-6"
                     : "grid-cols-2 md:grid-cols-4 mr-6"
             }`}
           >

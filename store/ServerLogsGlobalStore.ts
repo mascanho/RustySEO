@@ -61,5 +61,5 @@ export const useServerLogsStore = create<ServerLogSettings>()(
 
 export const useExcelLoading = create((set) => ({
   ExcelLoaded: false,
-  setExcelLoaded: () => set({ ExcelLoaded: true }),
+  setExcelLoaded: (loaded: boolean) => set({ ExcelLoaded: loaded }),
 }));

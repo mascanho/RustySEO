@@ -731,6 +731,8 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
     // Consolidated GSC matching - single lock, single normalization
     let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
 
+    let (crawled, _) = crate::loganalyser::helpers::crawl_log::check_crawl_match(path);
+
     // Get sorted taxonomies from CACHE - much faster than sorting every line
     let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
 
@@ -756,6 +758,7 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
         segment: classify_segment_name_internal(path, &sorted_taxonomies),
         segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
         taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
+        crawled,
     })
 }
 
@@ -812,6 +815,8 @@ where
             // Consolidated GSC lookup — single lock, single normalization
             let (position, clicks, impressions, gsc_url, ctr) = gsc_log::get_all_gsc_metrics(path);
 
+            let (crawled, _) = crate::loganalyser::helpers::crawl_log::check_crawl_match(path);
+
             f(LogEntry {
                 ip,
                 timestamp,
@@ -834,6 +839,7 @@ where
                 segment: classify_segment_name_internal(path, &sorted_taxonomies),
                 segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
                 taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
+                crawled,
             });
         }
     }
