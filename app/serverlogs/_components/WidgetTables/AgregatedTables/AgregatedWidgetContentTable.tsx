@@ -417,7 +417,6 @@ export const AgregatedWidgetContentTable: React.FC<
       case "path_analysis":
       case "human":
       case "orphan":
-      case "crawled":
       case "dead":
         specific = [
           {
@@ -429,8 +428,12 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
     }
 
-    if (type === "uncrawled") {
-      return base;
+    if (type === "uncrawled" || type === "crawled") {
+      return [
+        ...base,
+        { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
+        { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> },
+      ];
     }
 
     return [
@@ -439,6 +442,35 @@ export const AgregatedWidgetContentTable: React.FC<
       { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
       { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> },
     ];
+  };
+
+  const formatURLWithHighlight = (url: string) => {
+    if (!url) return "";
+    
+    let protocolIdx = url.indexOf("://");
+    let firstSlashIdx = -1;
+    if (protocolIdx !== -1) {
+      const postProtocol = url.substring(protocolIdx + 3);
+      const relativeSlash = postProtocol.indexOf("/");
+      if (relativeSlash !== -1) {
+        firstSlashIdx = protocolIdx + 3 + relativeSlash;
+      }
+    } else {
+      firstSlashIdx = url.indexOf("/");
+    }
+
+    if (firstSlashIdx !== -1) {
+      const domainPart = url.substring(0, firstSlashIdx);
+      const pathPart = url.substring(firstSlashIdx);
+      return (
+        <span>
+          <span className="opacity-45 text-foreground/50">{domainPart}</span>
+          <span className="text-blue-500 dark:text-blue-400 font-semibold bg-blue-500/10 dark:bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-500/20 dark:border-blue-400/20">{pathPart}</span>
+        </span>
+      );
+    }
+    
+    return url;
   };
 
   const renderValue = (item: any, key: string) => {
@@ -511,7 +543,7 @@ export const AgregatedWidgetContentTable: React.FC<
             title={val}
             onClick={(e) => handleURLClick(val, e)}
           >
-            {val}
+            {formatURLWithHighlight(val)}
           </span>
         </div>
       );
