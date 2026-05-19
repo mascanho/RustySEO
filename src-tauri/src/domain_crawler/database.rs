@@ -306,7 +306,11 @@ impl Database {
                     SUM(COALESCE(json_array_length(data, '$.inoutlinks_status_codes.external'), 0)) as external_links,
                     COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) >= 0.5) as indexable,
                     COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) < 0.5) as not_indexable,
-                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.status_code') AS INTEGER) >= 400) as errors
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.status_code') AS INTEGER) >= 400) as errors,
+                    SUM(COALESCE(json_array_length(data, '$.css.external'), 0)) as css,
+                    SUM(COALESCE(json_array_length(data, '$.javascript.external'), 0)) as js,
+                    SUM(COALESCE(json_array_length(data, '$.images.Ok'), 0)) as images,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.had_redirect') = 1 OR json_extract(data, '$.had_redirect') = 'true') as redirects
                 FROM domain_crawl
                 "#
             )?;
@@ -320,6 +324,10 @@ impl Database {
                     "indexable_pages": row.get::<_, i64>(3).unwrap_or(0),
                     "not_indexable_pages": row.get::<_, i64>(4).unwrap_or(0),
                     "errors": row.get::<_, i64>(5).unwrap_or(0),
+                    "total_css": row.get::<_, i64>(6).unwrap_or(0),
+                    "total_javascript": row.get::<_, i64>(7).unwrap_or(0),
+                    "total_images": row.get::<_, i64>(8).unwrap_or(0),
+                    "total_redirects": row.get::<_, i64>(9).unwrap_or(0),
                 }))
             })?;
 

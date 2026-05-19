@@ -626,6 +626,10 @@ pub async fn crawl_domain(
                     total_external_links: stats["total_external_links"].as_i64().unwrap_or(0) as i32,
                     indexable_pages: stats["indexable_pages"].as_i64().unwrap_or(0) as i32,
                     not_indexable_pages: stats["not_indexable_pages"].as_i64().unwrap_or(0) as i32,
+                    total_css: stats["total_css"].as_i64().unwrap_or(0) as i32,
+                    total_javascript: stats["total_javascript"].as_i64().unwrap_or(0) as i32,
+                    total_images: stats["total_images"].as_i64().unwrap_or(0) as i32,
+                    total_redirects: stats["total_redirects"].as_i64().unwrap_or(0) as i32,
                 };
                 
                 println!("Backend recording history for {}: {:?}", domain, history_entry);

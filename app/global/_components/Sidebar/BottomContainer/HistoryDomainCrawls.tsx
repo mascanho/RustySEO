@@ -19,6 +19,10 @@ type DeepCrawlHistory = {
   total_external_links: number;
   indexable_pages: number;
   not_indexable_pages: number;
+  total_css?: number;
+  total_javascript?: number;
+  total_images?: number;
+  total_redirects?: number;
 };
 
 const HistoryDomainCrawls = () => {
@@ -161,6 +165,22 @@ const HistoryDomainCrawls = () => {
                       <p>
                         <strong>Not Indexable:</strong>{" "}
                         {entry.not_indexable_pages}
+                      </p>
+                      <p>
+                        <strong>Total CSS Files:</strong>{" "}
+                        {entry.total_css ?? 0}
+                      </p>
+                      <p>
+                        <strong>Total JavaScript Files:</strong>{" "}
+                        {entry.total_javascript ?? 0}
+                      </p>
+                      <p>
+                        <strong>Total Images:</strong>{" "}
+                        {entry.total_images ?? 0}
+                      </p>
+                      <p>
+                        <strong>Total Redirects:</strong>{" "}
+                        {entry.total_redirects ?? 0}
                       </p>
                       <p>{/* <strong>Issues:</strong> {entry.errors} */}</p>
                     </div>
