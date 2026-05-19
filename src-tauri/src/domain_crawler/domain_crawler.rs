@@ -630,6 +630,13 @@ pub async fn crawl_domain(
                     total_javascript: stats["total_javascript"].as_i64().unwrap_or(0) as i32,
                     total_images: stats["total_images"].as_i64().unwrap_or(0) as i32,
                     total_redirects: stats["total_redirects"].as_i64().unwrap_or(0) as i32,
+                    missing_title: stats["missing_title"].as_i64().unwrap_or(0) as i32,
+                    missing_description: stats["missing_description"].as_i64().unwrap_or(0) as i32,
+                    avg_response_time: stats["avg_response_time"].as_i64().unwrap_or(0) as i32,
+                    max_crawl_depth: stats["max_crawl_depth"].as_i64().unwrap_or(0) as i32,
+                    total_secure_pages: stats["total_secure_pages"].as_i64().unwrap_or(0) as i32,
+                    total_schema_pages: stats["total_schema_pages"].as_i64().unwrap_or(0) as i32,
+                    total_mobile_pages: stats["total_mobile_pages"].as_i64().unwrap_or(0) as i32,
                 };
                 
                 println!("Backend recording history for {}: {:?}", domain, history_entry);

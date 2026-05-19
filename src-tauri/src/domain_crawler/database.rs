@@ -310,7 +310,14 @@ impl Database {
                     SUM(COALESCE(json_array_length(data, '$.css.external'), 0)) as css,
                     SUM(COALESCE(json_array_length(data, '$.javascript.external'), 0)) as js,
                     SUM(COALESCE(json_array_length(data, '$.images.Ok'), 0)) as images,
-                    COUNT(*) FILTER (WHERE json_extract(data, '$.had_redirect') = 1 OR json_extract(data, '$.had_redirect') = 'true') as redirects
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.had_redirect') = 1 OR json_extract(data, '$.had_redirect') = 'true') as redirects,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.title') IS NULL OR json_extract(data, '$.title') = '[]' OR json_extract(data, '$.title') = '') as missing_title,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.description') IS NULL OR json_extract(data, '$.description') = '') as missing_description,
+                    CAST(AVG(COALESCE(CAST(json_extract(data, '$.response_time') AS REAL), 0)) * 1000 AS INTEGER) as avg_response_time,
+                    MAX(COALESCE(CAST(json_extract(data, '$.url_depth') AS INTEGER), 0)) as max_crawl_depth,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.https') = 1 OR json_extract(data, '$.https') = 'true') as total_secure_pages,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.schema') IS NOT NULL AND json_extract(data, '$.schema') != '' AND json_extract(data, '$.schema') != 'null') as total_schema_pages,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.mobile') = 1 OR json_extract(data, '$.mobile') = 'true') as total_mobile_pages
                 FROM domain_crawl
                 "#
             )?;
@@ -328,6 +335,13 @@ impl Database {
                     "total_javascript": row.get::<_, i64>(7).unwrap_or(0),
                     "total_images": row.get::<_, i64>(8).unwrap_or(0),
                     "total_redirects": row.get::<_, i64>(9).unwrap_or(0),
+                    "missing_title": row.get::<_, i64>(10).unwrap_or(0),
+                    "missing_description": row.get::<_, i64>(11).unwrap_or(0),
+                    "avg_response_time": row.get::<_, i64>(12).unwrap_or(0),
+                    "max_crawl_depth": row.get::<_, i64>(13).unwrap_or(0),
+                    "total_secure_pages": row.get::<_, i64>(14).unwrap_or(0),
+                    "total_schema_pages": row.get::<_, i64>(15).unwrap_or(0),
+                    "total_mobile_pages": row.get::<_, i64>(16).unwrap_or(0),
                 }))
             })?;
 

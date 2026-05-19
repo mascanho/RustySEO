@@ -32,6 +32,7 @@ export const changelogData = [
       "Deep Crawler: Table Exports with Backend data processing",
       "Deep Crawler: Fixed 1015 too many requests bug",
       "Deep Crawler: UI Improvements",
+      "Deep Crawler: Improved History tab",
     ],
   },
   {
