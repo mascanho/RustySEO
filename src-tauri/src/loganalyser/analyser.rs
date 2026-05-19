@@ -423,7 +423,10 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
-        println!("Processing log {} out of {}: {}", index + 1, file_count, filename);
+        print!("⠋ Processing log {} out of {}: {}...", index + 1, file_count, filename);
+        use std::io::Write;
+        std::io::stdout().flush().ok();
+
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
             total_files: file_count,
@@ -432,7 +435,16 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             phase: "started".to_string(),
         });
 
+        let mut file_lines_processed = 0;
         parse_log_entries(&log_content, |e| {
+            file_lines_processed += 1;
+            if file_lines_processed % 1000 == 0 {
+                let spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+                let spinner_char = spinner_chars[(file_lines_processed / 1000) % spinner_chars.len()];
+                print!("\r{} Processing log {} out of {}: {} ({} lines)...", spinner_char, index + 1, file_count, filename, file_lines_processed);
+                std::io::stdout().flush().ok();
+            }
+
             let is_crawler = is_crawler(&e.user_agent);
             let entry = LogEntry {
                 ip: e.ip.clone(),
@@ -538,6 +550,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             // Stream the entry
             let _ = entry_tx.send(StreamEntry::LogEntry(entry));
         });
+
+        println!("\r✓ Completed log {} out of {}: {} ({} lines total)      ", index + 1, file_count, filename, file_lines_processed);
 
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
@@ -801,7 +815,9 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             .unwrap_or(file_path)
             .to_string();
 
-        println!("Processing log {} out of {}: {}", index + 1, file_count, filename);
+        print!("⠋ Processing log {} out of {}: {}...", index + 1, file_count, filename);
+        use std::io::Write;
+        std::io::stdout().flush().ok();
 
         // Get file size for intra-file progress reporting
         let file_size = std::fs::metadata(file_path)
@@ -827,6 +843,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         let reader = BufReader::with_capacity(8 * 1024 * 1024, file); // 8MB buffer
         let mut bytes_read: u64 = 0;
         let mut lines_since_progress: usize = 0;
+        let mut file_lines_processed = 0;
 
         for line_result in reader.lines() {
             let line = match line_result {
@@ -835,6 +852,14 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             };
             bytes_read += line.len() as u64 + 1; // +1 for newline
             lines_since_progress += 1;
+            file_lines_processed += 1;
+
+            if file_lines_processed % 1000 == 0 {
+                let spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+                let spinner_char = spinner_chars[(file_lines_processed / 1000) % spinner_chars.len()];
+                print!("\r{} Processing log {} out of {}: {} ({} lines)...", spinner_char, index + 1, file_count, filename, file_lines_processed);
+                std::io::stdout().flush().ok();
+            }
 
             // Send intra-file progress every 5000 lines
             if lines_since_progress >= 5000 && file_size > 0.0 {
@@ -954,6 +979,8 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 let _ = entry_tx.send(StreamEntry::LogEntry(entry));
             }
         }
+
+        println!("\r✓ Completed log {} out of {}: {} ({} lines total)      ", index + 1, file_count, filename, file_lines_processed);
 
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
