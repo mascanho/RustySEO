@@ -302,10 +302,10 @@ impl Database {
                 r#"
                 SELECT 
                     COUNT(*) as pages,
-                    SUM(CAST(json_extract(data, '$.internal_links_count') AS INTEGER)) as internal_links,
-                    SUM(CAST(json_extract(data, '$.external_links_count') AS INTEGER)) as external_links,
-                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) > 0.5) as indexable,
-                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) <= 0.5) as not_indexable,
+                    SUM(COALESCE(json_array_length(data, '$.inoutlinks_status_codes.internal'), 0)) as internal_links,
+                    SUM(COALESCE(json_array_length(data, '$.inoutlinks_status_codes.external'), 0)) as external_links,
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) >= 0.5) as indexable,
+                    COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.indexability.indexability') AS REAL) < 0.5) as not_indexable,
                     COUNT(*) FILTER (WHERE CAST(json_extract(data, '$.status_code') AS INTEGER) >= 400) as errors
                 FROM domain_crawl
                 "#
