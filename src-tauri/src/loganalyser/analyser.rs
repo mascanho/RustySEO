@@ -423,6 +423,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
+        println!("Processing log {} out of {}: {}", index + 1, file_count, filename);
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
             total_files: file_count,
@@ -799,6 +800,8 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             .and_then(|n| n.to_str())
             .unwrap_or(file_path)
             .to_string();
+
+        println!("Processing log {} out of {}: {}", index + 1, file_count, filename);
 
         // Get file size for intra-file progress reporting
         let file_size = std::fs::metadata(file_path)

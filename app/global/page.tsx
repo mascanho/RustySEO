@@ -42,14 +42,28 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("first");
 
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const setDomainCrawlLoading = useGlobalCrawlStore((state) => state.setDomainCrawlLoading);
-  const clearDomainCrawlData = useGlobalCrawlStore((state) => state.clearDomainCrawlData);
-  const addDomainCrawlResult = useGlobalCrawlStore((state) => state.addDomainCrawlResult);
-  const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
+  const setDomainCrawlLoading = useGlobalCrawlStore(
+    (state) => state.setDomainCrawlLoading,
+  );
+  const clearDomainCrawlData = useGlobalCrawlStore(
+    (state) => state.clearDomainCrawlData,
+  );
+  const addDomainCrawlResult = useGlobalCrawlStore(
+    (state) => state.addDomainCrawlResult,
+  );
+  const setSelectedTableURL = useGlobalCrawlStore(
+    (state) => state.setSelectedTableURL,
+  );
   const setIssuesData = useGlobalCrawlStore((state) => state.setIssuesData);
-  const setFinishedDeepCrawl = useGlobalCrawlStore((state) => state.setFinishedDeepCrawl);
-  const setCrawlSessionTotalArray = useGlobalCrawlStore((state) => state.setCrawlSessionTotalArray);
-  const setRobotsBlocked = useGlobalCrawlStore((state) => state.setRobotsBlocked);
+  const setFinishedDeepCrawl = useGlobalCrawlStore(
+    (state) => state.setFinishedDeepCrawl,
+  );
+  const setCrawlSessionTotalArray = useGlobalCrawlStore(
+    (state) => state.setCrawlSessionTotalArray,
+  );
+  const setRobotsBlocked = useGlobalCrawlStore(
+    (state) => state.setRobotsBlocked,
+  );
   const setFavicon = useGlobalCrawlStore((state) => state.setFavicon);
   const setIsPaused = useGlobalCrawlStore((state) => state.setIsPaused);
   const setIsStopped = useGlobalCrawlStore((state) => state.setIsStopped);
@@ -57,7 +71,9 @@ export default function Page() {
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
-  const fetchMaxUrlsStored = useGlobalCrawlStore((state) => state.actions.data.fetchMaxUrlsStored);
+  const fetchMaxUrlsStored = useGlobalCrawlStore(
+    (state) => state.actions.data.fetchMaxUrlsStored,
+  );
 
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
@@ -218,7 +234,9 @@ export default function Page() {
 
       // Update session storage for totals
       const totalUrlsCrawled = event.payload?.crawled_urls || 0;
-      const crawledLinks = JSON.parse(sessionStorage.getItem("CrawledLinks") || "[]");
+      const crawledLinks = JSON.parse(
+        sessionStorage.getItem("CrawledLinks") || "[]",
+      );
       crawledLinks.push(totalUrlsCrawled);
       setCrawlSessionTotalArray(crawledLinks);
       sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
@@ -347,6 +365,11 @@ export default function Page() {
               <Tabs.Tab value="content">
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                 Content
+              </Tabs.Tab>
+
+              <Tabs.Tab value="dashboard">
+                <FaGlobe className="inline-block mr-2" />
+                Dashboard
               </Tabs.Tab>
             </Tabs.List>
           </aside>
