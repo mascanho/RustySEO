@@ -646,14 +646,24 @@ export default function WidgetLogs() {
           type: "orphan",
         },
         {
-          name: "Crawled Pages",
+          name: "Orphans with GSC Traffic",
+          value: data.orphans_gsc_traffic || 0,
+          type: "orphan_gsc",
+        },
+        {
+          name: "Uploaded Crawl Pages",
           value: data.crawled_pages || 0,
           type: "crawled",
         },
         {
-          name: "Uncrawled / Uncorked URLs",
+          name: "Uncrawled Pages",
           value: data.uncrawled_urls || 0,
           type: "uncrawled",
+        },
+        {
+          name: "Wasted Crawl Budget",
+          value: data.wasted_crawl_budget || 0,
+          type: "crawled_errors",
         },
         {
           name: "Dead Content",
@@ -864,9 +874,9 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
-              activeTab === "Trend Totals"
+              activeTab === "Trend Totals" || activeTab === "Crawl Sync"
                 ? "grid-cols-2 md:grid-cols-3 mr-6"
-                : activeTab === "Crawl Sync" || activeTab === "Indexing Crawlers"
+                : activeTab === "Indexing Crawlers"
                   ? "grid-cols-2 md:grid-cols-4 mr-6"
                   : activeTab === "User Agents" || activeTab === "Referrers"
                     ? "grid-cols-2 md:grid-cols-5 mr-6"

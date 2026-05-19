@@ -60,7 +60,9 @@ interface AgregatedWidgetContentTableProps {
     | "path_analysis"
     | "human"
     | "orphan"
+    | "orphan_gsc"
     | "crawled"
+    | "crawled_errors"
     | "dead"
     | "uncrawled";
   title: string;
@@ -195,7 +197,9 @@ export const AgregatedWidgetContentTable: React.FC<
       case "path_analysis":
       case "human":
       case "orphan":
+      case "orphan_gsc":
       case "crawled":
+      case "crawled_errors":
       case "dead":
       case "uncrawled":
         return "get_active_path_aggregations";
@@ -222,7 +226,7 @@ export const AgregatedWidgetContentTable: React.FC<
         params.crawlerFilter = "Human";
       }
 
-      if (["orphan", "crawled", "dead", "uncrawled"].includes(type)) {
+      if (["orphan", "orphan_gsc", "crawled", "crawled_errors", "dead", "uncrawled"].includes(type)) {
         params.crawlStatusFilter = type;
       }
 
@@ -264,8 +268,14 @@ export const AgregatedWidgetContentTable: React.FC<
         case "orphan":
           hits = summary.orphan_pages;
           break;
+        case "orphan_gsc":
+          hits = summary.orphans_gsc_traffic;
+          break;
         case "crawled":
           hits = summary.crawled_pages;
+          break;
+        case "crawled_errors":
+          hits = summary.wasted_crawl_budget;
           break;
         case "uncrawled":
           hits = summary.uncrawled_urls;
@@ -417,7 +427,7 @@ export const AgregatedWidgetContentTable: React.FC<
       case "path_analysis":
       case "human":
       case "orphan":
-      case "dead":
+      case "orphan_gsc":
         specific = [
           {
             key: "crawler_type",
@@ -428,7 +438,7 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
     }
 
-    if (type === "uncrawled" || type === "crawled") {
+    if (type === "uncrawled" || type === "dead" || type === "crawled" || type === "crawled_errors") {
       return [
         ...base,
         { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },

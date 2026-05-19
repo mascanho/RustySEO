@@ -233,6 +233,8 @@ pub struct TrendTotalsSummary {
     pub crawled_pages: usize,
     pub dead_content: usize,
     pub uncrawled_urls: usize,
+    pub orphans_gsc_traffic: usize,
+    pub wasted_crawl_budget: usize,
     pub top_paths: Vec<(String, usize)>,
     pub top_status_codes: Vec<(String, usize)>,
     pub top_user_agents: Vec<(String, usize)>,
@@ -285,7 +287,16 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
         Ok(db) => db.get_crawl_row_count().unwrap_or(0) as usize,
         Err(_) => 0,
     };
-    summary.dead_content = conn.query_row("SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE status >= 400", [], |row| row.get(0)).unwrap_or(0);
+    summary.orphans_gsc_traffic = conn.query_row(
+        "SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE crawled = FALSE AND (clicks > 0 OR impressions > 0) AND crawler_type != 'Human'",
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+    summary.wasted_crawl_budget = conn.query_row(
+        "SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE status >= 400 AND crawled = TRUE AND crawler_type != 'Human'",
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
     summary.uncrawled_urls = match crate::uploads::storage::Storage::new("crawl_excel.db") {
         Ok(db) => {
             let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
@@ -311,6 +322,8 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
         }
         Err(_) => 0,
     };
+
+    summary.dead_content = summary.uncrawled_urls;
 
     // Fetch top 10 frequencies (excluding Human to match the Path Frequency table)
     let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations WHERE crawler_type != 'Human' ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
@@ -1938,7 +1951,7 @@ pub fn get_active_path_aggregations(
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     if let Some(ref status) = crawl_status_filter {
-        if status == "crawled" || status == "uncrawled" {
+        if status == "crawled" || status == "uncrawled" || status == "dead" {
             let db = match crate::uploads::storage::Storage::new("crawl_excel.db") {
                 Ok(db) => db,
                 Err(e) => return Err(format!("Failed to open crawl DB: {}", e)),
@@ -1978,7 +1991,7 @@ pub fn get_active_path_aggregations(
                         }
                     }
                 } else {
-                    if status == "crawled" || status == "uncrawled" {
+                    if status == "uncrawled" || status == "dead" {
                         all_items.push(ActivePathAggregation {
                             path: entry.url.clone(), // Use the original uploaded URL!
                             crawler_type: "-".to_string(),
@@ -2082,8 +2095,14 @@ pub fn get_active_path_aggregations(
     if let Some(ref crawl_status) = crawl_status_filter {
         if crawl_status == "orphan" {
             clauses.push("crawled = FALSE".to_string());
+        } else if crawl_status == "orphan_gsc" {
+            clauses.push("crawled = FALSE".to_string());
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE clicks > 0 OR impressions > 0)".to_string());
         } else if crawl_status == "crawled" {
             clauses.push("crawled = TRUE".to_string());
+        } else if crawl_status == "crawled_errors" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
         } else if crawl_status == "dead" {
             clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
         }
