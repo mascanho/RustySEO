@@ -27,6 +27,9 @@ import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
 import { useDiffStore } from "@/store/DiffStore";
+import DashboardSEO from "./_components/SEODashboard/DashboardSEO";
+import { TbDashboard } from "react-icons/tb";
+import { MdOutlineDashboard } from "react-icons/md";
 // import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
 
 interface CrawlResult {
@@ -368,7 +371,7 @@ export default function Page() {
               </Tabs.Tab>
 
               <Tabs.Tab value="dashboard">
-                <FaGlobe className="inline-block mr-2" />
+                <MdOutlineDashboard className="inline-block mr-2" />
                 Dashboard
               </Tabs.Tab>
             </Tabs.List>
@@ -462,6 +465,13 @@ export default function Page() {
               <GlobalSettings />
             </Tabs.Panel>
           )}
+
+          <Tabs.Panel
+            value="dashboard"
+            className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+          >
+            <DashboardSEO />
+          </Tabs.Panel>
         </Tabs>
       </section>
 
