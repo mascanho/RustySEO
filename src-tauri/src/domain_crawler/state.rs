@@ -8,11 +8,20 @@ use std::time::Instant;
 use tokio::sync::Mutex;
 use url::Url;
 
-use super::constants::{MAX_PENDING_TIME, MAX_URLS_PER_DOMAIN};
+use super::constants::MAX_PENDING_TIME;
 use super::database::{Database, DatabaseResults};
 use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::models::DomainCrawlResults;
 use super::helpers::normalize_url::normalize_url;
+
+/// Maximum number of failed URLs to retain. Once this cap is hit the oldest
+/// failures are silently discarded to prevent the set from consuming memory
+/// proportional to the number of errors on a large crawl.
+const MAX_FAILED_URLS: usize = 10_000;
+
+/// Maximum number of URL patterns to track. Patterns are used to detect
+/// infinite URL traps; beyond this cap new patterns are simply not tracked.
+const MAX_URL_PATTERNS: usize = 20_000;
 
 /// Track failed URLs and retries
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -96,11 +105,42 @@ impl CrawlerState {
         self
     }
 
-    /// Clean up stale pending URLs
+    /// Clean up stale pending URLs and periodically compact collections to return
+    /// memory to the OS. Called from the main crawler loop on every iteration.
     pub fn cleanup_stale_pending(&mut self) {
         let now = Instant::now();
         self.pending_urls
             .retain(|_, &mut added_time| now.duration_since(added_time) < MAX_PENDING_TIME);
+
+        // Compact the VecDeque periodically once a significant number of items have
+        // been drained from its front. VecDeque maintains a ring buffer that never
+        // automatically shrinks, so without this call its allocated capacity grows
+        // monotonically as the queue fills and drains across a long crawl.
+        if self.queue.capacity() > self.queue.len().saturating_mul(4).max(256) {
+            self.queue.shrink_to_fit();
+        }
+
+        // Periodically shrink the visited set's allocation after it plateaus.
+        // HashSet doubles its capacity on resize but never shrinks; at 40K URLs the
+        // backing array can be 2–4× larger than needed.
+        // Only run this expensive operation every 5000 URLs to amortise the cost.
+        if self.crawled_urls > 0 && self.crawled_urls % 5_000 == 0 {
+            self.visited.shrink_to_fit();
+            self.pending_urls.shrink_to_fit();
+            self.url_patterns.shrink_to_fit();
+        }
+
+        // Evict oldest failed_urls entries if the set is over the cap.
+        // FailedUrl doesn't have an ordering, so we collect into a Vec, truncate,
+        // and rebuild the set. This path is uncommon (only on error-heavy crawls).
+        if self.failed_urls.len() > MAX_FAILED_URLS {
+            let mut v: Vec<FailedUrl> = self.failed_urls.drain().collect();
+            // Keep the most-recently-recorded failures (largest timestamp).
+            v.sort_unstable_by(|a, b| b.timestamp.partial_cmp(&a.timestamp)
+                .unwrap_or(std::cmp::Ordering::Equal));
+            v.truncate(MAX_FAILED_URLS / 2);
+            self.failed_urls = v.into_iter().collect();
+        }
     }
 
     /// Check if we should continue crawling
@@ -114,7 +154,7 @@ impl CrawlerState {
     }
 
     /// Add multiple discovered URLs to the queue if they are new
-    pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, max_depth: usize, max_urls: usize) {
+    pub fn add_discovered_urls(&mut self, urls: HashSet<String>, base_url: &Url, _max_depth: usize, max_urls: usize) {
         for url_str in urls {
             // Normalize before any checks or queueing
             let normalized_url = normalize_url(&url_str);

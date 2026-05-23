@@ -149,16 +149,25 @@ export default function Home() {
   const [, setRenderTick] = useState(0);
 
   useEffect(() => {
-    // Continuously check if crawlData has grown and sync it every 2s
+    // Poll store for crawlData changes and sync to local ref.
+    // We use a ref+tick pattern to decouple Zustand subscriptions from React renders —
+    // directly subscribing with useGlobalCrawlStore(s => s.crawlData) would re-render
+    // this heavy component on every single crawl batch update.
     const timer = setInterval(() => {
-      // Only trigger a re-render if the array size has actually changed significantly
-      // or if the underlying reference changed (to handle ring buffer cap)
-      const currentStored = useGlobalCrawlStore.getState().crawlData;
+      const store = useGlobalCrawlStore.getState();
+      const currentStored = store.crawlData;
       if (debouncedCrawlDataRef.current !== currentStored) {
         debouncedCrawlDataRef.current = currentStored;
         setRenderTick((t) => t + 1);
+
+        // Once the cap is reached the array reference will stop changing
+        // (addDomainCrawlResult returns early). Stop polling to save CPU.
+        const cap = store.maxUrlsStored || 1500;
+        if (currentStored.length >= cap) {
+          clearInterval(timer);
+        }
       }
-    }, 2000);
+    }, 4000); // 4s interval — large crawls update DB every ~2s, no need to poll faster
 
     return () => clearInterval(timer);
   }, []);

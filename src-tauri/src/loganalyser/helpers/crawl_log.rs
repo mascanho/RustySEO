@@ -1,5 +1,4 @@
 use once_cell::sync::Lazy;
-use rusqlite::Connection;
 use std::collections::HashSet;
 use std::sync::Mutex;
 

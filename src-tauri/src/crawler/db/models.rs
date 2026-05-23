@@ -1,4 +1,3 @@
-use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
 
 // Main response struct

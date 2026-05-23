@@ -1,6 +1,6 @@
 use crate::loganalyser::analyser::LogEntry;
 use directories::ProjectDirs;
-use rusqlite::{params, Connection, Result as SqlResult};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -19,7 +19,7 @@ pub fn init_active_db() -> Result<(), String> {
     }
 
     let db_path = db_dir.join("active_logs.db");
-    let mut conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
     // Migration: If active_path_aggregations exists but lacks 'segment' column, drop it.
     // SQLite WITHOUT ROWID tables cannot be easily altered.
@@ -3416,7 +3416,7 @@ pub fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDe
     Ok(results)
 }
 
-use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
+use super::analyser::{LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
 
 #[tauri::command]
 pub fn reclassify_all_segments() -> Result<(), String> {
@@ -3616,7 +3616,7 @@ fn add_query_to_sheet(
     headers: Vec<String>,
     header_format: &rust_xlsxwriter::Format,
 ) -> Result<(), String> {
-    let mut worksheet = workbook.add_worksheet();
+    let worksheet = workbook.add_worksheet();
     // Sheet name must be <= 31 chars
     let safe_name = if sheet_name.len() > 31 { &sheet_name[..31] } else { sheet_name };
     worksheet.set_name(safe_name).map_err(|e| e.to_string())?;
@@ -3651,7 +3651,7 @@ fn add_query_to_sheet(
 #[tauri::command]
 pub fn export_server_logs_trends_excel(
     file_path: String,
-    include_gsc: bool,
+    _include_gsc: bool,
 ) -> Result<usize, String> {
     use rust_xlsxwriter::{Workbook, Format};
 
@@ -3663,7 +3663,7 @@ pub fn export_server_logs_trends_excel(
     let header_format = Format::new().set_bold();
 
     // 1. SUMMARY SHEET
-    let mut worksheet_summary = workbook.add_worksheet();
+    let worksheet_summary = workbook.add_worksheet();
     worksheet_summary.set_name("Trends Summary").map_err(|e| e.to_string())?;
     worksheet_summary.write_string_with_format(0, 0, "Metric", &header_format).map_err(|e| e.to_string())?;
     worksheet_summary.write_string_with_format(0, 1, "Unique Count", &header_format).map_err(|e| e.to_string())?;

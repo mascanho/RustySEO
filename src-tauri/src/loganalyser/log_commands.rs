@@ -1,13 +1,9 @@
-use super::{
-    analyser::LogResult,
-    database::{add_data_to_serverlog_db, create_serverlog_db},
-};
+use super::database::{add_data_to_serverlog_db, create_serverlog_db};
 use crate::loganalyser::{
-    analyser::{analyse_log, analyse_log_from_paths, LogAnalysisResult, LogInput},
-    helpers::gsc_query_match::{self, match_gsc_query, GscDataItem, GscQueryMatch},
+    analyser::{analyse_log, analyse_log_from_paths, LogInput},
+    helpers::gsc_query_match::{self, GscDataItem, GscQueryMatch},
 };
 use crate::uploads::storage;
-use anyhow::Error;
 
 #[tauri::command]
 pub async fn check_logs_from_paths_command(
@@ -23,8 +19,8 @@ pub async fn check_logs_from_paths_command(
         // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
         if storing_logs {
             use crate::loganalyser::analyser::ProgressUpdate;
-            use std::fs::File;
-            use std::io::{BufRead, BufReader};
+            
+            
             use tauri::Emitter;
 
             // Create the DB

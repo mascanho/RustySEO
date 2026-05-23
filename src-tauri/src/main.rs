@@ -20,11 +20,9 @@ use settings::settings::update_settings_command;
 use settings::settings::Settings;
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{Emitter, Listener, Manager, WindowEvent};
-use tokio::sync::Mutex;
+use tauri::{Emitter, Manager, WindowEvent};
 use tokio::sync::RwLock;
 use toml;
-use tracing_subscriber::fmt;
 
 pub mod chat;
 pub mod crawler;

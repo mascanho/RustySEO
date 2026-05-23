@@ -1,28 +1,23 @@
 use chrono::Utc;
 use directories::ProjectDirs;
-use google_sheets4::api::Response;
 use hyper::Client as HyperClient;
 use hyper_rustls::HttpsConnectorBuilder;
 use reqwest::Client;
-use rusqlite::{Connection, Result};
+use rusqlite::Result;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use serde_json::{json, Value};
-use std::fmt::format;
 use std::{error::Error, path::PathBuf};
-use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
-use tauri::Config;
+use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use url::{ParseError, Url};
 use yup_oauth2 as oauth2;
 use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
 use reqwest::header::{HeaderMap, HeaderValue};
-use toml::de::Error as TomlError;
 
-use crate::crawler::db::{self, refresh_links_table};
-use crate::server;
+use crate::crawler::db::{self};
 use crate::settings::settings::{load_settings, Settings};
 
 use super::crawler;
@@ -127,7 +122,7 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
     }
 
     // Parse the XML response asynchronously
-    let body = response.text().await?;
+    let _body = response.text().await?;
 
     // Print the sitemap XML to the user
 
@@ -618,7 +613,7 @@ pub async fn get_google_search_console(
     let mut site = false;
 
     // Set the end date to TODAY's date
-    let finish_date = Utc::now().format("%Y-%m-%d").to_string();
+    let _finish_date = Utc::now().format("%Y-%m-%d").to_string();
 
     // Prepare the request
 
@@ -1178,7 +1173,7 @@ pub async fn get_google_analytics(
     // Process and print the results
     if let Some(rows) = response["rows"].as_array() {
         for row in rows {
-            let page = &row["dimensionValues"][0]["value"];
+            let _page = &row["dimensionValues"][0]["value"];
             let _views = &row["metricValues"][0]["value"];
             // println!("Page: {}, Views: {}", page, views);
         }

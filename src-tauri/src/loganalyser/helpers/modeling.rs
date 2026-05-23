@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use std::net::{AddrParseError, IpAddr};
+use std::net::AddrParseError;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct BingBotRanges {

@@ -5,9 +5,7 @@
 //! the `url_processor` module.
 
 use rand::seq::IndexedRandom;
-use rand::Rng;
 use reqwest::Client;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -19,7 +17,7 @@ use dashmap::DashMap;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
-use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
+use crate::domain_crawler::helpers::robots::{self};
 use crate::domain_crawler::helpers::sitemap;
 use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::AppState;
@@ -41,7 +39,7 @@ pub async fn crawl_domain(
     crawl_control.store(0, Ordering::Relaxed);
 
     // Extract all settings values we need to avoid borrowing issues
-    let user_agents = settings.user_agents.clone();
+    let _user_agents = settings.user_agents.clone();
     let client_timeout = settings.client_timeout;
     let client_connect_timeout = settings.client_connect_timeout;
     let concurrent_requests = settings.concurrent_requests;

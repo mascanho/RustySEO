@@ -1,11 +1,8 @@
 //! URL processing logic for the domain crawler
 
-use colored::*;
 use reqwest::Client;
 use scraper::Html;
 use serde_json::Value;
-use std::collections::HashSet;
-use std::io::Write;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
@@ -23,10 +20,8 @@ use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::helpers::{headless_fetch, opengraph, url_depth};
 use crate::domain_crawler::models::Extractor;
-use crate::settings;
 use crate::settings::settings::Settings;
 
-use super::constants::{MAX_DEPTH, MAX_URLS_PER_DOMAIN};
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::cross_origin::analyze_cross_origin_security;
 use super::helpers::flesch_reader::get_flesch_score;
@@ -233,25 +228,36 @@ pub async fn process_url(
     };
 
     // Detect 'hidden' errors (200 OK but actually a block/error page)
-    let body_lower = body.to_lowercase();
-    let is_block_page = (body.len() < 25000 && (
-        body_lower.contains("error 1015") // Specific Cloudflare Rate Limit
-        || body_lower.contains("error 1020") // Cloudflare Access Denied
-        || body_lower.contains("challenge-form") // Cloudflare
-        || (body_lower.contains("cloudflare") && body_lower.contains("ray id")) // Cloudflare Block
-        || body_lower.contains("distilnetworks") // Distil Networks
-        || body_lower.contains("please enable js") // Anti-bot
-    )) || (body.len() < 2000 && (
-        body_lower.contains("access denied")
-        || body_lower.contains("rate limit")
-        || body_lower.contains("too many requests")
-        || body_lower.contains("forbidden")
-        || body_lower.contains("one more step") // Cloudflare short
-        || body_lower.contains("unusual traffic") // Google/AWS block
-        || body_lower.contains("bot detection")
-        || body_lower.contains("error")
-        || body_lower.contains("blocked")
-    ));
+    // Only check the first 25KB prefix to avoid cloning the full body into memory.
+    let is_block_page = {
+        let check_len = body.len().min(25_000);
+        let prefix = &body[..check_len];
+        // Use a case-insensitive byte search by working on a stack-bounded lowercase slice.
+        // We intentionally avoid `body.to_lowercase()` which would duplicate the entire body.
+        let prefix_lower = prefix.to_lowercase();
+        let is_large_block = body.len() < 25_000 && (
+            prefix_lower.contains("error 1015") // Specific Cloudflare Rate Limit
+            || prefix_lower.contains("error 1020") // Cloudflare Access Denied
+            || prefix_lower.contains("challenge-form") // Cloudflare
+            || (prefix_lower.contains("cloudflare") && prefix_lower.contains("ray id")) // Cloudflare Block
+            || prefix_lower.contains("distilnetworks") // Distil Networks
+            || prefix_lower.contains("please enable js") // Anti-bot
+        );
+        let short_prefix = &body[..body.len().min(2_000)];
+        let short_lower = short_prefix.to_lowercase();
+        let is_short_block = body.len() < 2_000 && (
+            short_lower.contains("access denied")
+            || short_lower.contains("rate limit")
+            || short_lower.contains("too many requests")
+            || short_lower.contains("forbidden")
+            || short_lower.contains("one more step") // Cloudflare short
+            || short_lower.contains("unusual traffic") // Google/AWS block
+            || short_lower.contains("bot detection")
+            || short_lower.contains("error")
+            || short_lower.contains("blocked")
+        );
+        is_large_block || is_short_block
+    };
 
     if is_block_page && status_code == 200 {
         let mut state = state.lock().await;
@@ -369,8 +375,25 @@ pub async fn process_url(
         cross_origin_data,
         links_for_crawler,
         _ngrams_data,
+        opengraph_data,
+        body_len,
     ) = {
+        // Parse ngrams before moving `body` into the document parse (ngrams borrows body as &str).
+        let ngrams_data_pre = if settings.extract_ngrams {
+            ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+
+        let opengraph_data_pre = opengraph::parse_opengraph(&body);
+        let body_len_pre = body.len();
+
         let document = Html::parse_document(&body);
+
+        // Explicitly drop `body` here so it's freed from memory before all the
+        // async link-checking and image-fetching tasks that follow.
+        // At 40K pages, keeping body alive until the end of process_url wastes GBs.
+        drop(body);
 
         (
             title_selector::extract_title(&document),
@@ -402,11 +425,9 @@ pub async fn process_url(
             perform_extraction(&document),
             analyze_cross_origin_security(&document, &final_url),
             links_selector::extract_links(&document, &final_url, base_url),
-            if settings.extract_ngrams {
-                ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_default()
-            } else {
-                Vec::new()
-            },
+            ngrams_data_pre,
+            opengraph_data_pre,
+            body_len_pre,
         )
     }; // `document` is dropped here
 
@@ -468,9 +489,6 @@ pub async fn process_url(
     // GETS THE SPECIFIC URL DEPTH
     let url_depth = url_depth::calculate_url_depth(&url);
 
-    // PARSES THE OPENGRAPH DATA
-    let opengraph_data = opengraph::parse_opengraph(&body);
-
     // PARSES THE COOKIE DATA
 
     let result = DomainCrawlResults {
@@ -501,7 +519,7 @@ pub async fn process_url(
         meta_robots: meta_robots_val,
         opengraph: opengraph_data,
         content_type: content_type.unwrap_or_else(|| "Unknown".to_string()),
-        content_length: body.len(),
+        content_length: body_len,
         text_ratio: Some(vec![text_ratio_val.and_then(|mut v| v.pop()).unwrap_or(
             TextRatio {
                 html_length: 0,
@@ -511,7 +529,7 @@ pub async fn process_url(
         )]),
         redirection: None,
         keywords: keywords_val,
-        page_size: calculate_html_size(Some(body.len())),
+        page_size: calculate_html_size(Some(body_len)),
         hreflangs: hreflangs_val,
         language: language_val,
         flesch: flesch_val,
@@ -739,10 +757,12 @@ async fn update_state_and_emit_progress(
             .push(super::models::LightCrawlResult::from_full(result));
     }
 
-    let (batch_interval_ms, batch_size_threshold) = if total_discovered > 20000 {
-        (2000, 400)  // Very large crawls: emit every 2s or 400 items
+    let (batch_interval_ms, batch_size_threshold) = if total_discovered > 30000 {
+        (5000, 600)  // Huge crawls (40K+ URLs): emit every 5s or 600 items — reduces IPC to ~12 events/min
+    } else if total_discovered > 20000 {
+        (3000, 500)  // Very large crawls: emit every 3s or 500 items
     } else if total_discovered > 10000 {
-        (1500, 200)  // Large crawls: emit every 1.5s or 200 items
+        (2000, 250)  // Large crawls: emit every 2s or 250 items
     } else if total_discovered > 5000 {
         (1000, 100)  // Medium crawls: emit every 1s or 100 items
     } else {
@@ -754,18 +774,20 @@ async fn update_state_and_emit_progress(
         || active_pending == 0; // Flush on completion
 
     if should_emit_results && !state.pending_results.is_empty() {
-        // Drain results BEFORE dropping the lock so we minimise lock-held time.
-        // The IPC emit happens after the lock is released to avoid blocking
-        // other tasks that are waiting to acquire the state mutex.
+        // Drain results and update the emit timestamp BEFORE dropping the lock.
+        // This is critical: if we drop the lock first, we can never update last_result_emit,
+        // which means the batch throttle is completely bypassed and every single URL
+        // triggers an IPC emit (the original bug causing UI freezes at 15K+ URLs).
         let result_data = CrawlResultData {
             results: state.pending_results.drain(..).collect(),
         };
-        drop(state); // Release lock before IPC call
+        // ✅ CRITICAL FIX: update timestamp BEFORE dropping so the throttle works
+        state.last_result_emit = Instant::now();
+        drop(state); // Release lock before IPC call to avoid holding mutex during serialization
         if let Err(err) = app_handle.emit("crawl_result", result_data) {
             eprintln!("Failed to emit crawl result batch: {}", err);
         }
-        // Note: state is dropped here; last_result_emit is updated implicitly through the emit timestamp
-        return; // state is consumed by drop, exit the function
+        return;
     }
 
     // progress info already logged above

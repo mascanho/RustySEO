@@ -1,7 +1,6 @@
 use std::time::Duration;
 use reqwest::Client;
 use tokio::time::{sleep, Instant};
-use rand::seq::IndexedRandom;
 
 use crate::settings::settings::Settings;
 

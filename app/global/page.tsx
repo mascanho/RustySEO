@@ -174,17 +174,18 @@ export default function Page() {
 
     const flushBuffer = () => {
       if (buffer.results.length > 0) {
-        // Chunk large flushes to avoid freezing the main thread.
-        // A single concat of 400+ items into a 30K+ array can freeze the UI.
-        const CHUNK_SIZE = 200;
-        const chunks: any[][] = [];
-        for (let i = 0; i < buffer.results.length; i += CHUNK_SIZE) {
-          chunks.push(buffer.results.slice(i, i + CHUNK_SIZE));
+        // Flush the entire buffer in a single call.
+        // addDomainCrawlResult already caps at maxUrlsStored internally and filters
+        // duplicates, so chunking into multiple calls just causes N extra Zustand
+        // state updates and N extra React re-renders per flush cycle.
+        const toFlush = buffer.results.splice(0);
+        // Use startTransition so the update is treated as non-urgent by React —
+        // it yields to input events and prevents the UI from freezing.
+        if (typeof window !== "undefined" && (window as any).__reactStartTransition) {
+          (window as any).__reactStartTransition(() => addDomainCrawlResult(toFlush));
+        } else {
+          addDomainCrawlResult(toFlush);
         }
-        buffer.results = [];
-        chunks.forEach((chunk, i) => {
-          setTimeout(() => addDomainCrawlResult(chunk), i * 30);
-        });
       }
       buffer.timer = null;
     };
@@ -207,9 +208,11 @@ export default function Page() {
           buffer.results.push(payload.result);
         }
 
-        // Throttle updates to Zustand to prevent memory thrashing
+        // Throttle updates to Zustand to prevent memory thrashing.
+        // 2500ms gives the backend time to accumulate a meaningful batch before
+        // triggering a React re-render, which is especially important at 40K+ URLs.
         if (!buffer.timer) {
-          buffer.timer = setTimeout(flushBuffer, 1500);
+          buffer.timer = setTimeout(flushBuffer, 2500);
         }
       }
     }).then((unlisten) => {

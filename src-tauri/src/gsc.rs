@@ -1,6 +1,6 @@
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, TokenResponse,
+    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, TokenResponse,
     TokenUrl,
 };
 use reqwest::Client;
@@ -96,7 +96,7 @@ pub async fn check_google_search_console() {
         .await
         .expect("Failed to send request");
 
-    let query_response: SearchAnalyticsQueryResponse = response
+    let _query_response: SearchAnalyticsQueryResponse = response
         .json()
         .await
         .expect("Failed to deserialize response");

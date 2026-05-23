@@ -1,6 +1,5 @@
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, warn};
 use urlencoding::decode;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

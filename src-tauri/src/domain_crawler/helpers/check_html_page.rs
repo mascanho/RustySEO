@@ -1,4 +1,3 @@
-use scraper::{Html, Selector};
 
 pub async fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
     let body_len = body.len();

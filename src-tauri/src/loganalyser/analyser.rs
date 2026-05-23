@@ -1,4 +1,3 @@
-use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -351,7 +350,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                         if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                             println!("Failed to insert active logs chunk: {}", e);
                         }
-                        let chunk = LogResult {
+                        let _chunk = LogResult {
                             overview: LogAnalysisResult::default(),
                             entries: Vec::new(),
                         };
@@ -370,7 +369,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                 println!("Failed to insert final active logs chunk: {}", e);
             }
-            let chunk = LogResult {
+            let _chunk = LogResult {
                 overview: LogAnalysisResult::default(),
                 entries: Vec::new(),
             };
@@ -445,7 +444,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 std::io::stdout().flush().ok();
             }
 
-            let is_crawler = is_crawler(&e.user_agent);
+            let _is_crawler = is_crawler(&e.user_agent);
             let entry = LogEntry {
                 ip: e.ip.clone(),
                 timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -754,7 +753,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                 println!("Failed to insert final active logs chunk: {}", e);
             }
-            let chunk = LogResult {
+            let _chunk = LogResult {
                 overview: LogAnalysisResult::default(),
                 entries: Vec::new(),
             };
