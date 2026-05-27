@@ -360,146 +360,124 @@ impl Database {
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
-            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
-
-            // We use a stream of rows to avoid loading everything into memory at once if possible,
-            // though we still construct a large result.
-            let rows = stmt.query_map(params![], |row| {
-                let data_json: String = row.get(0)?;
-                Ok(data_json)
-            })?;
-
-            // Initialize collections
-            // Images: Map URL -> Full Image Tuple/Object to deduplicate but keep data
-            let mut images_map: std::collections::HashMap<String, Value> =
-                std::collections::HashMap::new();
-
-            let mut scripts_set = std::collections::HashSet::new();
-            let mut css_set = std::collections::HashSet::new();
-            let mut internal_links = Vec::new(); // Store specific link objects
-            let mut external_links = Vec::new();
-            let mut keywords = Vec::new();
-            let mut redirects = Vec::new();
-
-            let mut row_count = 0;
-
-            for data_json_result in rows {
-                row_count += 1;
-                let data_json = match data_json_result {
-                    Ok(json) => json,
-                    Err(e) => {
-                        eprintln!("Error reading row: {}", e);
-                        continue;
-                    }
-                };
-
-                // Parse only what we need would be ideal, but for simplicity/robustness we parse to Value first
-                let data: Value = match serde_json::from_str(&data_json) {
-                    Ok(v) => v,
-                    Err(e) => {
-                        eprintln!("Error parsing JSON for row {}: {}", row_count, e);
-                        continue;
-                    }
-                };
-
-                match data_type.as_str() {
-                    "images" => {
-                        if let Some(imgs) = data
-                            .get("images")
-                            .and_then(|v| v.get("Ok"))
-                            .and_then(|v| v.as_array())
-                        {
-                            for img in imgs {
-                                // images tuple: (url, alt, size, type, status, is_internal)
+            
+            match data_type.as_str() {
+                "images" => {
+                    // Extract all unique images
+                    let mut stmt = conn.prepare(
+                        "SELECT DISTINCT json_each.value FROM domain_crawl, json_each(data, '$.images.Ok')"
+                    )?;
+                    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+                    
+                    let mut images_map = std::collections::HashMap::new();
+                    for img_json_res in rows {
+                        if let Ok(img_json) = img_json_res {
+                            if let Ok(img) = serde_json::from_str::<Value>(&img_json) {
                                 if let Some(url) = img.get(0).and_then(|v| v.as_str()) {
-                                    // Only insert if not exists (or overwrite? overwrite is fine)
-                                    images_map.insert(url.to_string(), img.clone());
+                                    images_map.insert(url.to_string(), img);
                                 }
                             }
                         }
                     }
-                    "scripts" => {
-                        if let Some(ext) = data
-                            .get("javascript")
-                            .and_then(|j| j.get("external"))
-                            .and_then(|v| v.as_array())
-                        {
-                            for script in ext {
-                                if let Some(url) = script.as_str() {
-                                    scripts_set.insert(url.to_string());
+                    Ok(serde_json::to_value(
+                        images_map.into_values().collect::<Vec<Value>>(),
+                    )?)
+                }
+                "scripts" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT DISTINCT json_each.value FROM domain_crawl, json_each(data, '$.javascript.external')"
+                    )?;
+                    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+                    let mut scripts = std::collections::HashSet::new();
+                    for script_res in rows {
+                        if let Ok(script) = script_res {
+                            scripts.insert(script);
+                        }
+                    }
+                    Ok(serde_json::to_value(
+                        scripts.into_iter().collect::<Vec<String>>(),
+                    )?)
+                }
+                "stylesheets" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT DISTINCT json_each.value FROM domain_crawl, json_each(data, '$.css.external')"
+                    )?;
+                    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+                    let mut css = std::collections::HashSet::new();
+                    for css_res in rows {
+                        if let Ok(c) = css_res {
+                            css.insert(c);
+                        }
+                    }
+                    Ok(serde_json::to_value(
+                        css.into_iter().collect::<Vec<String>>(),
+                    )?)
+                }
+                "internal_links" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_each.value 
+                         FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.internal')"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let link_json: String = row.get(1)?;
+                        Ok((page_url, link_json))
+                    })?;
+                    
+                    let mut internal_links = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, link_json)) = row_res {
+                            if let Ok(mut link_obj) = serde_json::from_str::<Value>(&link_json) {
+                                if let Some(obj_map) = link_obj.as_object_mut() {
+                                    obj_map.insert("page".to_string(), Value::String(page_url));
                                 }
+                                internal_links.push(link_obj);
                             }
                         }
                     }
-                    "stylesheets" => {
-                        if let Some(ext) = data
-                            .get("css")
-                            .and_then(|c| c.get("external"))
-                            .and_then(|v| v.as_array())
-                        {
-                            for css in ext {
-                                if let Some(url) = css.as_str() {
-                                    css_set.insert(url.to_string());
+                    Ok(Value::Array(internal_links))
+                }
+                "external_links" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_each.value 
+                         FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.external')"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let link_json: String = row.get(1)?;
+                        Ok((page_url, link_json))
+                    })?;
+                    
+                    let mut external_links = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, link_json)) = row_res {
+                            if let Ok(mut link_obj) = serde_json::from_str::<Value>(&link_json) {
+                                if let Some(obj_map) = link_obj.as_object_mut() {
+                                    obj_map.insert("page".to_string(), Value::String(page_url));
                                 }
+                                external_links.push(link_obj);
                             }
                         }
                     }
-                    "internal_links" => {
-                        let page_url = data
-                            .get("url")
-                            .and_then(|u| u.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        if let Some(links) = data
-                            .get("inoutlinks_status_codes")
-                            .and_then(|l| l.get("internal"))
-                            .and_then(|v| v.as_array())
-                        {
-                            for link_obj in links {
-                                // We need to return an object structure compatible with what frontend expects ideally
-                                // { link: url, anchor: text, status: code, error: err, page: page_url }
-                                let mut obj = link_obj.clone();
-                                if let Some(obj_map) = obj.as_object_mut() {
-                                    obj_map.insert(
-                                        "page".to_string(),
-                                        Value::String(page_url.clone()),
-                                    );
-                                }
-                                internal_links.push(obj);
-                            }
-                        }
-                    }
-                    "external_links" => {
-                        let page_url = data
-                            .get("url")
-                            .and_then(|u| u.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        if let Some(links) = data
-                            .get("inoutlinks_status_codes")
-                            .and_then(|l| l.get("external"))
-                            .and_then(|v| v.as_array())
-                        {
-                            for link_obj in links {
-                                let mut obj = link_obj.clone();
-                                if let Some(obj_map) = obj.as_object_mut() {
-                                    obj_map.insert(
-                                        "page".to_string(),
-                                        Value::String(page_url.clone()),
-                                    );
-                                }
-                                external_links.push(obj);
-                            }
-                        }
-                    }
-                    "keywords" => {
-                        let page_url = data
-                            .get("url")
-                            .and_then(|u| u.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        if let Some(kws) = data.get("keywords").and_then(|v| v.as_array()) {
-                            if !kws.is_empty() {
+                    Ok(Value::Array(external_links))
+                }
+                "keywords" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.keywords') 
+                         FROM domain_crawl 
+                         WHERE json_extract(data, '$.keywords') IS NOT NULL 
+                           AND json_extract(data, '$.keywords') != '[]'"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let keywords_json: String = row.get(1)?;
+                        Ok((page_url, keywords_json))
+                    })?;
+                    
+                    let mut keywords = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, keywords_json)) = row_res {
+                            if let Ok(kws) = serde_json::from_str::<Value>(&keywords_json) {
                                 keywords.push(serde_json::json!({
                                     "url": page_url,
                                     "keywords": kws
@@ -507,98 +485,84 @@ impl Database {
                             }
                         }
                     }
-                    "redirects" => {
-                        // Redirect logic: if status_code is 3xx OR if had_redirect is true
-                        let had_redirect = data
-                            .get("had_redirect")
-                            .and_then(|b| b.as_bool())
-                            .unwrap_or(false);
-                        let status = data
-                            .get("status_code")
-                            .and_then(|s| s.as_u64())
-                            .unwrap_or(0);
-
-                        if had_redirect || (status >= 300 && status < 400) {
-                            redirects.push(data.clone());
+                    Ok(Value::Array(keywords))
+                }
+                "redirects" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT data FROM domain_crawl 
+                         WHERE json_extract(data, '$.had_redirect') = 1 
+                            OR json_extract(data, '$.had_redirect') = 'true'
+                            OR CAST(json_extract(data, '$.status_code') AS INTEGER) >= 300 
+                           AND CAST(json_extract(data, '$.status_code') AS INTEGER) < 400"
+                    )?;
+                    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+                    
+                    let mut redirects = Vec::new();
+                    for row_res in rows {
+                        if let Ok(data_json) = row_res {
+                            if let Ok(data) = serde_json::from_str::<Value>(&data_json) {
+                                redirects.push(data);
+                            }
                         }
                     }
-                    "cwv" => {
-                        let page_url = data
-                            .get("url")
-                            .and_then(|u| u.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        let psi = data.get("psi_results").cloned().unwrap_or(Value::Null);
-                        keywords.push(serde_json::json!({
-                            "url": page_url,
-                            "psi_results": psi
-                        }));
+                    Ok(Value::Array(redirects))
+                }
+                "cwv" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.psi_results') 
+                         FROM domain_crawl"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let psi_json: String = row.get(1)?;
+                        Ok((page_url, psi_json))
+                    })?;
+                    
+                    let mut cwv_data = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, psi_json)) = row_res {
+                            if let Ok(psi) = serde_json::from_str::<Value>(&psi_json) {
+                                cwv_data.push(serde_json::json!({
+                                    "url": page_url,
+                                    "psi_results": psi
+                                }));
+                            }
+                        }
                     }
-                    "files" => {
-                        // For files we look at both internal/external links that look like files
-                        let page_url = data
-                            .get("url")
-                            .and_then(|u| u.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        let mut all_links = Vec::new();
-                        if let Some(links) = data
-                            .get("inoutlinks_status_codes")
-                            .and_then(|l| l.get("internal"))
-                            .and_then(|v| v.as_array())
-                        {
-                            all_links.extend(links.iter());
-                        }
-                        if let Some(links) = data
-                            .get("inoutlinks_status_codes")
-                            .and_then(|l| l.get("external"))
-                            .and_then(|v| v.as_array())
-                        {
-                            all_links.extend(links.iter());
-                        }
-
-                        for link_obj in all_links {
-                            if let Some(url) = link_obj.get("url").and_then(|u| u.as_str()) {
-                                if has_file_extension(url) {
-                                    let mut obj = link_obj.clone();
-                                    if let Some(obj_map) = obj.as_object_mut() {
-                                        obj_map.insert(
-                                            "found_at".to_string(),
-                                            Value::String(page_url.clone()),
-                                        );
+                    Ok(Value::Array(cwv_data))
+                }
+                "files" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_each.value 
+                         FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.internal')
+                         UNION ALL
+                         SELECT json_extract(data, '$.url'), json_each.value 
+                         FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.external')"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let link_json: String = row.get(1)?;
+                        Ok((page_url, link_json))
+                    })?;
+                    
+                    let mut files = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, link_json)) = row_res {
+                            if let Ok(link_obj) = serde_json::from_str::<Value>(&link_json) {
+                                if let Some(url) = link_obj.get("url").and_then(|u| u.as_str()) {
+                                    if has_file_extension(url) {
+                                        let mut obj = link_obj.clone();
+                                        if let Some(obj_map) = obj.as_object_mut() {
+                                            obj_map.insert("found_at".to_string(), Value::String(page_url));
+                                        }
+                                        files.push(obj);
                                     }
-                                    internal_links.push(obj); // Reuse this vec for files to return it
                                 }
                             }
                         }
                     }
-                    _ => {}
+                    Ok(Value::Array(files))
                 }
-            }
-
-            println!(
-                "Processed {} rows. Found {} internal links, {} external links",
-                row_count,
-                internal_links.len(),
-                external_links.len()
-            );
-
-            match data_type.as_str() {
-                "images" => Ok(serde_json::to_value(
-                    images_map.into_values().collect::<Vec<Value>>(),
-                )?),
-                "scripts" => Ok(serde_json::to_value(
-                    scripts_set.into_iter().collect::<Vec<String>>(),
-                )?),
-                "stylesheets" => Ok(serde_json::to_value(
-                    css_set.into_iter().collect::<Vec<String>>(),
-                )?),
-                "internal_links" => Ok(Value::Array(internal_links)),
-                "external_links" => Ok(Value::Array(external_links)),
-                "keywords" => Ok(Value::Array(keywords)),
-                "redirects" => Ok(Value::Array(redirects)),
-                "cwv" => Ok(Value::Array(keywords)), // Reused keywords vec for CWV
-                "files" => Ok(Value::Array(internal_links)), // Reused
                 _ => Ok(Value::Null),
             }
         })
@@ -636,17 +600,24 @@ impl Database {
         }
 
         let normalized_target = normalize_url(&target_url);
+        let like_pattern = format!("%{}%", normalized_target);
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
-            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
+            
+            // Query only matching candidate pages using SQLite json_each filtering
+            let mut stmt = conn.prepare(
+                "SELECT DISTINCT data 
+                 FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.internal')
+                 WHERE json_extract(json_each.value, '$.url') LIKE ?1"
+            )?;
 
-            let rows = stmt.query_map(params![], |row| {
+            let rows = stmt.query_map(params![like_pattern], |row| {
                 let data_json: String = row.get(0)?;
                 Ok(data_json)
             })?;
 
-            let mut matched_pages = Vec::new(); // Pages that link TO the target
+            let mut matched_pages = Vec::new();
 
             for data_json_result in rows {
                 let data_json = match data_json_result {
@@ -659,12 +630,6 @@ impl Database {
                     Err(_) => continue,
                 };
 
-                let _page_url = data
-                    .get("url")
-                    .and_then(|u| u.as_str())
-                    .unwrap_or("")
-                    .to_string();
-
                 if let Some(links) = data
                     .get("inoutlinks_status_codes")
                     .and_then(|l| l.get("internal"))
@@ -673,9 +638,8 @@ impl Database {
                     for link_obj in links {
                         if let Some(link_url) = link_obj.get("url").and_then(|u| u.as_str()) {
                             if normalize_url(link_url) == normalized_target {
-                                // Found a match! This page links to our target
                                 matched_pages.push(data.clone());
-                                break; // One link per page is enough to count it as "linking page"
+                                break; // One link per page is enough
                             }
                         }
                     }

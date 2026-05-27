@@ -636,6 +636,7 @@ async fn update_state_and_emit_progress(
                         url_pattern
                     );
                 }
+                *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
                 continue;
             }
 
