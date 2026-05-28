@@ -235,7 +235,7 @@ impl DomainTracker {
         }
     }
 
-    fn get_delay_for(&self, domain: &str) -> Duration {
+    fn get_delay_for(&self, domain: &str) -> Result<Duration, Duration> {
         let base_delay = {
             let delays = self.delays.lock().unwrap();
             delays
@@ -254,9 +254,16 @@ impl DomainTracker {
         } else {
             Duration::from_millis(0)
         };
+        
+        // If wait time is too long (e.g. > 5 seconds), abort the request to prevent
+        // compounding serialized delays that freeze the crawler threads.
+        if wait_time > Duration::from_secs(5) {
+            return Err(wait_time);
+        }
+        
         *last_req = std::cmp::max(now, target_time);
         
-        wait_time
+        Ok(wait_time)
     }
 
     fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
@@ -658,7 +665,23 @@ async fn fetch_with_retry(
 
     loop {
         // Get domain-specific delay
-        let delay = domain_tracker.get_delay_for(domain);
+        let delay = match domain_tracker.get_delay_for(domain) {
+            Ok(d) => d,
+            Err(wait_time) => {
+                // Throttled! Return immediately with 429 to prevent crawler freeze
+                return LinkStatus {
+                    base_url: (*base_url).clone(),
+                    url: url.to_string(),
+                    relative_path: relative_path.clone(),
+                    status: Some(429),
+                    error: Some(format!("Throttled: Rate limit wait time too long ({:?})", wait_time)),
+                    anchor_text: anchor_text.clone(),
+                    rel: rel.clone(),
+                    title: title.clone(),
+                    target: target.clone(),
+                };
+            }
+        };
         if delay.as_millis() > 0 {
             sleep(delay).await;
         }
