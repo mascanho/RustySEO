@@ -230,7 +230,7 @@ pub async fn process_url(
     // Detect 'hidden' errors (200 OK but actually a block/error page)
     // Only check the first 25KB prefix to avoid cloning the full body into memory.
     let is_block_page = {
-        let check_len = body.len().min(25_000);
+        let check_len = body.floor_char_boundary(25_000);
         let prefix = &body[..check_len];
         // Use a case-insensitive byte search by working on a stack-bounded lowercase slice.
         // We intentionally avoid `body.to_lowercase()` which would duplicate the entire body.
@@ -243,7 +243,7 @@ pub async fn process_url(
             || prefix_lower.contains("distilnetworks") // Distil Networks
             || prefix_lower.contains("please enable js") // Anti-bot
         );
-        let short_prefix = &body[..body.len().min(2_000)];
+        let short_prefix = &body[..body.floor_char_boundary(2_000)];
         let short_lower = short_prefix.to_lowercase();
         let is_short_block = body.len() < 2_000 && (
             short_lower.contains("access denied")
