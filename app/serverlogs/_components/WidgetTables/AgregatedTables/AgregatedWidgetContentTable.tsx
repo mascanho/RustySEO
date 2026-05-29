@@ -64,7 +64,11 @@ interface AgregatedWidgetContentTableProps {
     | "crawled"
     | "crawled_errors"
     | "dead"
-    | "uncrawled";
+    | "uncrawled"
+    | "non_important"
+    | "wasted_crawl"
+    | "robots_canonical"
+    | "low_frequency";
   title: string;
   segment: string;
 }
@@ -202,6 +206,10 @@ export const AgregatedWidgetContentTable: React.FC<
       case "crawled_errors":
       case "dead":
       case "uncrawled":
+      case "non_important":
+      case "wasted_crawl":
+      case "robots_canonical":
+      case "low_frequency":
         return "get_active_path_aggregations";
       default:
         return "";
@@ -226,7 +234,7 @@ export const AgregatedWidgetContentTable: React.FC<
         params.crawlerFilter = "Human";
       }
 
-      if (["orphan", "orphan_gsc", "crawled", "crawled_errors", "dead", "uncrawled"].includes(type)) {
+      if (["orphan", "orphan_gsc", "crawled", "crawled_errors", "dead", "uncrawled", "non_important", "wasted_crawl", "robots_canonical", "low_frequency"].includes(type)) {
         params.crawlStatusFilter = type;
       }
 
@@ -282,6 +290,18 @@ export const AgregatedWidgetContentTable: React.FC<
           break;
         case "dead":
           hits = summary.dead_content;
+          break;
+        case "non_important":
+          hits = summary.unimportant_crawled;
+          break;
+        case "wasted_crawl":
+          hits = summary.wasted_crawl_budget;
+          break;
+        case "robots_canonical":
+          hits = summary.robots_txt_improvements;
+          break;
+        case "low_frequency":
+          hits = summary.low_frequency_important;
           break;
       }
       setTotalHits(hits || 0);
@@ -428,6 +448,10 @@ export const AgregatedWidgetContentTable: React.FC<
       case "human":
       case "orphan":
       case "orphan_gsc":
+      case "non_important":
+      case "wasted_crawl":
+      case "robots_canonical":
+      case "low_frequency":
         specific = [
           {
             key: "crawler_type",

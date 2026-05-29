@@ -235,6 +235,9 @@ pub struct TrendTotalsSummary {
     pub uncrawled_urls: usize,
     pub orphans_gsc_traffic: usize,
     pub wasted_crawl_budget: usize,
+    pub unimportant_crawled: usize,
+    pub low_frequency_important: usize,
+    pub robots_txt_improvements: usize,
     pub top_paths: Vec<(String, usize)>,
     pub top_status_codes: Vec<(String, usize)>,
     pub top_user_agents: Vec<(String, usize)>,
@@ -292,11 +295,47 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
         [],
         |row| row.get(0)
     ).unwrap_or(0);
-    summary.wasted_crawl_budget = conn.query_row(
-        "SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE status >= 400 AND crawled = TRUE AND crawler_type != 'Human'",
+    let unimportant_clause = "(
+        path LIKE '%filter%' 
+        OR path LIKE '%sort%' 
+        OR path LIKE '%order%' 
+        OR path LIKE '%facet%'
+        OR path LIKE '%price%'
+        OR path LIKE '%color%'
+        OR path LIKE '%size%'
+        OR path LIKE '%search%'
+        OR path LIKE '%find%'
+        OR path LIKE '%tag%'
+        OR path LIKE '%page%'
+        OR path LIKE '%utm_%'
+        OR path LIKE '%gclid%'
+        OR path LIKE '%fbclid%'
+    )";
+
+    summary.unimportant_crawled = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND {}", unimportant_clause),
         [],
         |row| row.get(0)
     ).unwrap_or(0);
+
+    summary.wasted_crawl_budget = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = FALSE AND {}", unimportant_clause),
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.robots_txt_improvements = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = TRUE AND {}", unimportant_clause),
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.low_frequency_important = conn.query_row(
+        "SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = TRUE AND hit_count <= 2",
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
     summary.uncrawled_urls = match crate::uploads::storage::Storage::new("crawl_excel.db") {
         Ok(db) => {
             let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
@@ -2105,6 +2144,17 @@ pub fn get_active_path_aggregations(
             clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
         } else if crawl_status == "dead" {
             clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
+        } else if crawl_status == "non_important" {
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "wasted_crawl" {
+            clauses.push("crawled = FALSE".to_string());
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "robots_canonical" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "low_frequency" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("hit_count <= 2".to_string());
         }
     }
     if let Some(ref segment) = segment_filter {

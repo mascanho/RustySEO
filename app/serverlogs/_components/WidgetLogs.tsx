@@ -641,34 +641,34 @@ export default function WidgetLogs() {
       const data = trendTotals || {};
       return [
         {
+          name: "Non-Important URLs Crawled",
+          value: data.unimportant_crawled || 0,
+          type: "non_important",
+        },
+        {
+          name: "Wasted Crawl Budget",
+          value: data.wasted_crawl_budget || 0,
+          type: "wasted_crawl",
+        },
+        {
+          name: "Robots.txt / Canonical Fixes",
+          value: data.robots_txt_improvements || 0,
+          type: "robots_canonical",
+        },
+        {
           name: "Orphan Pages",
           value: data.orphan_pages || 0,
           type: "orphan",
         },
         {
-          name: "Orphans with GSC Traffic",
-          value: data.orphans_gsc_traffic || 0,
-          type: "orphan_gsc",
-        },
-        {
-          name: "Uploaded Crawl Pages",
-          value: data.crawled_pages || 0,
-          type: "crawled",
-        },
-        {
-          name: "Uncrawled Pages",
+          name: "Uncrawled Important Pages",
           value: data.uncrawled_urls || 0,
           type: "uncrawled",
         },
         {
-          name: "Wasted Crawl Budget",
-          value: data.wasted_crawl_budget || 0,
-          type: "crawled_errors",
-        },
-        {
-          name: "Dead Content",
-          value: data.dead_content || 0,
-          type: "dead",
+          name: "Low Crawl Frequency",
+          value: data.low_frequency_important || 0,
+          type: "low_frequency",
         },
       ];
     }
