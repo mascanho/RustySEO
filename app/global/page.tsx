@@ -27,6 +27,9 @@ import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
 import { useDiffStore } from "@/store/DiffStore";
+import DashboardSEO from "./_components/SEODashboard/DashboardSEO";
+import { TbDashboard } from "react-icons/tb";
+import { MdOutlineDashboard } from "react-icons/md";
 // import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
 
 interface CrawlResult {
@@ -42,20 +45,38 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("first");
 
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const setDomainCrawlLoading = useGlobalCrawlStore((state) => state.setDomainCrawlLoading);
-  const clearDomainCrawlData = useGlobalCrawlStore((state) => state.clearDomainCrawlData);
-  const addDomainCrawlResult = useGlobalCrawlStore((state) => state.addDomainCrawlResult);
-  const setSelectedTableURL = useGlobalCrawlStore((state) => state.setSelectedTableURL);
+  const setDomainCrawlLoading = useGlobalCrawlStore(
+    (state) => state.setDomainCrawlLoading,
+  );
+  const clearDomainCrawlData = useGlobalCrawlStore(
+    (state) => state.clearDomainCrawlData,
+  );
+  const addDomainCrawlResult = useGlobalCrawlStore(
+    (state) => state.addDomainCrawlResult,
+  );
+  const setSelectedTableURL = useGlobalCrawlStore(
+    (state) => state.setSelectedTableURL,
+  );
   const setIssuesData = useGlobalCrawlStore((state) => state.setIssuesData);
-  const setFinishedDeepCrawl = useGlobalCrawlStore((state) => state.setFinishedDeepCrawl);
-  const setCrawlSessionTotalArray = useGlobalCrawlStore((state) => state.setCrawlSessionTotalArray);
-  const setRobotsBlocked = useGlobalCrawlStore((state) => state.setRobotsBlocked);
+  const setFinishedDeepCrawl = useGlobalCrawlStore(
+    (state) => state.setFinishedDeepCrawl,
+  );
+  const setCrawlSessionTotalArray = useGlobalCrawlStore(
+    (state) => state.setCrawlSessionTotalArray,
+  );
+  const setRobotsBlocked = useGlobalCrawlStore(
+    (state) => state.setRobotsBlocked,
+  );
   const setFavicon = useGlobalCrawlStore((state) => state.setFavicon);
+  const setIsPaused = useGlobalCrawlStore((state) => state.setIsPaused);
+  const setIsStopped = useGlobalCrawlStore((state) => state.setIsStopped);
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const { setBulkDiffData } = useDiffStore();
-  const fetchMaxUrlsStored = useGlobalCrawlStore((state) => state.actions.data.fetchMaxUrlsStored);
+  const fetchMaxUrlsStored = useGlobalCrawlStore(
+    (state) => state.actions.data.fetchMaxUrlsStored,
+  );
 
   //POWERBI
   const [powerBiUrl, setPowerBiUrl] = useState("");
@@ -95,6 +116,8 @@ export default function Page() {
       setIsGlobalCrawling(true);
       setFinishedDeepCrawl(false);
       setIsFinishedDeepCrawl(false);
+      setIsPaused(false);
+      setIsStopped(false);
 
       await fetchMaxUrlsStored();
 
@@ -151,17 +174,23 @@ export default function Page() {
 
     const flushBuffer = () => {
       if (buffer.results.length > 0) {
-        // Chunk large flushes to avoid freezing the main thread.
-        // A single concat of 400+ items into a 30K+ array can freeze the UI.
-        const CHUNK_SIZE = 200;
-        const chunks: any[][] = [];
-        for (let i = 0; i < buffer.results.length; i += CHUNK_SIZE) {
-          chunks.push(buffer.results.slice(i, i + CHUNK_SIZE));
+        // Flush the entire buffer in a single call.
+        // addDomainCrawlResult already caps at maxUrlsStored internally and filters
+        // duplicates, so chunking into multiple calls just causes N extra Zustand
+        // state updates and N extra React re-renders per flush cycle.
+        const toFlush = buffer.results.splice(0);
+        // Use startTransition so the update is treated as non-urgent by React —
+        // it yields to input events and prevents the UI from freezing.
+        if (
+          typeof window !== "undefined" &&
+          (window as any).__reactStartTransition
+        ) {
+          (window as any).__reactStartTransition(() =>
+            addDomainCrawlResult(toFlush),
+          );
+        } else {
+          addDomainCrawlResult(toFlush);
         }
-        buffer.results = [];
-        chunks.forEach((chunk, i) => {
-          setTimeout(() => addDomainCrawlResult(chunk), i * 30);
-        });
       }
       buffer.timer = null;
     };
@@ -184,9 +213,11 @@ export default function Page() {
           buffer.results.push(payload.result);
         }
 
-        // Throttle updates to Zustand to prevent memory thrashing
+        // Throttle updates to Zustand to prevent memory thrashing.
+        // 2500ms gives the backend time to accumulate a meaningful batch before
+        // triggering a React re-render, which is especially important at 40K+ URLs.
         if (!buffer.timer) {
-          buffer.timer = setTimeout(flushBuffer, 1500);
+          buffer.timer = setTimeout(flushBuffer, 2500);
         }
       }
     }).then((unlisten) => {
@@ -214,7 +245,9 @@ export default function Page() {
 
       // Update session storage for totals
       const totalUrlsCrawled = event.payload?.crawled_urls || 0;
-      const crawledLinks = JSON.parse(sessionStorage.getItem("CrawledLinks") || "[]");
+      const crawledLinks = JSON.parse(
+        sessionStorage.getItem("CrawledLinks") || "[]",
+      );
       crawledLinks.push(totalUrlsCrawled);
       setCrawlSessionTotalArray(crawledLinks);
       sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
@@ -344,6 +377,11 @@ export default function Page() {
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                 Content
               </Tabs.Tab>
+
+              <Tabs.Tab value="dashboard">
+                <MdOutlineDashboard className="inline-block mr-2" />
+                Dashboard
+              </Tabs.Tab>
             </Tabs.List>
           </aside>
 
@@ -435,6 +473,13 @@ export default function Page() {
               <GlobalSettings />
             </Tabs.Panel>
           )}
+
+          <Tabs.Panel
+            value="dashboard"
+            className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+          >
+            <DashboardSEO />
+          </Tabs.Panel>
         </Tabs>
       </section>
 

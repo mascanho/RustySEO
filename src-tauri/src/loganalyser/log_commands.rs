@@ -1,13 +1,9 @@
-use super::{
-    analyser::LogResult,
-    database::{add_data_to_serverlog_db, create_serverlog_db},
-};
+use super::database::{add_data_to_serverlog_db, create_serverlog_db};
 use crate::loganalyser::{
-    analyser::{analyse_log, analyse_log_from_paths, LogAnalysisResult, LogInput},
-    helpers::gsc_query_match::{self, match_gsc_query, GscDataItem, GscQueryMatch},
+    analyser::{analyse_log, analyse_log_from_paths, LogInput},
+    helpers::gsc_query_match::{self, GscDataItem, GscQueryMatch},
 };
 use crate::uploads::storage;
-use anyhow::Error;
 
 #[tauri::command]
 pub async fn check_logs_from_paths_command(
@@ -18,23 +14,23 @@ pub async fn check_logs_from_paths_command(
 ) -> Result<(), String> {
     let app_handle = app.clone();
     let file_paths_clone = file_paths.clone();
-    
+
     tokio::task::spawn_blocking(move || {
         // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
         if storing_logs {
-            use std::io::{BufRead, BufReader};
-            use std::fs::File;
-            use tauri::Emitter;
             use crate::loganalyser::analyser::ProgressUpdate;
+            
+            
+            use tauri::Emitter;
 
             // Create the DB
             let _ = create_serverlog_db("serverlog.db");
             let total_files = file_paths_clone.len();
-            
+
             for (index, path) in file_paths_clone.iter().enumerate() {
                 let metadata = std::fs::metadata(path).map_err(|e| e.to_string())?;
                 let file_size = metadata.len();
-                
+
                 let filename = std::path::Path::new(path)
                     .file_name()
                     .and_then(|n| n.to_str())
@@ -42,23 +38,31 @@ pub async fn check_logs_from_paths_command(
                     .to_string();
 
                 // Emit progress for storage phase
-                let _ = app_handle.emit("progress-update", ProgressUpdate {
-                    current_file: index + 1,
-                    total_files,
-                    percentage: 0.0,
-                    filename: filename.clone(),
-                    phase: "storing".to_string(),
-                });
+                let _ = app_handle.emit(
+                    "progress-update",
+                    ProgressUpdate {
+                        current_file: index + 1,
+                        total_files,
+                        percentage: 0.0,
+                        filename: filename.clone(),
+                        phase: "storing".to_string(),
+                    },
+                );
 
                 // Safety check: Don't read files larger than 100MB into memory for persistent storage
                 if file_size > 100 * 1024 * 1024 {
-                    println!("Skipping persistent storage for {} ({} bytes) - size exceeds 100MB.", path, file_size);
+                    println!(
+                        "Skipping persistent storage for {} ({} bytes) - size exceeds 100MB.",
+                        path, file_size
+                    );
                     continue;
                 }
 
                 match std::fs::read_to_string(path) {
                     Ok(content) => {
-                        let data = LogInput { log_contents: vec![(filename.clone(), content)] };
+                        let data = LogInput {
+                            log_contents: vec![(filename.clone(), content)],
+                        };
                         add_data_to_serverlog_db("serverlog.db", &data, &project);
                     }
                     Err(e) => {
@@ -68,22 +72,30 @@ pub async fn check_logs_from_paths_command(
                 }
 
                 // Emit completion for this file's storage
-                let _ = app_handle.emit("progress-update", ProgressUpdate {
-                    current_file: index + 1,
-                    total_files,
-                    percentage: 100.0,
-                    filename: filename.clone(),
-                    phase: "stored".to_string(),
-                });
+                let _ = app_handle.emit(
+                    "progress-update",
+                    ProgressUpdate {
+                        current_file: index + 1,
+                        total_files,
+                        percentage: 100.0,
+                        filename: filename.clone(),
+                        phase: "stored".to_string(),
+                    },
+                );
             }
-            println!("Stored eligible logs in serverlog.db from paths for project: {}", project);
+            println!(
+                "Stored eligible logs in serverlog.db from paths for project: {}",
+                project
+            );
         }
 
         match analyse_log_from_paths(file_paths, app_handle) {
             Ok(()) => Ok(()),
             Err(e) => Err(e),
         }
-    }).await.map_err(|e| e.to_string())?
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -92,7 +104,6 @@ pub fn get_file_size(path: String) -> Result<u64, String> {
         .map(|m| m.len())
         .map_err(|e| e.to_string())
 }
-
 
 #[tauri::command]
 pub fn check_logs_command(
@@ -259,4 +270,88 @@ pub fn match_gsc_query_command(
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
     }
+}
+
+//
+//  HERE GOES THE LOGIC FOR THE CRAWL RESULTS EXCEL FILE UPLOAD TO
+//
+//
+
+// ------- SAVE CRAWL DATA FROM FRONTEND
+#[tauri::command]
+pub fn save_crawl_data(data: Vec<serde_json::Value>) -> Result<String, String> {
+    println!("DEBUG: Received {} rows", data.len());
+
+    // Extract all data first
+    let mut uploads = Vec::new();
+
+    for (index, row) in data.iter().enumerate() {
+        match extract_excel_crawl_upload(row, index) {
+            Ok(upload) => {
+                // Only add if it has actual data
+                if !upload.url.is_empty() {
+                    uploads.push(upload);
+                }
+            }
+            Err(e) => println!("Row {} error: {}", index, e),
+        }
+    }
+
+    println!("Extracted {} valid rows", uploads.len());
+
+    if uploads.is_empty() {
+        return Err("No valid data to insert".to_string());
+    }
+
+    // Use mut here since we're creating a new Storage instance
+    let mut db =
+        storage::Storage::new("crawl_excel.db").map_err(|e| format!("Failed to open DB: {}", e))?;
+
+    // Ensure table exists
+    db.create_crawl_table()
+        .map_err(|e| format!("Failed to create table: {}", e))?;
+
+    // OPTION 1: Use transaction method (requires mut)
+    let inserted = db
+        .replace_all_crawl_data_transaction(&uploads)
+        .map_err(|e| format!("Failed to replace data: {}", e))?;
+
+    // Verify
+    let final_count = db
+        .get_crawl_row_count()
+        .map_err(|e| format!("Failed to count rows: {}", e))?;
+
+    println!("=== DATA REPLACEMENT COMPLETE ===");
+    println!("Old data cleared, {} new rows inserted", inserted);
+    println!("Total rows in database: {}", final_count);
+
+    Ok(format!(
+        "Replaced all data with {} new rows. Total in DB: {}",
+        inserted, final_count
+    ))
+}
+
+// Helper function to properly extract data from JSON
+fn extract_excel_crawl_upload(
+    row: &serde_json::Value,
+    index: usize,
+) -> Result<storage::ExcelCrawlUpload, String> {
+    // Check if row is an object
+    let obj = row
+        .as_object()
+        .ok_or_else(|| format!("Row {} is not a JSON object", index))?;
+
+    let url = obj
+        .get("url")
+        .or_else(|| obj.get("URL"))
+        .or_else(|| obj.get("Address"))
+        .or_else(|| obj.get("Page"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    Ok(storage::ExcelCrawlUpload {
+        id: 0, // Will be auto-incremented
+        url,
+    })
 }

@@ -54,11 +54,35 @@ pub fn create_domain_results_table() -> Result<(), String> {
             total_internal_links INTEGER NOT NULL,
             total_external_links INTEGER NOT NULL,
             indexable_pages INTEGER NOT NULL,
-            not_indexable_pages INTEGER NOT NULL
+            not_indexable_pages INTEGER NOT NULL,
+            total_css INTEGER NOT NULL DEFAULT 0,
+            total_javascript INTEGER NOT NULL DEFAULT 0,
+            total_images INTEGER NOT NULL DEFAULT 0,
+            total_redirects INTEGER NOT NULL DEFAULT 0,
+            missing_title INTEGER NOT NULL DEFAULT 0,
+            missing_description INTEGER NOT NULL DEFAULT 0,
+            avg_response_time INTEGER NOT NULL DEFAULT 0,
+            max_crawl_depth INTEGER NOT NULL DEFAULT 0,
+            total_secure_pages INTEGER NOT NULL DEFAULT 0,
+            total_schema_pages INTEGER NOT NULL DEFAULT 0,
+            total_mobile_pages INTEGER NOT NULL DEFAULT 0
         )",
         [],
     )
     .map_err(|e| e.to_string())?;
+
+    // Safe schema migration for existing databases
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_css INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_javascript INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_images INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_redirects INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN missing_title INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN missing_description INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN avg_response_time INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN max_crawl_depth INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_secure_pages INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_schema_pages INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN total_mobile_pages INTEGER NOT NULL DEFAULT 0", []);
 
     Ok(())
 }
@@ -76,6 +100,17 @@ pub struct DeepCrawlHistory {
     pub total_external_links: i32,
     pub indexable_pages: i32,
     pub not_indexable_pages: i32,
+    pub total_css: i32,
+    pub total_javascript: i32,
+    pub total_images: i32,
+    pub total_redirects: i32,
+    pub missing_title: i32,
+    pub missing_description: i32,
+    pub avg_response_time: i32,
+    pub max_crawl_depth: i32,
+    pub total_secure_pages: i32,
+    pub total_schema_pages: i32,
+    pub total_mobile_pages: i32,
 }
 
 #[tauri::command]
@@ -86,7 +121,7 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
     // Prepare the SQL query to read data
     let mut stmt = conn
         .prepare(
-            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages
+            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages
              FROM deep_crawls_history",
         )
         .map_err(|e| e.to_string())?;
@@ -106,6 +141,17 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
                 total_external_links: row.get(8)?,
                 indexable_pages: row.get(9)?,
                 not_indexable_pages: row.get(10)?,
+                total_css: row.get(11)?,
+                total_javascript: row.get(12)?,
+                total_images: row.get(13)?,
+                total_redirects: row.get(14)?,
+                missing_title: row.get(15)?,
+                missing_description: row.get(16)?,
+                avg_response_time: row.get(17)?,
+                max_crawl_depth: row.get(18)?,
+                total_secure_pages: row.get(19)?,
+                total_schema_pages: row.get(20)?,
+                total_mobile_pages: row.get(21)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -132,8 +178,8 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
     for item in &data {
         conn.execute(
             "INSERT INTO deep_crawls_history (
-                domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)",
             [
                 &item.domain,
                 &item.date,
@@ -145,6 +191,17 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
                 &item.total_external_links.to_string(),
                 &item.indexable_pages.to_string(),
                 &item.not_indexable_pages.to_string(),
+                &item.total_css.to_string(),
+                &item.total_javascript.to_string(),
+                &item.total_images.to_string(),
+                &item.total_redirects.to_string(),
+                &item.missing_title.to_string(),
+                &item.missing_description.to_string(),
+                &item.avg_response_time.to_string(),
+                &item.max_crawl_depth.to_string(),
+                &item.total_secure_pages.to_string(),
+                &item.total_schema_pages.to_string(),
+                &item.total_mobile_pages.to_string(),
             ],
         )
         .map_err(|e| e.to_string())?;

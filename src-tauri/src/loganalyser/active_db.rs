@@ -1,6 +1,6 @@
 use crate::loganalyser::analyser::LogEntry;
 use directories::ProjectDirs;
-use rusqlite::{params, Connection, Result as SqlResult};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -19,7 +19,7 @@ pub fn init_active_db() -> Result<(), String> {
     }
 
     let db_path = db_dir.join("active_logs.db");
-    let mut conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
     // Migration: If active_path_aggregations exists but lacks 'segment' column, drop it.
     // SQLite WITHOUT ROWID tables cannot be easily altered.
@@ -62,6 +62,27 @@ pub fn init_active_db() -> Result<(), String> {
         }
     }
 
+    // Migration: If active_parsed_logs exists but lacks 'crawled' column, drop transient tables to recreate them with the new schema.
+    let parsed_logs_table_exists: bool = conn.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='active_parsed_logs'",
+        [],
+        |row| Ok(row.get::<_, i32>(0)? > 0),
+    ).unwrap_or(false);
+
+    if parsed_logs_table_exists {
+        let has_crawled: bool = conn.query_row(
+            "SELECT count(*) FROM pragma_table_info('active_parsed_logs') WHERE name='crawled'",
+            [],
+            |row| Ok(row.get::<_, i32>(0)? > 0),
+        ).unwrap_or(false);
+
+        if !has_crawled {
+            println!("Migration: Dropping old active tables to add crawled column.");
+            conn.execute("DROP TABLE IF EXISTS active_parsed_logs", []).map_err(|e| e.to_string())?;
+            conn.execute("DROP TABLE IF EXISTS active_path_aggregations", []).map_err(|e| e.to_string())?;
+        }
+    }
+
     conn.execute_batch(
         "
         PRAGMA synchronous = OFF;
@@ -92,55 +113,52 @@ pub fn init_active_db() -> Result<(), String> {
             segment TEXT,
             segment_match TEXT,
             taxonomy TEXT,
-            filename TEXT
+            filename TEXT,
+            crawled BOOLEAN DEFAULT FALSE
         );
 
         CREATE TABLE IF NOT EXISTS active_path_aggregations (
             path TEXT,
             crawler_type TEXT,
             segment TEXT,
+            crawled BOOLEAN DEFAULT FALSE,
             hit_count INTEGER DEFAULT 0,
             PRIMARY KEY (path, crawler_type, segment)
         ) WITHOUT ROWID;
 
-        CREATE TABLE IF NOT EXISTS active_path_status_aggregations (
-            path TEXT,
+        CREATE TABLE IF NOT EXISTS active_status_aggregations (
             status INTEGER,
             segment TEXT,
             hit_count INTEGER DEFAULT 0,
-            PRIMARY KEY (path, status, segment)
+            PRIMARY KEY (status, segment)
         ) WITHOUT ROWID;
 
-        CREATE TABLE IF NOT EXISTS active_path_method_aggregations (
-            path TEXT,
+        CREATE TABLE IF NOT EXISTS active_method_aggregations (
             method TEXT,
             segment TEXT,
             hit_count INTEGER DEFAULT 0,
-            PRIMARY KEY (path, method, segment)
+            PRIMARY KEY (method, segment)
         ) WITHOUT ROWID;
 
-        CREATE TABLE IF NOT EXISTS active_path_user_agent_aggregations (
-            path TEXT,
+        CREATE TABLE IF NOT EXISTS active_user_agent_aggregations (
             user_agent TEXT,
             segment TEXT,
             hit_count INTEGER DEFAULT 0,
-            PRIMARY KEY (path, user_agent, segment)
+            PRIMARY KEY (user_agent, segment)
         ) WITHOUT ROWID;
 
-        CREATE TABLE IF NOT EXISTS active_path_referer_aggregations (
-            path TEXT,
+        CREATE TABLE IF NOT EXISTS active_referer_aggregations (
             referer TEXT,
             segment TEXT,
             hit_count INTEGER DEFAULT 0,
-            PRIMARY KEY (path, referer, segment)
+            PRIMARY KEY (referer, segment)
         ) WITHOUT ROWID;
 
-        CREATE TABLE IF NOT EXISTS active_path_browser_aggregations (
-            path TEXT,
+        CREATE TABLE IF NOT EXISTS active_browser_aggregations (
             browser TEXT,
             segment TEXT,
             hit_count INTEGER DEFAULT 0,
-            PRIMARY KEY (path, browser, segment)
+            PRIMARY KEY (browser, segment)
         ) WITHOUT ROWID;
 
         CREATE TABLE IF NOT EXISTS active_path_human_aggregations (
@@ -175,11 +193,11 @@ pub fn init_active_db() -> Result<(), String> {
         CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
         CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
         CREATE INDEX IF NOT EXISTS idx_path_agg_count ON active_path_aggregations(hit_count DESC);
-        CREATE INDEX IF NOT EXISTS idx_path_status_agg_count ON active_path_status_aggregations(hit_count DESC);
-        CREATE INDEX IF NOT EXISTS idx_path_method_agg_count ON active_path_method_aggregations(hit_count DESC);
-        CREATE INDEX IF NOT EXISTS idx_path_user_agent_agg_count ON active_path_user_agent_aggregations(hit_count DESC);
-        CREATE INDEX IF NOT EXISTS idx_path_referer_agg_count ON active_path_referer_aggregations(hit_count DESC);
-        CREATE INDEX IF NOT EXISTS idx_path_browser_agg_count ON active_path_browser_aggregations(hit_count DESC);
+        CREATE INDEX IF NOT EXISTS idx_path_status_agg_count ON active_status_aggregations(hit_count DESC);
+        CREATE INDEX IF NOT EXISTS idx_path_method_agg_count ON active_method_aggregations(hit_count DESC);
+        CREATE INDEX IF NOT EXISTS idx_path_user_agent_agg_count ON active_user_agent_aggregations(hit_count DESC);
+        CREATE INDEX IF NOT EXISTS idx_path_referer_agg_count ON active_referer_aggregations(hit_count DESC);
+        CREATE INDEX IF NOT EXISTS idx_path_browser_agg_count ON active_browser_aggregations(hit_count DESC);
         CREATE INDEX IF NOT EXISTS idx_path_verified_agg_count ON active_path_verified_aggregations(hit_count DESC);
         CREATE INDEX IF NOT EXISTS idx_path_ip_agg_count ON active_path_ip_aggregations(hit_count DESC);
         ",
@@ -211,30 +229,49 @@ pub struct TrendTotalsSummary {
     pub path_hits: usize,
     pub human_hits: usize,
     pub human_count: usize,
+    pub orphan_pages: usize,
+    pub crawled_pages: usize,
+    pub dead_content: usize,
+    pub uncrawled_urls: usize,
+    pub orphans_gsc_traffic: usize,
+    pub wasted_crawl_budget: usize,
+    pub unimportant_crawled: usize,
+    pub low_frequency_important: usize,
+    pub robots_txt_improvements: usize,
+    pub top_paths: Vec<(String, usize)>,
+    pub top_status_codes: Vec<(String, usize)>,
+    pub top_user_agents: Vec<(String, usize)>,
+    pub top_referrers: Vec<(String, usize)>,
+    pub top_browsers: Vec<(String, usize)>,
 }
 
 #[tauri::command]
 pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
+    // If the crawl is not loaded, try loading it from the database first
+    if !crate::loganalyser::helpers::crawl_log::is_crawl_loaded() {
+        let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
+    }
+
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let mut summary = TrendTotalsSummary::default();
 
-    summary.status_count = conn.query_row("SELECT COUNT(*) FROM active_path_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.status_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.status_count = conn.query_row("SELECT COUNT(*) FROM active_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.status_hits = conn.query_row("SELECT SUM(hit_count) FROM active_status_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.method_count = conn.query_row("SELECT COUNT(*) FROM active_path_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.method_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.method_count = conn.query_row("SELECT COUNT(*) FROM active_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.method_hits = conn.query_row("SELECT SUM(hit_count) FROM active_method_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.user_agent_count = conn.query_row("SELECT COUNT(*) FROM active_path_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.user_agent_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.user_agent_count = conn.query_row("SELECT COUNT(*) FROM active_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.user_agent_hits = conn.query_row("SELECT SUM(hit_count) FROM active_user_agent_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.referer_count = conn.query_row("SELECT COUNT(*) FROM active_path_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.referer_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.referer_count = conn.query_row("SELECT COUNT(*) FROM active_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.referer_hits = conn.query_row("SELECT SUM(hit_count) FROM active_referer_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.browser_count = conn.query_row("SELECT COUNT(*) FROM active_path_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.browser_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.browser_count = conn.query_row("SELECT COUNT(*) FROM active_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.browser_hits = conn.query_row("SELECT SUM(hit_count) FROM active_browser_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
     summary.verified_count = conn.query_row("SELECT COUNT(*) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
     summary.verified_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
@@ -242,11 +279,106 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     summary.ip_count = conn.query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
     summary.ip_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
+    summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
 
     summary.human_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
     summary.human_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type = 'Human'", [], |row| row.get(0)).unwrap_or(0);
+
+    summary.orphan_pages = conn.query_row("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawled = FALSE AND crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
+    summary.crawled_pages = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+        Ok(db) => db.get_crawl_row_count().unwrap_or(0) as usize,
+        Err(_) => 0,
+    };
+    summary.orphans_gsc_traffic = conn.query_row(
+        "SELECT COUNT(DISTINCT path) FROM active_parsed_logs WHERE crawled = FALSE AND (clicks > 0 OR impressions > 0) AND crawler_type != 'Human'",
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+    let unimportant_clause = "(
+        path LIKE '%filter%' 
+        OR path LIKE '%sort%' 
+        OR path LIKE '%order%' 
+        OR path LIKE '%facet%'
+        OR path LIKE '%price%'
+        OR path LIKE '%color%'
+        OR path LIKE '%size%'
+        OR path LIKE '%search%'
+        OR path LIKE '%find%'
+        OR path LIKE '%tag%'
+        OR path LIKE '%page%'
+        OR path LIKE '%utm_%'
+        OR path LIKE '%gclid%'
+        OR path LIKE '%fbclid%'
+    )";
+
+    summary.unimportant_crawled = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND {}", unimportant_clause),
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.wasted_crawl_budget = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = FALSE AND {}", unimportant_clause),
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.robots_txt_improvements = conn.query_row(
+        &format!("SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = TRUE AND {}", unimportant_clause),
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.low_frequency_important = conn.query_row(
+        "SELECT COUNT(DISTINCT path) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawled = TRUE AND hit_count <= 2",
+        [],
+        |row| row.get(0)
+    ).unwrap_or(0);
+
+    summary.uncrawled_urls = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+        Ok(db) => {
+            let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
+            let mut active_paths = std::collections::HashSet::new();
+            if let Ok(mut stmt) = conn.prepare("SELECT DISTINCT path FROM active_path_aggregations WHERE crawler_type != 'Human'") {
+                if let Ok(mut rows) = stmt.query([]) {
+                    while let Ok(Some(row)) = rows.next() {
+                        if let Ok(p) = row.get::<_, String>(0) {
+                            active_paths.insert(p);
+                        }
+                    }
+                }
+            }
+            
+            let mut count = 0;
+            for entry in crawl_entries {
+                let normalized = crate::loganalyser::helpers::crawl_log::normalize_crawl_path(&entry.url);
+                if !active_paths.contains(&normalized) {
+                    count += 1;
+                }
+            }
+            count
+        }
+        Err(_) => 0,
+    };
+
+    summary.dead_content = summary.uncrawled_urls;
+
+    // Fetch top 10 frequencies (excluding Human to match the Path Frequency table)
+    let mut stmt = conn.prepare("SELECT path, hit_count FROM active_path_aggregations WHERE crawler_type != 'Human' ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_paths = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT status, hit_count FROM active_status_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_status_codes = stmt.query_map([], |row| Ok((row.get::<_, i32>(0)?.to_string(), row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT user_agent, hit_count FROM active_user_agent_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_user_agents = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT referer, hit_count FROM active_referer_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_referrers = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
+
+    let mut stmt = conn.prepare("SELECT browser, hit_count FROM active_browser_aggregations ORDER BY hit_count DESC LIMIT 10").map_err(|e| e.to_string())?;
+    summary.top_browsers = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?))).map_err(|e| e.to_string())?.filter_map(Result::ok).collect();
 
     Ok(summary)
 }
@@ -262,18 +394,18 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
                 "INSERT INTO active_parsed_logs (
                 ip, timestamp, method, path, position, clicks, ctr, impressions, gsc_url,
                 status, user_agent, referer, response_size, country, crawler_type, is_crawler,
-                file_type, browser, verified, segment, segment_match, taxonomy, filename
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                file_type, browser, verified, segment, segment_match, taxonomy, filename, crawled
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             )
             .map_err(|e| e.to_string())?;
 
         // Pre-aggregate the batch in memory to minimize DB hits for the aggregation table
-        let mut path_aggs: HashMap<(String, String, String), i64> = HashMap::new();
-        let mut path_status_aggs: HashMap<(String, u16, String), i64> = HashMap::new();
-        let mut path_method_aggs: HashMap<(String, String, String), i64> = HashMap::new();
-        let mut path_user_agent_aggs: HashMap<(String, String, String), i64> = HashMap::new();
-        let mut path_referer_aggs: HashMap<(String, String, String), i64> = HashMap::new();
-        let mut path_browser_aggs: HashMap<(String, String, String), i64> = HashMap::new();
+        let mut path_aggs: std::collections::HashMap<(String, String, String, bool), i64> = std::collections::HashMap::new();
+        let mut status_aggs: HashMap<(i32, String), i64> = HashMap::new();
+        let mut method_aggs: HashMap<(String, String), i64> = HashMap::new();
+        let mut ua_aggs: HashMap<(String, String), i64> = HashMap::new();
+        let mut referer_aggs: HashMap<(String, String), i64> = HashMap::new();
+        let mut browser_aggs: HashMap<(String, String), i64> = HashMap::new();
         let mut path_verified_aggs: HashMap<(String, String, bool, String), i64> = HashMap::new();
         let mut path_ip_aggs: HashMap<(String, String, String), i64> = HashMap::new();
         let mut path_human_aggs: HashMap<(String, String, String, String), i64> = HashMap::new();
@@ -302,28 +434,29 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
                 entry.segment,
                 entry.segment_match,
                 entry.taxonomy,
-                entry.filename
+                entry.filename,
+                entry.crawled
             ])
             .map_err(|e| e.to_string())?;
 
             // Track aggregations
-            let key = (entry.path.clone(), entry.crawler_type.clone(), entry.segment.clone());
+            let key = (entry.path.clone(), entry.crawler_type.clone(), entry.segment.clone(), entry.crawled);
             *path_aggs.entry(key).or_insert(0) += 1;
 
-            let status_key = (entry.path.clone(), entry.status, entry.segment.clone());
-            *path_status_aggs.entry(status_key).or_insert(0) += 1;
+            let status_key = (entry.status as i32, entry.segment.clone());
+            *status_aggs.entry(status_key).or_insert(0) += 1;
 
-            let method_key = (entry.path.clone(), entry.method.clone(), entry.segment.clone());
-            *path_method_aggs.entry(method_key).or_insert(0) += 1;
+            let method_key = (entry.method.clone(), entry.segment.clone());
+            *method_aggs.entry(method_key).or_insert(0) += 1;
 
-            let ua_key = (entry.path.clone(), entry.user_agent.clone(), entry.segment.clone());
-            *path_user_agent_aggs.entry(ua_key).or_insert(0) += 1;
+            let ua_key = (entry.user_agent.clone(), entry.segment.clone());
+            *ua_aggs.entry(ua_key).or_insert(0) += 1;
 
-            let referer_key = (entry.path.clone(), entry.referer.clone().unwrap_or_else(|| "-".to_string()), entry.segment.clone());
-            *path_referer_aggs.entry(referer_key).or_insert(0) += 1;
+            let referer_key = (entry.referer.clone().unwrap_or_else(|| "-".to_string()), entry.segment.clone());
+            *referer_aggs.entry(referer_key).or_insert(0) += 1;
 
-            let browser_key = (entry.path.clone(), entry.browser.clone(), entry.segment.clone());
-            *path_browser_aggs.entry(browser_key).or_insert(0) += 1;
+            let browser_key = (entry.browser.clone(), entry.segment.clone());
+            *browser_aggs.entry(browser_key).or_insert(0) += 1;
 
             if entry.crawler_type != "Human" {
                 let verified_key = (entry.path.clone(), entry.crawler_type.clone(), entry.verified, entry.segment.clone());
@@ -346,63 +479,63 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
 
         // Update the aggregation table in bulk
         let mut agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_aggregations (path, crawler_type, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, crawler_type, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(path, crawler_type, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count, crawled = excluded.crawled"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, crawler, segment), count) in path_aggs {
-            agg_stmt.execute(params![path, crawler, segment, count]).map_err(|e| e.to_string())?;
+        for ((path, crawler, segment, crawled), count) in path_aggs {
+            agg_stmt.execute(params![path, crawler, segment, crawled, count]).map_err(|e| e.to_string())?;
         }
 
         let mut status_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_status_aggregations (path, status, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, status, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_status_aggregations (status, segment, hit_count)
+             VALUES (?, ?, ?)
+             ON CONFLICT(status, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, status, segment), count) in path_status_aggs {
-            status_agg_stmt.execute(params![path, status, segment, count]).map_err(|e| e.to_string())?;
+        for ((status, segment), count) in status_aggs {
+            status_agg_stmt.execute(params![status, segment, count]).map_err(|e| e.to_string())?;
         }
 
         let mut method_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_method_aggregations (path, method, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, method, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_method_aggregations (method, segment, hit_count)
+             VALUES (?, ?, ?)
+             ON CONFLICT(method, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, method, segment), count) in path_method_aggs {
-            method_agg_stmt.execute(params![path, method, segment, count]).map_err(|e| e.to_string())?;
+        for ((method, segment), count) in method_aggs {
+            method_agg_stmt.execute(params![method, segment, count]).map_err(|e| e.to_string())?;
         }
 
         let mut ua_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_user_agent_aggregations (path, user_agent, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, user_agent, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
+             VALUES (?, ?, ?)
+             ON CONFLICT(user_agent, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, ua, segment), count) in path_user_agent_aggs {
-            ua_agg_stmt.execute(params![path, ua, segment, count]).map_err(|e| e.to_string())?;
+        for ((ua, segment), count) in ua_aggs {
+            ua_agg_stmt.execute(params![ua, segment, count]).map_err(|e| e.to_string())?;
         }
 
         let mut referer_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_referer_aggregations (path, referer, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, referer, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_referer_aggregations (referer, segment, hit_count)
+             VALUES (?, ?, ?)
+             ON CONFLICT(referer, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, referer, segment), count) in path_referer_aggs {
-            referer_agg_stmt.execute(params![path, referer, segment, count]).map_err(|e| e.to_string())?;
+        for ((referer, segment), count) in referer_aggs {
+            referer_agg_stmt.execute(params![referer, segment, count]).map_err(|e| e.to_string())?;
         }
 
         let mut browser_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_browser_aggregations (path, browser, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, browser, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
+            "INSERT INTO active_browser_aggregations (browser, segment, hit_count)
+             VALUES (?, ?, ?)
+             ON CONFLICT(browser, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
         ).map_err(|e| e.to_string())?;
 
-        for ((path, browser, segment), count) in path_browser_aggs {
-            browser_agg_stmt.execute(params![path, browser, segment, count]).map_err(|e| e.to_string())?;
+        for ((browser, segment), count) in browser_aggs {
+            browser_agg_stmt.execute(params![browser, segment, count]).map_err(|e| e.to_string())?;
         }
 
         let mut verified_agg_stmt = tx.prepare_cached(
@@ -471,6 +604,8 @@ pub struct ActiveFilters {
     pub user_agent_categories: Vec<String>,
     #[serde(default)]
     pub user_agent_specific: Vec<String>,
+    #[serde(default)]
+    pub crawl_status_filter: Option<String>,
 }
 
 fn get_referer_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value>) {
@@ -777,6 +912,17 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
         }
     }
 
+    if let Some(ref crawl_status) = filters.crawl_status_filter {
+        if crawl_status == "orphan" {
+            clauses.push("crawled = FALSE".to_string());
+        } else if crawl_status == "crawled" {
+            clauses.push("crawled = TRUE".to_string());
+        } else if crawl_status == "dead" {
+            // Usually dead means status >= 400
+            clauses.push("status >= 400".to_string());
+        }
+    }
+
     // 2. Specific referrers
     if !filters.referer_specific.is_empty() {
         let mut spec_or_clauses = Vec::new();
@@ -931,6 +1077,7 @@ pub fn get_active_logs_page(
                 segment_match: row.get("segment_match")?,
                 taxonomy: row.get("taxonomy")?,
                 filename: row.get("filename")?,
+                crawled: row.get("crawled")?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -1017,6 +1164,7 @@ pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsP
                 segment_match: row.get("segment_match")?,
                 taxonomy: row.get("taxonomy")?,
                 filename: row.get("filename")?,
+                crawled: row.get("crawled")?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -1714,8 +1862,7 @@ pub struct ActivePathAggregationsPage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActivePathStatusAggregation {
-    pub path: String,
-    pub status: u16,
+    pub status: i32,
     pub segment: String,
     pub hit_count: i64,
 }
@@ -1728,7 +1875,6 @@ pub struct ActivePathStatusAggregationsPage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActivePathMethodAggregation {
-    pub path: String,
     pub method: String,
     pub segment: String,
     pub hit_count: i64,
@@ -1742,7 +1888,6 @@ pub struct ActivePathMethodAggregationsPage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActivePathUserAgentAggregation {
-    pub path: String,
     pub user_agent: String,
     pub segment: String,
     pub hit_count: i64,
@@ -1756,7 +1901,6 @@ pub struct ActivePathUserAgentAggregationsPage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActivePathRefererAggregation {
-    pub path: String,
     pub referer: String,
     pub segment: String,
     pub hit_count: i64,
@@ -1770,7 +1914,6 @@ pub struct ActivePathRefererAggregationsPage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ActivePathBrowserAggregation {
-    pub path: String,
     pub browser: String,
     pub segment: String,
     pub hit_count: i64,
@@ -1835,25 +1978,185 @@ pub fn get_active_path_aggregations(
     crawler_filter: Option<String>,
     segment_filter: Option<String>,
     search_query: Option<String>,
+    crawl_status_filter: Option<String>,
 ) -> Result<ActivePathAggregationsPage, String> {
+    // If the crawl is not loaded, try loading it from the database first
+    if !crate::loganalyser::helpers::crawl_log::is_crawl_loaded() {
+        let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
+    }
+
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    if let Some(ref status) = crawl_status_filter {
+        if status == "crawled" || status == "uncrawled" || status == "dead" {
+            let db = match crate::uploads::storage::Storage::new("crawl_excel.db") {
+                Ok(db) => db,
+                Err(e) => return Err(format!("Failed to open crawl DB: {}", e)),
+            };
+            let crawl_entries = db.get_all_crawl_data().unwrap_or_default();
+
+            let mut active_map: std::collections::HashMap<String, Vec<ActivePathAggregation>> = std::collections::HashMap::new();
+            let mut stmt = conn.prepare("SELECT path, crawler_type, segment, hit_count FROM active_path_aggregations").map_err(|e| e.to_string())?;
+            let active_rows = stmt.query_map([], |row| {
+                Ok(ActivePathAggregation {
+                    path: row.get(0)?,
+                    crawler_type: row.get(1)?,
+                    segment: row.get(2)?,
+                    hit_count: row.get(3)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+            for row_res in active_rows {
+                if let Ok(row) = row_res {
+                    active_map.entry(row.path.clone()).or_default().push(row);
+                }
+            }
+
+            let mut all_items = Vec::new();
+            for entry in crawl_entries {
+                let normalized = crate::loganalyser::helpers::crawl_log::normalize_crawl_path(&entry.url);
+                if let Some(active_items) = active_map.get(&normalized) {
+                    if status == "crawled" {
+                        for item in active_items {
+                            all_items.push(ActivePathAggregation {
+                                path: entry.url.clone(), // Use the original uploaded URL!
+                                crawler_type: item.crawler_type.clone(),
+                                segment: item.segment.clone(),
+                                hit_count: item.hit_count,
+                            });
+                        }
+                    }
+                } else {
+                    if status == "uncrawled" || status == "dead" {
+                        all_items.push(ActivePathAggregation {
+                            path: entry.url.clone(), // Use the original uploaded URL!
+                            crawler_type: "-".to_string(),
+                            segment: "-".to_string(),
+                            hit_count: 0_i64,
+                        });
+                    }
+                }
+            }
+
+            let search_term = search_query.as_ref().map(|s| s.to_lowercase());
+            let segment_term = segment_filter.as_ref().filter(|s| !s.is_empty());
+            let crawler_term = crawler_filter.as_ref().filter(|s| !s.is_empty() && *s != "all");
+
+            let filtered_items: Vec<ActivePathAggregation> = all_items.into_iter().filter(|item| {
+                // Apply search query (matches path or crawler_type)
+                if let Some(ref term) = search_term {
+                    let path_match = item.path.to_lowercase().contains(term);
+                    let crawler_match = item.crawler_type.to_lowercase().contains(term);
+                    if !path_match && !crawler_match {
+                        return false;
+                    }
+                }
+
+                // Apply segment filter
+                if let Some(segment) = segment_term {
+                    if &item.segment != segment {
+                        return false;
+                    }
+                }
+
+                // Apply crawler filter
+                if let Some(crawler) = crawler_term {
+                    if crawler == "Human" {
+                        if item.crawler_type != "Human" {
+                            return false;
+                        }
+                    } else {
+                        if &item.crawler_type != crawler {
+                            return false;
+                        }
+                    }
+                } else {
+                    // Default crawler filter: exclude Human
+                    if item.crawler_type == "Human" {
+                        return false;
+                    }
+                }
+
+                true
+            }).collect();
+
+            let mut sorted_items = filtered_items;
+            let sort_col = sort_by.as_deref().unwrap_or("hit_count");
+            let sort_asc = sort_order.as_deref() == Some("ascending");
+
+            sorted_items.sort_by(|a, b| {
+                let cmp = match sort_col {
+                    "path" => a.path.cmp(&b.path),
+                    "crawler_type" => a.crawler_type.cmp(&b.crawler_type),
+                    "segment" => a.segment.cmp(&b.segment),
+                    "hit_count" => a.hit_count.cmp(&b.hit_count),
+                    _ => a.hit_count.cmp(&b.hit_count),
+                };
+                if sort_asc {
+                    cmp
+                } else {
+                    cmp.reverse()
+                }
+            });
+
+            let total_count = sorted_items.len() as u32;
+            let start_idx = (page.saturating_sub(1) * limit) as usize;
+            let end_idx = std::cmp::min(start_idx + limit as usize, sorted_items.len());
+            let paginated_data = if start_idx < sorted_items.len() {
+                sorted_items[start_idx..end_idx].to_vec()
+            } else {
+                Vec::new()
+            };
+
+            return Ok(ActivePathAggregationsPage {
+                data: paginated_data,
+                total_count,
+            });
+        }
+    }
 
     let mut clauses = vec!["1=1".to_string()];
     let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
     if let Some(ref crawler) = crawler_filter {
-        if !crawler.is_empty() {
+        if !crawler.is_empty() && crawler != "all" {
             clauses.push("crawler_type = ?".to_string());
             params.push(crawler.clone().into());
-        } else {
+        } else if crawler != "Human" && crawler != "all" {
             clauses.push("crawler_type != 'Human'".to_string());
         }
     } else {
         clauses.push("crawler_type != 'Human'".to_string());
     }
-
+    if let Some(ref crawl_status) = crawl_status_filter {
+        if crawl_status == "orphan" {
+            clauses.push("crawled = FALSE".to_string());
+        } else if crawl_status == "orphan_gsc" {
+            clauses.push("crawled = FALSE".to_string());
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE clicks > 0 OR impressions > 0)".to_string());
+        } else if crawl_status == "crawled" {
+            clauses.push("crawled = TRUE".to_string());
+        } else if crawl_status == "crawled_errors" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
+        } else if crawl_status == "dead" {
+            clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
+        } else if crawl_status == "non_important" {
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "wasted_crawl" {
+            clauses.push("crawled = FALSE".to_string());
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "robots_canonical" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("(path LIKE '%filter%' OR path LIKE '%sort%' OR path LIKE '%order%' OR path LIKE '%facet%' OR path LIKE '%price%' OR path LIKE '%color%' OR path LIKE '%size%' OR path LIKE '%search%' OR path LIKE '%find%' OR path LIKE '%tag%' OR path LIKE '%page%' OR path LIKE '%utm_%' OR path LIKE '%gclid%' OR path LIKE '%fbclid%')".to_string());
+        } else if crawl_status == "low_frequency" {
+            clauses.push("crawled = TRUE".to_string());
+            clauses.push("hit_count <= 2".to_string());
+        }
+    }
     if let Some(ref segment) = segment_filter {
         if !segment.is_empty() {
             clauses.push("segment = ?".to_string());
@@ -1956,9 +2259,8 @@ pub fn get_active_path_status_aggregations(
 
     if let Some(ref search) = search_query {
         if !search.is_empty() {
-            clauses.push("(path LIKE ? OR CAST(status AS TEXT) LIKE ?)".to_string());
+            clauses.push("CAST(status AS TEXT) LIKE ?".to_string());
             let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
             params.push(like_term.into());
         }
     }
@@ -1967,7 +2269,7 @@ pub fn get_active_path_status_aggregations(
 
     // Get total count
     let count_query = format!(
-        "SELECT COUNT(*) FROM active_path_status_aggregations WHERE {}",
+        "SELECT COUNT(*) FROM active_status_aggregations WHERE {}",
         where_sql
     );
     let total_count: u32 = conn
@@ -1981,7 +2283,6 @@ pub fn get_active_path_status_aggregations(
     // Get rows with pagination
     let sort_col = match sort_by.as_deref() {
         Some("hit_count") => "hit_count",
-        Some("path") => "path",
         Some("status") => "status",
         Some("segment") => "segment",
         _ => "hit_count",
@@ -1994,7 +2295,7 @@ pub fn get_active_path_status_aggregations(
 
     let offset = (page.saturating_sub(1)) * limit;
     let query = format!(
-        "SELECT path, status, segment, hit_count FROM active_path_status_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
+        "SELECT status, segment, hit_count FROM active_status_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
         where_sql, sort_col, order, limit, offset
     );
 
@@ -2003,10 +2304,9 @@ pub fn get_active_path_status_aggregations(
     let data = stmt
         .query_map(rusqlite::params_from_iter(params.iter()), |row| {
             Ok(ActivePathStatusAggregation {
-                path: row.get(0)?,
-                status: row.get(1)?,
-                segment: row.get(2)?,
-                hit_count: row.get(3)?,
+                status: row.get(0)?,
+                segment: row.get(1)?,
+                hit_count: row.get(2)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -2049,9 +2349,8 @@ pub fn get_active_path_method_aggregations(
 
     if let Some(ref search) = search_query {
         if !search.is_empty() {
-            clauses.push("(path LIKE ? OR method LIKE ?)".to_string());
+            clauses.push("method LIKE ?".to_string());
             let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
             params.push(like_term.into());
         }
     }
@@ -2060,7 +2359,7 @@ pub fn get_active_path_method_aggregations(
 
     // Get total count
     let count_query = format!(
-        "SELECT COUNT(*) FROM active_path_method_aggregations WHERE {}",
+        "SELECT COUNT(*) FROM active_method_aggregations WHERE {}",
         where_sql
     );
     let total_count: u32 = conn
@@ -2074,7 +2373,6 @@ pub fn get_active_path_method_aggregations(
     // Get rows with pagination
     let sort_col = match sort_by.as_deref() {
         Some("hit_count") => "hit_count",
-        Some("path") => "path",
         Some("method") => "method",
         Some("segment") => "segment",
         _ => "hit_count",
@@ -2087,7 +2385,7 @@ pub fn get_active_path_method_aggregations(
 
     let offset = (page.saturating_sub(1)) * limit;
     let query = format!(
-        "SELECT path, method, segment, hit_count FROM active_path_method_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
+        "SELECT method, segment, hit_count FROM active_method_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
         where_sql, sort_col, order, limit, offset
     );
 
@@ -2096,10 +2394,9 @@ pub fn get_active_path_method_aggregations(
     let data = stmt
         .query_map(rusqlite::params_from_iter(params.iter()), |row| {
             Ok(ActivePathMethodAggregation {
-                path: row.get(0)?,
-                method: row.get(1)?,
-                segment: row.get(2)?,
-                hit_count: row.get(3)?,
+                method: row.get(0)?,
+                segment: row.get(1)?,
+                hit_count: row.get(2)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -2142,9 +2439,8 @@ pub fn get_active_path_user_agent_aggregations(
 
     if let Some(ref search) = search_query {
         if !search.is_empty() {
-            clauses.push("(path LIKE ? OR user_agent LIKE ?)".to_string());
+            clauses.push("user_agent LIKE ?".to_string());
             let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
             params.push(like_term.into());
         }
     }
@@ -2153,7 +2449,7 @@ pub fn get_active_path_user_agent_aggregations(
 
     // Get total count
     let count_query = format!(
-        "SELECT COUNT(*) FROM active_path_user_agent_aggregations WHERE {}",
+        "SELECT COUNT(*) FROM active_user_agent_aggregations WHERE {}",
         where_sql
     );
     let total_count: u32 = conn
@@ -2167,7 +2463,6 @@ pub fn get_active_path_user_agent_aggregations(
     // Get rows with pagination
     let sort_col = match sort_by.as_deref() {
         Some("hit_count") => "hit_count",
-        Some("path") => "path",
         Some("user_agent") => "user_agent",
         Some("segment") => "segment",
         _ => "hit_count",
@@ -2180,7 +2475,7 @@ pub fn get_active_path_user_agent_aggregations(
 
     let offset = (page.saturating_sub(1)) * limit;
     let query = format!(
-        "SELECT path, user_agent, segment, hit_count FROM active_path_user_agent_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
+        "SELECT user_agent, segment, hit_count FROM active_user_agent_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
         where_sql, sort_col, order, limit, offset
     );
 
@@ -2189,10 +2484,9 @@ pub fn get_active_path_user_agent_aggregations(
     let data = stmt
         .query_map(rusqlite::params_from_iter(params.iter()), |row| {
             Ok(ActivePathUserAgentAggregation {
-                path: row.get(0)?,
-                user_agent: row.get(1)?,
-                segment: row.get(2)?,
-                hit_count: row.get(3)?,
+                user_agent: row.get(0)?,
+                segment: row.get(1)?,
+                hit_count: row.get(2)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -2235,9 +2529,8 @@ pub fn get_active_path_referer_aggregations(
 
     if let Some(ref search) = search_query {
         if !search.is_empty() {
-            clauses.push("(path LIKE ? OR referer LIKE ?)".to_string());
+            clauses.push("referer LIKE ?".to_string());
             let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
             params.push(like_term.into());
         }
     }
@@ -2246,7 +2539,7 @@ pub fn get_active_path_referer_aggregations(
 
     // Get total count
     let count_query = format!(
-        "SELECT COUNT(*) FROM active_path_referer_aggregations WHERE {}",
+        "SELECT COUNT(*) FROM active_referer_aggregations WHERE {}",
         where_sql
     );
     let total_count: u32 = conn
@@ -2260,7 +2553,6 @@ pub fn get_active_path_referer_aggregations(
     // Get rows with pagination
     let sort_col = match sort_by.as_deref() {
         Some("hit_count") => "hit_count",
-        Some("path") => "path",
         Some("referer") => "referer",
         Some("segment") => "segment",
         _ => "hit_count",
@@ -2273,7 +2565,7 @@ pub fn get_active_path_referer_aggregations(
 
     let offset = (page.saturating_sub(1)) * limit;
     let query = format!(
-        "SELECT path, referer, segment, hit_count FROM active_path_referer_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
+        "SELECT referer, segment, hit_count FROM active_referer_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
         where_sql, sort_col, order, limit, offset
     );
 
@@ -2282,10 +2574,9 @@ pub fn get_active_path_referer_aggregations(
     let data = stmt
         .query_map(rusqlite::params_from_iter(params.iter()), |row| {
             Ok(ActivePathRefererAggregation {
-                path: row.get(0)?,
-                referer: row.get(1)?,
-                segment: row.get(2)?,
-                hit_count: row.get(3)?,
+                referer: row.get(0)?,
+                segment: row.get(1)?,
+                hit_count: row.get(2)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -2328,9 +2619,8 @@ pub fn get_active_path_browser_aggregations(
 
     if let Some(ref search) = search_query {
         if !search.is_empty() {
-            clauses.push("(path LIKE ? OR browser LIKE ?)".to_string());
+            clauses.push("browser LIKE ?".to_string());
             let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
             params.push(like_term.into());
         }
     }
@@ -2339,7 +2629,7 @@ pub fn get_active_path_browser_aggregations(
 
     // Get total count
     let count_query = format!(
-        "SELECT COUNT(*) FROM active_path_browser_aggregations WHERE {}",
+        "SELECT COUNT(*) FROM active_browser_aggregations WHERE {}",
         where_sql
     );
     let total_count: u32 = conn
@@ -2353,7 +2643,6 @@ pub fn get_active_path_browser_aggregations(
     // Get rows with pagination
     let sort_col = match sort_by.as_deref() {
         Some("hit_count") => "hit_count",
-        Some("path") => "path",
         Some("browser") => "browser",
         Some("segment") => "segment",
         _ => "hit_count",
@@ -2366,7 +2655,7 @@ pub fn get_active_path_browser_aggregations(
 
     let offset = (page.saturating_sub(1)) * limit;
     let query = format!(
-        "SELECT path, browser, segment, hit_count FROM active_path_browser_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
+        "SELECT browser, segment, hit_count FROM active_browser_aggregations WHERE {} ORDER BY {} {} LIMIT {} OFFSET {}",
         where_sql, sort_col, order, limit, offset
     );
 
@@ -2375,10 +2664,9 @@ pub fn get_active_path_browser_aggregations(
     let data = stmt
         .query_map(rusqlite::params_from_iter(params.iter()), |row| {
             Ok(ActivePathBrowserAggregation {
-                path: row.get(0)?,
-                browser: row.get(1)?,
-                segment: row.get(2)?,
-                hit_count: row.get(3)?,
+                browser: row.get(0)?,
+                segment: row.get(1)?,
+                hit_count: row.get(2)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -2700,70 +2988,65 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
             .map_err(|e| e.to_string())?;
 
         tx.execute(
-            "INSERT INTO active_path_aggregations (path, crawler_type, segment, hit_count)
-             SELECT path, crawler_type, segment, COUNT(*) 
+            "INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+             SELECT path, crawler_type, segment, MAX(crawled), COUNT(*) 
              FROM active_parsed_logs 
              GROUP BY path, crawler_type, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
 
-        tx.execute("DELETE FROM active_path_status_aggregations", [])
+        tx.execute("DELETE FROM active_status_aggregations", [])
             .map_err(|e| e.to_string())?;
-
         tx.execute(
-            "INSERT INTO active_path_status_aggregations (path, status, segment, hit_count)
-             SELECT path, status, segment, COUNT(*) 
-             FROM active_parsed_logs 
-             GROUP BY path, status, segment",
+            "INSERT INTO active_status_aggregations (status, segment, hit_count)
+             SELECT status, segment, COUNT(*) as hit_count
+             FROM active_parsed_logs
+             GROUP BY status, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
 
-        tx.execute("DELETE FROM active_path_method_aggregations", [])
+        tx.execute("DELETE FROM active_method_aggregations", [])
             .map_err(|e| e.to_string())?;
-
         tx.execute(
-            "INSERT INTO active_path_method_aggregations (path, method, segment, hit_count)
-             SELECT path, method, segment, COUNT(*) 
-             FROM active_parsed_logs 
-             GROUP BY path, method, segment",
+            "INSERT INTO active_method_aggregations (method, segment, hit_count)
+             SELECT method, segment, COUNT(*) as hit_count
+             FROM active_parsed_logs
+             GROUP BY method, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
 
-        tx.execute("DELETE FROM active_path_user_agent_aggregations", [])
+        tx.execute("DELETE FROM active_user_agent_aggregations", [])
             .map_err(|e| e.to_string())?;
-
         tx.execute(
-            "INSERT INTO active_path_user_agent_aggregations (path, user_agent, segment, hit_count)
-             SELECT path, user_agent, segment, COUNT(*) 
-             FROM active_parsed_logs 
-             GROUP BY path, user_agent, segment",
+            "INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
+             SELECT user_agent, segment, COUNT(*) as hit_count
+             FROM active_parsed_logs
+             GROUP BY user_agent, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
 
-        tx.execute("DELETE FROM active_path_referer_aggregations", [])
+        tx.execute("DELETE FROM active_referer_aggregations", [])
             .map_err(|e| e.to_string())?;
-
         tx.execute(
-            "INSERT INTO active_path_referer_aggregations (path, referer, segment, hit_count)
-             SELECT path, COALESCE(referer, '-'), segment, COUNT(*) 
-             FROM active_parsed_logs 
-             GROUP BY path, referer, segment",
+            "INSERT INTO active_referer_aggregations (referer, segment, hit_count)
+             SELECT COALESCE(referer, '-'), segment, COUNT(*) as hit_count
+             FROM active_parsed_logs
+             GROUP BY COALESCE(referer, '-'), segment",
             [],
         )
         .map_err(|e| e.to_string())?;
 
-        tx.execute("DELETE FROM active_path_browser_aggregations", [])
+        tx.execute("DELETE FROM active_browser_aggregations", [])
             .map_err(|e| e.to_string())?;
-
         tx.execute(
-            "INSERT INTO active_path_browser_aggregations (path, browser, segment, hit_count)
-             SELECT path, browser, segment, COUNT(*) 
-             FROM active_parsed_logs 
-             GROUP BY path, browser, segment",
+            "INSERT INTO active_browser_aggregations (browser, segment, hit_count)
+             SELECT browser, segment, COUNT(*) as hit_count
+             FROM active_parsed_logs
+             GROUP BY browser, segment",
             [],
         )
         .map_err(|e| e.to_string())?;
@@ -2808,6 +3091,50 @@ pub fn rebuild_path_aggregations() -> Result<(), String> {
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
+
+pub fn update_crawled_status_from_cache() -> Result<(), String> {
+    init_active_db()?;
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    {
+        // 1. Reset all crawled statuses to FALSE first
+        tx.execute("UPDATE active_parsed_logs SET crawled = FALSE", [])
+            .map_err(|e| e.to_string())?;
+        tx.execute("UPDATE active_path_aggregations SET crawled = FALSE", [])
+            .map_err(|e| e.to_string())?;
+
+        // 2. Query distinct paths to check against crawled data cache
+        let mut stmt = tx.prepare("SELECT DISTINCT path FROM active_parsed_logs").map_err(|e| e.to_string())?;
+        let paths: Vec<String> = stmt.query_map([], |row| row.get(0))
+            .map_err(|e| e.to_string())?
+            .filter_map(Result::ok)
+            .collect();
+
+        // 3. Collect paths that are crawled
+        let mut crawled_paths = Vec::new();
+        for path in paths {
+            if crate::loganalyser::helpers::crawl_log::check_crawl_data_for_path(&path) {
+                crawled_paths.push(path);
+            }
+        }
+
+        // 4. Update the tables for matches
+        if !crawled_paths.is_empty() {
+            let mut stmt_logs = tx.prepare("UPDATE active_parsed_logs SET crawled = TRUE WHERE path = ?").map_err(|e| e.to_string())?;
+            let mut stmt_aggs = tx.prepare("UPDATE active_path_aggregations SET crawled = TRUE WHERE path = ?").map_err(|e| e.to_string())?;
+
+            for path in crawled_paths {
+                let _ = stmt_logs.execute([&path]);
+                let _ = stmt_aggs.execute([&path]);
+            }
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
     init_active_db()?;
@@ -2838,15 +3165,15 @@ pub fn clear_active_db_internal() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM active_path_aggregations", [])
         .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_status_aggregations", [])
+    conn.execute("DELETE FROM active_status_aggregations", [])
         .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_method_aggregations", [])
+    conn.execute("DELETE FROM active_method_aggregations", [])
         .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_user_agent_aggregations", [])
+    conn.execute("DELETE FROM active_user_agent_aggregations", [])
         .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_referer_aggregations", [])
+    conn.execute("DELETE FROM active_referer_aggregations", [])
         .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_browser_aggregations", [])
+    conn.execute("DELETE FROM active_browser_aggregations", [])
         .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM active_path_verified_aggregations", [])
         .map_err(|e| e.to_string())?;
@@ -3139,7 +3466,7 @@ pub fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDe
     Ok(results)
 }
 
-use super::analyser::{BotStatsMap, LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
+use super::analyser::{LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
 
 #[tauri::command]
 pub fn reclassify_all_segments() -> Result<(), String> {
@@ -3336,16 +3663,16 @@ fn add_query_to_sheet(
     workbook: &mut rust_xlsxwriter::Workbook,
     sheet_name: &str,
     query: &str,
-    headers: Vec<&str>,
+    headers: Vec<String>,
     header_format: &rust_xlsxwriter::Format,
 ) -> Result<(), String> {
-    let mut worksheet = workbook.add_worksheet();
+    let worksheet = workbook.add_worksheet();
     // Sheet name must be <= 31 chars
-    let safe_name = if sheet_name.len() > 31 { &sheet_name[..31] } else { sheet_name };
+    let safe_name = if sheet_name.len() > 31 { let end = sheet_name.floor_char_boundary(31); &sheet_name[..end] } else { sheet_name };
     worksheet.set_name(safe_name).map_err(|e| e.to_string())?;
 
     for (col, header) in headers.iter().enumerate() {
-        worksheet.write_string_with_format(0, col as u16, *header, header_format)
+        worksheet.write_string_with_format(0, col as u16, header, header_format)
             .map_err(|e| e.to_string())?;
     }
 
@@ -3374,7 +3701,7 @@ fn add_query_to_sheet(
 #[tauri::command]
 pub fn export_server_logs_trends_excel(
     file_path: String,
-    include_gsc: bool,
+    _include_gsc: bool,
 ) -> Result<usize, String> {
     use rust_xlsxwriter::{Workbook, Format};
 
@@ -3386,7 +3713,7 @@ pub fn export_server_logs_trends_excel(
     let header_format = Format::new().set_bold();
 
     // 1. SUMMARY SHEET
-    let mut worksheet_summary = workbook.add_worksheet();
+    let worksheet_summary = workbook.add_worksheet();
     worksheet_summary.set_name("Trends Summary").map_err(|e| e.to_string())?;
     worksheet_summary.write_string_with_format(0, 0, "Metric", &header_format).map_err(|e| e.to_string())?;
     worksheet_summary.write_string_with_format(0, 1, "Unique Count", &header_format).map_err(|e| e.to_string())?;
@@ -3394,13 +3721,13 @@ pub fn export_server_logs_trends_excel(
 
     let metrics = [
         ("URL Path Frequency", "active_path_aggregations", "path"),
-        ("Status Codes Frequency", "active_path_status_aggregations", "status"),
-        ("HTTP Methods Frequency", "active_path_method_aggregations", "method"),
-        ("User Agents Frequency", "active_path_user_agent_aggregations", "user_agent"),
-        ("Referrers Frequency", "active_path_referer_aggregations", "referer"),
-        ("Browsers Frequency", "active_path_browser_aggregations", "browser"),
-        ("Bots Frequency", "active_path_verified_aggregations", "crawler_type"),
-        ("IP Addresses Frequency", "active_path_ip_aggregations", "ip"),
+        ("Status Codes Frequency", "active_status_aggregations", "status"),
+        ("Method Frequency", "active_method_aggregations", "method"),
+        ("User Agents Frequency", "active_user_agent_aggregations", "user_agent"),
+        ("Referrers Frequency", "active_referer_aggregations", "referer"),
+        ("Browser Frequency", "active_browser_aggregations", "browser"),
+        ("Verified Bots", "active_path_verified_aggregations", "crawler_type"),
+        ("IP frequency", "active_path_ip_aggregations", "ip"),
         ("Human Traffic Frequency", "active_path_human_aggregations", "path"),
     ];
 
@@ -3422,18 +3749,18 @@ pub fn export_server_logs_trends_excel(
     worksheet_summary.write_number(last_row + 2, 2, total_logs as f64).map_err(|e| e.to_string())?;
 
     // 2. TRENDS AGGREGATIONS SHEETS
-    add_query_to_sheet(conn, &mut workbook, "Timeline", "SELECT substr(timestamp, 1, 10) as date, SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END) as human, SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END) as crawler FROM active_parsed_logs GROUP BY date ORDER BY date ASC", vec!["Date", "Human Hits", "Crawler Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "File Types", "SELECT file_type, COUNT(*) as count FROM active_parsed_logs GROUP BY file_type ORDER BY count DESC", vec!["File Type", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Content Segments", "SELECT segment, COUNT(*) as count FROM active_parsed_logs GROUP BY segment ORDER BY count DESC", vec!["Segment", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Path Frequency", "SELECT path, SUM(hit_count) as total_hits, crawler_type, segment FROM active_path_aggregations GROUP BY path, crawler_type, segment ORDER BY total_hits DESC", vec!["Path", "Hits", "Type", "Segment"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Status Codes", "SELECT status, SUM(hit_count) as total_hits FROM active_path_status_aggregations GROUP BY status ORDER BY total_hits DESC", vec!["Status", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Methods", "SELECT method, SUM(hit_count) as total_hits FROM active_path_method_aggregations GROUP BY method ORDER BY total_hits DESC", vec!["Method", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "User Agents", "SELECT user_agent, SUM(hit_count) as total_hits FROM active_path_user_agent_aggregations GROUP BY user_agent ORDER BY total_hits DESC", vec!["User Agent", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Referrers", "SELECT referer, SUM(hit_count) as total_hits FROM active_path_referer_aggregations GROUP BY referer ORDER BY total_hits DESC", vec!["Referer", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Browsers", "SELECT browser, SUM(hit_count) as total_hits FROM active_path_browser_aggregations GROUP BY browser ORDER BY total_hits DESC", vec!["Browser", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Verified Bots", "SELECT crawler_type, SUM(hit_count) as total_hits FROM active_path_verified_aggregations GROUP BY crawler_type ORDER BY total_hits DESC", vec!["Bot", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "IP Addresses", "SELECT ip, SUM(hit_count) as total_hits FROM active_path_ip_aggregations GROUP BY ip ORDER BY total_hits DESC", vec!["IP", "Hits"], &header_format)?;
-    add_query_to_sheet(conn, &mut workbook, "Human Traffic", "SELECT path, browser, country, SUM(hit_count) as total_hits FROM active_path_human_aggregations GROUP BY path, browser, country ORDER BY total_hits DESC", vec!["Path", "Browser", "Country", "Hits"], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Timeline", "SELECT substr(timestamp, 1, 10) as date, SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END) as human, SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END) as crawler FROM active_parsed_logs GROUP BY date ORDER BY date ASC", vec!["Date".to_string(), "Human Hits".to_string(), "Crawler Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "File Types", "SELECT file_type, COUNT(*) as count FROM active_parsed_logs GROUP BY file_type ORDER BY count DESC", vec!["File Type".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Content Segments", "SELECT segment, COUNT(*) as count FROM active_parsed_logs GROUP BY segment ORDER BY count DESC", vec!["Segment".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Path Frequency", "SELECT path, SUM(hit_count) as total_hits, crawler_type, segment FROM active_path_aggregations GROUP BY path, crawler_type, segment ORDER BY total_hits DESC", vec!["Path".to_string(), "Hits".to_string(), "Type".to_string(), "Segment".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Status Codes", "SELECT status, SUM(hit_count) as total_hits FROM active_status_aggregations GROUP BY status ORDER BY total_hits DESC", vec!["Status".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Methods", "SELECT method, SUM(hit_count) as total_hits FROM active_method_aggregations GROUP BY method ORDER BY total_hits DESC", vec!["Method".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "User Agents", "SELECT user_agent, SUM(hit_count) as total_hits FROM active_user_agent_aggregations GROUP BY user_agent ORDER BY total_hits DESC", vec!["User Agent".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Referrers", "SELECT referer, SUM(hit_count) as total_hits FROM active_referer_aggregations GROUP BY referer ORDER BY total_hits DESC", vec!["Referer".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Browsers", "SELECT browser, SUM(hit_count) as total_hits FROM active_browser_aggregations GROUP BY browser ORDER BY total_hits DESC", vec!["Browser".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Verified Bots", "SELECT crawler_type, SUM(hit_count) as total_hits FROM active_path_verified_aggregations GROUP BY crawler_type ORDER BY total_hits DESC", vec!["Bot".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "IP Addresses", "SELECT ip, SUM(hit_count) as total_hits FROM active_path_ip_aggregations GROUP BY ip ORDER BY total_hits DESC", vec!["IP".to_string(), "Hits".to_string()], &header_format)?;
+    add_query_to_sheet(conn, &mut workbook, "Human Traffic", "SELECT path, browser, country, SUM(hit_count) as total_hits FROM active_path_human_aggregations GROUP BY path, browser, country ORDER BY total_hits DESC", vec!["Path".to_string(), "Browser".to_string(), "Country".to_string(), "Hits".to_string()], &header_format)?;
 
     workbook.save(&file_path).map_err(|e| e.to_string())?;
     
@@ -3565,14 +3892,14 @@ pub fn export_aggregated_logs_csv(
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
     let table = match agg_type.as_str() {
-        "status" => "active_path_status_aggregations",
-        "method" => "active_path_method_aggregations",
-        "useragent" => "active_path_user_agent_aggregations",
-        "referer" => "active_path_referer_aggregations",
-        "browser" => "active_path_browser_aggregations",
+        "status" => "active_status_aggregations",
+        "method" => "active_method_aggregations",
+        "useragent" => "active_user_agent_aggregations",
+        "referer" => "active_referer_aggregations",
+        "browser" => "active_browser_aggregations",
         "verified" => "active_path_verified_aggregations",
         "ip" => "active_path_ip_aggregations",
-        "path_analysis" | "human" => "active_path_aggregations",
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => "active_path_aggregations",
         _ => return Err("Invalid aggregation type".to_string()),
     };
 
@@ -3584,14 +3911,20 @@ pub fn export_aggregated_logs_csv(
         "browser" => "browser",
         "verified" => "crawler_type, verified",
         "ip" => "ip",
-        "path_analysis" | "human" => "crawler_type",
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => "crawler_type",
         _ => return Err("Invalid aggregation type".to_string()),
     };
 
     let mut wtr = Writer::from_path(&file_path).map_err(|e| e.to_string())?;
 
     // Write header
-    let mut headers = vec!["Path"];
+    let mut headers = Vec::new();
+    let is_global = ["status", "method", "useragent", "referer", "browser"].contains(&agg_type.as_str());
+    
+    if !is_global {
+        headers.push("Path");
+    }
+
     match agg_type.as_str() {
         "status" => headers.push("Status Code"),
         "method" => headers.push("Method"),
@@ -3603,7 +3936,7 @@ pub fn export_aggregated_logs_csv(
             headers.push("Verified");
         },
         "ip" => headers.push("IP Address"),
-        "path_analysis" | "human" => headers.push("Crawler Type"),
+        "path_analysis" | "human" | "orphan" | "crawled" | "dead" => headers.push("Crawler Type"),
         _ => {},
     }
     headers.push("Segment");
@@ -3614,6 +3947,15 @@ pub fn export_aggregated_logs_csv(
     
     if agg_type == "human" {
         clauses.push("crawler_type = 'Human'".to_string());
+    } else if agg_type == "orphan" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("crawled = FALSE".to_string());
+    } else if agg_type == "crawled" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("crawled = TRUE".to_string());
+    } else if agg_type == "dead" {
+        clauses.push("crawler_type != 'Human'".to_string());
+        clauses.push("path IN (SELECT path FROM active_parsed_logs WHERE status >= 400)".to_string());
     } else if agg_type == "path_analysis" {
         clauses.push("crawler_type != 'Human'".to_string());
     }
@@ -3636,44 +3978,64 @@ pub fn export_aggregated_logs_csv(
             } else {
                 col_name
             };
-            clauses.push(format!("(path LIKE ? OR {} LIKE ?)", col));
-            let like_term = format!("%{}%", search);
-            params.push(like_term.clone().into());
-            params.push(like_term.into());
+            
+            if is_global {
+                clauses.push(format!("{} LIKE ?", col));
+                params.push(format!("%{}%", search).into());
+            } else {
+                clauses.push(format!("(path LIKE ? OR {} LIKE ?)", col));
+                let like_term = format!("%{}%", search);
+                params.push(like_term.clone().into());
+                params.push(like_term.into());
+            }
         }
     }
     let where_sql = clauses.join(" AND ");
 
-    let query = format!(
-        "SELECT path, {}, segment, hit_count FROM {} WHERE {} ORDER BY hit_count DESC",
-        col_name, table, where_sql
-    );
+    let query = if is_global {
+        format!(
+            "SELECT {}, segment, hit_count FROM {} WHERE {} ORDER BY hit_count DESC",
+            col_name, table, where_sql
+        )
+    } else {
+        format!(
+            "SELECT path, {}, segment, hit_count FROM {} WHERE {} ORDER BY hit_count DESC",
+            col_name, table, where_sql
+        )
+    };
 
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
     let mut rows = stmt.query(rusqlite::params_from_iter(params.iter())).map_err(|e| e.to_string())?;
     let mut total_exported: usize = 0;
 
     while let Some(row) = rows.next().map_err(|e| e.to_string())? {
-        let path: String = row.get(0).map_err(|e| e.to_string())?;
-        
-        let mut record = vec![path];
-        let (segment_idx, hits_idx) = match agg_type.as_str() {
+        let mut record = Vec::new();
+        let mut col_idx = 0;
+
+        if !is_global {
+            let path: String = row.get(col_idx).map_err(|e| e.to_string())?;
+            record.push(path);
+            col_idx += 1;
+        }
+
+        match agg_type.as_str() {
             "verified" => {
-                record.push(row.get::<_, String>(1).map_err(|e| e.to_string())?);
-                record.push(if row.get::<_, bool>(2).map_err(|e| e.to_string())? { "true".to_string() } else { "false".to_string() });
-                (3, 4)
+                record.push(row.get::<_, String>(col_idx).map_err(|e| e.to_string())?);
+                record.push(if row.get::<_, bool>(col_idx + 1).map_err(|e| e.to_string())? { "true".to_string() } else { "false".to_string() });
+                col_idx += 2;
+            },
+            "status" => {
+                record.push(row.get::<_, i64>(col_idx).map_err(|e| e.to_string())?.to_string());
+                col_idx += 1;
             },
             _ => {
-                match agg_type.as_str() {
-                    "status" => record.push(row.get::<_, i64>(1).map_err(|e| e.to_string())?.to_string()),
-                    _ => record.push(row.get::<_, String>(1).map_err(|e| e.to_string())?),
-                }
-                (2, 3)
+                record.push(row.get::<_, String>(col_idx).map_err(|e| e.to_string())?);
+                col_idx += 1;
             }
-        };
+        }
 
-        let segment: String = row.get(segment_idx).map_err(|e| e.to_string())?;
-        let hits: i64 = row.get(hits_idx).map_err(|e| e.to_string())?;
+        let segment: String = row.get(col_idx).map_err(|e| e.to_string())?;
+        let hits: i64 = row.get(col_idx + 1).map_err(|e| e.to_string())?;
 
         record.push(segment);
         record.push(hits.to_string());

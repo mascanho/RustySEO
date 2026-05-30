@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
 use reqwest;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 const API_KEY: &str = "AIzaSyAzGe221fKyFf8IgPNFAIpK7YfKugNSVhc"; // Replace with your actual API key
 const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models";

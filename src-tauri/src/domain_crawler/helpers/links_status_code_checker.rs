@@ -3,6 +3,14 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, Instant};
 
+/// Maximum number of link-check results to cache before evicting the oldest half.
+/// Prevents the status_cache from growing unboundedly across a 40K+ page crawl.
+const MAX_STATUS_CACHE_SIZE: usize = 50_000;
+
+/// How long (in seconds) a per-domain DomainTracker entry is considered stale.
+/// Entries not accessed within this window are pruned to free memory.
+const DOMAIN_TRACKER_TTL_SECS: u64 = 300; // 5 minutes
+
 use futures::{stream, StreamExt};
 use rand::seq::IndexedRandom;
 use reqwest::{
@@ -14,10 +22,9 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, Notify, Semaphore};
-use tokio::task::{JoinError, JoinHandle};
 use tokio::time::{sleep, timeout};
 
-use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
+use crate::domain_crawler::helpers::anchor_links::InternalExternalLinks;
 use crate::settings::settings::Settings;
 
 #[derive(Debug, Clone)]
@@ -193,14 +200,42 @@ struct DomainTracker {
 impl DomainTracker {
     fn new(config: &LinkCheckConfig) -> Self {
         DomainTracker {
-            last_request: StdMutex::new(HashMap::new()),
-            delays: StdMutex::new(HashMap::new()),
-            request_counts: StdMutex::new(HashMap::new()),
+            last_request: StdMutex::new(HashMap::with_capacity(64)),
+            delays: StdMutex::new(HashMap::with_capacity(64)),
+            request_counts: StdMutex::new(HashMap::with_capacity(64)),
             config: config.clone(),
         }
     }
 
-    fn get_delay_for(&self, domain: &str) -> Duration {
+    /// Remove per-domain entries that haven't been accessed within DOMAIN_TRACKER_TTL_SECS.
+    /// Called periodically to prevent the tracker maps from growing indefinitely when
+    /// crawling sites that link to many unique external domains.
+    fn prune(&self) {
+        let cutoff = Duration::from_secs(DOMAIN_TRACKER_TTL_SECS);
+        let now = Instant::now();
+
+        // Collect stale domains from last_request
+        let stale_domains: Vec<String> = {
+            let lr = self.last_request.lock().unwrap();
+            lr.iter()
+                .filter(|(_, &ts)| now.duration_since(ts) > cutoff)
+                .map(|(k, _)| k.clone())
+                .collect()
+        };
+
+        if !stale_domains.is_empty() {
+            let mut lr = self.last_request.lock().unwrap();
+            let mut dl = self.delays.lock().unwrap();
+            let mut rc = self.request_counts.lock().unwrap();
+            for domain in &stale_domains {
+                lr.remove(domain);
+                dl.remove(domain);
+                rc.remove(domain);
+            }
+        }
+    }
+
+    fn get_delay_for(&self, domain: &str) -> Result<Duration, Duration> {
         let base_delay = {
             let delays = self.delays.lock().unwrap();
             delays
@@ -219,9 +254,16 @@ impl DomainTracker {
         } else {
             Duration::from_millis(0)
         };
+        
+        // If wait time is too long (e.g. > 5 seconds), abort the request to prevent
+        // compounding serialized delays that freeze the crawler threads.
+        if wait_time > Duration::from_secs(5) {
+            return Err(wait_time);
+        }
+        
         *last_req = std::cmp::max(now, target_time);
         
-        wait_time
+        Ok(wait_time)
     }
 
     fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
@@ -260,7 +302,7 @@ pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
     base_url: &Url,
     page: String,
-    config: LinkCheckConfig,
+    _config: LinkCheckConfig,
 ) -> LinkCheckResults {
     let settings = Settings::default(); // Fallback
     let checker = SharedLinkChecker::new(
@@ -285,7 +327,7 @@ pub async fn get_links_status_code_from_settings(
     checker.check_links(links, base_url, page).await
 }
 
-fn build_client(config: &LinkCheckConfig, settings: &Settings, _user_agent: Option<String>) -> Client {
+fn build_client(config: &LinkCheckConfig, _settings: &Settings, _user_agent: Option<String>) -> Client {
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
     headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
@@ -558,10 +600,36 @@ async fn process_single_link(
     )
     .await;
 
-    // Update Global Cache
+    // Update Global Cache with bounded eviction.
+    // When the cache exceeds MAX_STATUS_CACHE_SIZE we drop the oldest half to free memory.
+    // This prevents unbounded growth across a 40K+ page crawl where every page's
+    // outbound links would otherwise accumulate here forever.
     {
         let mut cache = status_cache.lock().await;
+        if cache.len() >= MAX_STATUS_CACHE_SIZE {
+            // Evict roughly half the entries (the ones inserted earliest in iteration order).
+            // HashMap doesn't preserve insertion order, so we collect keys then remove.
+            let evict_count = cache.len() / 2;
+            let to_evict: Vec<String> = cache.keys().take(evict_count).cloned().collect();
+            for key in to_evict {
+                cache.remove(&key);
+            }
+            // Shrink the backing allocation so the freed memory is actually returned.
+            cache.shrink_to_fit();
+        }
         cache.insert(full_url_str.clone(), (result.status, result.error.clone()));
+    }
+
+    // Periodically prune stale DomainTracker entries to prevent unbounded growth
+    // when crawling pages that link to many unique external domains.
+    // Use a simple modulo on the domain string's hash as a cheap probabilistic trigger.
+    {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        domain.hash(&mut h);
+        if h.finish() % 200 == 0 {
+            domain_tracker.prune();
+        }
     }
 
     // Remove from in-flight and notify all waiting tasks
@@ -597,7 +665,23 @@ async fn fetch_with_retry(
 
     loop {
         // Get domain-specific delay
-        let delay = domain_tracker.get_delay_for(domain);
+        let delay = match domain_tracker.get_delay_for(domain) {
+            Ok(d) => d,
+            Err(wait_time) => {
+                // Throttled! Return immediately with 429 to prevent crawler freeze
+                return LinkStatus {
+                    base_url: (*base_url).clone(),
+                    url: url.to_string(),
+                    relative_path: relative_path.clone(),
+                    status: Some(429),
+                    error: Some(format!("Throttled: Rate limit wait time too long ({:?})", wait_time)),
+                    anchor_text: anchor_text.clone(),
+                    rel: rel.clone(),
+                    title: title.clone(),
+                    target: target.clone(),
+                };
+            }
+        };
         if delay.as_millis() > 0 {
             sleep(delay).await;
         }

@@ -13,7 +13,7 @@ export function getOS() {
   return "Unknown";
 }
 
-export function localStorageHandler(status) {
+export function localStorageHandler(status, key = "GscExcel") {
   let newStatus;
 
   if (!status) {
@@ -22,7 +22,7 @@ export function localStorageHandler(status) {
     newStatus = true;
   }
 
-  localStorage.setItem("GscExcel", JSON.stringify(newStatus));
+  localStorage.setItem(key, JSON.stringify(newStatus));
 }
 
 export function getLocalStorageLog() {

@@ -1,29 +1,16 @@
 // Import necessary modules and dependencies
-use directories::ProjectDirs;
 use dotenv::dotenv;
-use html5ever::driver::parse_document;
-use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
-use html5ever::tendril::{ByteTendril, TendrilSink};
-use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, USER_AGENT};
 use reqwest::Client;
-use rusqlite::Connection;
 use scraper::selectable::Selectable;
 use scraper::{ElementRef, Html, Selector};
-use serde::de::Error;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::error::Error as StdError;
-use std::time::Instant;
 use std::{
     collections::HashMap,
-    env,
-    fs::{self, File},
-    io::Write,
     usize,
 };
-use std::{io, vec};
 use url::Url;
 
 use crate::crawler;
@@ -242,7 +229,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<Hreflang> = Vec::new();
-    let mut index_type = Vec::new();
+    let index_type = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
     let mut words_arr: Vec<(usize, Vec<String>, usize)> = Vec::new();
     let mut og_details: HashMap<String, Option<String>> = [
@@ -312,7 +299,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
 
         if let Some(body) = document.select(&body_selector).next() {
             body_elements.push(body.html());
-            let body_contents = serialize_element(&body);
+            let _body_contents = serialize_element(&body);
         }
 
         let gtm_selector = Selector::parse("script").unwrap_or_else(|_| {
@@ -549,7 +536,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         std::time::Duration::from_secs(2),
         libs::get_sitemap(&normalized_url)
     );
-    let sitemap_from_url = match sitemap_future.await {
+    let _sitemap_from_url = match sitemap_future.await {
         Ok(_) => "Sitemap fetched".to_string(),
         Err(_) => "Sitemap fetch timeout".to_string(),
     };

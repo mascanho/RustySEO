@@ -1,11 +1,7 @@
 use directories::ProjectDirs;
 use genai::chat::{ChatMessage, ChatRequest, ChatResponse};
 use genai::client::Client;
-use genai::utils::print_chat_stream;
-use scraper::{ElementRef, Html, Selector};
-use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::io::Write;
 
 use crate::gemini::{self};
 

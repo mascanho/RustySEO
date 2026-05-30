@@ -58,7 +58,17 @@ interface AgregatedWidgetContentTableProps {
     | "verified"
     | "ip"
     | "path_analysis"
-    | "human";
+    | "human"
+    | "orphan"
+    | "orphan_gsc"
+    | "crawled"
+    | "crawled_errors"
+    | "dead"
+    | "uncrawled"
+    | "non_important"
+    | "wasted_crawl"
+    | "robots_canonical"
+    | "low_frequency";
   title: string;
   segment: string;
 }
@@ -190,6 +200,16 @@ export const AgregatedWidgetContentTable: React.FC<
         return "get_active_path_ip_aggregations";
       case "path_analysis":
       case "human":
+      case "orphan":
+      case "orphan_gsc":
+      case "crawled":
+      case "crawled_errors":
+      case "dead":
+      case "uncrawled":
+      case "non_important":
+      case "wasted_crawl":
+      case "robots_canonical":
+      case "low_frequency":
         return "get_active_path_aggregations";
       default:
         return "";
@@ -212,6 +232,10 @@ export const AgregatedWidgetContentTable: React.FC<
 
       if (type === "human") {
         params.crawlerFilter = "Human";
+      }
+
+      if (["orphan", "orphan_gsc", "crawled", "crawled_errors", "dead", "uncrawled", "non_important", "wasted_crawl", "robots_canonical", "low_frequency"].includes(type)) {
+        params.crawlStatusFilter = type;
       }
 
       const result = await invoke(command, params);
@@ -248,6 +272,36 @@ export const AgregatedWidgetContentTable: React.FC<
           break;
         case "human":
           hits = summary.human_hits;
+          break;
+        case "orphan":
+          hits = summary.orphan_pages;
+          break;
+        case "orphan_gsc":
+          hits = summary.orphans_gsc_traffic;
+          break;
+        case "crawled":
+          hits = summary.crawled_pages;
+          break;
+        case "crawled_errors":
+          hits = summary.wasted_crawl_budget;
+          break;
+        case "uncrawled":
+          hits = summary.uncrawled_urls;
+          break;
+        case "dead":
+          hits = summary.dead_content;
+          break;
+        case "non_important":
+          hits = summary.unimportant_crawled;
+          break;
+        case "wasted_crawl":
+          hits = summary.wasted_crawl_budget;
+          break;
+        case "robots_canonical":
+          hits = summary.robots_txt_improvements;
+          break;
+        case "low_frequency":
+          hits = summary.low_frequency_important;
           break;
       }
       setTotalHits(hits || 0);
@@ -315,7 +369,8 @@ export const AgregatedWidgetContentTable: React.FC<
   };
 
   const getColumns = () => {
-    const base = [
+    const isGlobal = ["status", "method", "useragent", "referer", "browser"].includes(type);
+    const base = isGlobal ? [] : [
       { key: "path", label: "Path", icon: <LayoutGrid className="w-3 h-3" /> },
     ];
 
@@ -391,6 +446,12 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
       case "path_analysis":
       case "human":
+      case "orphan":
+      case "orphan_gsc":
+      case "non_important":
+      case "wasted_crawl":
+      case "robots_canonical":
+      case "low_frequency":
         specific = [
           {
             key: "crawler_type",
@@ -401,12 +462,49 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
     }
 
+    if (type === "uncrawled" || type === "dead" || type === "crawled" || type === "crawled_errors") {
+      return [
+        ...base,
+        { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
+        { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> },
+      ];
+    }
+
     return [
       ...base,
       ...specific,
       { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
       { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> },
     ];
+  };
+
+  const formatURLWithHighlight = (url: string) => {
+    if (!url) return "";
+    
+    let protocolIdx = url.indexOf("://");
+    let firstSlashIdx = -1;
+    if (protocolIdx !== -1) {
+      const postProtocol = url.substring(protocolIdx + 3);
+      const relativeSlash = postProtocol.indexOf("/");
+      if (relativeSlash !== -1) {
+        firstSlashIdx = protocolIdx + 3 + relativeSlash;
+      }
+    } else {
+      firstSlashIdx = url.indexOf("/");
+    }
+
+    if (firstSlashIdx !== -1) {
+      const domainPart = url.substring(0, firstSlashIdx);
+      const pathPart = url.substring(firstSlashIdx);
+      return (
+        <span>
+          <span className="opacity-45 text-foreground/50">{domainPart}</span>
+          <span className="text-blue-500 dark:text-blue-400 font-semibold bg-blue-500/10 dark:bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-500/20 dark:border-blue-400/20">{pathPart}</span>
+        </span>
+      );
+    }
+    
+    return url;
   };
 
   const renderValue = (item: any, key: string) => {
@@ -479,7 +577,7 @@ export const AgregatedWidgetContentTable: React.FC<
             title={val}
             onClick={(e) => handleURLClick(val, e)}
           >
-            {val}
+            {formatURLWithHighlight(val)}
           </span>
         </div>
       );
@@ -507,6 +605,16 @@ export const AgregatedWidgetContentTable: React.FC<
         >
           {val || "All"}
         </Badge>
+      );
+    }
+    if (key === "referer") {
+      return (
+        <span
+          className="block dark:text-white/80 text-xs font-mono break-all min-w-[300px] pl-3"
+          title={val}
+        >
+          {val || "-"}
+        </span>
       );
     }
     return (
@@ -602,13 +710,13 @@ export const AgregatedWidgetContentTable: React.FC<
                       <TableHead
                         key={col.key}
                         className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
-                          col.key !== "path" ? "text-center" : ""
-                        }`}
+                          !["path", "referer", "status"].includes(col.key) ? "text-center" : ""
+                        } ${col.key === "status" ? "pl-4" : ""}`}
                         onClick={() => handleSort(col.key)}
                       >
                         <div
                           className={`flex items-center gap-2 mt-2 ${
-                            col.key !== "path" ? "justify-center" : ""
+                            !["path", "referer", "status"].includes(col.key) ? "justify-center" : ""
                           }`}
                         >
                           {col.icon}
@@ -650,10 +758,12 @@ export const AgregatedWidgetContentTable: React.FC<
                         {getColumns().map((col) => (
                           <TableCell
                             key={col.key}
-                            className={`py-2 ${col.key !== "path" ? "text-center" : ""}`}
+                            className={`py-2 ${!["path", "referer", "status"].includes(col.key) ? "text-center" : ""} ${
+                              col.key === "status" ? "pl-4" : ""
+                            }`}
                           >
                             <div
-                              className={`flex items-center ${col.key !== "path" ? "justify-center" : ""}`}
+                              className={`flex items-center ${!["path", "referer", "status"].includes(col.key) ? "justify-center" : ""}`}
                             >
                               {renderValue(item, col.key)}
                             </div>

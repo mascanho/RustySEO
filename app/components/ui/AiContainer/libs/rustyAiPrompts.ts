@@ -38,6 +38,31 @@ export interface RustyAiContext {
         status_codes?: string;
         content_segments?: string;
         specialized_bots?: string;
+        trend_totals?: {
+            path_count: number;
+            path_hits: number;
+            status_count: number;
+            status_hits: number;
+            method_count: number;
+            method_hits: number;
+            user_agent_count: number;
+            user_agent_hits: number;
+            referer_count: number;
+            referer_hits: number;
+            browser_count: number;
+            browser_hits: number;
+            verified_count: number;
+            verified_hits: number;
+            ip_count: number;
+            ip_hits: number;
+            human_count: number;
+            human_hits: number;
+            top_paths?: [string, number][];
+            top_status_codes?: [string, number][];
+            top_user_agents?: [string, number][];
+            top_referrers?: [string, number][];
+            top_browsers?: [string, number][];
+        };
     };
 }
 
@@ -139,6 +164,31 @@ export const buildRustyAiContext = (
                 status_codes: statusCodes || "N/A",
                 content_segments: "Included in Top Pages", // Content is already paths
                 specialized_bots: crawlerTypes || "N/A",
+                trend_totals: logAnalysisStore.trendTotals ? {
+                    path_count: logAnalysisStore.trendTotals.path_count,
+                    path_hits: logAnalysisStore.trendTotals.path_hits,
+                    status_count: logAnalysisStore.trendTotals.status_count,
+                    status_hits: logAnalysisStore.trendTotals.status_hits,
+                    method_count: logAnalysisStore.trendTotals.method_count,
+                    method_hits: logAnalysisStore.trendTotals.method_hits,
+                    user_agent_count: logAnalysisStore.trendTotals.user_agent_count,
+                    user_agent_hits: logAnalysisStore.trendTotals.user_agent_hits,
+                    referer_count: logAnalysisStore.trendTotals.referer_count,
+                    referer_hits: logAnalysisStore.trendTotals.referer_hits,
+                    browser_count: logAnalysisStore.trendTotals.browser_count,
+                    browser_hits: logAnalysisStore.trendTotals.browser_hits,
+                    verified_count: logAnalysisStore.trendTotals.verified_count,
+                    verified_hits: logAnalysisStore.trendTotals.verified_hits,
+                    ip_count: logAnalysisStore.trendTotals.ip_count,
+                    ip_hits: logAnalysisStore.trendTotals.ip_hits,
+                    human_count: logAnalysisStore.trendTotals.human_count,
+                    human_hits: logAnalysisStore.trendTotals.human_hits,
+                    top_paths: logAnalysisStore.trendTotals.top_paths,
+                    top_status_codes: logAnalysisStore.trendTotals.top_status_codes,
+                    top_user_agents: logAnalysisStore.trendTotals.top_user_agents,
+                    top_referrers: logAnalysisStore.trendTotals.top_referrers,
+                    top_browsers: logAnalysisStore.trendTotals.top_browsers,
+                } : undefined,
             }
         };
     } else {

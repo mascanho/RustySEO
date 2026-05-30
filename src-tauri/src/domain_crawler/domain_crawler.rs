@@ -5,9 +5,7 @@
 //! the `url_processor` module.
 
 use rand::seq::IndexedRandom;
-use rand::Rng;
 use reqwest::Client;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -19,7 +17,7 @@ use dashmap::DashMap;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::favicon;
-use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
+use crate::domain_crawler::helpers::robots::{self};
 use crate::domain_crawler::helpers::sitemap;
 use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::AppState;
@@ -37,9 +35,11 @@ pub async fn crawl_domain(
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
     let settings = settings_state.settings.read().await.clone();
+    let crawl_control = settings_state.crawl_control.clone();
+    crawl_control.store(0, Ordering::Relaxed);
 
     // Extract all settings values we need to avoid borrowing issues
-    let user_agents = settings.user_agents.clone();
+    let _user_agents = settings.user_agents.clone();
     let client_timeout = settings.client_timeout;
     let client_connect_timeout = settings.client_connect_timeout;
     let concurrent_requests = settings.concurrent_requests;
@@ -244,6 +244,16 @@ pub async fn crawl_domain(
     let mut last_log_time = Instant::now();
 
     while state.lock().await.should_continue() {
+        let control_status = crawl_control.load(Ordering::Relaxed);
+        if control_status == 2 {
+            tracing::info!("Crawl stopped by user.");
+            break;
+        }
+        if control_status == 1 {
+            sleep(Duration::from_millis(200)).await;
+            continue;
+        }
+
         let to_spawn = {
             let mut state_guard = state.lock().await;
             state_guard.cleanup_stale_pending();
@@ -614,6 +624,17 @@ pub async fn crawl_domain(
                     total_external_links: stats["total_external_links"].as_i64().unwrap_or(0) as i32,
                     indexable_pages: stats["indexable_pages"].as_i64().unwrap_or(0) as i32,
                     not_indexable_pages: stats["not_indexable_pages"].as_i64().unwrap_or(0) as i32,
+                    total_css: stats["total_css"].as_i64().unwrap_or(0) as i32,
+                    total_javascript: stats["total_javascript"].as_i64().unwrap_or(0) as i32,
+                    total_images: stats["total_images"].as_i64().unwrap_or(0) as i32,
+                    total_redirects: stats["total_redirects"].as_i64().unwrap_or(0) as i32,
+                    missing_title: stats["missing_title"].as_i64().unwrap_or(0) as i32,
+                    missing_description: stats["missing_description"].as_i64().unwrap_or(0) as i32,
+                    avg_response_time: stats["avg_response_time"].as_i64().unwrap_or(0) as i32,
+                    max_crawl_depth: stats["max_crawl_depth"].as_i64().unwrap_or(0) as i32,
+                    total_secure_pages: stats["total_secure_pages"].as_i64().unwrap_or(0) as i32,
+                    total_schema_pages: stats["total_schema_pages"].as_i64().unwrap_or(0) as i32,
+                    total_mobile_pages: stats["total_mobile_pages"].as_i64().unwrap_or(0) as i32,
                 };
                 
                 println!("Backend recording history for {}: {:?}", domain, history_entry);

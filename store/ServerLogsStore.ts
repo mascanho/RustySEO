@@ -178,6 +178,7 @@ interface LogAnalysisState {
   pathAggregations: PathAggregationsPage;
   botTypes: string[];
   tableIsFiltered: boolean;
+  trendTotals: any | null;
 }
 
 export interface BotPathDetail {
@@ -216,6 +217,7 @@ interface ActiveFilters {
   user_agent_filter: string | null;
   user_agent_categories: string[];
   user_agent_specific: string[];
+  crawl_status_filter?: string | null;
 }
 
 interface FilteredLogsPage {
@@ -273,6 +275,7 @@ interface LogAnalysisActions {
   fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchCrawlerAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchBotTypes: () => Promise<void>;
+  fetchTrendTotals: () => Promise<void>;
 }
 
 // Default values for new structures
@@ -387,6 +390,7 @@ const initialState: LogAnalysisState = {
     user_agent_filter: null,
     user_agent_categories: [],
     user_agent_specific: [],
+    crawl_status_filter: null,
   },
   totalCount: 0,
   currentPage: 1,
@@ -396,6 +400,7 @@ const initialState: LogAnalysisState = {
   crawlerTimelineData: [],
   botTypes: [],
   tableIsFiltered: false,
+  trendTotals: null,
 };
 
 // Helper functions for merging complex objects
@@ -800,6 +805,7 @@ export const useLogAnalysisStore = create<
           user_agent_filter: filters.user_agent_filter || null,
           user_agent_categories: filters.user_agent_categories || [],
           user_agent_specific: filters.user_agent_specific || [],
+          crawl_status_filter: filters.crawl_status_filter || null,
         };
 
         const result = await invoke<FilteredLogsPage>("get_active_logs_page", {
@@ -846,6 +852,7 @@ export const useLogAnalysisStore = create<
           user_agent_filter: filters.user_agent_filter || null,
           user_agent_categories: filters.user_agent_categories || [],
           user_agent_specific: filters.user_agent_specific || [],
+          crawl_status_filter: filters.crawl_status_filter || null,
         };
 
         const result = await invoke<FilteredLogsPage>(
@@ -887,6 +894,7 @@ export const useLogAnalysisStore = create<
           user_agent_filter: filters.user_agent_filter || null,
           user_agent_categories: filters.user_agent_categories || [],
           user_agent_specific: filters.user_agent_specific || [],
+          crawl_status_filter: filters.crawl_status_filter || null,
         };
         const widgetAggs = await invoke<WidgetAggregations>("get_widget_aggregations", {
           filters: activeFilters,
@@ -1007,6 +1015,17 @@ export const useLogAnalysisStore = create<
       set((state) => {
         state.totalCount = count;
       }),
+
+    fetchTrendTotals: async () => {
+      try {
+        const summary = await invoke("get_trend_totals_summary");
+        set((state) => {
+          state.trendTotals = summary;
+        });
+      } catch (error) {
+        console.error("Failed to fetch trend totals:", error);
+      }
+    },
   })),
 );
 
@@ -1049,6 +1068,8 @@ export const useLogAnalysis = () =>
       fetchStatusAggregations: state.fetchStatusAggregations,
       crawlerTimelineData: state.crawlerTimelineData,
       fetchCrawlerAggregations: state.fetchCrawlerAggregations,
+      trendTotals: state.trendTotals,
+      fetchTrendTotals: state.fetchTrendTotals,
     }),
     shallow,
   );

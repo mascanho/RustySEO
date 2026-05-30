@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use scraper::{node::Node, ElementRef, Html, Selector};
+use scraper::{node::Node, ElementRef, Html};
 use std::collections::{HashMap, HashSet};
 
 use crate::settings::settings::Settings;

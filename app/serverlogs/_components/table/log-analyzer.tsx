@@ -180,7 +180,19 @@ export function LogAnalyzer() {
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
   const [posColumn, setPosColumn] = useState("position");
-  const { ExcelLoaded } = useExcelLoading();
+  const { ExcelLoaded, setExcelLoaded } = useExcelLoading();
+
+  useEffect(() => {
+    const checkGsc = () => {
+      const isGscLoaded = localStorage.getItem("GscExcel") === "true";
+      if (isGscLoaded !== ExcelLoaded) {
+        setExcelLoaded(isGscLoaded);
+      }
+    };
+    checkGsc();
+    const interval = setInterval(checkGsc, 500);
+    return () => clearInterval(interval);
+  }, [ExcelLoaded, setExcelLoaded]);
 
   // GSC Status
   const {

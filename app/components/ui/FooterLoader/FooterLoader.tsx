@@ -38,7 +38,10 @@ const FooterLoader = () => {
       const { crawled_urls, percentage, total_urls, failed_urls_count } =
         event.payload;
 
-      const safeCrawledUrls = Math.max(0, crawled_urls || 0);
+      // Backend emits crawled_urls = succeeded + failed. Subtract failed to get
+      // the true successful count that matches the table row count.
+      const succeededUrls = Math.max(0, (crawled_urls || 0) - (failed_urls_count || 0));
+      const safeCrawledUrls = succeededUrls;
       const safeTotalUrls = Math.max(1, total_urls || 1);
       const safeFailedUrls = Math.max(0, failed_urls_count || 0);
 
@@ -49,9 +52,13 @@ const FooterLoader = () => {
     const completeUnlistenPromise = listen("crawl_complete", (event: any) => {
       // Use getState() to avoid stale closure over crawlData
       const currentData = useCrawlStore.getState().crawlData;
-      const finalCount = event.payload?.crawled_urls || currentData?.length || 0;
+      const failedCount = event.payload?.failed_urls_count || 0;
+      const totalCrawled = event.payload?.crawled_urls || currentData?.length || 0;
+      // Subtract failed so displayed count matches the table (which only shows successful results)
+      const finalCount = Math.max(0, totalCrawled - failedCount);
       setStreamedCrawledPages(finalCount);
-      setStreamedTotalPages(event.payload?.total_urls || finalCount);
+      setStreamedTotalPages(event.payload?.total_urls || finalCount + failedCount);
+      setFailedPages(failedCount);
       setShowComplete(true);
       setFinishedDeepCrawl(true);
     });

@@ -5,11 +5,11 @@ use tauri::{Emitter, Window};
 
 use crate::{
     crawler::db::open_db_connection,
-    loganalyser::{analyser::analyse_log, log_commands::check_logs_command},
+    loganalyser::analyser::analyse_log,
     settings,
 };
 
-use super::analyser::{LogAnalysisResult, LogInput};
+use super::analyser::LogInput;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DatabaseResults {
@@ -292,7 +292,7 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
 
     let logs = stmt
         .query_map([project], |row| {
-            let log_text: String = row.get(3)?;
+            let _log_text: String = row.get(3)?;
             // Raw text, no parsing needed here as DatabaseResults doesn't include the log field anyway
             // (Wait, the struct has no log field, but it was being parsed? Cleaned up.)
 

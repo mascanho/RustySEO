@@ -19,6 +19,17 @@ type DeepCrawlHistory = {
   total_external_links: number;
   indexable_pages: number;
   not_indexable_pages: number;
+  total_css?: number;
+  total_javascript?: number;
+  total_images?: number;
+  total_redirects?: number;
+  missing_title?: number;
+  missing_description?: number;
+  avg_response_time?: number;
+  max_crawl_depth?: number;
+  total_secure_pages?: number;
+  total_schema_pages?: number;
+  total_mobile_pages?: number;
 };
 
 const HistoryDomainCrawls = () => {
@@ -136,34 +147,37 @@ const HistoryDomainCrawls = () => {
                 </div>
                 {expandedRows.includes(index) && (
                   <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
-                    <div className="text-left">
-                      <p>
-                        <strong>Domain:</strong> {entry.domain}
-                      </p>
-                      <p>
-                        <strong>Pages Crawled:</strong> {entry.pages}
-                      </p>
-                      <p>
-                        <strong>Total Links:</strong> {entry.total_links}
-                      </p>
-                      <p>
-                        <strong>Total Internal Links:</strong>{" "}
-                        {entry.total_internal_links}
-                      </p>
-                      <p>
-                        <strong>Total External Links:</strong>{" "}
-                        {entry.total_external_links}
-                      </p>
-                      <p>
-                        <strong>Indexable Pages:</strong>{" "}
-                        {entry.indexable_pages}
-                      </p>
-                      <p>
-                        <strong>Not Indexable:</strong>{" "}
-                        {entry.not_indexable_pages}
-                      </p>
-                      <p>{/* <strong>Issues:</strong> {entry.errors} */}</p>
-                    </div>
+                      <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-left bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded border dark:border-gray-800">
+                        <div className="space-y-0.5">
+                          <h4 className="font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-200 dark:border-gray-800 pb-0.5 mb-1 text-[11px] uppercase tracking-wider">Crawl Summary</h4>
+                          <p><strong>Domain:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.domain}</span></p>
+                          <p><strong>Pages Crawled:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.pages}</span></p>
+                          <p><strong>Max Crawl Depth:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.max_crawl_depth ?? 0}</span></p>
+                          <p><strong>Avg Response Time:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.avg_response_time ?? 0} ms</span></p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <h4 className="font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-200 dark:border-gray-800 pb-0.5 mb-1 text-[11px] uppercase tracking-wider">Links & Indexability</h4>
+                          <p><strong>Total Links:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_links}</span></p>
+                          <p><strong>Internal / External:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_internal_links} / {entry.total_external_links}</span></p>
+                          <p><strong>Indexable Pages:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.indexable_pages}</span></p>
+                          <p><strong>Not Indexable:</strong> <span className="text-gray-800 dark:text-gray-200 text-red-500 font-medium">{entry.not_indexable_pages}</span></p>
+                        </div>
+                        <div className="space-y-0.5 mt-1">
+                          <h4 className="font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-200 dark:border-gray-800 pb-0.5 mb-1 text-[11px] uppercase tracking-wider">Technical Assets</h4>
+                          <p><strong>CSS Files:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_css ?? 0}</span></p>
+                          <p><strong>JavaScript Files:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_javascript ?? 0}</span></p>
+                          <p><strong>Images:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_images ?? 0}</span></p>
+                          <p><strong>Redirects:</strong> <span className="text-gray-800 dark:text-gray-200 font-medium text-orange-500">{entry.total_redirects ?? 0}</span></p>
+                        </div>
+                        <div className="space-y-0.5 mt-1">
+                          <h4 className="font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-200 dark:border-gray-800 pb-0.5 mb-1 text-[11px] uppercase tracking-wider">SEO & Quality</h4>
+                          <p><strong>Missing Titles:</strong> <span className={entry.missing_title ? "text-red-500 font-medium" : "text-gray-800 dark:text-gray-200"}>{entry.missing_title ?? 0}</span></p>
+                          <p><strong>Missing Descriptions:</strong> <span className={entry.missing_description ? "text-red-500 font-medium" : "text-gray-800 dark:text-gray-200"}>{entry.missing_description ?? 0}</span></p>
+                          <p><strong>Schema / Structured Data:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_schema_pages ?? 0}</span></p>
+                          <p><strong>HTTPS (Secure):</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_secure_pages ?? 0} / {entry.pages}</span></p>
+                          <p><strong>Mobile Friendly:</strong> <span className="text-gray-800 dark:text-gray-200">{entry.total_mobile_pages ?? 0} / {entry.pages}</span></p>
+                        </div>
+                      </div>
                   </div>
                 )}
               </React.Fragment>

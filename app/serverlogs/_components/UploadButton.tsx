@@ -28,6 +28,7 @@ import { SiGooglesearchconsole } from "react-icons/si";
 import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
 import { FaDownload } from "react-icons/fa";
 import { save } from "@tauri-apps/plugin-dialog";
+import CrawlUploadManager from "./CrawlUploadManager";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -89,7 +90,7 @@ function UploadButton() {
         onClick={async () => {
           try {
             const { ExcelLoaded } = useServerLogsStore.getState();
-            
+
             // 1. Show save dialog to get file path
             const filePath = await save({
               defaultPath: `RustySEO_ServerLogs_Report_${new Date().toISOString().slice(0, 10)}.xlsx`,
@@ -98,15 +99,22 @@ function UploadButton() {
 
             if (!filePath) return;
 
-            toast.loading("Generating comprehensive Excel report...", { id: "excel-export" });
-
-            // 2. Call the backend to export ALL data with trends
-            const totalExported = await invoke("export_server_logs_trends_excel", {
-              filePath,
-              includeGsc: ExcelLoaded,
+            toast.loading("Generating comprehensive Excel report...", {
+              id: "excel-export",
             });
 
-            toast.success("Trend report exported successfully!", { id: "excel-export" });
+            // 2. Call the backend to export ALL data with trends
+            const totalExported = await invoke(
+              "export_server_logs_trends_excel",
+              {
+                filePath,
+                includeGsc: ExcelLoaded,
+              },
+            );
+
+            toast.success("Trend report exported successfully!", {
+              id: "excel-export",
+            });
           } catch (error) {
             console.error("Export failed:", error);
             toast.error(`Export failed: ${error}`, { id: "excel-export" });
@@ -160,7 +168,7 @@ function UploadButton() {
           </DialogTrigger>
           <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] min-w-[800px] h-[660px] dark:bg-brand-darker">
             <Tabs>
-              <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
+              <TabsList className="grid w-full grid-cols-6 bg-gray-100 dark:bg-brand-dark">
                 <TabsTrigger
                   className="hover:bg-brand-bright/70 hover:text-white"
                   value="domain"
@@ -171,6 +179,7 @@ function UploadButton() {
                 {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
                 <TabsTrigger value="logs">Stored Logs</TabsTrigger>
                 <TabsTrigger value="gsc">GSC Sync</TabsTrigger>
+                <TabsTrigger value="crawl">Crawl Sync</TabsTrigger>
                 <TabsTrigger value="projects">Projects</TabsTrigger>
               </TabsList>
 
@@ -197,6 +206,9 @@ function UploadButton() {
 
               <TabsContent value="gsc" className="mt-4">
                 <GSCuploadManager />
+              </TabsContent>
+              <TabsContent value="crawl" className="mt-4">
+                <CrawlUploadManager />
               </TabsContent>
             </Tabs>
           </DialogContent>

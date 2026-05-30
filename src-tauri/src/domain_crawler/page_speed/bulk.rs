@@ -1,7 +1,4 @@
-use crate::{
-    domain_crawler::page_speed::model::{LighthouseResult, PsiResponse},
-    Settings,
-};
+use crate::Settings;
 use reqwest::Client;
 use serde_json::Value;
 use std::sync::Arc;

@@ -1,22 +1,16 @@
 use std::collections::HashMap;
 
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use crate::crawler::libs::LinkStatus;
 
-use super::{
-    helpers::{
+use super::helpers::{
         alt_tags::AltTags, anchor_links::InternalExternalLinks, cross_origin::SecuritySummary,
         css_selector::CSS, hreflang_selector::HreflangObject, html_size_calculator::Sizes,
         iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
-        links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
-        pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
-    },
-    page_speed::model::LighthouseResult,
-};
+        links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots, text_ratio::TextRatio, title_selector::TitleDetails,
+    };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedirectHop {
@@ -213,7 +207,8 @@ impl LightCrawlResult {
         for (tag, values) in &full.headings {
             let safe_vals: Vec<String> = values.iter().take(10).map(|s| {
                 if s.len() > 200 {
-                    let mut truncated = s[..200].to_string();
+                    let end = s.floor_char_boundary(200);
+                    let mut truncated = s[..end].to_string();
                     truncated.push_str("...");
                     truncated
                 } else {
@@ -237,7 +232,8 @@ impl LightCrawlResult {
             titles.iter().map(|t| {
                 let mut safe_t = t.clone();
                 if safe_t.title.len() > 200 {
-                    let mut tr = safe_t.title[..200].to_string();
+                    let end = safe_t.title.floor_char_boundary(200);
+                    let mut tr = safe_t.title[..end].to_string();
                     tr.push_str("...");
                     safe_t.title = tr;
                 }

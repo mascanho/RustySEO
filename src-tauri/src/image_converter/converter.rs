@@ -1,17 +1,15 @@
 use base64::{
-    alphabet::STANDARD,
-    engine::general_purpose::{self, URL_SAFE},
+    engine::general_purpose::{self},
     Engine,
 };
-use image::{codecs::png::FilterType, ImageFormat, ImageOutputFormat};
+use image::{ImageFormat, ImageOutputFormat};
 use std::{io::Cursor, u32};
-use tauri::Manager;
 
 #[tauri::command]
 pub async fn handle_image_conversion(
     image: String,
-    format: String,
-    quality: u8,
+    _format: String,
+    _quality: u8,
     width: u32,
     height: u32,
 ) -> Result<Vec<String>, String> {
@@ -54,7 +52,7 @@ pub async fn handle_image_conversion(
             results.push(result_base64);
         }
     }
-    Ok((results))
+    Ok(results )
 }
 
 #[tauri::command]

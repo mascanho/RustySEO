@@ -132,6 +132,7 @@ const tabs = [
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
   // { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
   { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
+  { label: "Crawl Sync", icon: <TbSum className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -254,7 +255,10 @@ export default function WidgetLogs() {
   const [indexingBots, setIndexingBots] = useState<string[]>([]);
   const [retrievalAgents, setRetrievalAgents] = useState<string[]>([]);
   const [agenticBots, setAgenticBots] = useState<string[]>([]);
-  const [trendTotals, setTrendTotals] = useState<any>(null);
+  const trendTotals = useLogAnalysisStore((state) => state.trendTotals);
+  const fetchTrendTotals = useLogAnalysisStore(
+    (state) => state.fetchTrendTotals,
+  );
 
   useEffect(() => {
     const fetchIndexingBots = async () => {
@@ -288,19 +292,10 @@ export default function WidgetLogs() {
     fetchAgenticBots();
   }, []);
 
-  const fetchTrendTotals = useCallback(async () => {
-    try {
-      const summary = await invoke("get_trend_totals_summary");
-      setTrendTotals(summary);
-    } catch (error) {
-      console.error("Failed to fetch trend totals:", error);
-    }
-  }, []);
-
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (activeTab === "Trend Totals") {
+    if (activeTab === "Trend Totals" || activeTab === "Crawl Sync") {
       fetchTrendTotals();
       // Poll every 5 seconds while active
       interval = setInterval(fetchTrendTotals, 5000);
@@ -599,11 +594,6 @@ export default function WidgetLogs() {
       const data = trendTotals || {};
       return [
         {
-          name: "URL Path Frequency",
-          value: data.path_count || 0,
-          type: "path_analysis",
-        },
-        {
           name: "Status Codes Frequency",
           value: data.status_count || 0,
           type: "status",
@@ -642,6 +632,43 @@ export default function WidgetLogs() {
           name: "Human Traffic Frequency",
           value: data.human_count || 0,
           type: "human",
+        },
+      ];
+    }
+
+    // CRAWL SYNC TAB
+    if (activeTab === "Crawl Sync") {
+      const data = trendTotals || {};
+      return [
+        {
+          name: "Non-Important URLs Crawled",
+          value: data.unimportant_crawled || 0,
+          type: "non_important",
+        },
+        {
+          name: "Wasted Crawl Budget",
+          value: data.wasted_crawl_budget || 0,
+          type: "wasted_crawl",
+        },
+        {
+          name: "Robots.txt / Canonical Fixes",
+          value: data.robots_txt_improvements || 0,
+          type: "robots_canonical",
+        },
+        {
+          name: "Orphan Pages",
+          value: data.orphan_pages || 0,
+          type: "orphan",
+        },
+        {
+          name: "Uncrawled Important Pages",
+          value: data.uncrawled_urls || 0,
+          type: "uncrawled",
+        },
+        {
+          name: "Low Crawl Frequency",
+          value: data.low_frequency_important || 0,
+          type: "low_frequency",
         },
       ];
     }
@@ -847,12 +874,12 @@ export default function WidgetLogs() {
 
           <div
             className={`grid gap-2 w-full max-w-2xl px-4 py-3 mb-2 overflow-y-auto overflow-x-hidden max-h-[210px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 ${
-              activeTab === "Trend Totals"
+              activeTab === "Trend Totals" || activeTab === "Crawl Sync"
                 ? "grid-cols-2 md:grid-cols-3 mr-6"
-                : activeTab === "User Agents" || activeTab === "Referrers"
-                  ? "grid-cols-2 md:grid-cols-5 mr-6"
-                  : activeTab === "Indexing Crawlers"
-                    ? "grid-cols-2 md:grid-cols-4 mr-6 pt-3"
+                : activeTab === "Indexing Crawlers"
+                  ? "grid-cols-2 md:grid-cols-4 mr-6"
+                  : activeTab === "User Agents" || activeTab === "Referrers"
+                    ? "grid-cols-2 md:grid-cols-5 mr-6"
                     : "grid-cols-2 md:grid-cols-4 mr-6"
             }`}
           >
@@ -1098,7 +1125,8 @@ export default function WidgetLogs() {
                       </div>
                     </>
                   ) : activeTab === "Trend Totals" ||
-                    activeTab === "Human Traffic" ? (
+                    activeTab === "Human Traffic" ||
+                    activeTab === "Crawl Sync" ? (
                     <AgregatedWidgetContentTable
                       type={entry.type}
                       title={entry.name}
