@@ -207,7 +207,8 @@ impl LightCrawlResult {
         for (tag, values) in &full.headings {
             let safe_vals: Vec<String> = values.iter().take(10).map(|s| {
                 if s.len() > 200 {
-                    let mut truncated = s[..200].to_string();
+                    let end = s.floor_char_boundary(200);
+                    let mut truncated = s[..end].to_string();
                     truncated.push_str("...");
                     truncated
                 } else {
@@ -231,7 +232,8 @@ impl LightCrawlResult {
             titles.iter().map(|t| {
                 let mut safe_t = t.clone();
                 if safe_t.title.len() > 200 {
-                    let mut tr = safe_t.title[..200].to_string();
+                    let end = safe_t.title.floor_char_boundary(200);
+                    let mut tr = safe_t.title[..end].to_string();
                     tr.push_str("...");
                     safe_t.title = tr;
                 }

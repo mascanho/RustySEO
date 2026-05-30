@@ -3668,7 +3668,7 @@ fn add_query_to_sheet(
 ) -> Result<(), String> {
     let worksheet = workbook.add_worksheet();
     // Sheet name must be <= 31 chars
-    let safe_name = if sheet_name.len() > 31 { &sheet_name[..31] } else { sheet_name };
+    let safe_name = if sheet_name.len() > 31 { let end = sheet_name.floor_char_boundary(31); &sheet_name[..end] } else { sheet_name };
     worksheet.set_name(safe_name).map_err(|e| e.to_string())?;
 
     for (col, header) in headers.iter().enumerate() {

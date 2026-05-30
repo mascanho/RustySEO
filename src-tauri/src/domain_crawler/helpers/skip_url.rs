@@ -20,6 +20,10 @@ pub fn should_skip_url(url: &str) -> bool {
         ".css",
         ".js",
         ".zip",
+        ".tar",
+        ".tar.gz",
+        ".tgz",
+        ".gz",
         ".pdf",
     ];
 

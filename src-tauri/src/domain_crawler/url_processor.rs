@@ -196,6 +196,34 @@ pub async fn process_url(
         sleep(Duration::from_millis(500)).await;
     }
 
+    // Skip binary content types early to avoid downloading large non-HTML payloads.
+    if let Some(ref ct) = content_type {
+        let ct_lower = ct.to_lowercase();
+        let is_binary = ct_lower.starts_with("application/")
+            && !ct_lower.contains("xhtml")
+            && !ct_lower.contains("xml")
+            && !ct_lower.contains("json")
+            && !ct_lower.contains("ld+json")
+            && !ct_lower.contains("problem+json")
+            || ct_lower.starts_with("image/")
+            || ct_lower.starts_with("video/")
+            || ct_lower.starts_with("audio/")
+            || ct_lower.starts_with("font/")
+            || ct_lower.starts_with("multipart/");
+        if is_binary {
+            let mut state = state.lock().await;
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: format!("Skipped binary content type: {}", ct),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
+            state.pending_urls.remove(url.as_str());
+            return Err(format!("Skipped binary content for {}: content-type ({}) is not HTML/text", url, ct));
+        }
+    }
+
     let mut body = match tokio::time::timeout(
         Duration::from_secs(60), // 60s timeout for body download
         response.bytes()
