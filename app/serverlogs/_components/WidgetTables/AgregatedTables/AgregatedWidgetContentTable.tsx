@@ -234,7 +234,20 @@ export const AgregatedWidgetContentTable: React.FC<
         params.crawlerFilter = "Human";
       }
 
-      if (["orphan", "orphan_gsc", "crawled", "crawled_errors", "dead", "uncrawled", "non_important", "wasted_crawl", "robots_canonical", "low_frequency"].includes(type)) {
+      if (
+        [
+          "orphan",
+          "orphan_gsc",
+          "crawled",
+          "crawled_errors",
+          "dead",
+          "uncrawled",
+          "non_important",
+          "wasted_crawl",
+          "robots_canonical",
+          "low_frequency",
+        ].includes(type)
+      ) {
         params.crawlStatusFilter = type;
       }
 
@@ -369,10 +382,22 @@ export const AgregatedWidgetContentTable: React.FC<
   };
 
   const getColumns = () => {
-    const isGlobal = ["status", "method", "useragent", "referer", "browser"].includes(type);
-    const base = isGlobal ? [] : [
-      { key: "path", label: "Path", icon: <LayoutGrid className="w-3 h-3" /> },
-    ];
+    const isGlobal = [
+      "status",
+      "method",
+      "useragent",
+      "referer",
+      "browser",
+    ].includes(type);
+    const base = isGlobal
+      ? []
+      : [
+          {
+            key: "path",
+            label: "Path",
+            icon: <LayoutGrid className="w-3 h-3" />,
+          },
+        ];
 
     let specific = [];
     switch (type) {
@@ -462,10 +487,19 @@ export const AgregatedWidgetContentTable: React.FC<
         break;
     }
 
-    if (type === "uncrawled" || type === "dead" || type === "crawled" || type === "crawled_errors") {
+    if (
+      type === "uncrawled" ||
+      type === "dead" ||
+      type === "crawled" ||
+      type === "crawled_errors"
+    ) {
       return [
         ...base,
-        { key: "segment", label: "Segment", icon: <Hash className="w-3 h-3" /> },
+        {
+          key: "segment",
+          label: "Segment",
+          icon: <Hash className="w-3 h-3" />,
+        },
         { key: "hit_count", label: "Hits", icon: <Hash className="w-3 h-3" /> },
       ];
     }
@@ -480,7 +514,7 @@ export const AgregatedWidgetContentTable: React.FC<
 
   const formatURLWithHighlight = (url: string) => {
     if (!url) return "";
-    
+
     let protocolIdx = url.indexOf("://");
     let firstSlashIdx = -1;
     if (protocolIdx !== -1) {
@@ -499,11 +533,13 @@ export const AgregatedWidgetContentTable: React.FC<
       return (
         <span>
           <span className="opacity-45 text-foreground/50">{domainPart}</span>
-          <span className="text-blue-500 dark:text-blue-400 font-semibold bg-blue-500/10 dark:bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-500/20 dark:border-blue-400/20">{pathPart}</span>
+          <span className="text-blue-500 dark:text-blue-400 font-semibold bg-blue-500/10 dark:bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-500/20 dark:border-blue-400/20">
+            {pathPart}
+          </span>
         </span>
       );
     }
-    
+
     return url;
   };
 
@@ -710,13 +746,17 @@ export const AgregatedWidgetContentTable: React.FC<
                       <TableHead
                         key={col.key}
                         className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
-                          !["path", "referer", "status"].includes(col.key) ? "text-center" : ""
+                          !["path", "referer", "status"].includes(col.key)
+                            ? "text-center"
+                            : ""
                         } ${col.key === "status" ? "pl-4" : ""}`}
                         onClick={() => handleSort(col.key)}
                       >
                         <div
                           className={`flex items-center gap-2 mt-2 ${
-                            !["path", "referer", "status"].includes(col.key) ? "justify-center" : ""
+                            !["path", "referer", "status"].includes(col.key)
+                              ? "justify-center"
+                              : ""
                           }`}
                         >
                           {col.icon}

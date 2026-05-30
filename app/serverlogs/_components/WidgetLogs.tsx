@@ -659,6 +659,7 @@ export default function WidgetLogs() {
           name: "Orphan Pages",
           value: data.orphan_pages || 0,
           type: "orphan",
+          description: "Crawled by bots but not in the crawl excel.",
         },
         {
           name: "Uncrawled Important Pages",

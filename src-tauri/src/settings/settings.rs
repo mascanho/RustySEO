@@ -134,6 +134,11 @@ pub struct Settings {
     pub page_speed_bulk_api_key: Option<Option<String>>,
     /// Row limit for GSC data
     pub gsc_row_limit: i32,
+
+    // --- AXUM API SERVER ---
+    pub axum_api_server: bool,
+    pub axum_api_host: String,
+    pub axum_api_port: u16,
 }
 
 impl Settings {
@@ -209,6 +214,11 @@ impl Settings {
             page_speed_bulk: false,
             page_speed_bulk_api_key: None,
             gsc_row_limit: 25000,
+
+            // AXUM API SERVER
+            axum_api_server: false,
+            axum_api_host: "127.0.0.1".to_string(),
+            axum_api_port: 3000,
         }
     }
 
@@ -435,6 +445,13 @@ impl Settings {
         s.push_str("# Row limit for GSC data\n");
         s.push_str(&format!("gsc_row_limit = {}\n", self.gsc_row_limit));
 
+        // API SERVER
+        s.push_str("\n# --- API Server ---\n");
+        s.push_str("# Enable API server\n");
+        s.push_str(&format!("api = {}\n", self.axum_api_server));
+        s.push_str(&format!("api_server = {}\n", self.axum_api_port));
+        s.push_str(&format!("api_host = {}\n", self.axum_api_host));
+
         s
     }
 
@@ -468,7 +485,10 @@ pub async fn load_settings() -> Result<Settings, String> {
 
 pub async fn check_and_replace() {
     if let Err(e) = utils::config_checker::replace_config_file().await {
-        println!("Warning: Failed to verify or replace the config file: {}", e);
+        println!(
+            "Warning: Failed to verify or replace the config file: {}",
+            e
+        );
     }
 }
 
@@ -590,6 +610,11 @@ pub fn print_settings(settings: &Settings) {
     println!("GSC Row Limit: {}", settings.gsc_row_limit);
     println!("Adaptive Crawling: {}", settings.adaptive_crawling);
     println!("Min Crawl Delay: {}", settings.min_crawl_delay);
+
+    println!("");
+    println!("API Server: {}", settings.axum_api_server);
+    println!("API Port: {}", settings.axum_api_port);
+    println!("API Host: {}", settings.axum_api_host);
 
     println!("")
 }
@@ -855,6 +880,18 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
             .iter()
             .filter_map(|v| v.as_str().map(|s| s.to_string()))
             .collect();
+    }
+
+    if let Some(val) = updates.get("axum_api_server").and_then(|v| v.as_bool()) {
+        settings.axum_api_server = val;
+    }
+
+    if let Some(val) = updates.get("axum_api_server_port").and_then(|v| v.as_integer()) {
+        settings.axum_api_port = val as u16;
+    }
+
+    if let Some(val) = updates.get("axum_api_server_host").and_then(|v| v.as_str()) {
+        settings.axum_api_host = val.to_string();
     }
 
     if let Some(val) = updates.get("log_bots").and_then(|v| v.as_array()) {

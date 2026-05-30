@@ -24,6 +24,7 @@ use tauri::{Emitter, Manager, WindowEvent};
 use tokio::sync::RwLock;
 use toml;
 
+pub mod api;
 pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
