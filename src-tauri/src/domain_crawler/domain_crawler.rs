@@ -284,7 +284,7 @@ pub async fn crawl_domain(
                     state_guard.queue.len(),
                     state_guard.pending_urls.len(),
                     state_guard.active_tasks,
-                    state_guard.failed_urls.len()
+                    state_guard.total_failed_count
                 );
                 last_log_time = Instant::now();
             }
@@ -501,7 +501,7 @@ pub async fn crawl_domain(
 
                 if let Err(e) = result {
                     tracing::error!("Failed to process {}: {}", url_str, e);
-                    state_guard.failed_urls.insert(FailedUrl {
+                    state_guard.record_failure(FailedUrl {
                         url: url_str,
                         error: e,
                         retries: 0,
@@ -531,13 +531,14 @@ pub async fn crawl_domain(
         tracing::info!("Crawl completed - Final stats:");
         tracing::info!("  Total URLs discovered: {}", state_guard.total_urls);
         tracing::info!("  URLs successfully crawled: {}", state_guard.crawled_urls);
-        tracing::info!("  URLs failed: {}", state_guard.failed_urls.len());
+        tracing::info!("  URLs failed (total): {}", state_guard.total_failed_count);
+        tracing::info!("  URLs failed (retained): {}", state_guard.failed_urls.len());
         tracing::info!("  URLs still pending: {}", state_guard.pending_urls.len());
         tracing::info!("  Active tasks remaining: {}", state_guard.active_tasks);
         tracing::info!("  Unique URL patterns: {}", state_guard.url_patterns.len());
 
         // Calculate final completion percentage
-        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let completed = state_guard.crawled_urls + state_guard.total_failed_count;
         let final_percentage = if state_guard.total_urls > 0 {
             (completed as f32 / state_guard.total_urls as f32) * 100.0
         } else {
@@ -567,7 +568,7 @@ pub async fn crawl_domain(
     // Emit final 100% progress update before completion
     let final_progress = {
         let state_guard = state.lock().await;
-        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let completed = state_guard.crawled_urls + state_guard.total_failed_count;
         let progress = ProgressData {
             total_urls: std::cmp::max(state_guard.total_urls, 1),
             crawled_urls: completed,
@@ -576,7 +577,7 @@ pub async fn crawl_domain(
             } else {
                 100.0
             },
-            failed_urls_count: state_guard.failed_urls.len(),
+            failed_urls_count: state_guard.total_failed_count,
             discovered_urls: std::cmp::max(state_guard.total_urls, 1),
             robots_blocked: Some(robots_blocked),
         };
@@ -585,7 +586,7 @@ pub async fn crawl_domain(
             "Final crawl stats: {} total processed ({} succeeded, {} failed)",
             completed,
             state_guard.crawled_urls,
-            state_guard.failed_urls.len()
+            state_guard.total_failed_count
         );
 
         if let Err(err) = app_handle.emit("progress_update", progress.clone()) {

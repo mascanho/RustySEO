@@ -105,7 +105,12 @@ import {
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
-import { GiPoliceOfficerHead, GiRobotGolem, GiSpiderWeb } from "react-icons/gi";
+import {
+  GiPoliceOfficerHead,
+  GiRobotGolem,
+  GiSpiderEye,
+  GiSpiderWeb,
+} from "react-icons/gi";
 
 import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
@@ -124,6 +129,7 @@ const tabs = [
   { label: "Aggregated Crawlers", icon: <GiRobotGolem className="w-4 h-4" /> },
   { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
   { label: "Referrers", icon: <GiHypersonicBolt className="w-4 h-4" /> },
+  { label: "Crawl Sync", icon: <GiSpiderEye className="w-4 h-4" /> },
   {
     label: "Indexing Crawlers",
     icon: <TbSpider className="w-4 h-4" />,
@@ -132,7 +138,6 @@ const tabs = [
   { label: "Agentic Bots", icon: <RiRobot3Line className="w-4 h-4" /> },
   // { label: "Human Traffic", icon: <User className="w-4 h-4" /> },
   { label: "Trend Totals", icon: <TbSum className="w-4 h-4" /> },
-  { label: "Crawl Sync", icon: <TbSum className="w-4 h-4" /> },
 ];
 
 const COLORS = [

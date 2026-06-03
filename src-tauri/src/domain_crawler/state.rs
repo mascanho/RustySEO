@@ -58,6 +58,7 @@ pub struct CrawlerState {
     pub queue: VecDeque<(Url, usize)>,          // Include depth tracking
     pub total_urls: usize,
     pub crawled_urls: usize,
+    pub total_failed_count: usize,
     pub db: Option<Database>,
     pub last_activity: Instant,        // Track last crawling activity
     pub url_patterns: HashMap<String, usize>, // Track URL patterns to avoid duplicates
@@ -83,6 +84,7 @@ impl CrawlerState {
             queue: VecDeque::new(),
             total_urls: 0,
             crawled_urls: 0,
+            total_failed_count: 0,
             db,
             last_activity: Instant::now(),
             url_patterns: HashMap::new(),
@@ -105,12 +107,36 @@ impl CrawlerState {
         self
     }
 
+    /// Record a failed URL. Always increments `total_failed_count` even though
+    /// the `failed_urls` set is periodically truncated to cap memory usage.
+    /// Use this instead of inserting into `failed_urls` directly.
+    pub fn record_failure(&mut self, failed: FailedUrl) {
+        let is_new = self.failed_urls.insert(failed);
+        if is_new {
+            self.total_failed_count += 1;
+        }
+    }
+
     /// Clean up stale pending URLs and periodically compact collections to return
     /// memory to the OS. Called from the main crawler loop on every iteration.
     pub fn cleanup_stale_pending(&mut self) {
         let now = Instant::now();
+
+        // Build a set of URLs still sitting in the queue so we never evict their
+        // pending_urls entry. Without this guard, sitemap-seeded URLs (which all
+        // share the same early timestamp) get evicted before they are even spawned,
+        // causing the crawler to think all work is done and terminate at e.g. 26%.
+        let queued_urls: HashSet<String> = self.queue.iter()
+            .map(|(url, _)| url.to_string())
+            .collect();
+
         self.pending_urls
-            .retain(|_, &mut added_time| now.duration_since(added_time) < MAX_PENDING_TIME);
+            .retain(|url, &mut added_time| {
+                // Keep entries that are still fresh
+                now.duration_since(added_time) < MAX_PENDING_TIME
+                // OR that are still waiting in the queue (not yet spawned)
+                || queued_urls.contains(url)
+            });
 
         // Compact the VecDeque periodically once a significant number of items have
         // been drained from its front. VecDeque maintains a ring buffer that never
@@ -131,8 +157,7 @@ impl CrawlerState {
         }
 
         // Evict oldest failed_urls entries if the set is over the cap.
-        // FailedUrl doesn't have an ordering, so we collect into a Vec, truncate,
-        // and rebuild the set. This path is uncommon (only on error-heavy crawls).
+        // total_failed_count is NOT affected — it always reflects the true count.
         if self.failed_urls.len() > MAX_FAILED_URLS {
             let mut v: Vec<FailedUrl> = self.failed_urls.drain().collect();
             // Keep the most-recently-recorded failures (largest timestamp).
@@ -148,9 +173,16 @@ impl CrawlerState {
         !self.queue.is_empty() || !self.pending_urls.is_empty() || self.active_tasks > 0
     }
 
-    /// Check if crawl is truly complete (no pending work)
+    /// Check if crawl is truly complete (no pending work and all URLs accounted for)
     pub fn is_truly_complete(&self) -> bool {
-        self.queue.is_empty() && self.pending_urls.is_empty() && self.active_tasks == 0
+        if !self.queue.is_empty() || self.active_tasks > 0 {
+            return false;
+        }
+        // Even if pending_urls was cleaned up, verify that every discovered URL
+        // has actually been processed (crawled or failed). This prevents premature
+        // termination when cleanup_stale_pending evicts entries before their tasks finish.
+        let accounted = self.crawled_urls + self.total_failed_count;
+        self.pending_urls.is_empty() && accounted >= self.total_urls
     }
 
     /// Add multiple discovered URLs to the queue if they are new

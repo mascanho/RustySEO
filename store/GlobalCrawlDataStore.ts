@@ -200,10 +200,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         const newResults = results.filter((r) => !existingVisited.has(r.url));
         if (newResults.length === 0) return state;
 
-        // Build updated visited set — create a NEW Set to satisfy Zustand equality checks.
-        const updatedVisited = new Set<string>(existingVisited);
         for (const r of newResults) {
-          updatedVisited.add(r.url);
+          existingVisited.add(r.url);
         }
 
         // Max cap: keep only the first MAX_CRAWL_ROWS in the JS heap.
@@ -215,7 +213,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         if (state.crawlData.length >= MAX_CRAWL_ROWS) {
           // Cap already reached — update visitedUrls so deduplication stays accurate
           // but don't grow the array any further.
-          return { visitedUrls: updatedVisited };
+          return { visitedUrls: existingVisited };
         }
 
         const combined = state.crawlData.concat(newResults);
@@ -224,7 +222,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             ? combined.slice(0, MAX_CRAWL_ROWS)
             : combined;
 
-        return { crawlData: capped, visitedUrls: updatedVisited };
+        return { crawlData: capped, visitedUrls: existingVisited };
       }),
     clearDomainCrawlData: () =>
       set({
@@ -291,9 +289,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           };
         }
 
-        // Create a new Set — never mutate state in place
-        const updatedVisited = new Set<string>(existingVisited);
-        updatedVisited.add(result.url);
+        if (!existingVisited.has(result.url)) {
+          existingVisited.add(result.url);
+        }
 
         const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
         let newCrawlData = state.crawlData;
@@ -304,7 +302,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
         return {
           crawlData: newCrawlData,
-          visitedUrls: updatedVisited,
+          visitedUrls: existingVisited,
           streamedCrawledPages: crawledPages,
           streamedTotalPages: totalPages,
         };
@@ -541,9 +539,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
                 : new Set<string>((state.crawlData || []).map((item: any) => item.url));
 
               if (!existingVisited.has(update.result.url)) {
-                // Create a new Set — never mutate state in place
-                newVisited = new Set<string>(existingVisited);
-                newVisited.add(update.result.url);
+                existingVisited.add(update.result.url);
+                newVisited = existingVisited;
 
                 const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
                 if (newCrawlData.length < MAX_CRAWL_ROWS) {

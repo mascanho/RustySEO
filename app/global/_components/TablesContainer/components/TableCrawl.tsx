@@ -400,12 +400,12 @@ const TableCrawl = ({
   const setIsGeneratingExcel = useGlobalCrawlStore(
     (s) => s.setIsGeneratingExcel,
   );
-  const totalUrlsCrawled = useGlobalCrawlStore((s) => s.totalUrlsCrawled);
 
   const { setInlinks, setOutlinks, setSelectedTableURL, selectURL } =
     useDataActions();
 
   const handleDownload = useCallback(async () => {
+    const totalUrlsCrawled = useGlobalCrawlStore.getState().totalUrlsCrawled;
     if (!rows.length && totalUrlsCrawled === 0) {
       toast.error("No data to download");
       return;
@@ -469,7 +469,7 @@ const TableCrawl = ({
         }
       }
     }
-  }, [rows, tabName, setIsGeneratingExcel, totalUrlsCrawled]);
+  }, [rows, tabName, setIsGeneratingExcel]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;

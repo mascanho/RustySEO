@@ -122,7 +122,7 @@ pub async fn process_url(
             }
             Ok(Err(e)) => {
                 let mut state = state.lock().await;
-                state.failed_urls.insert(FailedUrl {
+                state.record_failure(FailedUrl {
                     url: url.to_string(),
                     error: e.to_string(),
                     retries: 0,
@@ -134,7 +134,7 @@ pub async fn process_url(
             }
             Err(_) => {
                 let mut state = state.lock().await;
-                state.failed_urls.insert(FailedUrl {
+                state.record_failure(FailedUrl {
                     url: url.to_string(),
                     error: "Timeout fetching".to_string(),
                     retries: 0,
@@ -212,7 +212,7 @@ pub async fn process_url(
             || ct_lower.starts_with("multipart/");
         if is_binary {
             let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
+            state.record_failure(FailedUrl {
                 url: url.to_string(),
                 error: format!("Skipped binary content type: {}", ct),
                 retries: 0,
@@ -231,7 +231,7 @@ pub async fn process_url(
         Ok(Ok(bytes)) => String::from_utf8_lossy(&bytes).into_owned(),
         Ok(Err(e)) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
+            state.record_failure(FailedUrl {
                 url: url.to_string(),
                 error: e.to_string(),
                 retries: 0,
@@ -243,7 +243,7 @@ pub async fn process_url(
         }
         Err(_) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
+            state.record_failure(FailedUrl {
                 url: url.to_string(),
                 error: "Timeout reading body".to_string(),
                 retries: 0,
@@ -289,7 +289,7 @@ pub async fn process_url(
 
     if is_block_page && status_code == 200 {
         let mut state = state.lock().await;
-        state.failed_urls.insert(FailedUrl {
+        state.record_failure(FailedUrl {
             url: url.to_string(),
             error: "Cloudflare/Server Block (Error 1015 or Rate Limit). Please lower 'concurrent_requests' in settings.".to_string(),
             retries: 0,
@@ -696,7 +696,7 @@ async fn update_state_and_emit_progress(
     }
 
     // Calculate progress - use a stable approach for dynamic crawling
-    let completed_urls = state.crawled_urls + state.failed_urls.len();
+    let completed_urls = state.crawled_urls + state.total_failed_count;
     let total_discovered = state.total_urls;
     let active_pending = state.pending_urls.len() + state.active_tasks;
 
@@ -720,7 +720,7 @@ async fn update_state_and_emit_progress(
         total_urls: safe_total_discovered,
         crawled_urls: safe_completed_urls,
         percentage,
-        failed_urls_count: state.failed_urls.len(),
+        failed_urls_count: state.total_failed_count,
         discovered_urls: safe_total_discovered,
         robots_blocked: None,
     };

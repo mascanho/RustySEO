@@ -448,9 +448,9 @@ impl Settings {
         // API SERVER
         s.push_str("\n# --- API Server ---\n");
         s.push_str("# Enable API server\n");
-        s.push_str(&format!("api = {}\n", self.axum_api_server));
-        s.push_str(&format!("api_server = {}\n", self.axum_api_port));
-        s.push_str(&format!("api_host = {}\n", self.axum_api_host));
+        s.push_str(&format!("axum_api_server = {}\n", self.axum_api_server));
+        s.push_str(&format!("axum_api_port = {}\n", self.axum_api_port));
+        s.push_str(&format!("axum_api_host = {:?}\n", self.axum_api_host));
 
         s
     }

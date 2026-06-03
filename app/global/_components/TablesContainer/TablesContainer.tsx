@@ -272,7 +272,7 @@ export default function Home() {
       else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
         shouldFetchImmediate = true;
 
-      const totalUrlsCrawled = useGlobalCrawlStore.getState().totalUrlsCrawled;
+      const totalUrlsCrawled = useGlobalCrawlStore.getState().streamedCrawledPages;
       // Prevent massive JSON payloads crossing the IPC bridge during large crawls
       const isScaleTooLargeForLive = totalUrlsCrawled > 2000;
 
