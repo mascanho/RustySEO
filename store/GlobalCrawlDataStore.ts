@@ -201,7 +201,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         if (newResults.length === 0) return state;
 
         for (const r of newResults) {
-          existingVisited.add(r.url);
+          // CRITICAL: Flatten string to prevent V8 sliced-string memory leak.
+          // r.url is a slice of a massive JSON IPC payload. Force a new string allocation 
+          // so the original payload buffer can be garbage collected.
+          existingVisited.add((' ' + r.url).slice(1));
         }
 
         // Max cap: keep only the first MAX_CRAWL_ROWS in the JS heap.
