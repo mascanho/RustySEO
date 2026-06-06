@@ -76,7 +76,7 @@ interface TableRowProps {
   columnWidths: string[];
   columnAlignments: string[];
   columnVisibility: boolean[];
-  clickedCell: { row: number | null; cell: number | null };
+  isSelected: boolean;
   handleCellClick: (
     rowIndex: number,
     cellIndex: number,
@@ -212,7 +212,7 @@ const TableRow = memo(
     columnWidths,
     columnAlignments,
     columnVisibility,
-    clickedCell,
+    isSelected,
     handleCellClick,
     onCellDoubleClick,
   }: TableRowProps) => {
@@ -230,12 +230,16 @@ const TableRow = memo(
         row?.headings?.h2?.[0]?.length || "", // H2 Size
         row?.status_code || "", // Status Code
         row?.word_count || "", // Word Count
-        typeof row?.text_ratio === "number"
-          ? row.text_ratio.toFixed(1)
-          : row?.text_ratio?.[0]?.text_ratio?.toFixed(1) || "", // Text Ratio
-        typeof row?.flesch === "number"
-          ? row.flesch.toFixed(1)
-          : row?.flesch?.Ok?.[0]?.toFixed(1) || "", // Flesch Score
+        !isNaN(Number(row?.text_ratio)) && row?.text_ratio !== null
+          ? Number(row.text_ratio).toFixed(1)
+          : !isNaN(Number(row?.text_ratio?.[0]?.text_ratio)) && row?.text_ratio?.[0]?.text_ratio !== null
+            ? Number(row.text_ratio[0].text_ratio).toFixed(1)
+            : "", // Text Ratio
+        !isNaN(Number(row?.flesch)) && row?.flesch !== null
+          ? Number(row.flesch).toFixed(1)
+          : !isNaN(Number(row?.flesch?.Ok?.[0])) && row?.flesch?.Ok?.[0] !== null
+            ? Number(row.flesch.Ok[0]).toFixed(1)
+            : "", // Flesch Score
         row?.flesch_grade || row?.flesch?.Ok?.[1] || "", // Flesch Grade
         row?.mobile ? "Yes" : "No", // Mobile
         row?.meta_robots?.meta_robots?.[0] || "", // Meta Robots
@@ -274,8 +278,6 @@ const TableRow = memo(
         .filter((item) => item.visible);
     }, [rowData, columnWidths, columnAlignments, columnVisibility]);
 
-    const isRowClicked = clickedCell.row === index;
-
     return (
       <div
         style={{
@@ -283,7 +285,7 @@ const TableRow = memo(
           gridTemplateColumns: visibleItems.map((item) => item.width).join(" "),
           height: "100%",
           alignItems: "center",
-          color: isRowClicked ? "white" : "inherit",
+          color: isSelected ? "white" : "inherit",
         }}
         className="dark:text-white/50 cursor-pointer not-selectable hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
       >
@@ -317,7 +319,7 @@ const TableRow = memo(
               alignItems: "center",
             }}
             className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
-              isRowClicked
+              isSelected
                 ? "bg-blue-600"
                 : index % 2 === 0
                   ? "bg-white dark:bg-brand-darker"
@@ -526,16 +528,23 @@ const TableCrawl = ({
     });
   }, [rows, searchTerm]);
 
+  // Use a ref for getItemKey so the callback identity is stable across re-renders.
+  // This prevents the virtualizer from recomputing all keys when filteredRows changes.
+  const filteredRowsRef = useRef(filteredRows);
+  filteredRowsRef.current = filteredRows;
+
+  const stableGetItemKey = useCallback(
+    (index: number) => `${filteredRowsRef.current[index]?.url || "row"}-${index}`,
+    [],
+  );
+
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     initialRect: { width: 1000, height: rowHeight },
     overscan,
-    getItemKey: useCallback(
-      (index: number) => `${filteredRows[index]?.url || "no-url"}-${index}`,
-      [filteredRows],
-    ),
+    getItemKey: stableGetItemKey,
   });
 
   const debouncedSearch = useMemo(
@@ -673,7 +682,7 @@ const TableCrawl = ({
                   columnWidths={columnWidths}
                   columnAlignments={columnAlignments}
                   columnVisibility={columnVisibility}
-                  clickedCell={clickedCell}
+                  isSelected={clickedCell.row === virtualRow.index}
                   handleCellClick={handleCellClick}
                   onCellDoubleClick={handleCellDoubleClick}
                 />

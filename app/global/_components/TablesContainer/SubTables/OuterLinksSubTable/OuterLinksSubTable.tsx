@@ -252,7 +252,7 @@ const OuterLinksSubTable = forwardRef<{ exportCSV: () => Promise<void> }, Inlink
         </thead>
 
         <tbody>
-          {data?.[1].map((item: any, index: number) => {
+          {data?.[1]?.map((item: any, index: number) => {
             // Determine the background color class based on the index
             const rowColorClass =
               index % 2 === 0

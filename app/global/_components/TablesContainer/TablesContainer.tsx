@@ -21,7 +21,6 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore, {
   useDataActions,
 } from "@/store/GlobalCrawlDataStore";
-import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 import LinksTable from "./LinksTable/LinksTable";
@@ -62,30 +61,44 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const selectedTableURL = useGlobalCrawlStore(
-    (state) => state.selectedTableURL,
-  );
-  const issuesView = useCrawlStore((state) => state.issuesView);
-  const issuesData = useCrawlStore((state) => state.issuesData);
-  const { setIssuesView, setGenericChart, setDeepCrawlTab } = useCrawlStore(
-    (state) => ({
-      setIssuesView: state.setIssuesView,
-      setGenericChart: state.setGenericChart,
-      setDeepCrawlTab: state.setDeepCrawlTab,
-    }),
-    shallow,
-  );
-  const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
-  const { inlinks, outlinks } = useGlobalCrawlStore(
+  // Consolidated selector: subscribe to all needed data slices in one call.
+  // This means only ONE subscription fires per store update, and `shallow`
+  // prevents re-renders when unrelated slices change.
+  const {
+    selectedTableURL,
+    issuesView,
+    issuesData,
+    inlinks,
+    outlinks,
+    storeDeepCrawlTab,
+    isFinishedDeepCrawl,
+  } = useGlobalCrawlStore(
     (state) => ({
+      selectedTableURL: state.selectedTableURL,
+      issuesView: state.issuesView,
+      issuesData: state.issuesData,
       inlinks: state.inlinks,
       outlinks: state.outlinks,
+      storeDeepCrawlTab: state.deepCrawlTab,
+      isFinishedDeepCrawl: state.isFinishedDeepCrawl,
     }),
     shallow,
   );
 
-  const storeDeepCrawlTab = useGlobalCrawlStore((state) => state.deepCrawlTab);
+  // Consolidated selector for actions — these are stable function references
+  // so this selector effectively never triggers a re-render.
+  const { setIssuesView, setGenericChart, setDeepCrawlTab } =
+    useGlobalCrawlStore(
+      (state) => ({
+        setIssuesView: state.setIssuesView,
+        setGenericChart: state.setGenericChart,
+        setDeepCrawlTab: state.setDeepCrawlTab,
+      }),
+      shallow,
+    );
+  const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
+
   useEffect(() => {
     if (storeDeepCrawlTab && storeDeepCrawlTab !== activeTab) {
       setActiveTab(storeDeepCrawlTab);
@@ -141,50 +154,44 @@ export default function Home() {
       }, 16),
     [],
   );
-  // Use a ref to avoid duplicating the entire crawlData array in memory.
-  // We use an interval to periodically sync the render state.
-  const debouncedCrawlDataRef = useRef(
-    useGlobalCrawlStore.getState().crawlData,
+
+  // Event-driven crawlData sync: instead of polling every 4s, subscribe to
+  // store changes and debounce the render update. This only fires when
+  // crawlData actually changes, and the 4s debounce prevents rapid-fire
+  // renders during batch ingestion.
+  const [crawlDataSnapshot, setCrawlDataSnapshot] = useState(
+    () => useGlobalCrawlStore.getState().crawlData,
   );
-  const [, setRenderTick] = useState(0);
 
   useEffect(() => {
-    // Poll store for crawlData changes and sync to local ref.
-    // We use a ref+tick pattern to decouple Zustand subscriptions from React renders —
-    // directly subscribing with useGlobalCrawlStore(s => s.crawlData) would re-render
-    // this heavy component on every single crawl batch update.
-    const timer = setInterval(() => {
-      const store = useGlobalCrawlStore.getState();
-      const currentStored = store.crawlData;
-      if (debouncedCrawlDataRef.current !== currentStored) {
-        debouncedCrawlDataRef.current = currentStored;
-        setRenderTick((t) => t + 1);
-
-        // Once the cap is reached the array reference will stop changing
-        // (addDomainCrawlResult returns early). Stop polling to save CPU.
-        const cap = store.maxUrlsStored || 1500;
-        if (currentStored.length >= cap) {
-          clearInterval(timer);
-        }
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const unsub = useGlobalCrawlStore.subscribe((state, prevState) => {
+      if (state.crawlData !== prevState?.crawlData) {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setCrawlDataSnapshot(state.crawlData);
+        }, 4000);
       }
-    }, 4000); // 4s interval — large crawls update DB every ~2s, no need to poll faster
-
-    return () => clearInterval(timer);
+    });
+    return () => {
+      unsub();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
-
-  const debouncedCrawlData = debouncedCrawlDataRef.current;
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
-  const aggregatedData = useGlobalCrawlStore((state) => state.aggregatedData);
-  const isFinishedDeepCrawl = useGlobalCrawlStore(
-    (state) => state.isFinishedDeepCrawl,
+  const aggregatedData = useGlobalCrawlStore(
+    (state) => state.aggregatedData,
+    shallow,
   );
 
   // THIS HANDLES THE DATA FETCHING FROM THE DATABSE TO NO OVERWHELM THE MEMORY.
   // ON TAB CLICK IT SHOULD LOAD THE DATA INTO THE RESPECTIVE TAB.
   // TODO: Make this better in the future as it might still be too when crawling is on.
   useEffect(() => {
+    let isSubscribed = true;
+
     const fetchData = async () => {
       const fetchForTab = async () => {
         try {
@@ -192,47 +199,47 @@ export default function Home() {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "images",
             });
-            setAggregatedData({ images: res });
+            if (isSubscribed) setAggregatedData({ images: res || [] });
           } else if (activeTab === "javascript") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "scripts",
             });
-            setAggregatedData({ scripts: res });
+            if (isSubscribed) setAggregatedData({ scripts: res || [] });
           } else if (activeTab === "css") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "stylesheets",
             });
-            setAggregatedData({ css: res });
+            if (isSubscribed) setAggregatedData({ css: res || [] });
           } else if (activeTab === "internalLinks") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "internal_links",
             });
-            setAggregatedData({ internalLinks: res });
+            if (isSubscribed) setAggregatedData({ internalLinks: res || [] });
           } else if (activeTab === "externalLinks") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "external_links",
             });
-            setAggregatedData({ externalLinks: res });
+            if (isSubscribed) setAggregatedData({ externalLinks: res || [] });
           } else if (activeTab === "keywords") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "keywords",
             });
-            setAggregatedData({ keywords: res });
+            if (isSubscribed) setAggregatedData({ keywords: res || [] });
           } else if (activeTab === "redirects") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "redirects",
             });
-            setAggregatedData({ redirects: res });
+            if (isSubscribed) setAggregatedData({ redirects: res || [] });
           } else if (activeTab === "cwv") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "cwv",
             });
-            setAggregatedData({ cwv: res });
+            if (isSubscribed) setAggregatedData({ cwv: res || [] });
           } else if (activeTab === "files") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "files",
             });
-            setAggregatedData({ files: res });
+            if (isSubscribed) setAggregatedData({ files: res || [] });
           }
         } catch (e) {
           console.error("Error fetching aggregated data:", e);
@@ -241,35 +248,37 @@ export default function Home() {
 
       // Immediate fetch check This is important to avoid unnecessary re-renders
       let shouldFetchImmediate = false;
-      if (activeTab === "images" && aggregatedData.images.length === 0)
+      const currentData = useGlobalCrawlStore.getState().aggregatedData;
+      
+      if (activeTab === "images" && (!currentData.images || currentData.images.length === 0))
         shouldFetchImmediate = true;
       else if (
         activeTab === "javascript" &&
-        aggregatedData.scripts.length === 0
+        (!currentData.scripts || currentData.scripts.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "css" && aggregatedData.css.length === 0)
+      else if (activeTab === "css" && (!currentData.css || currentData.css.length === 0))
         shouldFetchImmediate = true;
       else if (
         activeTab === "internalLinks" &&
-        aggregatedData.internalLinks.length === 0
+        (!currentData.internalLinks || currentData.internalLinks.length === 0)
       )
         shouldFetchImmediate = true;
       else if (
         activeTab === "externalLinks" &&
-        aggregatedData.externalLinks.length === 0
+        (!currentData.externalLinks || currentData.externalLinks.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "keywords" && aggregatedData.keywords.length === 0)
+      else if (activeTab === "keywords" && (!currentData.keywords || currentData.keywords.length === 0))
         shouldFetchImmediate = true;
       else if (
         activeTab === "redirects" &&
-        aggregatedData.redirects.length === 0
+        (!currentData.redirects || currentData.redirects.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "files" && aggregatedData.files.length === 0)
+      else if (activeTab === "files" && (!currentData.files || currentData.files.length === 0))
         shouldFetchImmediate = true;
-      else if (activeTab === "cwv" && aggregatedData.cwv.length === 0)
+      else if (activeTab === "cwv" && (!currentData.cwv || currentData.cwv.length === 0))
         shouldFetchImmediate = true;
 
       const totalUrlsCrawled = useGlobalCrawlStore.getState().streamedCrawledPages;
@@ -293,6 +302,7 @@ export default function Home() {
     }
 
     return () => {
+      isSubscribed = false;
       if (intervalId) clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,7 +312,7 @@ export default function Home() {
   const filteredJsArr = useMemo(() => {
     if (activeTab !== "javascript") return [];
     // Use fetched data
-    return aggregatedData.scripts.map((url, index) => ({
+    return (aggregatedData.scripts || []).map((url, index) => ({
       index: index + 1,
       url,
     }));
@@ -311,13 +321,13 @@ export default function Home() {
   // Filters all the CSS
   const filteredCssArr = useMemo(() => {
     if (activeTab !== "css") return [];
-    return aggregatedData.css.map((url, index) => ({ index: index + 1, url }));
+    return (aggregatedData.css || []).map((url, index) => ({ index: index + 1, url }));
   }, [aggregatedData.css, activeTab]);
 
   // Filters all the images
   const filteredImagesArr = useMemo(() => {
     if (activeTab !== "images") return [];
-    return aggregatedData.images;
+    return aggregatedData.images || [];
   }, [aggregatedData.images, activeTab]);
 
   // Filters all the Internal links
@@ -325,7 +335,7 @@ export default function Home() {
     if (activeTab !== "internalLinks") return [];
     // The structure returned by backend is generic JSON link objects, map to what Table expects
     // { link, anchor, status, error, page }
-    return aggregatedData.internalLinks.map((link) => ({
+    return (aggregatedData.internalLinks || []).map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
       rel: link.rel || "",
@@ -340,7 +350,7 @@ export default function Home() {
   // Filters all the External links
   const filteredExternalLinks = useMemo(() => {
     if (activeTab !== "externalLinks") return [];
-    return aggregatedData.externalLinks.map((link) => ({
+    return (aggregatedData.externalLinks || []).map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
       rel: link.rel || "",
@@ -356,27 +366,27 @@ export default function Home() {
   const filteredKeywords = useMemo(() => {
     if (activeTab !== "keywords") return [];
     // The structure returned by backend is { url, keywords: [] }
-    return aggregatedData.keywords;
+    return aggregatedData.keywords || [];
   }, [aggregatedData.keywords, activeTab]);
 
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return [];
-    if (!debouncedCrawlData) {
+    if (!crawlDataSnapshot || !Array.isArray(crawlDataSnapshot)) {
       return [];
     }
 
-    const customSearch = debouncedCrawlData.filter(
+    const customSearch = crawlDataSnapshot.filter(
       (search) => search?.extractor?.html === true,
     );
     return customSearch;
-  }, [debouncedCrawlData, activeTab]);
+  }, [crawlDataSnapshot, activeTab]);
 
   // Filters all files
   const filteredFilesArr = useMemo(() => {
     if (activeTab !== "files") return [];
     // Structure: { url, found_at: page }
     // We need to derive 'filetype' from url
-    return aggregatedData.files
+    return (aggregatedData.files || [])
       .map((f, index) => {
         const ext =
           f.url.split(".").pop()?.split(/[?#]/)[0]?.toUpperCase() || "UNKNOWN";
@@ -399,7 +409,7 @@ export default function Home() {
   // Redirects logic - new
   const filteredRedirects = useMemo(() => {
     if (activeTab !== "redirects") return [];
-    return aggregatedData.redirects;
+    return aggregatedData.redirects || [];
   }, [aggregatedData.redirects, activeTab]);
 
   const renderIssuesViewContent = () => {
@@ -485,25 +495,25 @@ export default function Home() {
             </TabsList>
             <TabsContent
               value="crawledPages"
-              className="flex-grow overflow-hidden"
+              className="flex-1 min-h-0 h-full overflow-hidden"
             >
-              <TableCrawl tabName={"AllData"} rows={debouncedCrawlData} />
+              <TableCrawl tabName={"AllData"} rows={crawlDataSnapshot} />
             </TabsContent>
 
-            <TabsContent className="flex-grow overflow-hidden" value="css">
+            <TabsContent className="flex-1 min-h-0 h-full overflow-hidden" value="css">
               <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
             </TabsContent>
 
             <TabsContent
               value="javascript"
-              className="flex-grow overflow-hidden"
+              className="flex-1 min-h-0 h-full overflow-hidden"
             >
               <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
             </TabsContent>
 
             <TabsContent
               value="internalLinks"
-              className="flex-grow overflow-hidden"
+              className="flex-1 min-h-0 h-full overflow-hidden"
             >
               <LinksTable
                 tabName={"Internal Links"}
@@ -514,7 +524,7 @@ export default function Home() {
             {/*EXTERNAL LINKS*/}
             <TabsContent
               value="externalLinks"
-              className="flex-grow overflow-hidden"
+              className="flex-1 min-h-0 h-full overflow-hidden"
             >
               <LinksTable
                 tabName={"External Links"}
@@ -523,31 +533,31 @@ export default function Home() {
             </TabsContent>
 
             {/*IMAGES*/}
-            <TabsContent value="images" className="flex-grow overflow-hidden">
+            <TabsContent value="images" className="flex-1 min-h-0 h-full overflow-hidden">
               <ImagesCrawlTable
                 tabName={"All Images"}
                 rows={filteredImagesArr}
               />
             </TabsContent>
 
-            <TabsContent value="keywords" className="flex-grow overflow-hidden">
+            <TabsContent value="keywords" className="flex-1 min-h-0 h-full overflow-hidden">
               <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
             </TabsContent>
 
             {/* CORE WEB VITALS TABLe */}
-            <TabsContent value="cwv" className="flex-grow overflow-hidden">
+            <TabsContent value="cwv" className="flex-1 min-h-0 h-full overflow-hidden">
               <CoreWebVitalsTable
                 tabName={"CoreWebVitals"}
                 rows={
                   aggregatedData?.cwv?.length > 0
                     ? aggregatedData.cwv
-                    : debouncedCrawlData
+                    : crawlDataSnapshot
                 }
               />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
-            <TabsContent value="search" className="flex-grow overflow-hidden">
+            <TabsContent value="search" className="flex-1 min-h-0 h-full overflow-hidden">
               <TableCrawl
                 rows={filteredCustomSearch}
                 tabName={"Custom Search"}
@@ -557,18 +567,18 @@ export default function Home() {
             {/*REDIRECTS*/}
             <TabsContent
               value="redirects"
-              className="flex-grow overflow-hidden"
+              className="flex-1 min-h-0 h-full overflow-hidden"
             >
               <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} />
             </TabsContent>
-            <TabsContent value="files" className="flex-grow overflow-hidden">
+            <TabsContent value="files" className="flex-1 min-h-0 h-full overflow-hidden">
               <FilesTable tabName={"All Files"} rows={filteredFilesArr} />
             </TabsContent>
             {/* DYNAMIC TABS */}
             {issuesView && (
               <TabsContent
                 value={issuesView}
-                className="flex-grow overflow-hidden"
+                className="flex-1 min-h-0 h-full overflow-hidden"
               >
                 {/* {renderIssuesViewContent()} */}
                 <TableCrawl tabName={issuesView} rows={issuesData || []} />

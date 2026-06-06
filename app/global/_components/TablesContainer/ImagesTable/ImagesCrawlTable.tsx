@@ -567,7 +567,7 @@ const ImagesCrawlTable = ({
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
-    <>
+    <div className="flex flex-col h-full w-full min-h-0 relative">
       <div className="text-xs dark:bg-brand-darker relative top-0 flex gap-1 pb-1">
         <input
           type="text"
@@ -592,7 +592,7 @@ const ImagesCrawlTable = ({
 
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-brand-darker"
+        className="w-full flex-1 min-h-0 overflow-auto relative bg-white dark:bg-brand-darker"
         style={{ contain: "strict" }}
       >
         <div
@@ -658,7 +658,7 @@ const ImagesCrawlTable = ({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

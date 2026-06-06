@@ -544,8 +544,9 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.text_ratio?.[0]?.text_ratio?.toFixed(1) ||
-                        ""}
+                      {!isNaN(Number(anchorItem?.text_ratio?.[0]?.text_ratio)) && anchorItem?.text_ratio?.[0]?.text_ratio !== null
+                        ? Number(anchorItem.text_ratio[0].text_ratio).toFixed(1)
+                        : ""}
                     </td>
                   </tr>
                   <tr>

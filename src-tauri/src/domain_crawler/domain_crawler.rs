@@ -349,10 +349,12 @@ pub async fn crawl_domain(
             let global_last_request_clone = global_last_request.clone();
 
             tokio::spawn(async move {
+                let url_str = url.to_string();
                 let _active_guard = {
                     let mut state_guard = state_clone.lock().await;
                     state_guard.active_tasks += 1;
-                    CrawlerState::enter_task(state_clone.clone())
+                    state_guard.active_urls.insert(url_str.clone());
+                    CrawlerState::enter_task(state_clone.clone(), url_str.clone())
                 };
                 let _permit = semaphore_clone.acquire().await.unwrap();
 
@@ -425,7 +427,6 @@ pub async fn crawl_domain(
                     }
                 }
 
-                let url_str = url.to_string();
                 let result = process_url(
                     url.clone(),
                     depth,

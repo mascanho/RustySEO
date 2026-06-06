@@ -63,6 +63,7 @@ pub struct CrawlerState {
     pub last_activity: Instant,        // Track last crawling activity
     pub url_patterns: HashMap<String, usize>, // Track URL patterns to avoid duplicates
     pub active_tasks: usize,           // Track number of currently processing tasks
+    pub active_urls: HashSet<String>,  // Track URLs currently being processed
     pub link_checker: Option<Arc<SharedLinkChecker>>,
     pub last_progress_emit: Instant,   // Track time of last progress emission
     pub last_result_emit: Instant,     // Track time of last crawl_result batch emission
@@ -89,6 +90,7 @@ impl CrawlerState {
             last_activity: Instant::now(),
             url_patterns: HashMap::new(),
             active_tasks: 0,
+            active_urls: HashSet::new(),
             link_checker: None,
             last_progress_emit: Instant::now(),
             last_result_emit: Instant::now(),
@@ -136,6 +138,8 @@ impl CrawlerState {
                 now.duration_since(added_time) < MAX_PENDING_TIME
                 // OR that are still waiting in the queue (not yet spawned)
                 || queued_urls.contains(url)
+                // OR that are currently being actively processed
+                || self.active_urls.contains(url)
             });
 
         // Compact the VecDeque periodically once a significant number of items have
@@ -210,22 +214,25 @@ impl CrawlerState {
     }
 
     /// Enter a new task and return a guard that decrements active_tasks on drop
-    pub fn enter_task(state: Arc<Mutex<Self>>) -> ActiveTaskGuard {
-        ActiveTaskGuard { state }
+    pub fn enter_task(state: Arc<Mutex<Self>>, url: String) -> ActiveTaskGuard {
+        ActiveTaskGuard { state, url }
     }
 }
 
 /// RAII guard to ensure active_tasks is always decremented
 pub struct ActiveTaskGuard {
     state: Arc<Mutex<CrawlerState>>,
+    url: String,
 }
 
 impl Drop for ActiveTaskGuard {
     fn drop(&mut self) {
         let state = self.state.clone();
+        let url = self.url.clone();
         tokio::spawn(async move {
             let mut state_guard = state.lock().await;
             state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
+            state_guard.active_urls.remove(&url);
         });
     }
 }

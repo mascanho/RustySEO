@@ -441,7 +441,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
-    <>
+    <div className="flex flex-col h-full w-full min-h-0 relative">
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-2">
         <input
           type="text"
@@ -459,7 +459,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
+        className="w-full flex-1 min-h-0 overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
@@ -516,7 +516,7 @@ const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
           </table>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

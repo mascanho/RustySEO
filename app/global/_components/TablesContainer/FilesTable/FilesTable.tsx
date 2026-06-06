@@ -462,7 +462,7 @@ const FilesTable = ({
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
-    <>
+    <div className="flex flex-col h-full w-full min-h-0 relative">
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable z-20 pb-1 ">
         <input
           type="text"
@@ -487,7 +487,7 @@ const FilesTable = ({
 
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-2rem)] overflow-auto relative min-w-full"
+        className="w-full flex-1 min-h-0 overflow-auto relative min-w-full"
       >
         <div className="sticky top-0 z-10">
           <TableHeader
@@ -538,7 +538,7 @@ const FilesTable = ({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

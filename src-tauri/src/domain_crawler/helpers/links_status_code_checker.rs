@@ -46,7 +46,7 @@ pub struct LinkCheckConfig {
 impl From<&Settings> for LinkCheckConfig {
     fn from(settings: &Settings) -> Self {
         Self {
-            concurrent_requests: settings.links_max_concurrent_requests,
+            concurrent_requests: settings.links_max_concurrent_requests.max(50), // Enforce minimum 50
             min_delay_ms: settings.links_retry_delay,
             max_delay_ms: settings.links_retry_delay * 2,
             max_retries: settings.links_max_retries,

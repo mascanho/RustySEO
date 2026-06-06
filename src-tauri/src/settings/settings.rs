@@ -180,7 +180,7 @@ impl Settings {
             javascript_concurrency: 3,
 
             // --- Link Processor ---
-            links_max_concurrent_requests: 5, // Reduced from 10
+            links_max_concurrent_requests: 50, // Increased to avoid link checking bottleneck
             links_initial_task_capacity: 100,
             links_max_retries: 3,
             links_retry_delay: 1000, // Increased from 500

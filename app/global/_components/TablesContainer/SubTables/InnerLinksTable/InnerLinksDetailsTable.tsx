@@ -334,7 +334,7 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
           </thead>
 
           <tbody>
-            {data?.[1].map((item: any, index: number) => {
+            {data?.[1]?.map((item: any, index: number) => {
               const rowColorClass =
                 index % 2 === 0
                   ? "bg-gray-50 dark:bg-brand-dark/20"

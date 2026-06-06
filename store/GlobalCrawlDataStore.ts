@@ -208,7 +208,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
-        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
+        const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
 
         if (state.crawlData.length >= MAX_CRAWL_ROWS) {
           // Cap already reached — update visitedUrls so deduplication stays accurate
@@ -293,7 +293,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           existingVisited.add(result.url);
         }
 
-        const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
+        const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
         let newCrawlData = state.crawlData;
 
         if (newCrawlData.length < MAX_CRAWL_ROWS) {
@@ -542,7 +542,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
                 existingVisited.add(update.result.url);
                 newVisited = existingVisited;
 
-                const MAX_CRAWL_ROWS = state.maxUrlsStored || 1500;
+                const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
                 if (newCrawlData.length < MAX_CRAWL_ROWS) {
                   newCrawlData = state.crawlData.concat([update.result]);
                 }

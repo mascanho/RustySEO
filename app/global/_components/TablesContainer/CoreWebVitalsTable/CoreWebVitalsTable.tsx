@@ -200,12 +200,14 @@ const TableRow = ({
           const i = Math.floor(Math.log(bytes) / Math.log(k));
           return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
         }
-        // If it's a small decimal (like CLS), keep decimals, otherwise round
-        return audit.numericValue < 1 && audit.numericValue > 0
-          ? audit.numericValue.toFixed(3)
-          : audit.numericValue > 100
-            ? Math.round(audit.numericValue).toString()
-            : audit.numericValue.toFixed(2);
+        const numValue = Number(audit.numericValue);
+        if (isNaN(numValue)) return audit.displayValue || "n/a";
+        
+        return numValue < 1 && numValue > 0
+          ? numValue.toFixed(3)
+          : numValue > 100
+            ? Math.round(numValue).toString()
+            : numValue.toFixed(2);
       }
       return audit.displayValue || "n/a";
     };

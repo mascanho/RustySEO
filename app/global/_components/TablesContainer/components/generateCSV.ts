@@ -96,10 +96,16 @@ export const exportSEODataCSV = async (data) => {
       item.word_count?.toString() || "",
 
       // Text Ratio (12)
-      getValue("text_ratio", "0", "text_ratio")?.toFixed(1) || "",
+      (() => {
+        const tr = getValue("text_ratio", "0", "text_ratio");
+        return !isNaN(Number(tr)) && tr !== null ? Number(tr).toFixed(1) : "";
+      })(),
 
       // Flesch Score (13)
-      getValue("flesch", "Ok", "0")?.toFixed(1) || "",
+      (() => {
+        const fs = getValue("flesch", "Ok", "0");
+        return !isNaN(Number(fs)) && fs !== null ? Number(fs).toFixed(1) : "";
+      })(),
 
       // Flesch Grade (14)
       `"${(getValue("flesch", "Ok", "1") || "").replace(/"/g, '""')}"`,

@@ -53,9 +53,11 @@ export const exportPSIDataCSV = async (data) => {
       return (Math.round(score * 100)).toString();
     };
 
-    const getAuditValue = (audit: any) => {
+    const formatAudit = (audit: any) => {
       if (!audit) return "n/a";
-      return `"${(audit.displayValue || (audit.numericValue !== undefined ? audit.numericValue.toFixed(2) : "n/a")).replace(/"/g, '""')}"`;
+      const numVal = Number(audit.numericValue);
+      const valStr = audit.displayValue || (!isNaN(numVal) ? numVal.toFixed(2) : "n/a");
+      return `"${valStr.replace(/"/g, '""')}"`;
     };
 
     return [
@@ -69,24 +71,24 @@ export const exportPSIDataCSV = async (data) => {
       formatScore(desktop?.categories?.["best-practices"]?.score),
       formatScore(mobile?.categories?.seo?.score),
       formatScore(desktop?.categories?.seo?.score),
-      getAuditValue(mobile?.audits?.["speed-index"]),
-      getAuditValue(desktop?.audits?.["speed-index"]),
-      getAuditValue(mobile?.audits?.["largest-contentful-paint"]),
-      getAuditValue(desktop?.audits?.["largest-contentful-paint"]),
-      getAuditValue(mobile?.audits?.["cumulative-layout-shift"]),
-      getAuditValue(desktop?.audits?.["cumulative-layout-shift"]),
-      getAuditValue(mobile?.audits?.["first-contentful-paint"]),
-      getAuditValue(desktop?.audits?.["first-contentful-paint"]),
-      getAuditValue(mobile?.audits?.["interactive"]),
-      getAuditValue(desktop?.audits?.["interactive"]),
-      getAuditValue(mobile?.audits?.["total-blocking-time"]),
-      getAuditValue(desktop?.audits?.["total-blocking-time"]),
+      formatAudit(mobile?.audits?.["speed-index"]),
+      formatAudit(desktop?.audits?.["speed-index"]),
+      formatAudit(mobile?.audits?.["largest-contentful-paint"]),
+      formatAudit(desktop?.audits?.["largest-contentful-paint"]),
+      formatAudit(mobile?.audits?.["cumulative-layout-shift"]),
+      formatAudit(desktop?.audits?.["cumulative-layout-shift"]),
+      formatAudit(mobile?.audits?.["first-contentful-paint"]),
+      formatAudit(desktop?.audits?.["first-contentful-paint"]),
+      formatAudit(mobile?.audits?.["interactive"]),
+      formatAudit(desktop?.audits?.["interactive"]),
+      formatAudit(mobile?.audits?.["total-blocking-time"]),
+      formatAudit(desktop?.audits?.["total-blocking-time"]),
       formatScore(mobile?.audits?.["redirects"]?.score),
-      getAuditValue(mobile?.audits?.["server-response-time"]),
-      getAuditValue(desktop?.audits?.["server-response-time"]),
-      getAuditValue(mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"]),
-      getAuditValue(mobile?.audits?.["total-byte-weight"]),
-      getAuditValue(desktop?.audits?.["total-byte-weight"]),
+      formatAudit(mobile?.audits?.["server-response-time"]),
+      formatAudit(desktop?.audits?.["server-response-time"]),
+      formatAudit(mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"]),
+      formatAudit(mobile?.audits?.["total-byte-weight"]),
+      formatAudit(desktop?.audits?.["total-byte-weight"]),
     ];
   });
 
