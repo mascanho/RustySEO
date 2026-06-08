@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import type React from "react";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -662,4 +662,4 @@ const ImagesCrawlTable = ({
   );
 };
 
-export default ImagesCrawlTable;
+export default memo(ImagesCrawlTable);

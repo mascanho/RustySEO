@@ -155,29 +155,9 @@ export default function Home() {
     [],
   );
 
-  // Event-driven crawlData sync: instead of polling every 4s, subscribe to
-  // store changes and debounce the render update. This only fires when
-  // crawlData actually changes, and the 4s debounce prevents rapid-fire
-  // renders during batch ingestion.
-  const [crawlDataSnapshot, setCrawlDataSnapshot] = useState(
-    () => useGlobalCrawlStore.getState().crawlData,
-  );
-
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const unsub = useGlobalCrawlStore.subscribe((state, prevState) => {
-      if (state.crawlData !== prevState?.crawlData) {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          setCrawlDataSnapshot(state.crawlData);
-        }, 4000);
-      }
-    });
-    return () => {
-      unsub();
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, []);
+  // Read crawlData directly from the store so the HTML table updates in
+  // real-time as the backend streams results.
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
@@ -249,15 +229,21 @@ export default function Home() {
       // Immediate fetch check This is important to avoid unnecessary re-renders
       let shouldFetchImmediate = false;
       const currentData = useGlobalCrawlStore.getState().aggregatedData;
-      
-      if (activeTab === "images" && (!currentData.images || currentData.images.length === 0))
+
+      if (
+        activeTab === "images" &&
+        (!currentData.images || currentData.images.length === 0)
+      )
         shouldFetchImmediate = true;
       else if (
         activeTab === "javascript" &&
         (!currentData.scripts || currentData.scripts.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "css" && (!currentData.css || currentData.css.length === 0))
+      else if (
+        activeTab === "css" &&
+        (!currentData.css || currentData.css.length === 0)
+      )
         shouldFetchImmediate = true;
       else if (
         activeTab === "internalLinks" &&
@@ -269,19 +255,29 @@ export default function Home() {
         (!currentData.externalLinks || currentData.externalLinks.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "keywords" && (!currentData.keywords || currentData.keywords.length === 0))
+      else if (
+        activeTab === "keywords" &&
+        (!currentData.keywords || currentData.keywords.length === 0)
+      )
         shouldFetchImmediate = true;
       else if (
         activeTab === "redirects" &&
         (!currentData.redirects || currentData.redirects.length === 0)
       )
         shouldFetchImmediate = true;
-      else if (activeTab === "files" && (!currentData.files || currentData.files.length === 0))
+      else if (
+        activeTab === "files" &&
+        (!currentData.files || currentData.files.length === 0)
+      )
         shouldFetchImmediate = true;
-      else if (activeTab === "cwv" && (!currentData.cwv || currentData.cwv.length === 0))
+      else if (
+        activeTab === "cwv" &&
+        (!currentData.cwv || currentData.cwv.length === 0)
+      )
         shouldFetchImmediate = true;
 
-      const totalUrlsCrawled = useGlobalCrawlStore.getState().streamedCrawledPages;
+      const totalUrlsCrawled =
+        useGlobalCrawlStore.getState().streamedCrawledPages;
       // Prevent massive JSON payloads crossing the IPC bridge during large crawls
       const isScaleTooLargeForLive = totalUrlsCrawled > 2000;
 
@@ -321,7 +317,10 @@ export default function Home() {
   // Filters all the CSS
   const filteredCssArr = useMemo(() => {
     if (activeTab !== "css") return [];
-    return (aggregatedData.css || []).map((url, index) => ({ index: index + 1, url }));
+    return (aggregatedData.css || []).map((url, index) => ({
+      index: index + 1,
+      url,
+    }));
   }, [aggregatedData.css, activeTab]);
 
   // Filters all the images
@@ -371,15 +370,15 @@ export default function Home() {
 
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return [];
-    if (!crawlDataSnapshot || !Array.isArray(crawlDataSnapshot)) {
+    if (!crawlData || !Array.isArray(crawlData)) {
       return [];
     }
 
-    const customSearch = crawlDataSnapshot.filter(
+    const customSearch = crawlData.filter(
       (search) => search?.extractor?.html === true,
     );
     return customSearch;
-  }, [crawlDataSnapshot, activeTab]);
+  }, [crawlData, activeTab]);
 
   // Filters all files
   const filteredFilesArr = useMemo(() => {
@@ -493,96 +492,72 @@ export default function Home() {
                 </TabsTrigger>
               )}
             </TabsList>
-            <TabsContent
-              value="crawledPages"
-              className="flex-1 min-h-0 h-full overflow-hidden"
-            >
-              <TableCrawl tabName={"AllData"} rows={crawlDataSnapshot} />
-            </TabsContent>
-
-            <TabsContent className="flex-1 min-h-0 h-full overflow-hidden" value="css">
-              <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
-            </TabsContent>
-
-            <TabsContent
-              value="javascript"
-              className="flex-1 min-h-0 h-full overflow-hidden"
-            >
-              <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
-            </TabsContent>
-
-            <TabsContent
-              value="internalLinks"
-              className="flex-1 min-h-0 h-full overflow-hidden"
-            >
-              <LinksTable
-                tabName={"Internal Links"}
-                rows={filteredInternalLinks}
-              />
-            </TabsContent>
-
-            {/*EXTERNAL LINKS*/}
-            <TabsContent
-              value="externalLinks"
-              className="flex-1 min-h-0 h-full overflow-hidden"
-            >
-              <LinksTable
-                tabName={"External Links"}
-                rows={filteredExternalLinks}
-              />
-            </TabsContent>
-
-            {/*IMAGES*/}
-            <TabsContent value="images" className="flex-1 min-h-0 h-full overflow-hidden">
-              <ImagesCrawlTable
-                tabName={"All Images"}
-                rows={filteredImagesArr}
-              />
-            </TabsContent>
-
-            <TabsContent value="keywords" className="flex-1 min-h-0 h-full overflow-hidden">
-              <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
-            </TabsContent>
-
-            {/* CORE WEB VITALS TABLe */}
-            <TabsContent value="cwv" className="flex-1 min-h-0 h-full overflow-hidden">
-              <CoreWebVitalsTable
-                tabName={"CoreWebVitals"}
-                rows={
-                  aggregatedData?.cwv?.length > 0
-                    ? aggregatedData.cwv
-                    : crawlDataSnapshot
-                }
-              />
-            </TabsContent>
-
-            {/* CUSTOM SEARCH */}
-            <TabsContent value="search" className="flex-1 min-h-0 h-full overflow-hidden">
-              <TableCrawl
-                rows={filteredCustomSearch}
-                tabName={"Custom Search"}
-              />
-            </TabsContent>
-
-            {/*REDIRECTS*/}
-            <TabsContent
-              value="redirects"
-              className="flex-1 min-h-0 h-full overflow-hidden"
-            >
-              <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} />
-            </TabsContent>
-            <TabsContent value="files" className="flex-1 min-h-0 h-full overflow-hidden">
-              <FilesTable tabName={"All Files"} rows={filteredFilesArr} />
-            </TabsContent>
-            {/* DYNAMIC TABS */}
-            {issuesView && (
-              <TabsContent
-                value={issuesView}
-                className="flex-1 min-h-0 h-full overflow-hidden"
-              >
-                {/* {renderIssuesViewContent()} */}
-                <TableCrawl tabName={issuesView} rows={issuesData || []} />
-              </TabsContent>
+            {activeTab === "crawledPages" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                <TableCrawl tabName={"AllData"} rows={crawlData} />
+              </div>
+            )}
+            {activeTab === "css" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} /> */}
+              </div>
+            )}
+            {activeTab === "javascript" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} /> */}
+              </div>
+            )}
+            {activeTab === "internalLinks" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <LinksTable tabName={"Internal Links"} rows={filteredInternalLinks} /> */}
+              </div>
+            )}
+            {activeTab === "externalLinks" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <LinksTable tabName={"External Links"} rows={filteredExternalLinks} /> */}
+              </div>
+            )}
+            {activeTab === "images" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <ImagesCrawlTable tabName={"All Images"} rows={filteredImagesArr} /> */}
+              </div>
+            )}
+            {activeTab === "keywords" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <KeywordsTable rows={filteredKeywords} tabName="All Keywords" /> */}
+              </div>
+            )}
+            {activeTab === "cwv" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <CoreWebVitalsTable */}
+                {/*   tabName={"CoreWebVitals"} */}
+                {/*   rows={ */}
+                {/*     aggregatedData?.cwv?.length > 0 */}
+                {/*       ? aggregatedData.cwv */}
+                {/*       : crawlData */}
+                {/*   } */}
+                {/* /> */}
+              </div>
+            )}
+            {activeTab === "search" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <TableCrawl rows={filteredCustomSearch} tabName={"Custom Search"} /> */}
+              </div>
+            )}
+            {activeTab === "redirects" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} /> */}
+              </div>
+            )}
+            {activeTab === "files" && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <FilesTable tabName={"All Files"} rows={filteredFilesArr} /> */}
+              </div>
+            )}
+            {activeTab === issuesView && issuesView && (
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                {/* <TableCrawl tabName={issuesView} rows={issuesData || []} /> */}
+              </div>
             )}
           </Tabs>
         </div>
@@ -672,86 +647,73 @@ export default function Home() {
               </TabsList>
             </div>
 
-            <TabsContent
-              value="details"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <DetailsTable
-                data={selectedTableURL}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
-            <TabsContent
-              value="inlinks"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <InnerLinksDetailsTable
-                ref={inlinksTableRef}
-                data={inlinks}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
-            <TabsContent
-              value="outlinks"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <OuterLinksSubTable
-                ref={outlinksTableRef}
-                data={outlinks}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
-            <TabsContent
-              value="images"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <ImagesTable height={bottomTableHeight} />
-            </TabsContent>
-            <TabsContent
-              value="schema"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <SchemaSubTable height={bottomTableHeight} />
-            </TabsContent>
-
-            <TabsContent
-              value="headers"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <ResponseHeaders
-                data={selectedTableURL}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
-
-            <TabsContent
-              value="opengraph"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <OpenGraphPreview height={bottomTableHeight} />
-            </TabsContent>
-
-            <TabsContent
-              value="pageInternal"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <PageInternalSubTable
-                ref={pageInternalTableRef}
-                data={selectedTableURL}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
-
-            <TabsContent
-              value="pageExternal"
-              className="flex-1 min-h-0 mt-0 overflow-hidden"
-            >
-              <PageExternalSubTable
-                ref={pageExternalTableRef}
-                data={selectedTableURL}
-                height={bottomTableHeight}
-              />
-            </TabsContent>
+            {activeBottomTab === "details" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <DetailsTable
+                  data={selectedTableURL}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
+            {activeBottomTab === "inlinks" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <InnerLinksDetailsTable
+                  ref={inlinksTableRef}
+                  data={inlinks}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
+            {activeBottomTab === "outlinks" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <OuterLinksSubTable
+                  ref={outlinksTableRef}
+                  data={outlinks}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
+            {activeBottomTab === "images" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <ImagesTable height={bottomTableHeight} />
+              </div>
+            )}
+            {activeBottomTab === "schema" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <SchemaSubTable height={bottomTableHeight} />
+              </div>
+            )}
+            {activeBottomTab === "headers" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <ResponseHeaders
+                  data={selectedTableURL}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
+            {activeBottomTab === "opengraph" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <OpenGraphPreview height={bottomTableHeight} />
+              </div>
+            )}
+            {activeBottomTab === "pageInternal" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <PageInternalSubTable
+                  ref={pageInternalTableRef}
+                  data={selectedTableURL}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
+            {activeBottomTab === "pageExternal" && (
+              <div className="flex-1 min-h-0 mt-0 overflow-hidden">
+                <PageExternalSubTable
+                  ref={pageExternalTableRef}
+                  data={selectedTableURL}
+                  height={bottomTableHeight}
+                />
+              </div>
+            )}
 
             {/* <TabsContent */}
             {/*   value="innerLinks" */}

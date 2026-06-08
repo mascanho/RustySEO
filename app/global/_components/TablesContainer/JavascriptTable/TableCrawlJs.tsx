@@ -1,10 +1,11 @@
 // @ts-nocheck
 import React, {
+  memo,
   useState,
   useRef,
+  useMemo,
   useEffect,
   useCallback,
-  useMemo,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
@@ -590,4 +591,4 @@ const TableCrawlJs = ({
   );
 };
 
-export default TableCrawlJs;
+export default memo(TableCrawlJs);

@@ -166,8 +166,19 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
   const setters = {
     setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
     setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) =>
-      set((state) => ({
-        aggregatedData: { ...state.aggregatedData, ...data },
+      set(() => ({
+        aggregatedData: {
+          images: [],
+          scripts: [],
+          css: [],
+          internalLinks: [],
+          externalLinks: [],
+          keywords: [],
+          redirects: [],
+          cwv: [],
+          files: [],
+          ...data,
+        },
       })),
     fetchMaxUrlsStored: async () => {
       try {
@@ -183,6 +194,15 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         console.error("Failed to fetch maxUrlsStored:", error);
       }
     },
+    // Strip the massive inoutlinks_status_codes (all links per page) before
+    // storing in the JS heap. This field is only needed on-demand via selectURL.
+    stripLinkData: (page: any) => {
+      if (page?.inoutlinks_status_codes) {
+        const { inoutlinks_status_codes, ...rest } = page;
+        return rest;
+      }
+      return page;
+    },
     addDomainCrawlResult: (resultOrBatch: PageDetails | PageDetails[]) =>
       set((state) => {
         const results = Array.isArray(resultOrBatch)
@@ -192,9 +212,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
         // Build the visited set from existing state — never mutate state directly.
         // Use existing visitedUrls if available, else rebuild from crawlData.
-        const existingVisited: Set<string> = state.visitedUrls instanceof Set
-          ? state.visitedUrls
-          : new Set<string>((state.crawlData || []).map((item: any) => item.url));
+        const existingVisited: Set<string> =
+          state.visitedUrls instanceof Set
+            ? state.visitedUrls
+            : new Set<string>(
+                (state.crawlData || []).map((item: any) => item.url),
+              );
 
         // Filter to only new URLs
         const newResults = results.filter((r) => !existingVisited.has(r.url));
@@ -202,24 +225,30 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
         for (const r of newResults) {
           // CRITICAL: Flatten string to prevent V8 sliced-string memory leak.
-          // r.url is a slice of a massive JSON IPC payload. Force a new string allocation 
+          // r.url is a slice of a massive JSON IPC payload. Force a new string allocation
           // so the original payload buffer can be garbage collected.
-          existingVisited.add((' ' + r.url).slice(1));
+          existingVisited.add((" " + r.url).slice(1));
         }
+
+        // Strip heavy link data from each result before storing in the heap ring buffer
+        const stripped = newResults.map((r) => setters.stripLinkData(r));
 
         // Max cap: keep only the first MAX_CRAWL_ROWS in the JS heap.
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
-        const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
+        const MAX_CRAWL_ROWS = Math.min(
+          state.maxUrlsStored || 1000000,
+          1000000,
+        );
 
         if (state.crawlData.length >= MAX_CRAWL_ROWS) {
-          // Cap already reached — update visitedUrls so deduplication stays accurate
+          // Cap already reached — update visitedUrls so deduplgiation stays accurate
           // but don't grow the array any further.
           return { visitedUrls: existingVisited };
         }
 
-        const combined = state.crawlData.concat(newResults);
+        const combined = state.crawlData.concat(stripped);
         const capped =
           combined.length > MAX_CRAWL_ROWS
             ? combined.slice(0, MAX_CRAWL_ROWS)
@@ -281,9 +310,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       totalPages: number,
     ) =>
       set((state) => {
-        const existingVisited: Set<string> = state.visitedUrls instanceof Set
-          ? state.visitedUrls
-          : new Set<string>((state.crawlData || []).map((item: any) => item.url));
+        const existingVisited: Set<string> =
+          state.visitedUrls instanceof Set
+            ? state.visitedUrls
+            : new Set<string>(
+                (state.crawlData || []).map((item: any) => item.url),
+              );
 
         if (existingVisited.has(result.url)) {
           return {
@@ -296,11 +328,14 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           existingVisited.add(result.url);
         }
 
-        const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
+        const MAX_CRAWL_ROWS = Math.min(
+          state.maxUrlsStored || 10000000,
+          10000000,
+        );
         let newCrawlData = state.crawlData;
 
         if (newCrawlData.length < MAX_CRAWL_ROWS) {
-          newCrawlData = newCrawlData.concat([result]);
+          newCrawlData = newCrawlData.concat([setters.stripLinkData(result)]);
         }
 
         return {
@@ -358,7 +393,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     cookies: [],
     favicon: "",
     visitedUrls: new Set(),
-    maxUrlsStored: 1500,
+    maxUrlsStored: 10000000,
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -537,15 +572,21 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             let newVisited: Set<string> | undefined;
 
             if (update.result) {
-              const existingVisited: Set<string> = state.visitedUrls instanceof Set
-                ? state.visitedUrls
-                : new Set<string>((state.crawlData || []).map((item: any) => item.url));
+              const existingVisited: Set<string> =
+                state.visitedUrls instanceof Set
+                  ? state.visitedUrls
+                  : new Set<string>(
+                      (state.crawlData || []).map((item: any) => item.url),
+                    );
 
               if (!existingVisited.has(update.result.url)) {
                 existingVisited.add(update.result.url);
                 newVisited = existingVisited;
 
-                const MAX_CRAWL_ROWS = Math.min(state.maxUrlsStored || 1500, 1500);
+                const MAX_CRAWL_ROWS = Math.min(
+                  state.maxUrlsStored || 1500,
+                  1500,
+                );
                 if (newCrawlData.length < MAX_CRAWL_ROWS) {
                   newCrawlData = state.crawlData.concat([update.result]);
                 }
