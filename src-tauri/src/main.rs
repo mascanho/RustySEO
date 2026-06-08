@@ -368,6 +368,7 @@ async fn main() {
             domain_commands::get_incoming_links_command,
             domain_commands::get_crawl_page_command,
             domain_commands::get_crawl_total_count_command,
+            domain_commands::get_crawl_summary_stats_command,
             domain_commands::export_images_to_excel_command,
             domain_commands::export_keywords_to_excel_command,
             domain_commands::export_redirects_to_excel_command,

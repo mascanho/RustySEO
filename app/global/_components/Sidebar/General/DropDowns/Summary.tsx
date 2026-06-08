@@ -6,9 +6,11 @@ import React, {
   useEffect,
   useState,
   useReducer,
+  useRef,
 } from "react";
 import debounce from "lodash.debounce";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { invoke } from "@tauri-apps/api/core";
 
 import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
 
@@ -24,6 +26,15 @@ interface SummaryItem {
   label: string;
   value: number;
   percentage: string;
+}
+
+interface BackendStats {
+  pages: number;
+  total_internal_links: number;
+  total_external_links: number;
+  total_links: number;
+  indexable_pages: number;
+  not_indexable_pages: number;
 }
 
 const SummaryItemRow: React.FC<SummaryItem> = memo(
@@ -84,13 +95,43 @@ const reducer = (state: State, action: Action): State => {
 };
 
 const Summary: React.FC = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const isFinishedDeepCrawl = useGlobalCrawlStore(
+    (state) => state.isFinishedDeepCrawl,
+  );
   const setSummary = useGlobalCrawlStore((state) => state.setSummary);
   const [state, dispatch] = useReducer(reducer, initialState);
-
+  const [backendStats, setBackendStats] = useState<BackendStats | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  // Memoize crawlData to prevent unnecessary recalculations
+  const isFetching = useRef(false);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const stableCrawlData = useMemo(() => crawlData || [], [crawlData]);
+
+  // Fetch real stats from SQLite via backend
+  const fetchBackendStats = useCallback(async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    try {
+      const stats: BackendStats = await invoke(
+        "get_crawl_summary_stats_command",
+      );
+      if (stats && typeof stats.pages === "number") {
+        setBackendStats(stats);
+      }
+    } catch (e) {
+      // Silently fall back to crawlData-based stats
+    } finally {
+      isFetching.current = false;
+    }
+  }, []);
+
+  // Fetch backend stats once when crawl completes
+  useEffect(() => {
+    if (isFinishedDeepCrawl) {
+      fetchBackendStats();
+    }
+  }, [isFinishedDeepCrawl, fetchBackendStats]);
 
   // Stable debounced update function
   const debouncedUpdate = useCallback(
@@ -100,19 +141,33 @@ const Summary: React.FC = () => {
     [],
   );
 
-  // Update global summary only when processing is complete
+  // Update global summary
   useEffect(() => {
     if (!state.isProcessing) {
-      setSummary({
-        totalPagesCrawled: stableCrawlData.length,
-        totalInternalLinks: state.internalLinks,
-        totalExternalLinks: state.externalLinks,
-        totalLinksFound: state.internalLinks + state.externalLinks,
-        notIndexablePages: stableCrawlData.length - state.totalIndexablePages,
-        indexablePages: state.totalIndexablePages,
-      });
+      if (backendStats) {
+        // Use accurate backend stats
+        setSummary({
+          totalPagesCrawled: backendStats.pages,
+          totalInternalLinks: backendStats.total_internal_links,
+          totalExternalLinks: backendStats.total_external_links,
+          totalLinksFound: backendStats.total_links,
+          notIndexablePages: backendStats.not_indexable_pages,
+          indexablePages: backendStats.indexable_pages,
+        });
+      } else {
+        // Fall back to live crawlData computation
+        setSummary({
+          totalPagesCrawled: stableCrawlData.length,
+          totalInternalLinks: state.internalLinks,
+          totalExternalLinks: state.externalLinks,
+          totalLinksFound: state.internalLinks + state.externalLinks,
+          notIndexablePages:
+            stableCrawlData.length - state.totalIndexablePages,
+          indexablePages: state.totalIndexablePages,
+        });
+      }
     }
-  }, [state, stableCrawlData, setSummary]);
+  }, [state, stableCrawlData, setSummary, backendStats]);
 
   // Trigger debounced update when crawlData changes
   useEffect(() => {
@@ -121,14 +176,32 @@ const Summary: React.FC = () => {
   }, [stableCrawlData, debouncedUpdate]);
 
   // Memoize derived values
-  const { totalPagesCrawled, totalNotIndexablePages } = useMemo(
-    () => ({
+  const { totalPagesCrawled, totalNotIndexablePages } = useMemo(() => {
+    if (backendStats) {
+      return {
+        totalPagesCrawled: backendStats.pages,
+        totalNotIndexablePages: backendStats.not_indexable_pages,
+      };
+    }
+    return {
       totalPagesCrawled: stableCrawlData.length,
       totalNotIndexablePages:
         stableCrawlData.length - state.totalIndexablePages,
-    }),
-    [stableCrawlData, state.totalIndexablePages],
-  );
+    };
+  }, [stableCrawlData, state.totalIndexablePages, backendStats]);
+
+  const displayInternalLinks = backendStats
+    ? backendStats.total_internal_links
+    : state.internalLinks;
+  const displayExternalLinks = backendStats
+    ? backendStats.total_external_links
+    : state.externalLinks;
+  const displayTotalLinks = backendStats
+    ? backendStats.total_links
+    : state.internalLinks + state.externalLinks;
+  const displayIndexablePages = backendStats
+    ? backendStats.indexable_pages
+    : state.totalIndexablePages;
 
   // Memoize summary data
   const summaryData: SummaryItem[] = useMemo(
@@ -140,30 +213,30 @@ const Summary: React.FC = () => {
       },
       {
         label: "Total Links Found",
-        value: state.internalLinks + state.externalLinks,
+        value: displayTotalLinks,
         percentage: "100%",
       },
       {
         label: "Total Internal Links",
-        value: state.internalLinks,
+        value: displayInternalLinks,
         percentage:
-          state.internalLinks + state.externalLinks
-            ? `${((state.internalLinks / (state.internalLinks + state.externalLinks)) * 100).toFixed(0)}%`
+          displayInternalLinks + displayExternalLinks
+            ? `${((displayInternalLinks / (displayInternalLinks + displayExternalLinks)) * 100).toFixed(0)}%`
             : "0%",
       },
       {
         label: "Total External Links",
-        value: state.externalLinks,
+        value: displayExternalLinks,
         percentage:
-          state.internalLinks + state.externalLinks
-            ? `${((state.externalLinks / (state.internalLinks + state.externalLinks)) * 100).toFixed(0)}%`
+          displayInternalLinks + displayExternalLinks
+            ? `${((displayExternalLinks / (displayInternalLinks + displayExternalLinks)) * 100).toFixed(0)}%`
             : "0%",
       },
       {
         label: "Total Indexable Pages",
-        value: state.totalIndexablePages,
+        value: displayIndexablePages,
         percentage: totalPagesCrawled
-          ? `${((state.totalIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
+          ? `${((displayIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
           : "0%",
       },
       {
@@ -174,7 +247,14 @@ const Summary: React.FC = () => {
           : "0%",
       },
     ],
-    [state, totalPagesCrawled, totalNotIndexablePages],
+    [
+      totalPagesCrawled,
+      displayInternalLinks,
+      displayExternalLinks,
+      displayTotalLinks,
+      displayIndexablePages,
+      totalNotIndexablePages,
+    ],
   );
 
   return (

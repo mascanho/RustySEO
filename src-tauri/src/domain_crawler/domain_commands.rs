@@ -194,6 +194,12 @@ pub async fn get_crawl_total_count_command(search: Option<String>) -> Result<i64
     db.get_crawl_total_count(search).await.map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub async fn get_crawl_summary_stats_command() -> Result<Value, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    db.get_summary_stats().await.map_err(|e| e.to_string())
+}
+
 // EXPORT DATA DIRECTLY FROM DATABASE - BYPASS FRONTEND MEMORY LIMITS
 
 #[tauri::command]
