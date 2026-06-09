@@ -499,59 +499,74 @@ export default function Home() {
             )}
             {activeTab === "css" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} /> */}
+                <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
               </div>
             )}
             {activeTab === "javascript" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} /> */}
+                <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
               </div>
             )}
             {activeTab === "internalLinks" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <LinksTable tabName={"Internal Links"} rows={filteredInternalLinks} /> */}
+                <LinksTable
+                  tabName={"Internal Links"}
+                  rows={filteredInternalLinks}
+                />
               </div>
             )}
             {activeTab === "externalLinks" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <LinksTable tabName={"External Links"} rows={filteredExternalLinks} /> */}
+                <LinksTable
+                  tabName={"External Links"}
+                  rows={filteredExternalLinks}
+                />
               </div>
             )}
             {activeTab === "images" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <ImagesCrawlTable tabName={"All Images"} rows={filteredImagesArr} /> */}
+                <ImagesCrawlTable
+                  tabName={"All Images"}
+                  rows={filteredImagesArr}
+                />
               </div>
             )}
             {activeTab === "keywords" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <KeywordsTable rows={filteredKeywords} tabName="All Keywords" /> */}
+                <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
               </div>
             )}
             {activeTab === "cwv" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <CoreWebVitalsTable */}
-                {/*   tabName={"CoreWebVitals"} */}
-                {/*   rows={ */}
-                {/*     aggregatedData?.cwv?.length > 0 */}
-                {/*       ? aggregatedData.cwv */}
-                {/*       : crawlData */}
-                {/*   } */}
-                {/* /> */}
+                <CoreWebVitalsTable
+                  tabName={"CoreWebVitals"}
+                  rows={
+                    aggregatedData?.cwv?.length > 0
+                      ? aggregatedData.cwv
+                      : crawlData
+                  }
+                />
               </div>
             )}
             {activeTab === "search" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <TableCrawl rows={filteredCustomSearch} tabName={"Custom Search"} /> */}
+                <TableCrawl
+                  rows={filteredCustomSearch}
+                  tabName={"Custom Search"}
+                />
               </div>
             )}
             {activeTab === "redirects" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <RedirectsTable tabName={"Redirects"} rows={filteredRedirects} /> */}
+                <RedirectsTable
+                  tabName={"Redirects"}
+                  rows={filteredRedirects}
+                />
               </div>
             )}
             {activeTab === "files" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <FilesTable tabName={"All Files"} rows={filteredFilesArr} /> */}
+                <FilesTable tabName={"All Files"} rows={filteredFilesArr} />
               </div>
             )}
             {activeTab === issuesView && issuesView && (
@@ -715,10 +730,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* <TabsContent */}
-            {/*   value="innerLinks" */}
-            {/*   className="relative z-0" */}
-            {/* ></TabsContent> */}
+            <TabsContent
+              value="innerLinks"
+              className="relative z-0"
+            ></TabsContent>
           </Tabs>
         </div>
       </div>
