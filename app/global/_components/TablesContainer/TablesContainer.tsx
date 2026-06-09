@@ -452,7 +452,7 @@ export default function Home() {
             onValueChange={handleTabChange}
             className="h-full flex dark:bg-brand-darker flex-col"
           >
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t-0 -mb-2 bg-gray-50 rounded-none">
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t-0 -mb-1.5 bg-gray-50 rounded-none">
               <TabsTrigger value="crawledPages" className="rounded-t-md">
                 HTML
               </TabsTrigger>
