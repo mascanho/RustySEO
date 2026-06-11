@@ -390,7 +390,7 @@ export default function Page() {
               value="first"
               className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-hidden"
             >
-              <TablesContainer />
+              {/* <TablesContainer /> */}
             </Tabs.Panel>
           )}
 
