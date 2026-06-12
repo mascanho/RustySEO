@@ -24,8 +24,9 @@ interface CrawlDataItem {
 
 interface SummaryItem {
   label: string;
-  value: number;
+  value: number | string;
   percentage: string;
+  loading?: boolean;
 }
 
 interface BackendStats {
@@ -38,11 +39,23 @@ interface BackendStats {
 }
 
 const SummaryItemRow: React.FC<SummaryItem> = memo(
-  ({ label, value, percentage }) => (
+  ({ label, value, percentage, loading }) => (
     <div className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark">
       <div className="w-2/3 pl-2.5 py-1 text-brand-bright">{label}</div>
-      <div className="w-1/6 text-right pr-2">{value}</div>
-      <div className="w-1/6 text-right pr-2">{percentage}</div>
+      <div className="w-1/6 text-right pr-2">
+        {loading ? (
+          <span className="inline-block w-4 animate-pulse">...</span>
+        ) : (
+          value
+        )}
+      </div>
+      <div className="w-1/6 text-right pr-2">
+        {loading ? (
+          <span className="inline-block w-4 animate-pulse">...</span>
+        ) : (
+          percentage
+        )}
+      </div>
     </div>
   ),
 );
@@ -100,6 +113,15 @@ const Summary: React.FC = () => {
     (state) => state.isFinishedDeepCrawl,
   );
   const setSummary = useGlobalCrawlStore((state) => state.setSummary);
+  const domainCrawlLoading = useGlobalCrawlStore(
+    (state) => state.domainCrawlLoading,
+  );
+  const streamedCrawledPages = useGlobalCrawlStore(
+    (state) => state.streamedCrawledPages,
+  );
+  const streamedTotalPages = useGlobalCrawlStore(
+    (state) => state.streamedTotalPages,
+  );
   const [state, dispatch] = useReducer(reducer, initialState);
   const [backendStats, setBackendStats] = useState<BackendStats | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -107,6 +129,7 @@ const Summary: React.FC = () => {
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stableCrawlData = useMemo(() => crawlData || [], [crawlData]);
+  const isCrawling = domainCrawlLoading && !isFinishedDeepCrawl;
 
   // Fetch real stats from SQLite via backend
   const fetchBackendStats = useCallback(async () => {
@@ -183,12 +206,20 @@ const Summary: React.FC = () => {
         totalNotIndexablePages: backendStats.not_indexable_pages,
       };
     }
+    const pages = isCrawling
+      ? streamedCrawledPages || stableCrawlData.length
+      : stableCrawlData.length;
     return {
-      totalPagesCrawled: stableCrawlData.length,
-      totalNotIndexablePages:
-        stableCrawlData.length - state.totalIndexablePages,
+      totalPagesCrawled: pages,
+      totalNotIndexablePages: pages - state.totalIndexablePages,
     };
-  }, [stableCrawlData, state.totalIndexablePages, backendStats]);
+  }, [
+    stableCrawlData,
+    state.totalIndexablePages,
+    backendStats,
+    isCrawling,
+    streamedCrawledPages,
+  ]);
 
   const displayInternalLinks = backendStats
     ? backendStats.total_internal_links
@@ -209,12 +240,17 @@ const Summary: React.FC = () => {
       {
         label: "Pages crawled",
         value: totalPagesCrawled,
-        percentage: "100%",
+        percentage:
+          isCrawling && streamedTotalPages
+            ? `${((streamedCrawledPages / streamedTotalPages) * 100).toFixed(0)}%`
+            : "100%",
+        loading: isCrawling && !totalPagesCrawled,
       },
       {
         label: "Total Links Found",
         value: displayTotalLinks,
         percentage: "100%",
+        loading: isCrawling && !displayTotalLinks,
       },
       {
         label: "Total Internal Links",
@@ -223,6 +259,7 @@ const Summary: React.FC = () => {
           displayInternalLinks + displayExternalLinks
             ? `${((displayInternalLinks / (displayInternalLinks + displayExternalLinks)) * 100).toFixed(0)}%`
             : "0%",
+        loading: isCrawling && !displayInternalLinks && !displayExternalLinks,
       },
       {
         label: "Total External Links",
@@ -231,6 +268,7 @@ const Summary: React.FC = () => {
           displayInternalLinks + displayExternalLinks
             ? `${((displayExternalLinks / (displayInternalLinks + displayExternalLinks)) * 100).toFixed(0)}%`
             : "0%",
+        loading: isCrawling && !displayInternalLinks && !displayExternalLinks,
       },
       {
         label: "Total Indexable Pages",
@@ -238,6 +276,7 @@ const Summary: React.FC = () => {
         percentage: totalPagesCrawled
           ? `${((displayIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
           : "0%",
+        loading: isCrawling && !displayIndexablePages,
       },
       {
         label: "Total Not Indexable Pages",
@@ -245,6 +284,7 @@ const Summary: React.FC = () => {
         percentage: totalPagesCrawled
           ? `${((totalNotIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
           : "0%",
+        loading: isCrawling && !totalNotIndexablePages && !totalPagesCrawled,
       },
     ],
     [
@@ -254,6 +294,9 @@ const Summary: React.FC = () => {
       displayTotalLinks,
       displayIndexablePages,
       totalNotIndexablePages,
+      isCrawling,
+      streamedCrawledPages,
+      streamedTotalPages,
     ],
   );
 
@@ -269,7 +312,12 @@ const Summary: React.FC = () => {
             )}
           </span>
           <span className="ml-1">Summary</span>
-          {state.isProcessing && (
+          {isCrawling && (
+            <span className="ml-2 text-xs text-sky-500 animate-pulse">
+              Crawling...
+            </span>
+          )}
+          {state.isProcessing && !isCrawling && (
             <span className="ml-2 text-xs text-gray-500">Processing...</span>
           )}
         </div>
