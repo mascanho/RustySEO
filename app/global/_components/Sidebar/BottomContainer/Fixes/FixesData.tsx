@@ -256,4 +256,130 @@ export const FixesData = [
       "Review your robots.txt file. Remove the Disallow rule for these URLs if you want them to be indexed. If they are intentionally blocked, ensure they are not being linked to internally.",
     links: ["https://developers.google.com/search/docs/crawling-indexing/robots/intro"],
   },
+  {
+    id: 29,
+    title: "Redirect Detected",
+    description:
+      "Redirects add an extra HTTP round-trip which increases page load time. Even a single redirect can meaningfully impact Core Web Vitals, especially on mobile networks with high latency.",
+    fixes:
+      "Replace the redirect with a direct link to the final destination URL, or consolidate to a single 301 redirect if removal is not possible.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/redirects"],
+  },
+  {
+    id: 30,
+    title: "URL Has Uppercase Characters",
+    description:
+      "URLs with uppercase characters can cause duplicate content issues because some servers treat uppercase and lowercase URLs as different pages. Consistent lowercase URLs are an SEO best practice.",
+    fixes:
+      "Rewrite URLs using only lowercase characters. Set up 301 redirects from the uppercase versions to the lowercase versions if they are already indexed.",
+    links: ["https://moz.com/learn/seo/url"],
+  },
+  {
+    id: 31,
+    title: "URL Too Long (>100 chars)",
+    description:
+      "Long URLs are harder for users to read and share, and search engines may truncate them in results. They also tend to get fewer clicks and can look spammy.",
+    fixes:
+      "Shorten URLs to under 100 characters with concise, keyword-rich slugs that accurately describe the page content. Remove unnecessary stop words and parameters.",
+    links: ["https://developers.google.com/search/docs/fundamentals/seo-starter-guide#url-structure"],
+  },
+  {
+    id: 32,
+    title: "URL Contains Special Characters",
+    description:
+      "Characters like underscores, spaces, and URL-encoded symbols in URLs can cause technical issues. Underscores are not treated as word separators by Google, unlike hyphens.",
+    fixes:
+      "Replace underscores and spaces in URL slugs with hyphens. Remove or percent-encode other special characters. Ensure all URLs use only alphanumerics and hyphens.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/url-structure"],
+  },
+  {
+    id: 33,
+    title: "Low Readability Score",
+    description:
+      "The Flesch Reading Ease score measures how easy your text is to understand. Scores below 50 indicate 'difficult' or 'very difficult' content, which can hurt user engagement and accessibility.",
+    fixes:
+      "Simplify sentence structure, use shorter words, and break up complex paragraphs. Aim for a Flesch score of 60-70 (plain English) for general audiences.",
+    links: ["https://yoast.com/flesch-reading-ease-score/"],
+  },
+  {
+    id: 34,
+    title: "Low Text-to-HTML Ratio",
+    description:
+      "A low text-to-HTML ratio means the page has excessive HTML markup compared to its actual textual content. This can indicate bloated code, excessive inline styles, or thin content.",
+    fixes:
+      "Reduce unnecessary HTML/CSS markup, externalize inline styles and scripts, and increase the amount of meaningful text content on the page.",
+    links: ["https://web.dev/reduce-network-payloads-and-compress-assets/"],
+  },
+  {
+    id: 35,
+    title: "Missing Language Attribute",
+    description:
+      "The lang attribute on the <html> tag helps assistive technologies (like screen readers) pronounce content correctly and helps search engines serve language-appropriate results.",
+    fixes:
+      "Add a lang attribute to the <html> element, e.g., <html lang=\"en\"> for English content. Use the appropriate IANA language subtag for your content language.",
+    links: ["https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang"],
+  },
+  {
+    id: 36,
+    title: "Too Many Internal Links (>150)",
+    description:
+      "Google recommends keeping the number of links per page under 150 to avoid diluting link equity. Excess links can also overwhelm users and make navigation confusing.",
+    fixes:
+      "Audit your page navigation and content. Consolidate link-heavy sections, use dropdowns or accordions, and remove redundant or low-value internal links.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/links-crawling"],
+  },
+  {
+    id: 37,
+    title: "Too Many External Links (>50)",
+    description:
+      "A high number of external outbound links can dilute PageRank passed to your own pages and may confuse users. It can also signal a 'links page' rather than valuable content.",
+    fixes:
+      "Review all external links and remove redundant or low-value ones. Add rel=\"nofollow\" or rel=\"sponsored\" to non-essential external links to preserve link equity.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links"],
+  },
+  {
+    id: 38,
+    title: "Inline CSS Detected",
+    description:
+      "Inline CSS prevents browser caching and increases page size. It also makes maintenance harder and can block rendering if not managed carefully.",
+    fixes:
+      "Move inline CSS styles to dedicated external stylesheet files. Use CSS classes instead of inline style attributes to enable caching and improve maintainability.",
+    links: ["https://web.dev/defer-non-critical-css/"],
+  },
+  {
+    id: 39,
+    title: "Mixed Content Detected",
+    description:
+      "Mixed content occurs when an HTTPS page loads resources (like images or scripts) over HTTP. Browsers may block these resources or show security warnings to users.",
+    fixes:
+      "Update all resource URLs to use HTTPS instead of HTTP. Use protocol-relative URLs (//) or ensure your CMS serves all assets over HTTPS.",
+    links: ["https://developers.google.com/web/fundamentals/security/prevent-mixed-content"],
+  },
+  {
+    id: 40,
+    title: "Unsafe Cross-Origin Links",
+    description:
+      "Links with target=\"_blank\" without rel=\"noopener noreferrer\" pose a security risk. The opened page can access your page's window object via window.opener and redirect it to a malicious site.",
+    fixes:
+      "Add rel=\"noopener noreferrer\" to every link that uses target=\"_blank\". This is a security best practice and prevents tab-napping attacks.",
+    links: ["https://web.dev/external-anchors-use-rel-noopener/"],
+  },
+  {
+    id: 41,
+    title: "Not Mobile-Friendly",
+    description:
+      "Google uses mobile-first indexing, meaning it primarily crawls and indexes the mobile version of your site. Non-mobile-friendly pages rank significantly worse on all devices.",
+    fixes:
+      "Implement responsive web design using CSS media queries. Test your site with Google's Mobile-Friendly Test tool and fix any issues it reports, especially tap targets and viewport configuration.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/mobile-friendly"],
+  },
+  {
+    id: 42,
+    title: "Cookies Detected",
+    description:
+      "Websites that set cookies without user consent can violate GDPR and ePrivacy regulations. Unnecessary cookies also increase privacy concerns and can slow down page loads.",
+    fixes:
+      "Implement a cookie consent banner that lets users opt in before non-essential cookies are set. Audit your cookies and remove any that are not strictly necessary.",
+    links: ["https://gdpr.eu/cookies/"],
+  },
 ];

@@ -1,15 +1,18 @@
 import React from "react";
 import { useFixesStore } from "@/store/FixesStore";
 import { FixesData } from "./FixesData";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import {
   IconBulb,
   IconInfoCircle,
   IconExternalLink,
   IconCircleCheck,
+  IconLink,
 } from "@tabler/icons-react";
 
 const FixesContainer = () => {
   const { fix } = useFixesStore();
+  const issuesData = useGlobalCrawlStore((state) => state.issuesData);
 
   // Find the matching fix object
   const fixDetail = FixesData.find((item) => item.title === fix);
@@ -110,6 +113,47 @@ const FixesContainer = () => {
               Technical details for this issue are still being generated. Please
               check back shortly.
             </p>
+          </div>
+        )}
+
+        {/* Affected URLs Section */}
+        {issuesData?.length > 0 && (
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+              <IconLink size={14} />
+              <span className="text-[10px] font-bold uppercase tracking-tight">
+                Affected URLs ({issuesData.length})
+              </span>
+            </div>
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800">
+              {issuesData.map((page, index) => (
+                <a
+                  key={index}
+                  href={page?.url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 text-[11px] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <span className="w-5 text-right text-gray-400 font-mono text-[10px]">
+                    {index + 1}
+                  </span>
+                  <span className="truncate flex-1">{page?.url}</span>
+                  {page?.status_code && (
+                    <span
+                      className={`flex-none px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        page.status_code >= 400
+                          ? "bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400"
+                          : page.status_code >= 300
+                            ? "bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                            : "bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400"
+                      }`}
+                    >
+                      {page.status_code}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </div>

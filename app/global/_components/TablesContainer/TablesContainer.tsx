@@ -571,7 +571,7 @@ export default function Home() {
             )}
             {activeTab === issuesView && issuesView && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                {/* <TableCrawl tabName={issuesView} rows={issuesData || []} /> */}
+                <TableCrawl tabName={issuesView} rows={issuesData || []} />
               </div>
             )}
           </Tabs>
