@@ -6,6 +6,7 @@ pub mod domain_crawler;
 pub mod excel;
 pub mod extractors;
 pub mod helpers;
+pub mod issues_report;
 pub mod models;
 pub mod page_speed;
 pub mod state;

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { useFixesStore } from "@/store/FixesStore";
 import { ISSUE_REGISTRY } from "./libs/issuesRegistry";
@@ -200,6 +201,25 @@ const IssuesContainer = () => {
       console.log("Event payload:", event.payload);
       console.log("Issues Report:", JSON.stringify(report, null, 2));
       console.log("=== END ISSUES REPORT ===");
+
+      const firstUrl = crawlData[0]?.url || "";
+      let domain = "unknown";
+      try {
+        domain = new URL(firstUrl).hostname;
+      } catch {
+        // fallback
+      }
+
+      invoke("store_issues_report", {
+        domain,
+        totalUrlsCrawled: report.totalUrlsCrawled,
+        totalIssuesFound: report.totalIssuesFound,
+        reportJson: report,
+      }).then((id) => {
+        console.log("Issues report stored with id:", id);
+      }).catch((err) => {
+        console.error("Failed to store issues report:", err);
+      });
     }).then((unlistenFn) => {
       unlisten = unlistenFn;
     });

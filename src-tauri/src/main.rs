@@ -359,6 +359,8 @@ async fn main() {
             db::read_domain_results_history_table,
             db::create_domain_results_history,
             db::store_custom_search,
+            domain_crawler::issues_report::store_issues_report,
+            domain_crawler::issues_report::get_issues_reports,
             domain_commands::create_excel_two_cols,
             domain_commands::create_css_excel,
             domain_commands::create_keywords_excel_command,

@@ -72,11 +72,15 @@ export default function DashboardSEO() {
   const [history, setHistory] = useState<DeepCrawlHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
-  const [activeSubTab, setActiveSubTab] = useState<"overview" | "trends" | "comparison">("overview");
+  const [activeSubTab, setActiveSubTab] = useState<"overview" | "trends" | "comparison" | "issues">("overview");
 
   // Comparison State
   const [compCrawl1Id, setCompCrawl1Id] = useState<string>("");
   const [compCrawl2Id, setCompCrawl2Id] = useState<string>("");
+
+  // Issues Reports State
+  const [issuesReports, setIssuesReports] = useState<any[]>([]);
+  const [issuesReportsLoading, setIssuesReportsLoading] = useState(false);
 
   // Fetch History from SQLite database
   const fetchHistoryData = async () => {
@@ -100,6 +104,20 @@ export default function DashboardSEO() {
       toast.error("Failed to load historical analytics");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchIssuesReports = async () => {
+    setIssuesReportsLoading(true);
+    try {
+      const result = await invoke("get_issues_reports");
+      const parsed = Array.isArray(result) ? result : [];
+      setIssuesReports(parsed);
+      console.log("=== ISSUES REPORTS ===", JSON.stringify(parsed, null, 2));
+    } catch (e) {
+      console.error("Failed to fetch issues reports:", e);
+    } finally {
+      setIssuesReportsLoading(false);
     }
   };
 
@@ -273,7 +291,8 @@ export default function DashboardSEO() {
             {[
               { id: "overview", label: "Crawl Audit Scorecard" },
               { id: "trends", label: "Historical Timeline Trends" },
-              { id: "comparison", label: "Crawl-to-Crawl Comparison" }
+              { id: "comparison", label: "Crawl-to-Crawl Comparison" },
+              { id: "issues", label: "Issues Reports" }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -726,6 +745,61 @@ export default function DashboardSEO() {
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* Sub-tab 4: Issues Reports */}
+          {activeSubTab === "issues" && (
+            <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Stored Issues Reports</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    View issues reports generated after each crawl completion.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchIssuesReports}
+                  disabled={issuesReportsLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+                >
+                  <Database className="w-4 h-4" />
+                  {issuesReportsLoading ? "Loading..." : "Fetch & Console.log Reports"}
+                </button>
+              </div>
+
+              {issuesReports.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                        <th className="py-2.5 px-4 font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase">ID</th>
+                        <th className="py-2.5 px-4 font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase">Domain</th>
+                        <th className="py-2.5 px-4 font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase">Date</th>
+                        <th className="py-2.5 px-4 font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase">URLs Crawled</th>
+                        <th className="py-2.5 px-4 font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase">Issues Found</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                      {issuesReports.map((report, idx) => (
+                        <tr key={report.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                          <td className="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-400">{report.id}</td>
+                          <td className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">{report.domain}</td>
+                          <td className="py-2.5 px-4 text-slate-600 dark:text-slate-400">{report.crawl_date?.split("T")[0] || report.crawl_date}</td>
+                          <td className="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-400">{report.total_urls_crawled}</td>
+                          <td className="py-2.5 px-4 font-mono font-bold text-amber-500">{report.total_issues_found}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-10 text-center">
+                  <p className="text-xs text-slate-400">
+                    {issuesReportsLoading ? "Loading reports..." : "No issues reports found. Run a crawl to generate one."}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
