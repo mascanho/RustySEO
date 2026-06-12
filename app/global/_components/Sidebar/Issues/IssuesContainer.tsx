@@ -1,10 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useCallback } from "react";
+import { listen } from "@tauri-apps/api/event";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import useFindDuplicateTitles from "./libs/useDuplicatedTitles";
-import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
-import useResponseCodes from "./libs/useResponseCodes";
 import { useFixesStore } from "@/store/FixesStore";
+import { ISSUE_REGISTRY } from "./libs/issuesRegistry";
 import {
   IconAlertCircle,
   IconAlertTriangle,
@@ -28,16 +27,6 @@ import {
   IconShare,
   IconRobot
 } from "@tabler/icons-react";
-
-// Import new modularized hooks
-import { useMultipleH1, useMissingH1, useMissingH2 } from "./libs/useHeadingsIssues";
-import { useCanonicalsMissing, useCanonicalMismatch } from "./libs/useCanonicalIssues";
-import { useNoIndex, useNoFollow } from "./libs/useIndexabilityIssues";
-import { useMissingAltText, useBrokenImages, useLargeImages } from "./libs/useImageIssues";
-import { useSlowPages, useLargeHTML } from "./libs/usePerformanceIssues";
-import { useShortContent } from "./libs/useContentIssues";
-import { useNotHttps } from "./libs/useHttpsIssues";
-import { useLongRedirectChains } from "./libs/useRedirectIssues";
 
 const getIssueIcon = (name) => {
   const iconProps = { size: 16, className: "flex-none" };
@@ -145,131 +134,88 @@ const IssuesContainer = () => {
   const setGenericChart = useGlobalCrawlStore((state) => state.setGenericChart);
   const { setFix } = useFixesStore();
 
-  // Basic SEO Issues - USE debouncedCrawlData instead of crawlData
-  const missingTitles = useMemo(() => debouncedCrawlData?.filter((page) => !page?.title?.[0]?.title) || [], [debouncedCrawlData]);
-  const missingDescriptions = useMemo(() => debouncedCrawlData?.filter((page) => !page?.description || page?.description === "") || [], [debouncedCrawlData]);
-  const duplicateTitles = useFindDuplicateTitles(debouncedCrawlData);
-  const duplicateDescriptions = useFindDuplicateDescriptions(debouncedCrawlData);
-  const descriptionsAbove160Chars = useMemo(() => debouncedCrawlData?.filter((page) => page?.description?.length > 160) || [], [debouncedCrawlData]);
-  const pagetitleBelow30Chars = useMemo(() => debouncedCrawlData?.filter((page) => page?.title?.[0]?.title?.length < 30) || [], [debouncedCrawlData]);
-  const pageTitlesAbove60Chars = useMemo(() => debouncedCrawlData?.filter((page) => page?.title?.[0]?.title?.length > 60) || [], [debouncedCrawlData]);
+  // Compute all issues from the registry
+  const issueResults = useMemo(() => {
+    const results: Record<string, any[]> = {};
+    for (const def of ISSUE_REGISTRY) {
+      results[def.name] = def.detect(debouncedCrawlData || [], robotsBlocked);
+    }
+    return results;
+  }, [debouncedCrawlData, robotsBlocked]);
 
-  // Status Code Issues
-  const response4xx = useMemo(() => debouncedCrawlData?.filter((page) => page?.status_code >= 400 && page?.status_code < 500) || [], [debouncedCrawlData]);
-  const response5xx = useMemo(() => debouncedCrawlData?.filter((page) => page?.status_code >= 500 && page?.status_code < 600) || [], [debouncedCrawlData]);
+  const totalUrls = debouncedCrawlData?.length || 1;
 
-  // Robots Blocked Issues
-  const blockedRobotsIssue = useMemo(
-    () =>
-      robotsBlocked?.map((url) => ({
-        url,
-        title: "Blocked by robots.txt",
-        description: "This URL is disallowed in robots.txt",
-      })) || [],
-    [robotsBlocked],
+  const issuesArr = useMemo(() =>
+    ISSUE_REGISTRY.map((def) => {
+      const urls = issueResults[def.name] || [];
+      return {
+        id: def.id,
+        name: def.name,
+        issueCount: urls.length,
+        priority: def.priority,
+        percentage: ((urls.length / totalUrls) * 100).toFixed(0) + "%",
+      };
+    }).sort((a, b) => b.issueCount - a.issueCount),
+    [issueResults, totalUrls],
   );
 
-  // Modularized Issues
-  const multipleH1 = useMultipleH1(debouncedCrawlData);
-  const missingH1 = useMissingH1(debouncedCrawlData);
-  const missingH2 = useMissingH2(debouncedCrawlData);
-  const canonicalsMissing = useCanonicalsMissing(debouncedCrawlData);
-  const canonicalMismatch = useCanonicalMismatch(debouncedCrawlData);
-  const noIndex = useNoIndex(debouncedCrawlData);
-  const noFollow = useNoFollow(debouncedCrawlData);
-  const missingAltText = useMissingAltText(debouncedCrawlData);
-  const brokenImages = useBrokenImages(debouncedCrawlData);
-  const largeImages = useLargeImages(debouncedCrawlData);
-  const slowPages = useSlowPages(debouncedCrawlData);
-  const largeHTML = useLargeHTML(debouncedCrawlData);
-  const shortContent = useShortContent(debouncedCrawlData);
-  const notHttps = useNotHttps(debouncedCrawlData);
-  const longRedirectChains = useLongRedirectChains(debouncedCrawlData);
-  const deepLinks = useMemo(() => debouncedCrawlData?.filter((page) => page?.url_depth >= 4) || [], [debouncedCrawlData]);
-  const missingOG = useMemo(() => debouncedCrawlData?.filter((page) => !page?.opengraph || Object.keys(page.opengraph).length === 0) || [], [debouncedCrawlData]);
-
-  // Existing ad-hoc filters
-  const missingSchema = useMemo(() => debouncedCrawlData?.filter((page) => !page?.schema) || [], [debouncedCrawlData]);
-
-  const issuesArr = useMemo(() => [
-    { id: 1, name: "Missing Page Title", issueCount: missingTitles.length, priority: "High" },
-    { id: 2, name: "Missing Description", issueCount: missingDescriptions.length, priority: "High" },
-    { id: 3, name: "Duplicated Titles", issueCount: duplicateTitles?.length || 0, priority: "High" },
-    { id: 4, name: "Page Title > 60 Chars", issueCount: pageTitlesAbove60Chars.length, priority: "Medium" },
-    { id: 5, name: "Page Title < 30 Chars", issueCount: pagetitleBelow30Chars.length, priority: "Medium" },
-    { id: 6, name: "Duplicated Descriptions", issueCount: duplicateDescriptions?.length || 0, priority: "Medium" },
-    { id: 7, name: "Descriptions > 160 Chars", issueCount: descriptionsAbove160Chars.length, priority: "Medium" },
-    { id: 8, name: "4XX Client Error", issueCount: response4xx?.length || 0, priority: "High" },
-    { id: 9, name: "5XX Server Error", issueCount: response5xx?.length || 0, priority: "High" },
-    { id: 10, name: "H1 Missing", issueCount: missingH1.length, priority: "High" },
-    { id: 11, name: "H2 Missing", issueCount: missingH2.length, priority: "Low" },
-    { id: 12, name: "Multiple H1 tags", issueCount: multipleH1.length, priority: "Medium" },
-    { id: 13, name: "Canonical Missing", issueCount: canonicalsMissing.length, priority: "Medium" },
-    { id: 14, name: "Canonical Mismatch", issueCount: canonicalMismatch.length, priority: "Medium" },
-    { id: 15, name: "NoIndex Pages", issueCount: noIndex.length, priority: "Medium" },
-    { id: 16, name: "NoFollow Pages", issueCount: noFollow.length, priority: "Medium" },
-    { id: 17, name: "Images Missing Alt Text", issueCount: missingAltText.length, priority: "Low" },
-    { id: 18, name: "Broken Images", issueCount: brokenImages.length, priority: "High" },
-    { id: 19, name: "Large Images (>100KB)", issueCount: largeImages.length, priority: "Medium" },
-    { id: 20, name: "Slow Response (>2s)", issueCount: slowPages.length, priority: "High" },
-    { id: 21, name: "Large HTML Page (>100KB)", issueCount: largeHTML.length, priority: "Low" },
-    { id: 22, name: "Thin Content (<300 words)", issueCount: shortContent.length, priority: "Low" },
-    { id: 23, name: "Non-HTTPS Pages", issueCount: notHttps.length, priority: "High" },
-    { id: 24, name: "Long Redirect Chains", issueCount: longRedirectChains.length, priority: "Medium" },
-    { id: 25, name: "Missing Schema", issueCount: missingSchema.length, priority: "Medium" },
-    { id: 26, name: "Deeply Nested URLs (4+ Depth)", issueCount: deepLinks.length, priority: "Low" },
-    { id: 27, name: "Missing OpenGraph Tags", issueCount: missingOG.length, priority: "Low" },
-    { id: 28, name: "Blocked by Robots.txt", issueCount: blockedRobotsIssue.length, priority: "High" },
-  ].map(issue => ({
-    ...issue,
-    percentage: ((issue.issueCount / (debouncedCrawlData?.length || 1)) * 100).toFixed(0) + "%"
-  })).sort((a, b) => b.issueCount - a.issueCount),
-    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response4xx, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, blockedRobotsIssue, debouncedCrawlData]);
-
-  const sumIssues = useMemo(() => issuesArr.reduce((total, issue) => total + (issue.issueCount || 0), 0), [issuesArr]);
-
-  const issueDataMap = useMemo(() => ({
-    "Missing Page Title": missingTitles,
-    "Missing Description": missingDescriptions,
-    "Duplicated Titles": duplicateTitles,
-    "Page Title > 60 Chars": pageTitlesAbove60Chars,
-    "Page Title < 30 Chars": pagetitleBelow30Chars,
-    "Duplicated Descriptions": duplicateDescriptions,
-    "Descriptions > 160 Chars": descriptionsAbove160Chars,
-    "4XX Client Error": response4xx,
-    "5XX Server Error": response5xx,
-    "H1 Missing": missingH1,
-    "H2 Missing": missingH2,
-    "Multiple H1 tags": multipleH1,
-    "Canonical Missing": canonicalsMissing,
-    "Canonical Mismatch": canonicalMismatch,
-    "NoIndex Pages": noIndex,
-    "NoFollow Pages": noFollow,
-    "Images Missing Alt Text": missingAltText,
-    "Broken Images": brokenImages,
-    "Large Images (>100KB)": largeImages,
-    "Slow Response (>2s)": slowPages,
-    "Large HTML Page (>100KB)": largeHTML,
-    "Thin Content (<300 words)": shortContent,
-    "Non-HTTPS Pages": notHttps,
-    "Long Redirect Chains": longRedirectChains,
-    "Missing Schema": missingSchema,
-    "Deeply Nested URLs (4+ Depth)": deepLinks,
-    "Missing OpenGraph Tags": missingOG,
-    "Blocked by Robots.txt": blockedRobotsIssue,
-  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response4xx, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, blockedRobotsIssue]);
+  const sumIssues = useMemo(
+    () => issuesArr.reduce((total, issue) => total + issue.issueCount, 0),
+    [issuesArr],
+  );
 
   useEffect(() => {
     setIssues(sumIssues);
   }, [sumIssues, setIssues]);
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+
+    listen("crawl_complete", (event) => {
+      const state = useGlobalCrawlStore.getState();
+      const crawlData = state.crawlData || [];
+      const blocked = state.robotsBlocked || [];
+
+      const detected: { name: string; count: number; priority: string }[] = [];
+      for (const def of ISSUE_REGISTRY) {
+        const urls = def.detect(crawlData, blocked);
+        if (urls.length > 0) {
+          detected.push({
+            name: def.name,
+            count: urls.length,
+            priority: def.priority,
+          });
+        }
+      }
+
+      const report = {
+        timestamp: new Date().toISOString(),
+        totalUrlsCrawled: crawlData.length,
+        totalIssuesFound: detected.reduce((s, d) => s + d.count, 0),
+        robotsBlockedUrls: blocked,
+        issuesSummary: detected,
+      };
+
+      console.log("=== CRAWL COMPLETE - ISSUES REPORT ===");
+      console.log("Event payload:", event.payload);
+      console.log("Issues Report:", JSON.stringify(report, null, 2));
+      console.log("=== END ISSUES REPORT ===");
+    }).then((unlistenFn) => {
+      unlisten = unlistenFn;
+    });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
 
   const handleIssueClick = useCallback((issueName) => {
     setIssueRow(issueName);
     setIssuesView(issueName);
     setGenericChart("");
     setFix(issueName);
-    setIssuesData(issueDataMap[issueName] || []);
-  }, [setIssueRow, setIssuesView, setGenericChart, setFix, setIssuesData, issueDataMap]);
+    setIssuesData(issueResults[issueName] || []);
+  }, [setIssueRow, setIssuesView, setGenericChart, setFix, setIssuesData, issueResults]);
 
   if (!debouncedCrawlData || debouncedCrawlData.length === 0) {
     return (
