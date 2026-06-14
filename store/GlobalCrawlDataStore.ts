@@ -20,6 +20,7 @@ interface StreamingUpdate {
 interface CrawlStore {
   // State properties
   crawlData: PageDetails[];
+  crawlDataVersion: number;
   domainCrawlLoading: boolean;
   crawlerType: string;
   issues: string[];
@@ -166,17 +167,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
   const setters = {
     setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
     setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) =>
-      set(() => ({
+      set((state) => ({
         aggregatedData: {
-          images: [],
-          scripts: [],
-          css: [],
-          internalLinks: [],
-          externalLinks: [],
-          keywords: [],
-          redirects: [],
-          cwv: [],
-          files: [],
+          ...state.aggregatedData,
           ...data,
         },
       })),
@@ -237,13 +230,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         // This is purely for showing crawl activity while the crawl is running.
         // After crawl completion TablesContainer fetches all data via paginated DB queries,
         // so no data is ever lost — everything is in SQLite regardless of this cap.
-        const MAX_CRAWL_ROWS = Math.min(
-          state.maxUrlsStored || 1000000,
-          1000000,
-        );
+        const MAX_CRAWL_ROWS = state.maxUrlsStored || 5000;
 
         if (state.crawlData.length >= MAX_CRAWL_ROWS) {
-          // Cap already reached — update visitedUrls so deduplgiation stays accurate
+          // Cap already reached — update visitedUrls so deduplication stays accurate
           // but don't grow the array any further.
           return { visitedUrls: existingVisited };
         }
@@ -254,7 +244,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
             ? combined.slice(0, MAX_CRAWL_ROWS)
             : combined;
 
-        return { crawlData: capped, visitedUrls: existingVisited };
+        return { crawlData: capped, crawlDataVersion: state.crawlDataVersion + 1, visitedUrls: existingVisited };
       }),
     clearDomainCrawlData: () =>
       set({
@@ -328,18 +318,18 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           existingVisited.add(result.url);
         }
 
-        const MAX_CRAWL_ROWS = Math.min(
-          state.maxUrlsStored || 10000000,
-          10000000,
-        );
+        const MAX_CRAWL_ROWS = state.maxUrlsStored || 5000;
         let newCrawlData = state.crawlData;
+        let newVersion = state.crawlDataVersion;
 
         if (newCrawlData.length < MAX_CRAWL_ROWS) {
           newCrawlData = newCrawlData.concat([setters.stripLinkData(result)]);
+          newVersion = state.crawlDataVersion + 1;
         }
 
         return {
           crawlData: newCrawlData,
+          crawlDataVersion: newVersion,
           visitedUrls: existingVisited,
           streamedCrawledPages: crawledPages,
           streamedTotalPages: totalPages,
@@ -352,6 +342,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     isPaused: false,
     isStopped: false,
     crawlData: [],
+    crawlDataVersion: 0,
     aggregatedData: {
       images: [],
       scripts: [],
@@ -393,7 +384,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     cookies: [],
     favicon: "",
     visitedUrls: new Set(),
-    maxUrlsStored: 10000000,
+    maxUrlsStored: 5000,
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -583,18 +574,17 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
                 existingVisited.add(update.result.url);
                 newVisited = existingVisited;
 
-                const MAX_CRAWL_ROWS = Math.min(
-                  state.maxUrlsStored || 1500,
-                  1500,
-                );
+                const MAX_CRAWL_ROWS = state.maxUrlsStored || 5000;
                 if (newCrawlData.length < MAX_CRAWL_ROWS) {
                   newCrawlData = state.crawlData.concat([update.result]);
                 }
               }
             }
 
+            const versionBumped = newCrawlData !== state.crawlData;
             return {
               crawlData: newCrawlData,
+              ...(versionBumped ? { crawlDataVersion: state.crawlDataVersion + 1 } : {}),
               ...(newVisited ? { visitedUrls: newVisited } : {}),
               streamedCrawledPages:
                 update.progress?.crawled ?? state.streamedCrawledPages,
@@ -615,6 +605,11 @@ export const useCrawlData = () => {
   const selector = useCallback((state: CrawlStore) => state.crawlData, []);
   return useGlobalCrawlStore(selector, shallow);
 };
+
+// Lightweight version counter — subscribe to this instead of crawlData to
+// avoid holding the full array reference in React's fiber tree.
+export const useCrawlDataVersion = () =>
+  useGlobalCrawlStore((state) => state.crawlDataVersion);
 
 export const useAggregatedData = () => {
   const selector = useCallback((state: CrawlStore) => state.aggregatedData, []);

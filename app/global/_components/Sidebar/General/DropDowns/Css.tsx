@@ -1,12 +1,17 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Css = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+    const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
   const setCss = useGlobalCrawlStore((state) => state.setCss);
-  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+   // State to track if details are open
 
   // Memoize calculations to avoid recalculating on every render
   const externalCss = useMemo(

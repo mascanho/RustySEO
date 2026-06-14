@@ -1,11 +1,16 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState, useCallback, memo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Images = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
-  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+    const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
+   // State to track if details are open
 
   // Memoize calculations to avoid recalculating on every render
   const imageCounts = useMemo(

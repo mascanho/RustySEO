@@ -1,5 +1,5 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
@@ -10,11 +10,12 @@ interface CookiesDataItem {
 }
 
 const Cookies: React.FC = () => {
-    const { crawlData } = useGlobalCrawlStore((state) => ({
-        crawlData: state.crawlData || [],
-    }));
-
     const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
 
     // Memoize cookies statistics
     const cookiesStats = useMemo(() => {

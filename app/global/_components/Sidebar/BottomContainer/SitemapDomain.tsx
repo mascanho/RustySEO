@@ -6,7 +6,6 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { darkula } from "react-syntax-highlighter/dist/cjs/styles/hljs";
 
 const SitemapDomain = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
   const setSitemaps = useGlobalCrawlStore((state) => state.setSitemaps);
   const sitemaps = useGlobalCrawlStore((state) => state.sitemaps);
   const [sitemapState, setSitemapState] = useState();
@@ -22,7 +21,7 @@ const SitemapDomain = () => {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [crawlData]);
+  }, []);
 
   return (
     <div className="w-[20rem] h-[28rem] overflow-clip sitemapsDomain">

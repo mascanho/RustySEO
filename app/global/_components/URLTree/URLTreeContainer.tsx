@@ -11,7 +11,7 @@ import {
   IconFolders,
   IconArrowsVertical,
 } from "@tabler/icons-react";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import TreeNodeContextMenu from "./TreeNodeContextMenu";
 
 interface TreeNode {
@@ -23,9 +23,11 @@ interface TreeNode {
 }
 
 const URLTreeContainer = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
+  const crawlDataVersion = useCrawlDataVersion();
 
   const { treeData, stats } = useMemo(() => {
+    const crawlData = useGlobalCrawlStore.getState().crawlData;
     if (!crawlData || crawlData.length === 0)
       return {
         treeData: [],
@@ -101,9 +103,9 @@ const URLTreeContainer = () => {
       treeData: [root],
       stats: { totalPages, totalFolders, maxDepth },
     };
-  }, [crawlData]);
+  }, [crawlDataVersion]);
 
-  if (!crawlData || crawlData.length === 0) {
+  if (crawlDataLength === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full dark:text-gray-400 gap-4">
         <IconHierarchy2

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
@@ -22,12 +22,15 @@ interface StatusDataItem {
 
 const StatusCodes: React.FC = () => {
   // Use a single selector to access Zustand store
-  const { crawlData, setStatusCodes } = useGlobalCrawlStore((state) => ({
-    crawlData: state.crawlData || [],
+  const { setStatusCodes } = useGlobalCrawlStore((state) => ({
     setStatusCodes: state.setStatusCodes,
   }));
-
   const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
 
   // Memoize status codes calculation
   const statusCodes: StatusCodesData = useMemo(() => {

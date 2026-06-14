@@ -1,5 +1,5 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState, useCallback, memo, useEffect } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
@@ -18,9 +18,13 @@ interface ExtractorData {
 }
 
 const CustomSearch: React.FC = () => {
-    const domainCrawlData = useGlobalCrawlStore((state) => state.crawlData);
+    const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const domainCrawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
   const setCustomSearch = useGlobalCrawlStore((state) => state.setCustomSearch);
-  const [isOpen, setIsOpen] = useState(false);
 
   const crawlData: CrawlDataItem[] = useMemo(
     () => domainCrawlData || [],

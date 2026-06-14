@@ -24,7 +24,7 @@ interface InputZoneProps {
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const [url, setUrl] = useState("");
     const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
-  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
   const favicon = useGlobalCrawlStore((state) => state.favicon);
   const isPaused = useGlobalCrawlStore((state) => state.isPaused);
   const isStopped = useGlobalCrawlStore((state) => state.isStopped);
@@ -94,7 +94,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
 
   useEffect(() => {
     getHistoryUrls();
-  }, [crawlData, getHistoryUrls]);
+  }, [crawlDataLength, getHistoryUrls]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

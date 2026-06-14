@@ -1,5 +1,5 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
@@ -20,8 +20,12 @@ interface Section {
 }
 
 const H2 = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
-  const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
 
   // Ensure crawlData is always an array
   const safeCrawlData = useMemo(

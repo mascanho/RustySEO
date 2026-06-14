@@ -48,7 +48,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function MissingTitlesChart() {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+    const totalPages = useGlobalCrawlStore((state) => state.crawlData.length);
   const javascript = useGlobalCrawlStore((state) => state.javascript);
   const css = useGlobalCrawlStore((state) => state.css);
   const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
@@ -58,7 +58,7 @@ function MissingTitlesChart() {
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 
   // Default values for optional data
-  const totalPages = crawlData?.length || 0;
+  
   const inlineJs = javascript?.inline || 0;
   const externalJs = javascript?.external || 0;
   const inlineCss = css?.inline || 0;

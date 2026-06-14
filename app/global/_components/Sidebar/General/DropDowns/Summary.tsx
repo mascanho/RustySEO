@@ -9,7 +9,7 @@ import React, {
   useRef,
 } from "react";
 import debounce from "lodash.debounce";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
 
 import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
@@ -108,7 +108,12 @@ const reducer = (state: State, action: Action): State => {
 };
 
 const Summary: React.FC = () => {
-  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
   const isFinishedDeepCrawl = useGlobalCrawlStore(
     (state) => state.isFinishedDeepCrawl,
   );
@@ -124,7 +129,7 @@ const Summary: React.FC = () => {
   );
   const [state, dispatch] = useReducer(reducer, initialState);
   const [backendStats, setBackendStats] = useState<BackendStats | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  
   const isFetching = useRef(false);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 

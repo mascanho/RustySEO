@@ -1,5 +1,5 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, memo, useEffect, useRef, useState } from "react";
 import { debounce } from "lodash";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
@@ -19,7 +19,12 @@ interface Section {
 }
 
 const MetaDescription = () => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+    const [isOpen, setIsOpen] = useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
   const [counts, setCounts] = useState<DescriptionCounts>({
     all: 0,
     empty: 0,
@@ -28,7 +33,7 @@ const MetaDescription = () => {
     short: 0,
   });
   const [totalPages, setTotalPages] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+  
   const crawlDataRef = useRef(crawlData);
 
   // Update the ref with the latest data whenever crawlData changes

@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore, {
   useDataActions,
+  useCrawlDataVersion,
 } from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
@@ -155,9 +156,9 @@ export default function Home() {
     [],
   );
 
-  // Read crawlData directly from the store so the HTML table updates in
-  // real-time as the backend streams results.
-  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  // Subscribe to crawlDataVersion instead of the full array to avoid re-renders
+  // in this container for every streamed row.
+  const crawlDataVersion = useCrawlDataVersion();
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
@@ -370,6 +371,8 @@ export default function Home() {
 
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return [];
+    const state = useGlobalCrawlStore.getState();
+    const crawlData = state.crawlData;
     if (!crawlData || !Array.isArray(crawlData)) {
       return [];
     }
@@ -378,7 +381,22 @@ export default function Home() {
       (search) => search?.extractor?.html === true,
     );
     return customSearch;
-  }, [crawlData, activeTab]);
+  }, [crawlDataVersion, activeTab]);
+
+  const cwvRows = useMemo(() => {
+    if (activeTab !== "cwv") return [];
+    if (aggregatedData?.cwv?.length > 0) {
+      return aggregatedData.cwv;
+    }
+    const state = useGlobalCrawlStore.getState();
+    return state.crawlData || [];
+  }, [aggregatedData.cwv, crawlDataVersion, activeTab]);
+
+  const allCrawlData = useMemo(() => {
+    if (activeTab !== "crawledPages") return [];
+    const state = useGlobalCrawlStore.getState();
+    return state.crawlData || [];
+  }, [crawlDataVersion, activeTab]);
 
   // Filters all files
   const filteredFilesArr = useMemo(() => {
@@ -494,7 +512,7 @@ export default function Home() {
             </TabsList>
             {activeTab === "crawledPages" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                <TableCrawl tabName={"AllData"} rows={crawlData} />
+                <TableCrawl tabName={"AllData"} rows={allCrawlData} />
               </div>
             )}
             {activeTab === "css" && (
@@ -538,14 +556,7 @@ export default function Home() {
             )}
             {activeTab === "cwv" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                <CoreWebVitalsTable
-                  tabName={"CoreWebVitals"}
-                  rows={
-                    aggregatedData?.cwv?.length > 0
-                      ? aggregatedData.cwv
-                      : crawlData
-                  }
-                />
+                <CoreWebVitalsTable tabName={"CoreWebVitals"} rows={cwvRows} />
               </div>
             )}
             {activeTab === "search" && (

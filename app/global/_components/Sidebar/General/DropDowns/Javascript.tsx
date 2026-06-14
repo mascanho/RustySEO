@@ -1,13 +1,18 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useCallback } from "react";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
 import { debounce } from "lodash";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Javascript: React.FC = React.memo(() => {
-    const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+    const [isOpen, setIsOpen] = React.useState(false);
+  const crawlDataVersion = useCrawlDataVersion();
+  const crawlData = useMemo(() => {
+    if (!isOpen) return [];
+    return useGlobalCrawlStore.getState().crawlData || [];
+  }, [isOpen, crawlDataVersion]);
   const setJavascript = useGlobalCrawlStore((state) => state.setJavascript);
-  const [isOpen, setIsOpen] = React.useState(false); // State to track if details are open
+   // State to track if details are open
 
   // Calculate external and inline scripts using Sets to avoid duplicates
   const { externalScripts, inlineScripts, totalScripts } = useMemo(() => {

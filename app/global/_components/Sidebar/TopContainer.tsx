@@ -16,7 +16,7 @@ const TopContainer = () => {
     <div
       className={`h-full w-full overflow-hidden flex flex-col ${showSidebar ? "block" : "hidden"}`}
     >
-      <Tabs defaultValue="first" className="flex flex-col flex-1 min-h-0">
+      <Tabs defaultValue="first" keepMounted={false} className="flex flex-col flex-1 min-h-0">
         <Tabs.List
           justify="center"
           grow
