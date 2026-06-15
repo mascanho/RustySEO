@@ -38,6 +38,9 @@ import PageInternalSubTable from "./SubTables/PageLinksSubTable/PageInternalSubT
 import PageExternalSubTable from "./SubTables/PageLinksSubTable/PageExternalSubTable";
 import { invoke } from "@tauri-apps/api/core";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 const BottomTableContent = ({ children, height }) => (
   <div
     style={{
@@ -307,7 +310,7 @@ export default function Home() {
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
-    if (activeTab !== "javascript") return [];
+    if (activeTab !== "javascript") return EMPTY_ARRAY;
     // Use fetched data
     return (aggregatedData.scripts || []).map((url, index) => ({
       index: index + 1,
@@ -317,7 +320,7 @@ export default function Home() {
 
   // Filters all the CSS
   const filteredCssArr = useMemo(() => {
-    if (activeTab !== "css") return [];
+    if (activeTab !== "css") return EMPTY_ARRAY;
     return (aggregatedData.css || []).map((url, index) => ({
       index: index + 1,
       url,
@@ -326,13 +329,13 @@ export default function Home() {
 
   // Filters all the images
   const filteredImagesArr = useMemo(() => {
-    if (activeTab !== "images") return [];
+    if (activeTab !== "images") return EMPTY_ARRAY;
     return aggregatedData.images || [];
   }, [aggregatedData.images, activeTab]);
 
   // Filters all the Internal links
   const filteredInternalLinks = useMemo(() => {
-    if (activeTab !== "internalLinks") return [];
+    if (activeTab !== "internalLinks") return EMPTY_ARRAY;
     // The structure returned by backend is generic JSON link objects, map to what Table expects
     // { link, anchor, status, error, page }
     return (aggregatedData.internalLinks || []).map((link) => ({
@@ -349,7 +352,7 @@ export default function Home() {
 
   // Filters all the External links
   const filteredExternalLinks = useMemo(() => {
-    if (activeTab !== "externalLinks") return [];
+    if (activeTab !== "externalLinks") return EMPTY_ARRAY;
     return (aggregatedData.externalLinks || []).map((link) => ({
       link: link.url,
       anchor: link.anchor_text || "",
@@ -364,17 +367,17 @@ export default function Home() {
 
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
-    if (activeTab !== "keywords") return [];
+    if (activeTab !== "keywords") return EMPTY_ARRAY;
     // The structure returned by backend is { url, keywords: [] }
     return aggregatedData.keywords || [];
   }, [aggregatedData.keywords, activeTab]);
 
   const filteredCustomSearch = useMemo(() => {
-    if (activeTab !== "search") return [];
+    if (activeTab !== "search") return EMPTY_ARRAY;
     const state = useGlobalCrawlStore.getState();
     const crawlData = state.crawlData;
     if (!crawlData || !Array.isArray(crawlData)) {
-      return [];
+      return EMPTY_ARRAY;
     }
 
     const customSearch = crawlData.filter(
@@ -384,7 +387,7 @@ export default function Home() {
   }, [crawlDataVersion, activeTab]);
 
   const cwvRows = useMemo(() => {
-    if (activeTab !== "cwv") return [];
+    if (activeTab !== "cwv") return EMPTY_ARRAY;
     if (aggregatedData?.cwv?.length > 0) {
       return aggregatedData.cwv;
     }
@@ -393,14 +396,14 @@ export default function Home() {
   }, [aggregatedData.cwv, crawlDataVersion, activeTab]);
 
   const allCrawlData = useMemo(() => {
-    if (activeTab !== "crawledPages") return [];
+    if (activeTab !== "crawledPages") return EMPTY_ARRAY;
     const state = useGlobalCrawlStore.getState();
     return state.crawlData || [];
   }, [crawlDataVersion, activeTab]);
 
   // Filters all files
   const filteredFilesArr = useMemo(() => {
-    if (activeTab !== "files") return [];
+    if (activeTab !== "files") return EMPTY_ARRAY;
     // Structure: { url, found_at: page }
     // We need to derive 'filetype' from url
     return (aggregatedData.files || [])
@@ -425,7 +428,7 @@ export default function Home() {
 
   // Redirects logic - new
   const filteredRedirects = useMemo(() => {
-    if (activeTab !== "redirects") return [];
+    if (activeTab !== "redirects") return EMPTY_ARRAY;
     return aggregatedData.redirects || [];
   }, [aggregatedData.redirects, activeTab]);
 

@@ -4,6 +4,9 @@ import React, { useMemo, memo, useEffect, useRef, useState } from "react";
 import { debounce } from "lodash";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface DescriptionCounts {
   all: number; // Total unique descriptions
   empty: number; // Empty descriptions
@@ -22,7 +25,7 @@ const MetaDescription = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const [counts, setCounts] = useState<DescriptionCounts>({

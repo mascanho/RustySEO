@@ -3,11 +3,14 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 const Css = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const setCss = useGlobalCrawlStore((state) => state.setCss);

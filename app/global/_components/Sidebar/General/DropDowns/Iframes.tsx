@@ -2,6 +2,9 @@
 import React, { useMemo } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface CrawlDataItem {
   iframe?: Array<unknown>; // Replace `unknown` with the actual type of iframe data if known
 }

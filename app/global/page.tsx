@@ -181,16 +181,9 @@ export default function Page() {
         const toFlush = buffer.results.splice(0);
         // Use startTransition so the update is treated as non-urgent by React —
         // it yields to input events and prevents the UI from freezing.
-        if (
-          typeof window !== "undefined" &&
-          (window as any).__reactStartTransition
-        ) {
-          (window as any).__reactStartTransition(() =>
-            addDomainCrawlResult(toFlush),
-          );
-        } else {
+        React.startTransition(() => {
           addDomainCrawlResult(toFlush);
-        }
+        });
       }
       buffer.timer = null;
     };

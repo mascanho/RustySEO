@@ -14,6 +14,9 @@ import { invoke } from "@tauri-apps/api/core";
 
 import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface CrawlDataItem {
   internal_links_count?: number;
   external_links_count?: number;
@@ -111,7 +114,7 @@ const Summary: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const isFinishedDeepCrawl = useGlobalCrawlStore(

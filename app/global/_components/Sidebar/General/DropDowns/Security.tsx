@@ -3,6 +3,9 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import React, { useMemo, useEffect, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface SecurityCounts {
   https: number; // Number of HTTPS URLs
   http: number; // Number of HTTP URLs
@@ -23,7 +26,7 @@ const Security = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const setSecurityData = useGlobalCrawlStore((state) => state.setSecurityData);

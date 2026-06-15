@@ -3,6 +3,9 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface CrawlDataItem {
     canonicals?: string[] | null;
 }
@@ -17,7 +20,7 @@ const Canonicals: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
 

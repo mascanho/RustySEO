@@ -3,6 +3,9 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import React, { useMemo, useEffect, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface UrlCounts {
   total: number; // Total URLs analyzed
   nonAscii: number; // URLs with non-ASCII characters
@@ -26,7 +29,7 @@ const URLinfo = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const setUrlData = useGlobalCrawlStore((state) => state.setUrlData);

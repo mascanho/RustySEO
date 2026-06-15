@@ -3,6 +3,9 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import React, { useMemo, useEffect, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface H1Counts {
   exists: number; // Number of valid H1 headings
   all: number; // Total H1 headings (including empty/undefined)
@@ -23,7 +26,7 @@ const H1 = () => {
     const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const setHeadingsH1 = useGlobalCrawlStore((state) => state.setHeadingsH1);

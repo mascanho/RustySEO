@@ -4,6 +4,9 @@ import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDat
 import { debounce } from "lodash";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
+const EMPTY_ARRAY: any[] = [];
+
+
 interface CrawlDataItem {
   title?: { title: string; title_len: number }[];
 }
@@ -12,7 +15,7 @@ const PageTitles: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const crawlDataVersion = useCrawlDataVersion();
   const crawlData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return EMPTY_ARRAY;
     return useGlobalCrawlStore.getState().crawlData || [];
   }, [isOpen, crawlDataVersion]);
   const [counts, setCounts] = useState({ all: 0, long: 0, empty: 0, short: 0 });
