@@ -781,9 +781,14 @@ async fn update_state_and_emit_progress(
     // At 40K+ URLs, emitting per-URL would cause ~40K state updates and re-renders.
     // Adaptive thresholds: larger batches at scale to reduce IPC pressure.
     if is_new_final {
-        state
-            .pending_results
-            .push(super::models::LightCrawlResult::from_full(result));
+        // The frontend JS heap is capped at max_urls_stored to prevent memory exhaustion and UI freezing.
+        // There is no need to serialize and send results over IPC once this limit is reached,
+        // because the frontend simply drops them. (All results are already saved in the SQLite DB).
+        if state.crawled_urls <= settings.max_urls_stored {
+            state
+                .pending_results
+                .push(super::models::LightCrawlResult::from_full(result));
+        }
     }
 
     let (batch_interval_ms, batch_size_threshold) = if total_discovered > 30000 {
