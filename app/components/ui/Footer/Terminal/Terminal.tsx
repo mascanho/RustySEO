@@ -43,7 +43,6 @@ const Terminal = () => {
 
     console.log("[Terminal] Starting tui-log listener...");
     const unlistenPromise = listen("tui-log", (event) => {
-      console.log("[Terminal] Received event:", event);
       const payload = event.payload as any;
       if (payload && typeof payload === 'object' && payload.message) {
         logBatchRef.current.push({

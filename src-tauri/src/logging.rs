@@ -140,7 +140,7 @@ pub fn init() -> mpsc::Receiver<LogPayload> {
     // Default to 'info' level unless RUST_LOG is set
     // We explicitly enable logs for our own modules to be sure
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,rusty_seo=info,crawler=info"));
+        .unwrap_or_else(|_| EnvFilter::new("warn,app=info,rusty_seo=info,crawler=info"));
 
     let subscriber = Registry::default()
         .with(filter)
