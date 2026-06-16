@@ -152,7 +152,7 @@ const Terminal = () => {
         ref={scrollRef}
       >
         <div className="space-y-1.5">
-          {filteredLogs.map((log, index) => (
+          {visibility.terminal && filteredLogs.map((log, index) => (
             <div
               key={index}
               className="flex space-x-3 group hover:bg-white/[0.02] -mx-2 px-2 rounded-sm transition-colors"

@@ -35,9 +35,6 @@ impl<S: Subscriber> tracing_subscriber::Layer<S> for Logger {
             message: visitor.message,
         };
 
-        // Debug print to see if we are capturing anything
-        eprintln!("[Backend Logger] Capturing event: {}", payload.message);
-
         let _ = self.sender.send(payload);
     }
 }
@@ -137,10 +134,11 @@ pub fn init() -> mpsc::Receiver<LogPayload> {
         .with_target(false)
         .compact();
     
-    // Default to 'info' level unless RUST_LOG is set
-    // We explicitly enable logs for our own modules to be sure
+    // Only forward warn/error to the TUI terminal. Progress info is shown
+    // by FooterLoader via progress_update events; flooding the IPC bridge
+    // with ~2 info messages per 50 URLs caused UI freezes on large crawls.
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("warn,app=info,rusty_seo=info,crawler=info"));
+        .unwrap_or_else(|_| EnvFilter::new("warn"));
 
     let subscriber = Registry::default()
         .with(filter)

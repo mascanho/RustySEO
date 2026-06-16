@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 
 interface LogEntry {
     timestamp: string;
@@ -14,51 +13,35 @@ interface TerminalState {
     clearLogs: () => void;
 }
 
-export const useTerminalStore = create<TerminalState>()(
-    persist(
-        (set) => ({
-            logs: [
-                {
-                    timestamp: new Date().toLocaleTimeString(),
-                    level: "info",
-                    message: "🚀 RustySEO Terminal initialized...",
-                },
-                {
-                    timestamp: new Date().toLocaleTimeString(),
-                    level: "debug",
-                    message: "Scanning system configuration...",
-                },
-                {
-                    timestamp: new Date().toLocaleTimeString(),
-                    level: "info",
-                    message: "System: macOS detected. Engine: Rust-Tauri.",
-                },
-                {
-                    timestamp: new Date().toLocaleTimeString(),
-                    level: "success",
-                    message: "All systems go. Ready for crawling.",
-                },
-            ],
-            addLog: (message, level = "info", timestamp?: string) =>
-                set((state) => ({
-                    logs: [
-                        ...state.logs,
-                        {
-                            timestamp: timestamp || new Date().toLocaleTimeString(),
-                            level,
-                            message,
-                        },
-                    ].slice(-500),
-                })),
-            addLogs: (newLogs) =>
-                set((state) => ({
-                    logs: [...state.logs, ...newLogs].slice(-500),
-                })),
-            clearLogs: () => set({ logs: [] }),
-        }),
+const MAX_LOGS = 500;
+
+export const useTerminalStore = create<TerminalState>((set) => ({
+    logs: [
         {
-            name: "rusty-terminal-logs",
-            storage: createJSONStorage(() => localStorage),
+            timestamp: new Date().toLocaleTimeString(),
+            level: "info",
+            message: "🚀 RustySEO Terminal initialized...",
         },
-    ),
-);
+        {
+            timestamp: new Date().toLocaleTimeString(),
+            level: "info",
+            message: "System ready. Waiting for crawl activity.",
+        },
+    ],
+    addLog: (message, level = "info", timestamp?: string) =>
+        set((state) => ({
+            logs: [
+                ...state.logs,
+                {
+                    timestamp: timestamp || new Date().toLocaleTimeString(),
+                    level,
+                    message,
+                },
+            ].slice(-MAX_LOGS),
+        })),
+    addLogs: (newLogs) =>
+        set((state) => ({
+            logs: [...state.logs, ...newLogs].slice(-MAX_LOGS),
+        })),
+    clearLogs: () => set({ logs: [] }),
+}));

@@ -20,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore, {
   useDataActions,
-  useCrawlDataVersion,
 } from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
@@ -39,6 +38,8 @@ import PageExternalSubTable from "./SubTables/PageLinksSubTable/PageExternalSubT
 import { invoke } from "@tauri-apps/api/core";
 
 const EMPTY_ARRAY: any[] = [];
+// Matches the existing isScaleTooLargeForLive threshold used in the data-fetch effect
+const LIVE_DATA_LIMIT = 2000;
 
 
 const BottomTableContent = ({ children, height }) => (
@@ -159,9 +160,15 @@ export default function Home() {
     [],
   );
 
-  // Subscribe to crawlDataVersion instead of the full array to avoid re-renders
-  // in this container for every streamed row.
-  const crawlDataVersion = useCrawlDataVersion();
+  // Scale-aware version subscription: once the crawl exceeds LIVE_DATA_LIMIT rows,
+  // return a stable sentinel (-1) so Zustand stops re-rendering this component on
+  // every new URL. The component refreshes naturally when isFinishedDeepCrawl flips.
+  const crawlDataVersion = useGlobalCrawlStore((state) => {
+    if (!state.isFinishedDeepCrawl && state.streamedCrawledPages > LIVE_DATA_LIMIT) {
+      return -1;
+    }
+    return state.crawlDataVersion;
+  });
 
   // Fetch aggregated data when tab changes
   const { setAggregatedData } = useDataActions();
@@ -376,30 +383,27 @@ export default function Home() {
     if (activeTab !== "search") return EMPTY_ARRAY;
     const state = useGlobalCrawlStore.getState();
     const crawlData = state.crawlData;
-    if (!crawlData || !Array.isArray(crawlData)) {
-      return EMPTY_ARRAY;
-    }
-
-    const customSearch = crawlData.filter(
-      (search) => search?.extractor?.html === true,
-    );
-    return customSearch;
-  }, [crawlDataVersion, activeTab]);
+    if (!crawlData || !Array.isArray(crawlData)) return EMPTY_ARRAY;
+    if (!isFinishedDeepCrawl && crawlData.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
+    return crawlData.filter((search) => search?.extractor?.html === true);
+  }, [crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
   const cwvRows = useMemo(() => {
     if (activeTab !== "cwv") return EMPTY_ARRAY;
-    if (aggregatedData?.cwv?.length > 0) {
-      return aggregatedData.cwv;
-    }
+    if (aggregatedData?.cwv?.length > 0) return aggregatedData.cwv;
     const state = useGlobalCrawlStore.getState();
-    return state.crawlData || [];
-  }, [aggregatedData.cwv, crawlDataVersion, activeTab]);
+    const data = state.crawlData || [];
+    if (!isFinishedDeepCrawl && data.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
+    return data;
+  }, [aggregatedData.cwv, crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
   const allCrawlData = useMemo(() => {
     if (activeTab !== "crawledPages") return EMPTY_ARRAY;
     const state = useGlobalCrawlStore.getState();
-    return state.crawlData || [];
-  }, [crawlDataVersion, activeTab]);
+    const data = state.crawlData || [];
+    if (!isFinishedDeepCrawl && data.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
+    return data;
+  }, [crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
   // Filters all files
   const filteredFilesArr = useMemo(() => {

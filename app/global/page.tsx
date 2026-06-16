@@ -194,6 +194,12 @@ export default function Page() {
     let unlistenFavicon: (() => void) | null = null;
 
     listen("crawl_result", (event) => {
+      // Drop incoming events once the JS heap cap is reached. The Rust side
+      // already stops sending after max_urls_stored, but guard here too so
+      // any edge-case IPC messages don't cause unnecessary processing.
+      const { crawlData, maxUrlsStored } = useGlobalCrawlStore.getState();
+      if (crawlData.length >= (maxUrlsStored || 5000)) return;
+
       // The payload structure is now { results: LightCrawlResult[] } (batched)
       const payload: any = event.payload;
 
