@@ -384,7 +384,6 @@ export default function Home() {
     const state = useGlobalCrawlStore.getState();
     const crawlData = state.crawlData;
     if (!crawlData || !Array.isArray(crawlData)) return EMPTY_ARRAY;
-    if (!isFinishedDeepCrawl && crawlData.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
     return crawlData.filter((search) => search?.extractor?.html === true);
   }, [crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
@@ -393,16 +392,13 @@ export default function Home() {
     if (aggregatedData?.cwv?.length > 0) return aggregatedData.cwv;
     const state = useGlobalCrawlStore.getState();
     const data = state.crawlData || [];
-    if (!isFinishedDeepCrawl && data.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
     return data;
   }, [aggregatedData.cwv, crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
   const allCrawlData = useMemo(() => {
     if (activeTab !== "crawledPages") return EMPTY_ARRAY;
     const state = useGlobalCrawlStore.getState();
-    const data = state.crawlData || [];
-    if (!isFinishedDeepCrawl && data.length > LIVE_DATA_LIMIT) return EMPTY_ARRAY;
-    return data;
+    return state.crawlData || [];
   }, [crawlDataVersion, activeTab, isFinishedDeepCrawl]);
 
   // Filters all files

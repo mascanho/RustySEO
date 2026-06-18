@@ -462,71 +462,20 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
 
           const targetUrlNormalized = normalizeUrl(url);
 
-          // Use debouncedCrawlData from TablesContainer? No, we use store state.
-          // This matched call is still O(N) but only on click.
-          // Fetch incoming links from backend
-          let innerLinksMatched = [];
+          // Fetch incoming links — backend returns pre-computed flat [{url, anchor_text, status}],
+          // one entry per source page. No full page objects cross the IPC bridge.
+          let incomingLinks: any[] = [];
           try {
             const { invoke } = await import("@tauri-apps/api/core");
-            innerLinksMatched = await invoke("get_incoming_links_command", {
+            incomingLinks = (await invoke("get_incoming_links_command", {
               targetUrl: url,
-            });
+            })) || [];
           } catch (error) {
             console.error("Failed to fetch incoming links:", error);
-            // Fallback to client-side filtering if command fails (though less reliable)
-            innerLinksMatched = rows.filter((r) => {
-              const internalLinks = r?.inoutlinks_status_codes?.internal || [];
-              return internalLinks.some(
-                (link: any) => normalizeUrl(link?.url) === targetUrlNormalized,
-              );
-            });
           }
 
-          console.log("🔍 Inlinks Debug:", {
-            selectedUrl: url,
-            normalizedUrl: targetUrlNormalized,
-            totalPages: rows.length,
-            pagesWithLinksToThisUrl: innerLinksMatched.length,
-            samplePage: innerLinksMatched[0],
-          });
-
-          // Extract all internal links that point to the selected URL
-          const inlinksData = [];
-          innerLinksMatched.forEach((page) => {
-            const internalLinks = page?.inoutlinks_status_codes?.internal || [];
-            internalLinks.forEach((link: any) => {
-              if (normalizeUrl(link?.url) === targetUrlNormalized) {
-                inlinksData.push({
-                  anchor_text: link?.anchor_text || "",
-                  url: link?.url || "",
-                  relative_path: link?.relative_path || null,
-                  status: link?.status || null,
-                  error: link?.error || null,
-                  rel: link?.rel || "",
-                  target: link?.target || "",
-                  title: link?.title || "",
-                });
-              }
-            });
-          });
-
-          console.log("📊 Inlinks Data:", {
-            totalInlinks: inlinksData.length,
-            sampleInlink: inlinksData[0],
-          });
-
-          // Format data to match BOTH InlinksSubTable and InnerLinksDetailsTable expectations
-          // data[0] = selected URL with inlinks data (for InlinksSubTable)
-          // data[1] = array of pages that link to this URL (for InnerLinksDetailsTable)
-          setters.setInlinks([
-            {
-              url,
-              inoutlinks_status_codes: {
-                internal: inlinksData,
-              },
-            },
-            innerLinksMatched, // Array of pages for InnerLinksDetailsTable
-          ]);
+          // data[0] = target page identifier; data[1] = flat source list
+          setters.setInlinks([{ url }, incomingLinks]);
 
           const allOutgoingLinks = [];
           if (pageData.inoutlinks_status_codes?.internal) {

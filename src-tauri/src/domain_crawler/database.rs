@@ -572,27 +572,22 @@ impl Database {
     pub async fn get_incoming_links(&self, target_url: String) -> Result<Value, DatabaseError> {
         let pool = self.pool.clone();
 
-        // Helper to normalize URL for matching
         fn normalize_url(url: &str) -> String {
             let mut u = url.trim().to_lowercase();
-            // Remove protocol
             if u.starts_with("http://") {
                 u = u[7..].to_string();
             } else if u.starts_with("https://") {
                 u = u[8..].to_string();
             }
-            // Remove www
             if u.starts_with("www.") {
                 u = u[4..].to_string();
             }
-            // Remove query/hash
             if let Some(idx) = u.find('?') {
                 u = u[..idx].to_string();
             }
             if let Some(idx) = u.find('#') {
                 u = u[..idx].to_string();
             }
-            // Remove trailing slash
             if u.ends_with('/') {
                 u.pop();
             }
@@ -604,49 +599,65 @@ impl Database {
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
-            
-            // Query only matching candidate pages using SQLite json_each filtering
+
+            // Extract only the 4 scalar fields we need — never fetch full page blobs.
+            // LIKE pre-filters candidates; exact normalization match happens in Rust below.
             let mut stmt = conn.prepare(
-                "SELECT DISTINCT data 
-                 FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.internal')
-                 WHERE json_extract(json_each.value, '$.url') LIKE ?1"
+                "SELECT
+                    json_extract(domain_crawl.data, '$.url')          AS source_url,
+                    json_extract(json_each.value,   '$.url')          AS link_url,
+                    json_extract(json_each.value,   '$.anchor_text')  AS anchor_text,
+                    json_extract(json_each.value,   '$.status')       AS status
+                 FROM domain_crawl, json_each(domain_crawl.data, '$.inoutlinks_status_codes.internal')
+                 WHERE json_extract(json_each.value, '$.url') LIKE ?1
+                 LIMIT 50000",
             )?;
 
             let rows = stmt.query_map(params![like_pattern], |row| {
-                let data_json: String = row.get(0)?;
-                Ok(data_json)
+                let source_url: Option<String> = row.get(0).ok();
+                let link_url: Option<String> = row.get(1).ok();
+                let anchor_text: Option<String> = row.get(2).ok();
+                let status: Option<i64> = row.get(3).ok();
+                Ok((source_url, link_url, anchor_text, status))
             })?;
 
-            let mut matched_pages = Vec::new();
+            // Group by source page, exact-normalisation match, dedup anchor texts.
+            let mut page_links: std::collections::HashMap<String, (Vec<String>, Option<i64>)> =
+                std::collections::HashMap::new();
 
-            for data_json_result in rows {
-                let data_json = match data_json_result {
-                    Ok(json) => json,
-                    Err(_) => continue,
-                };
+            for row_result in rows {
+                let (source_url, link_url, anchor_text, status) = row_result?;
+                let source = source_url.unwrap_or_default();
+                let link = link_url.unwrap_or_default();
 
-                let data: Value = match serde_json::from_str(&data_json) {
-                    Ok(v) => v,
-                    Err(_) => continue,
-                };
+                if source.is_empty() || normalize_url(&link) != normalized_target {
+                    continue;
+                }
 
-                if let Some(links) = data
-                    .get("inoutlinks_status_codes")
-                    .and_then(|l| l.get("internal"))
-                    .and_then(|v| v.as_array())
-                {
-                    for link_obj in links {
-                        if let Some(link_url) = link_obj.get("url").and_then(|u| u.as_str()) {
-                            if normalize_url(link_url) == normalized_target {
-                                matched_pages.push(data.clone());
-                                break; // One link per page is enough
-                            }
-                        }
+                let entry = page_links.entry(source).or_insert_with(|| (Vec::new(), None));
+                if let Some(text) = anchor_text {
+                    if !text.is_empty() && !entry.0.contains(&text) {
+                        entry.0.push(text);
                     }
+                }
+                if entry.1.is_none() {
+                    entry.1 = status;
                 }
             }
 
-            Ok(Value::Array(matched_pages))
+            let results: Vec<Value> = page_links
+                .into_iter()
+                .take(1000)
+                .map(|(url, (anchors, status))| {
+                    serde_json::json!({
+                        "url": url,
+                        "anchor_text": anchors.join(", "),
+                        "status": status
+                    })
+                })
+                .collect();
+
+            Ok(Value::Array(results))
         })
         .await?
     }

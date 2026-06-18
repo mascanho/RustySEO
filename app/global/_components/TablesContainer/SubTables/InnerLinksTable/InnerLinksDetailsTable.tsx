@@ -10,11 +10,6 @@ interface InlinksSubTableProps {
 const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, InlinksSubTableProps>(({ data, height }, ref) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const urlsWithPageAsInternalLink = data
-    .map((page) => page?.inoutlinks_status_codes?.internal)
-    .flat()
-    .map((link) => link?.url);
-
   // Memoize the makeResizable function
   const makeResizable = useCallback((tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
@@ -86,20 +81,15 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
       const csvData = data[1].map((item, index) => {
         const sourceUrl = item?.url || "N/A";
         const targetUrl = data[0]?.url || "N/A";
-        const anchorTexts = getAnchorText(item, targetUrl);
-        const statusCodes = getStatusCode(item, targetUrl);
-
-        // Extract just the status code number (removes the JSX span element)
-        const statusCodeValue = Array.isArray(statusCodes?.props?.children)
-          ? statusCodes.props.children[0]
-          : statusCodes?.props?.children || "N/A";
+        const anchorText = getAnchorText(item) || "N/A";
+        const statusCode = item?.status ?? "N/A";
 
         return [
           index + 1,
           `"${sourceUrl.replace(/"/g, '""')}"`,
           `"${targetUrl.replace(/"/g, '""')}"`,
-          `"${(Array.isArray(anchorTexts) ? anchorTexts.join(", ") : anchorTexts || "N/A").replace(/"/g, '""')}"`,
-          statusCodeValue,
+          `"${anchorText.replace(/"/g, '""')}"`,
+          statusCode,
         ];
       });
 
@@ -152,12 +142,6 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
     exportCSV
   }));
 
-  // Move localStorage access into useEffect to avoid re-renders
-  useEffect(() => {
-    const isDark = localStorage.getItem("dark-mode");
-    console.log("Dark mode:", isDark); // Example usage
-  }, []);
-
   if (data?.length === 0) {
     return (
       <div
@@ -176,96 +160,34 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
     );
   }
 
-  function normalizeUrl(url) {
-    if (!url) return "";
-    try {
-      let u = url.toString().trim().toLowerCase();
-      // Remove protocol
-      u = u.replace(/^(?:https?:\/\/)?/i, "");
-      // Remove www
-      u = u.replace(/^www\./i, "");
-
-      // Remove query params and hash
-      const queryIdx = u.indexOf("?");
-      if (queryIdx !== -1) u = u.substring(0, queryIdx);
-
-      const hashIdx = u.indexOf("#");
-      if (hashIdx !== -1) u = u.substring(0, hashIdx);
-
-      // Remove trailing slash
-      if (u.endsWith("/")) u = u.slice(0, -1);
-      return u;
-    } catch (e) {
-      console.error("Error normalizing URL:", e);
-      return "";
-    }
+  // Backend pre-computes these fields — no per-row URL scanning needed.
+  function getAnchorText(obj) {
+    return obj?.anchor_text || "";
   }
 
-  function getAnchorText(obj, targetUrl) {
-    const normalizedTargetUrl = normalizeUrl(targetUrl);
+  function getStatusCode(obj) {
+    const raw = obj?.status;
+    if (raw === null || raw === undefined) return <span className="text-gray-400">-</span>;
 
-    const anchorTexts = obj?.inoutlinks_status_codes?.internal
-      ?.filter((item) => {
-        const normalizedItemUrl = normalizeUrl(item.url);
-        return normalizedItemUrl === normalizedTargetUrl;
-      })
-      .map((item) => item.anchor_text);
+    const str = String(raw).trim();
+    let code: number | null = null;
 
-    return [...new Set(anchorTexts)].join(", ");
-  }
-
-  function getStatusCode(obj, targetUrl) {
-    const normalizedTargetUrl = normalizeUrl(targetUrl);
-
-    const rawStatuses = obj?.inoutlinks_status_codes?.internal
-      ?.filter((item) => {
-        const normalizedItemUrl = normalizeUrl(item.url);
-        return normalizedItemUrl === normalizedTargetUrl;
-      })
-      .map((item) => item.status);
-
-    if (!rawStatuses || rawStatuses.length === 0) return <span className="text-gray-400">-</span>;
-
-    const processedStatuses = new Set<number>();
-
-    // Helper to process a single status value
-    const addStatus = (val: any) => {
-      if (val === null || val === undefined) return;
-      if (Array.isArray(val)) {
-        val.forEach(addStatus);
-        return;
+    // Handle concatenated status strings stored by older crawl runs (e.g. "200429")
+    if (str.length > 3 && /^\d+$/.test(str) && str.length % 3 === 0) {
+      const codes: number[] = [];
+      for (let i = 0; i < str.length; i += 3) {
+        const chunk = parseInt(str.substring(i, i + 3), 10);
+        if (!isNaN(chunk)) codes.push(chunk);
       }
-
-      const str = String(val).trim();
-      // If it looks like a concatenated status string (e.g. "200429")
-      if (str.length > 3 && /^\d+$/.test(str) && str.length % 3 === 0) {
-        for (let i = 0; i < str.length; i += 3) {
-          const chunk = parseInt(str.substring(i, i + 3), 10);
-          if (!isNaN(chunk)) processedStatuses.add(chunk);
-        }
-      } else {
-        const num = parseInt(str, 10);
-        if (!isNaN(num)) processedStatuses.add(num);
-      }
-    };
-
-    rawStatuses.forEach(addStatus);
-
-    const uniqueStatusCodes = Array.from(processedStatuses);
-
-    if (uniqueStatusCodes.length === 0) return <span className="text-gray-400">-</span>;
-
-    // Fix: If we have multiple statuses for the same link (e.g. 429 then 200), prefer 200 OK
-    // or just show the most significant one.
-    let code = uniqueStatusCodes[0];
-    if (uniqueStatusCodes.includes(200)) {
-      code = 200;
-    } else if (uniqueStatusCodes.includes(429)) {
-      code = 429;
-    } else if (uniqueStatusCodes.some(c => c >= 400 && c < 600)) {
-      // Find any error status
-      code = uniqueStatusCodes.find(c => c >= 400 && c < 600) || code;
+      if (codes.includes(200)) code = 200;
+      else if (codes.includes(429)) code = 429;
+      else code = codes[0] ?? null;
+    } else {
+      const n = parseInt(str, 10);
+      code = isNaN(n) ? null : n;
     }
+
+    if (code === null) return <span className="text-gray-400">-</span>;
 
     return (
       <span
@@ -359,12 +281,12 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
                   </td>
                   <td
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
-                    title={getAnchorText(item, data?.[0].url)}
+                    title={getAnchorText(item)}
                   >
-                    {getAnchorText(item, data?.[0].url)}
+                    {getAnchorText(item)}
                   </td>
                   <td className="px-2 text-center py-1">
-                    {getStatusCode(item, data?.[0].url)}
+                    {getStatusCode(item)}
                   </td>
                 </tr>
               );
