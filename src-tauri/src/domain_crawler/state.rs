@@ -54,8 +54,15 @@ pub struct CrawlResultData {
 pub struct CrawlerState {
     pub visited: HashSet<String>,
     pub failed_urls: HashSet<FailedUrl>,
-    pub pending_urls: HashMap<String, Instant>, // Track when URLs were added to pending
+    /// Tracks URLs that have been **dequeued and are actively being fetched**.
+    /// NOT used for queued-but-not-yet-fetched URLs — use `queued_url_set` for those.
+    /// Keeping this small (≤ concurrent_requests * 2) is critical for performance:
+    /// it is checked on every link during dedup and iterated in cleanup_stale_pending.
+    pub pending_urls: HashMap<String, Instant>,
     pub queue: VecDeque<(Url, usize)>,          // Include depth tracking
+    /// Mirror of `queue` as a set for O(1) membership tests and deduplication.
+    /// Must be kept in sync: insert when pushing to queue, remove when draining.
+    pub queued_url_set: HashSet<String>,
     pub total_urls: usize,
     pub crawled_urls: usize,
     pub total_failed_count: usize,
@@ -68,6 +75,7 @@ pub struct CrawlerState {
     pub last_progress_emit: Instant,   // Track time of last progress emission
     pub last_result_emit: Instant,     // Track time of last crawl_result batch emission
     pub pending_results: Vec<super::models::LightCrawlResult>, // Buffer for batching crawl_result events
+    pub last_cleanup: Instant,         // Rate-limit cleanup_stale_pending calls
     /// Global URL → HTTP status code registry shared between the crawler and link checker.
     /// Populated by the crawler after fetching each page; read by the link checker to skip
     /// redundant HTTP requests for URLs whose status is already known.
@@ -81,6 +89,7 @@ impl CrawlerState {
         Self {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
+            queued_url_set: HashSet::new(),
             pending_urls: HashMap::new(),
             queue: VecDeque::new(),
             total_urls: 0,
@@ -95,6 +104,7 @@ impl CrawlerState {
             last_progress_emit: Instant::now(),
             last_result_emit: Instant::now(),
             pending_results: Vec::with_capacity(64),
+            last_cleanup: Instant::now(),
             url_status_registry: Arc::new(DashMap::with_capacity(4096)),
         }
     }
@@ -121,24 +131,22 @@ impl CrawlerState {
 
     /// Clean up stale pending URLs and periodically compact collections to return
     /// memory to the OS. Called from the main crawler loop on every iteration.
+    /// Rate-limited to every 10 seconds — pending_urls is small (only active fetches),
+    /// so there is no point paying the retain + shrink overhead on every 50ms tick.
     pub fn cleanup_stale_pending(&mut self) {
+        if self.last_cleanup.elapsed() < std::time::Duration::from_secs(10) {
+            return;
+        }
+        self.last_cleanup = Instant::now();
+
         let now = Instant::now();
 
-        // Build a set of URLs still sitting in the queue so we never evict their
-        // pending_urls entry. Without this guard, sitemap-seeded URLs (which all
-        // share the same early timestamp) get evicted before they are even spawned,
-        // causing the crawler to think all work is done and terminate at e.g. 26%.
-        let queued_urls: HashSet<String> = self.queue.iter()
-            .map(|(url, _)| url.to_string())
-            .collect();
-
+        // pending_urls only contains actively-fetched URLs (not queued ones), so this
+        // retain iterates at most concurrent_requests * 2 entries — always cheap.
         self.pending_urls
             .retain(|url, &mut added_time| {
-                // Keep entries that are still fresh
+                // Keep if still within the stale timeout OR still actively being processed.
                 now.duration_since(added_time) < MAX_PENDING_TIME
-                // OR that are still waiting in the queue (not yet spawned)
-                || queued_urls.contains(url)
-                // OR that are currently being actively processed
                 || self.active_urls.contains(url)
             });
 
@@ -201,13 +209,18 @@ impl CrawlerState {
                     continue;
                 }
 
-                if !self.visited.contains(&normalized_url) 
+                // queued_url_set covers "waiting in queue"; pending_urls covers "actively fetching".
+                // Both must be checked to avoid double-queueing.
+                if !self.visited.contains(&normalized_url)
+                    && !self.queued_url_set.contains(&normalized_url)
                     && !self.pending_urls.contains_key(&normalized_url)
-                    && self.total_urls < max_urls 
+                    && self.total_urls < max_urls
                 {
                     self.queue.push_back((url.clone(), 0)); // Sitemaps seed at depth 0
+                    self.queued_url_set.insert(normalized_url.clone());
                     self.total_urls += 1;
-                    self.pending_urls.insert(normalized_url.clone(), Instant::now());
+                    // pending_urls is NOT populated here; it is populated in the main loop
+                    // when the URL is actually dequeued, keeping its size small.
                 }
             }
         }

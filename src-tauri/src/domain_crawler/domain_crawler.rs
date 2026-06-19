@@ -151,10 +151,9 @@ pub async fn crawl_domain(
         
         let mut state_guard = state.lock().await;
         state_guard.queue.push_back((normalized_url_obj, 0)); // Start at depth 0
+        state_guard.queued_url_set.insert(normalized_base.clone());
         state_guard.total_urls = 1;
-        state_guard
-            .pending_urls
-            .insert(normalized_base, Instant::now());
+        // pending_urls is populated at dequeue time (in the main loop batch drain), not here.
     }
 
     // DISCOVER URLS FROM SITEMAPS
@@ -323,10 +322,16 @@ pub async fn crawl_domain(
             // Calculate how many we can spawn based on semaphore and current active tasks
             // But actually, the inner loop handles the semaphore, so we just pull a reasonable batch
             let available_batch = std::cmp::min(batch_size, state_guard.queue.len());
-            state_guard
-                .queue
-                .drain(..available_batch)
-                .collect::<Vec<_>>()
+            let batch: Vec<(url::Url, usize)> = state_guard.queue.drain(..available_batch).collect();
+            for (url, _) in &batch {
+                let url_str = normalize_url(url.as_str());
+                state_guard.queued_url_set.remove(&url_str);
+                // Move from "queued" to "pending" (actively being fetched).
+                // pending_urls is only populated here so it stays small (≤ batch_size * active rounds),
+                // making all pending_urls lookups cheap regardless of total queue depth.
+                state_guard.pending_urls.insert(url_str, Instant::now());
+            }
+            batch
         };
 
         if to_spawn.is_empty() {

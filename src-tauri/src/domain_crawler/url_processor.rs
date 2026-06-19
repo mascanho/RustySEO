@@ -601,19 +601,38 @@ async fn update_state_and_emit_progress(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
 ) {
-    let mut state = state.lock().await;
-    
+    // Pre-compute everything that doesn't need the lock — string normalization and
+    // pattern extraction are CPU work that would otherwise inflate lock hold time
+    // under high concurrency (50+ tasks all fighting for the same mutex).
     let normalized_current_url = normalize_url(url.as_str());
     let normalized_final_url = normalize_url(&result.url);
-    
+
+    // Pre-filter and normalize links before touching shared state.
+    // Each entry: (normalized_url_string, pattern_string, parsed_Url)
+    let prepared_links: Vec<(String, String, Url)> = links_for_crawler
+        .into_iter()
+        .filter_map(|link| {
+            let link_str = link.as_str();
+            if should_skip_url(link_str) {
+                return None;
+            }
+            let normalized = normalize_url(link_str);
+            let pattern = extract_url_pattern(&normalized);
+            let url_obj = Url::parse(&normalized).ok()?;
+            Some((normalized, pattern, url_obj))
+        })
+        .collect();
+
+    let mut state = state.lock().await;
+
     // Insert final_url first to see if it's new
     let is_new_final = state.visited.insert(normalized_final_url.clone());
-    
+
     // Also mark original requested URL as visited
     if normalized_current_url != normalized_final_url {
         state.visited.insert(normalized_current_url.clone());
     }
-    
+
     state.pending_urls.remove(&normalized_current_url);
     state.last_activity = Instant::now();
 
@@ -633,31 +652,17 @@ async fn update_state_and_emit_progress(
         && state.total_urls < settings.max_urls_per_domain
         && state.queue.len() < MAX_QUEUE_SIZE
     {
-        let links = links_for_crawler;
-        let links_found = links.len();
+        let links_found = prepared_links.len();
         if links_found > 0 && state.crawled_urls % 100 == 0 {
             tracing::info!("Found {} links on {} at depth {}", links_found, url, depth);
         }
-        for link in links {
-            let link_str = link.as_str();
-
-            // Enhanced URL filtering
-            if should_skip_url(link_str) {
-                continue;
-            }
-
-            // Normalize URL to avoid duplicates (handles trailing slashes, tracking params, etc.)
-            let normalized_url = normalize_url(link_str);
-            let url_pattern = extract_url_pattern(&normalized_url);
-
+        for (normalized_url, url_pattern, normalized_url_obj) in prepared_links {
             // Pattern checking to avoid infinite URL traps
             let pattern_count = *state.url_patterns.get(&url_pattern).unwrap_or(&0);
 
             // Set a reasonable limit for pattern-based skipping.
             // 500 is high enough for normal sites but catches infinite URL traps before memory bloats.
-            let should_skip_pattern = pattern_count > 500;
-
-            if should_skip_pattern {
+            if pattern_count > 500 {
                 if pattern_count == 501 {
                     tracing::warn!(
                         "Pattern trap detected for pattern: {}. Limiting discovery.",
@@ -668,29 +673,20 @@ async fn update_state_and_emit_progress(
                 continue;
             }
 
-            // Use the NORMALIZED url for deduplication checks
+            // queued_url_set covers "in queue"; pending_urls covers "actively fetching".
+            // Checking both prevents double-queueing. Neither check is expensive:
+            // queued_url_set is a HashSet and pending_urls is now small (≤ active tasks).
             if !state.visited.contains(&normalized_url)
+                && !state.queued_url_set.contains(&normalized_url)
                 && !state.pending_urls.contains_key(&normalized_url)
                 && state.total_urls < settings.max_urls_per_domain
             {
-                // Only increment total_urls when we actually add a new URL
-                let queue_length_before = state.queue.len();
-                
-                // Parse the normalized URL back to a Url object for the queue
-                if let Ok(normalized_url_obj) = Url::parse(&normalized_url) {
-                    state.queue.push_back((normalized_url_obj, depth + 1));
-
-                    // Only increment if we successfully added to queue
-                    if state.queue.len() > queue_length_before {
-                        state.total_urls += 1;
-                        state
-                            .pending_urls
-                            .insert(normalized_url.clone(), Instant::now());
-
-                        // Increment the pattern count
-                        *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
-                    }
-                }
+                state.queue.push_back((normalized_url_obj, depth + 1));
+                state.queued_url_set.insert(normalized_url.clone());
+                state.total_urls += 1;
+                // pending_urls is NOT inserted here; it is inserted in the main loop
+                // when the URL is dequeued, keeping pending_urls small at all scales.
+                *state.url_patterns.entry(url_pattern).or_insert(0) += 1;
             }
         }
     }
