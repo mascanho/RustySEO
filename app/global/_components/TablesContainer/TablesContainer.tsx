@@ -38,8 +38,7 @@ import PageExternalSubTable from "./SubTables/PageLinksSubTable/PageExternalSubT
 import { invoke } from "@tauri-apps/api/core";
 
 const EMPTY_ARRAY: any[] = [];
-// Matches the existing isScaleTooLargeForLive threshold used in the data-fetch effect
-const LIVE_DATA_LIMIT = 2000;
+const DEFAULT_LIVE_DATA_LIMIT = 5000;
 
 
 const BottomTableContent = ({ children, height }) => (
@@ -160,11 +159,12 @@ export default function Home() {
     [],
   );
 
-  // Scale-aware version subscription: once the crawl exceeds LIVE_DATA_LIMIT rows,
+  // Scale-aware version subscription: once the crawl exceeds max_urls_stored rows,
   // return a stable sentinel (-1) so Zustand stops re-rendering this component on
   // every new URL. The component refreshes naturally when isFinishedDeepCrawl flips.
   const crawlDataVersion = useGlobalCrawlStore((state) => {
-    if (!state.isFinishedDeepCrawl && state.streamedCrawledPages > LIVE_DATA_LIMIT) {
+    const limit = state.maxUrlsStored || DEFAULT_LIVE_DATA_LIMIT;
+    if (!state.isFinishedDeepCrawl && state.streamedCrawledPages > limit) {
       return -1;
     }
     return state.crawlDataVersion;

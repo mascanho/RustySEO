@@ -1,279 +1,231 @@
 // @ts-nocheck
 "use client";
-import * as React from "react";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { TrendingUp } from "lucide-react";
-import { Label, Pie, PieChart } from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { useEffect, useState, memo, createContext, useContext } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
-import { debounce } from "lodash";
 
-const chartConfig = {
-  crawled: {
-    label: "Crawled",
-    color: "hsl(210, 100%, 50%)", // Blue
-  },
-  failed4xx: {
-    label: "4XX Errors",
-    color: "hsl(210, 100%, 65%)", // Medium Blue
-  },
-  failed5xx: {
-    label: "5XX Errors",
-    color: "hsl(210, 100%, 80%)", // Light Blue
-  },
-  queued: {
-    label: "Queued",
-    color: "hsl(210, 100%, 90%)", // Very Light Blue
-  },
-} satisfies ChartConfig;
+// ─── Brand-matched colour palette ────────────────────────────────────────────
+const PALETTE = {
+  // Primary — sky-bright (#00A9FF) dark / brand-bright (#2B6CC4) light
+  cyan:   { dark: { color: "#00A9FF", shadow: "0 0 10px #00A9FF, 0 0 26px #00A9FF44" }, light: { color: "#2B6CC4", shadow: "none" } },
+  green:  { dark: { color: "#4ade80", shadow: "0 0 8px #4ade80, 0 0 20px #4ade8044"  }, light: { color: "#16a34a", shadow: "none" } },
+  orange: { dark: { color: "#f97316", shadow: "0 0 8px #f97316, 0 0 20px #f9731644"  }, light: { color: "#c2410c", shadow: "none" } },
+  red:    { dark: { color: "#ef4444", shadow: "0 0 8px #ef4444, 0 0 20px #ef444444"  }, light: { color: "#b91c1c", shadow: "none" } },
+  violet: { dark: { color: "#a78bfa", shadow: "0 0 8px #a78bfa, 0 0 20px #a78bfa44"  }, light: { color: "#7c3aed", shadow: "none" } },
+} as const;
 
-function OverviewChart() {
-  const javascript = useGlobalCrawlStore((state) => state.javascript);
-  const css = useGlobalCrawlStore((state) => state.css);
-  const domainCrawlLoading = useGlobalCrawlStore((state) => state.domainCrawlLoading);
-  const setStreamedTotalPages = useGlobalCrawlStore((state) => state.setStreamedTotalPages);
-  const setStreamedCrawledPages = useGlobalCrawlStore((state) => state.setStreamedCrawledPages);
-  const streamedCrawledPages = useGlobalCrawlStore((state) => state.streamedCrawledPages);
-  const streamedTotalPages = useGlobalCrawlStore((state) => state.streamedTotalPages);
-  const totalUrlsCrawled = useGlobalCrawlStore((state) => state.totalUrlsCrawled);
-  const crawlDataLength = useGlobalCrawlStore((state) => state.crawlData.length);
-  const [sessionCrawls, setSessionCrawls] = useState<number>(0);
-  const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
-  const [failed4xxCount, setFailed4xxCount] = useState<number>(0);
-  const [failed5xxCount, setFailed5xxCount] = useState<number>(0);
+type PaletteKey = keyof typeof PALETTE;
 
-  // Calculate crawled and queued pages
-  const crawledPages = useMemo(() => {
-    // Always prefer the backend-reported count. crawlDataLength is capped in memory
-    // and will diverge from the real count on large crawls.
-    return streamedCrawledPages || 0;
-  }, [streamedCrawledPages]);
+const DarkCtx = createContext(true);
 
-  const queuedPages = useMemo(() => {
-    // During crawl: total - crawled, After crawl: 0
-    const total = streamedTotalPages || 0;
-    const crawled = streamedCrawledPages || 0;
-    return Math.max(0, total - crawled);
-  }, [streamedTotalPages, streamedCrawledPages]);
+// ─── Derived stats from crawlData ─────────────────────────────────────────────
+function computeStats(data: any[]) {
+  const c4 = data.filter((p) => { const s = p?.status_code || 0; return s >= 400 && s < 500; }).length;
+  const c5 = data.filter((p) => { const s = p?.status_code || 0; return s >= 500; }).length;
+  const ni = data.filter((p) => p?.indexability?.noindex === true).length;
+  const totalLinks = data.reduce((sum, p) => sum + (p?.internal_links_count || 0) + (p?.external_links_count || 0), 0);
 
-  // Debounced update function
-  const debouncedUpdate = useCallback(
-    debounce((crawled_urls, total_urls, failed_urls) => {
-      setStreamedCrawledPages(crawled_urls);
-      setStreamedTotalPages(total_urls);
-      // For now, put all failed in 4xx until we get separate counts from backend
-      // Backend sends total failed_urls_count, we'll split on completion
-      setFailed4xxCount(failed_urls);
-    }, 300),
-    [setStreamedCrawledPages, setStreamedTotalPages],
+  return { c4, c5, ni, totalLinks };
+}
+
+// ─── Single digit cell ────────────────────────────────────────────────────────
+const DigitCell = memo(({ char, paletteKey, size }: {
+  char: string;
+  paletteKey: PaletteKey;
+  size: "lg" | "md";
+}) => {
+  const isDark = useContext(DarkCtx);
+  const theme  = PALETTE[paletteKey][isDark ? "dark" : "light"];
+  const dims   = size === "lg" ? "w-[30px] h-[50px] text-[30px]" : "w-[22px] h-[38px] text-[22px]";
+  return (
+    <span className={`relative inline-flex items-center justify-center ${dims} bg-[#39393a]/60 dark:bg-[#39393a]/60 border border-white/[0.06] rounded-[3px] font-mono font-bold leading-none select-none overflow-hidden`}
+      style={{ background: isDark ? "rgba(57,57,58,0.6)" : "rgba(229,231,235,0.7)" }}
+    >
+      <span
+        className={`absolute inset-0 flex items-center justify-center font-mono ${dims.split(" ")[2]} font-bold`}
+        aria-hidden="true"
+        style={{ color: `${theme.color}14` }}
+      >8</span>
+      <span className="relative z-10" style={{ color: theme.color, textShadow: theme.shadow }}>{char}</span>
+    </span>
   );
+});
+DigitCell.displayName = "DigitCell";
 
-  // Listen only for crawl_complete to calculate final error breakdown.
-  // progress_update is handled centrally by FooterLoader — no duplicate listener here.
+// ─── Row of digit cells ───────────────────────────────────────────────────────
+const DigitRow = memo(({ value, paletteKey, size = "md" }: {
+  value: number;
+  paletteKey: PaletteKey;
+  size?: "lg" | "md";
+}) => {
+  const str = String(Math.max(0, value)) || "0";
+  return (
+    <div className="flex gap-[4px]">
+      {str.split("").map((c, i) => (
+        <DigitCell key={i} char={c} paletteKey={paletteKey} size={size} />
+      ))}
+    </div>
+  );
+});
+DigitRow.displayName = "DigitRow";
+
+// ─── Stat tile ────────────────────────────────────────────────────────────────
+const StatTile = memo(({ label, value, paletteKey }: {
+  label: string;
+  value: number;
+  paletteKey: PaletteKey;
+}) => {
+  const isDark = useContext(DarkCtx);
+  const theme  = PALETTE[paletteKey][isDark ? "dark" : "light"];
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded flex-1"
+      style={{
+        background: isDark ? "rgba(57,57,58,0.35)" : "rgba(255,255,255,0.7)",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"}`,
+      }}
+    >
+      <span
+        className="text-[9px] font-mono tracking-[0.18em] uppercase"
+        style={{ color: isDark ? `${theme.color}60` : `${theme.color}99` }}
+      >
+        {label}
+      </span>
+      <DigitRow value={value} paletteKey={paletteKey} size="md" />
+    </div>
+  );
+});
+StatTile.displayName = "StatTile";
+
+// ─── Main component ───────────────────────────────────────────────────────────
+function OverviewChart() {
+  const domainCrawlLoading      = useGlobalCrawlStore((s) => s.domainCrawlLoading);
+  const streamedCrawledPages    = useGlobalCrawlStore((s) => s.streamedCrawledPages);
+  const streamedTotalPages      = useGlobalCrawlStore((s) => s.streamedTotalPages);
+  const crawlDataLength         = useGlobalCrawlStore((s) => s.crawlData.length);
+  const setStreamedCrawledPages = useGlobalCrawlStore((s) => s.setStreamedCrawledPages);
+  const setStreamedTotalPages   = useGlobalCrawlStore((s) => s.setStreamedTotalPages);
+
+  const [failed4xx, setFailed4xx]             = useState(0);
+  const [failed5xx, setFailed5xx]             = useState(0);
+  const [nonIndexable, setNonIndexable]       = useState(0);
+  const [totalLinks, setTotalLinks] = useState(0);
+  const [sessionCrawls, setSessionCrawls]     = useState(0);
+  const [isDark, setIsDark]                   = useState(true);
+
+  // Track dark class on <html>
   useEffect(() => {
-    const completeUnlisten = listen("crawl_complete", () => {
-      // Use the backend-reported totals (streamedCrawledPages) as the source of truth.
-      // crawlData.length is capped at 10K in memory and must NOT be used as the count here.
-      const state = useGlobalCrawlStore.getState();
-      const failedCount = state.crawlData?.filter((p) => {
-        const s = p?.status_code || 0;
-        return s >= 400;
-      }).length || 0;
-      const rawCount = state.streamedCrawledPages || state.crawlData.length;
-      // Use the same succeeded-only count as FooterLoader
-      const trueCount = Math.max(0, rawCount - failedCount);
-      setStreamedCrawledPages(trueCount);
-      setStreamedTotalPages(rawCount);
-
-      // Calculate 4XX and 5XX separately from the in-memory crawlData slice
-      // (only a subset for large crawls, but gives a reasonable approximation)
-      const currentData = state.crawlData;
-      const count4xx =
-        currentData?.filter((page) => {
-          const status = page?.status_code || 0;
-          return status >= 400 && status < 500;
-        }).length || 0;
-
-      const count5xx =
-        currentData?.filter((page) => {
-          const status = page?.status_code || 0;
-          return status >= 500;
-        }).length || 0;
-
-      setFailed4xxCount(count4xx);
-      setFailed5xxCount(count5xx);
-    });
-
-    return () => {
-      completeUnlisten.then((f) => f());
-    };
-    // Empty deps — register once, use getState() for fresh data
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const update = () => setIsDark(document.documentElement.classList.contains("dark"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
   }, []);
 
-  // Memoized chart data
-  const chartData = useMemo(() => {
-    const crawled = Math.max(0, crawledPages || 0);
-    const errors4xx = Math.max(0, failed4xxCount || 0);
-    const errors5xx = Math.max(0, failed5xxCount || 0);
-    const queued = Math.max(0, queuedPages || 0);
+  const crawled = streamedCrawledPages || 0;
 
-    // If all values are 0, show a small segment to make the chart visible
-    const totalValue = crawled + errors4xx + errors5xx + queued;
-    const hasData = totalValue > 0;
+  // Recompute derived stats whenever crawlData changes (covers mount + live updates)
+  useEffect(() => {
+    const data = useGlobalCrawlStore.getState().crawlData || [];
+    if (!data.length) return;
+    const { c4, c5, ni, totalLinks } = computeStats(data);
+    setFailed4xx(c4);
+    setFailed5xx(c5);
+    setNonIndexable(ni);
+    setTotalLinks(totalLinks);
+  }, [crawlDataLength]);
 
-    return [
-      {
-        browser: "Crawled",
-        visitors: hasData ? crawled : 1,
-        fill: "hsl(210, 100%, 50%)",
-      },
-      {
-        browser: "4XX Errors",
-        visitors: hasData ? errors4xx : 0,
-        fill: "hsl(210, 100%, 65%)",
-      },
-      {
-        browser: "5XX Errors",
-        visitors: hasData ? errors5xx : 0,
-        fill: "hsl(210, 100%, 80%)",
-      },
-      {
-        browser: "Queued",
-        visitors: hasData ? queued : 0,
-        fill: "hsl(210, 100%, 90%)",
-      },
-    ];
-  }, [crawledPages, failed4xxCount, failed5xxCount, queuedPages]);
+  // Also lock in final counts when crawl_complete fires
+  useEffect(() => {
+    let dead = false;
+    const p = listen("crawl_complete", () => {
+      if (dead) return;
+      const s    = useGlobalCrawlStore.getState();
+      const data = s.crawlData || [];
+      const { c4, c5, ni, totalLinks } = computeStats(data);
+      const raw  = s.streamedCrawledPages || data.length;
+      setStreamedCrawledPages(Math.max(0, raw - c4 - c5));
+      setStreamedTotalPages(raw);
+      setFailed4xx(c4);
+      setFailed5xx(c5);
+      setNonIndexable(ni);
+      setTotalLinks(totalLinks);
+    });
+    return () => { dead = true; p.then((f) => f()); };
+  }, [setStreamedCrawledPages, setStreamedTotalPages]);
 
-  // Memoized total pages crawled in session
-  const totalPagesCrawledInSession = useMemo(() => {
-    try {
-      return Array.isArray(totalCrawlPages)
-        ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
-        : 0;
-    } catch (error) {
-      console.error("Error calculating total pages crawled in session:", error);
-      return 0;
-    }
-  }, [totalCrawlPages]);
-
-  // Read sessionStorage data
+  // Session crawl count
   useEffect(() => {
     try {
-      const crawls = sessionStorage.getItem("crawlNumber");
-      setSessionCrawls(crawls ? parseInt(crawls, 10) : 0);
-
-      const crawledPages = JSON.parse(
-        sessionStorage.getItem("CrawledLinks") || "[]",
-      );
-      setTotalCrawlPages(Array.isArray(crawledPages) ? crawledPages : []);
-    } catch (error) {
-      console.error("Error reading sessionStorage:", error);
+      const n = sessionStorage.getItem("crawlNumber");
+      setSessionCrawls(n ? parseInt(n, 10) : 0);
+    } catch {
       setSessionCrawls(0);
-      setTotalCrawlPages([]);
     }
   }, [domainCrawlLoading, crawlDataLength]);
 
-  // Memoized label renderer
-  const renderLabel = useCallback(
-    ({ viewBox }) => {
-      if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-        return (
-          <text
-            x={viewBox.cx}
-            y={viewBox.cy}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="dark:text-white"
-            aria-label="Total Pages"
-            role="text"
-          >
-            <tspan
-              x={viewBox.cx}
-              y={viewBox.cy}
-              style={{ color: "white" }}
-              className="text-3xl dark:fill-white text-white font-bold dark:text-white"
-            >
-              {/* Always use backend-reported count — crawlDataLength is capped in memory */}
-              {streamedCrawledPages || 0}
-            </tspan>
-            <tspan
-              x={viewBox.cx}
-              y={(viewBox.cy || 0) + 24}
-              className="fill-muted-foreground dark:fill-white/50 dark:text-white"
-            >
-              Pages
-            </tspan>
-          </text>
-        );
-      }
-      return null;
-    },
-    [streamedCrawledPages],
-  );
+  const totalDiscovered = (streamedTotalPages || 0).toLocaleString();
+
+  const cardStyle: React.CSSProperties = {
+    background: isDark ? "#171717" : "#F5F5F5",
+    backgroundImage: isDark
+      ? `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px),
+         linear-gradient(rgba(0,169,255,0.012) 1px, transparent 1px),
+         linear-gradient(90deg, rgba(0,169,255,0.012) 1px, transparent 1px)`
+      : `linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+         linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)`,
+    backgroundSize: isDark ? "100% 4px, 18px 18px, 18px 18px" : "18px 18px, 18px 18px",
+    border: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.08)"}`,
+  };
+
+  const mainPanelStyle: React.CSSProperties = {
+    background: isDark ? "rgba(57,57,58,0.25)" : "rgba(255,255,255,0.65)",
+    border: `1px solid ${isDark ? "rgba(0,169,255,0.1)" : "rgba(43,108,196,0.15)"}`,
+    boxShadow: isDark
+      ? "inset 0 0 40px rgba(0,169,255,0.03), 0 0 1px rgba(0,169,255,0.15)"
+      : "inset 0 2px 8px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.05)",
+  };
 
   return (
-    <Card className="flex flex-col dark:bg-gray-900 bg-slate-100 border-0 shadow-none">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Latest Crawl</CardTitle>
-        <CardDescription>{`${new Date().toLocaleString("default", {
-          month: "long",
-          day: "numeric",
-        })} ${new Date().getFullYear()}`}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+    <DarkCtx.Provider value={isDark}>
+      <div className="flex flex-col h-full px-4 py-4 overflow-hidden" style={cardStyle}>
+
+        {/* Primary counter */}
+        <div
+          className="flex flex-col items-center justify-center flex-1 mb-4 rounded shrink-0 min-h-[100px]"
+          style={mainPanelStyle}
         >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-              className="text-white"
-              // Ensure chart is always visible even with zero data
-              startAngle={90}
-              endAngle={-270}
-            >
-              <Label content={renderLabel} />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col gap-2 text-xs dark:text-white/50">
-        <div className="leading-none text-muted-foreground">
-          This session has recorded {sessionCrawls || 0} crawls.
+          <DigitRow value={streamedTotalPages || 0} paletteKey="cyan" size="lg" />
+          <span
+            className="mt-3 text-[9px] font-mono tracking-[0.4em] uppercase"
+            style={{ color: isDark ? "rgba(0,169,255,0.25)" : "rgba(43,108,196,0.4)" }}
+          >
+            PAGES FOUND
+          </span>
         </div>
-        <div className="flex items-center gap-3 font-medium leading-none">
-          With a total of{" "}
-          {streamedTotalPages || 0}{" "}
-          pages discovered
-          <TrendingUp className="h-5 w-4" aria-hidden="true" />
+
+        {/* 2×2 stat grid */}
+        <div className="grid grid-cols-2 gap-4 mb-4 pb-6 shrink-0">
+          <StatTile label="TOTAL LINKS"    value={totalLinks} paletteKey="green"  />
+          <StatTile label="4XX"            value={failed4xx}       paletteKey="orange" />
+          <StatTile label="5XX"            value={failed5xx}       paletteKey="red"    />
+          <StatTile label="NON-INDEXABLE"  value={nonIndexable}    paletteKey="violet" />
         </div>
-      </CardFooter>
-    </Card>
+
+        {/* Footer */}
+        <div
+          className="shrink-0 pt-2.5 flex items-center justify-between"
+          style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)"}` }}
+        >
+          <span className="text-[9px] font-mono" style={{ color: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.3)" }}>
+            {sessionCrawls} crawl{sessionCrawls !== 1 ? "s" : ""} this session
+          </span>
+          <span className="text-[9px] font-mono" style={{ color: isDark ? "rgba(0,169,255,0.2)" : "rgba(43,108,196,0.4)" }}>
+            {totalDiscovered} found
+          </span>
+        </div>
+      </div>
+    </DarkCtx.Provider>
   );
 }
 
