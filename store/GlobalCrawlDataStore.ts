@@ -62,6 +62,7 @@ interface CrawlStore {
     files: any[];
   };
   setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
+  appendAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
   maxUrlsStored: number;
   isPaused: boolean;
   isStopped: boolean;
@@ -130,6 +131,7 @@ interface CrawlStore {
       setFavicon: (favicon: string) => void;
       selectURL: (url: string) => void;
       setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
+      appendAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
       fetchMaxUrlsStored: () => Promise<void>;
     };
     ui: {
@@ -173,6 +175,19 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           ...data,
         },
       })),
+    appendAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) =>
+      set((state) => {
+        const merged: CrawlStore["aggregatedData"] = { ...state.aggregatedData };
+        for (const key of Object.keys(data) as Array<keyof typeof data>) {
+          const incoming = data[key];
+          if (Array.isArray(incoming) && Array.isArray(merged[key])) {
+            (merged as any)[key] = [...(merged[key] as any[]), ...incoming];
+          } else if (incoming !== undefined) {
+            (merged as any)[key] = incoming;
+          }
+        }
+        return { aggregatedData: merged };
+      }),
     fetchMaxUrlsStored: async () => {
       try {
         const { invoke } = await import("@tauri-apps/api/core");
@@ -414,6 +429,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setCookies: setters.setCookies,
         setFavicon: setters.setFavicon,
         setAggregatedData: setters.setAggregatedData,
+        appendAggregatedData: setters.appendAggregatedData,
         fetchMaxUrlsStored: setters.fetchMaxUrlsStored,
         selectURL: async (url: string) => {
           const state = get();

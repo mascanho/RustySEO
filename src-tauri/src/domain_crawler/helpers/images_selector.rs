@@ -88,15 +88,11 @@ pub async fn fetch_image_details(
     image_semaphore: std::sync::Arc<tokio::sync::Semaphore>,
 ) -> Result<Vec<(String, String, u64, String, u16, bool)>, String> {
     let client = client.clone();
-    let results: Vec<_> = stream::iter(image_urls_and_alts.into_iter().enumerate())
-        .map(|(index, (image_url, alt, is_size_not_specified))| {
+    let results: Vec<_> = stream::iter(image_urls_and_alts.into_iter())
+        .map(|(image_url, alt, is_size_not_specified)| {
             let client_ref = client.clone();
             let semaphore = image_semaphore.clone();
             async move {
-                // Stagger image requests globally to prevent instantaneous bursts (100ms per index offset)
-                // This spreads 50 images across 5 seconds instead of 0 seconds.
-                tokio::time::sleep(tokio::time::Duration::from_millis((index as u64) * 100)).await;
-
                 let url_string = image_url.to_string();
 
                 let _permit = match semaphore.acquire().await {

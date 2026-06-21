@@ -670,6 +670,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.max_delay = val as u64;
     }
 
+    if let Some(val) = updates.get("min_crawl_delay").and_then(|v| v.as_integer()) {
+        settings.min_crawl_delay = val as u64;
+    }
+
     if let Some(val) = updates.get("max_urls_stored").and_then(|v| v.as_integer()) {
         settings.max_urls_stored = val as usize;
     }
@@ -812,7 +816,7 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     }
 
     if let Some(val) = updates
-        .get("max_concurrent_requests")
+        .get("max_pending_time")
         .and_then(|v| v.as_integer())
     {
         settings.max_pending_time = val as u64;

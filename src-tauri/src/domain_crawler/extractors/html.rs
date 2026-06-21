@@ -1,10 +1,13 @@
 use crate::domain_crawler::db_deep::db::{fetch_custom_search, ExtractorConfig};
 use scraper::{Html, Selector};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use tokio::sync::OnceCell;
 
 // Global cache for custom_search results
 static CUSTOM_SEARCH_CACHE: OnceCell<Mutex<Option<Vec<ExtractorConfig>>>> = OnceCell::const_new();
+// Timestamp (seconds since epoch) of the last DB fetch — throttles to once per 60s.
+static LAST_CACHE_FETCH_SECS: AtomicU64 = AtomicU64::new(0);
 
 async fn get_custom_search() -> &'static Mutex<Option<Vec<ExtractorConfig>>> {
     CUSTOM_SEARCH_CACHE
@@ -25,18 +28,32 @@ async fn fetch_and_update_cache() -> Result<(), String> {
     // Compare new data with cached data
     if let Some(cached_data) = &*cache_lock {
         if *cached_data == new_data {
-            // println!("Data is the same, keeping the cache.");
             return Ok(());
         }
     }
 
     // Update the cache with new data
-    println!("Data has changed, updating the cache.");
     *cache_lock = Some(new_data);
     Ok(())
 }
 
 pub async fn update_cache() -> Result<(), String> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let last = LAST_CACHE_FETCH_SECS.load(Ordering::Relaxed);
+    // Only hit the DB at most once every 60 seconds across all concurrent tasks.
+    if now.saturating_sub(last) < 60 {
+        return Ok(());
+    }
+    // CAS to ensure only one concurrent task triggers the fetch.
+    if LAST_CACHE_FETCH_SECS
+        .compare_exchange(last, now, Ordering::Relaxed, Ordering::Relaxed)
+        .is_err()
+    {
+        return Ok(());
+    }
     fetch_and_update_cache().await
 }
 

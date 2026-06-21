@@ -415,7 +415,7 @@ impl Database {
                 }
                 "internal_links" => {
                     let mut stmt = conn.prepare(
-                        "SELECT json_extract(data, '$.url'), json_each.value 
+                        "SELECT json_extract(data, '$.url'), json_each.value
                          FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.internal')"
                     )?;
                     let rows = stmt.query_map([], |row| {
@@ -423,7 +423,7 @@ impl Database {
                         let link_json: String = row.get(1)?;
                         Ok((page_url, link_json))
                     })?;
-                    
+
                     let mut internal_links = Vec::new();
                     for row_res in rows {
                         if let Ok((page_url, link_json)) = row_res {
@@ -439,7 +439,7 @@ impl Database {
                 }
                 "external_links" => {
                     let mut stmt = conn.prepare(
-                        "SELECT json_extract(data, '$.url'), json_each.value 
+                        "SELECT json_extract(data, '$.url'), json_each.value
                          FROM domain_crawl, json_each(data, '$.inoutlinks_status_codes.external')"
                     )?;
                     let rows = stmt.query_map([], |row| {
@@ -447,7 +447,7 @@ impl Database {
                         let link_json: String = row.get(1)?;
                         Ok((page_url, link_json))
                     })?;
-                    
+
                     let mut external_links = Vec::new();
                     for row_res in rows {
                         if let Ok((page_url, link_json)) = row_res {
@@ -565,6 +565,58 @@ impl Database {
                 }
                 _ => Ok(Value::Null),
             }
+        })
+        .await?
+    }
+
+    /// Fetch a page of internal or external links with LIMIT/OFFSET.
+    /// `limit = 0` means no limit (returns all rows from `offset` onwards).
+    pub async fn get_links_page(
+        &self,
+        data_type: String,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Value, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+
+            let json_path = match data_type.as_str() {
+                "internal_links" => "$.inoutlinks_status_codes.internal",
+                "external_links" => "$.inoutlinks_status_codes.external",
+                _ => return Err(DatabaseError::QueryError(format!("Unknown link type: {}", data_type))),
+            };
+
+            // SQLite: LIMIT -1 means "no limit"; OFFSET still works correctly.
+            let effective_limit = if limit <= 0 { -1i64 } else { limit };
+
+            let sql = format!(
+                "SELECT json_extract(data, '$.url'), json_each.value \
+                 FROM domain_crawl, json_each(data, '{}') \
+                 LIMIT {} OFFSET {}",
+                json_path, effective_limit, offset
+            );
+
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map([], |row| {
+                let page_url: String = row.get(0)?;
+                let link_json: String = row.get(1)?;
+                Ok((page_url, link_json))
+            })?;
+
+            let mut links = Vec::new();
+            for row_res in rows {
+                if let Ok((page_url, link_json)) = row_res {
+                    if let Ok(mut link_obj) = serde_json::from_str::<Value>(&link_json) {
+                        if let Some(obj_map) = link_obj.as_object_mut() {
+                            obj_map.insert("page".to_string(), Value::String(page_url));
+                        }
+                        links.push(link_obj);
+                    }
+                }
+            }
+            Ok(Value::Array(links))
         })
         .await?
     }

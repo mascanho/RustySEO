@@ -395,6 +395,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 overview.totals.claude = stats.totals.claude;
                 overview.totals.status_codes = stats.totals.status_codes;
             }
+            // Emit first — UI loads from active_parsed_logs immediately, no need to wait for aggregations
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -402,6 +403,11 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     entries: Vec::new(),
                 },
             );
+            // Rebuild aggregation tables after emitting so the UI isn't blocked.
+            // active_path_ip_aggregations is rebuilt lazily on first access (too high-cardinality).
+            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                println!("Warning: Background aggregation rebuild failed: {}", e);
+            }
         }
     });
 
@@ -409,7 +415,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut total_requests = 0;
     let mut success_count = 0;
     let mut status_code_counts = StatusCodeCounts::new();
-    
+
     let mut log_start_time = String::new();
     let mut log_finish_time = String::new();
 
@@ -779,6 +785,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 overview.totals.claude = stats.totals.claude;
                 overview.totals.status_codes = stats.totals.status_codes;
             }
+            // Emit first — UI loads from active_parsed_logs immediately, no need to wait for aggregations
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -786,6 +793,11 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                     entries: Vec::new(),
                 },
             );
+            // Rebuild aggregation tables after emitting so the UI isn't blocked.
+            // active_path_ip_aggregations is rebuilt lazily on first access (too high-cardinality).
+            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                println!("Warning: Background aggregation rebuild failed: {}", e);
+            }
         }
     });
 
@@ -800,8 +812,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
-
-    // SEGMENTATION
 
     // SEGMENTATION
     let mut segments: HashMap<String, Segmentation> = HashMap::new();

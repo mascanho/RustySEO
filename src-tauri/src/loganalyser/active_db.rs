@@ -86,8 +86,9 @@ pub fn init_active_db() -> Result<(), String> {
     conn.execute_batch(
         "
         PRAGMA synchronous = OFF;
-        PRAGMA journal_mode = MEMORY;
-        PRAGMA cache_size = 10000;
+        PRAGMA journal_mode = WAL;
+        PRAGMA cache_size = 32768;
+        PRAGMA temp_store = MEMORY;
 
         CREATE TABLE IF NOT EXISTS active_parsed_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -383,6 +384,71 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     Ok(summary)
 }
 
+/// Rebuild core aggregation tables from active_parsed_logs in a single efficient pass.
+/// Skips active_path_ip_aggregations (high-cardinality — rebuilt lazily on first access).
+///
+/// Opens a DEDICATED connection instead of reusing DB_CONN so that concurrent reads
+/// from the frontend (triggered immediately after "log-analysis-complete") are not
+/// blocked. SQLite WAL mode allows readers on DB_CONN to proceed while this writer runs.
+pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA synchronous = OFF;
+         PRAGMA journal_mode = WAL;
+         PRAGMA cache_size = 32768;
+         PRAGMA temp_store = MEMORY;",
+    )
+    .map_err(|e| e.to_string())?;
+
+    conn.execute_batch("
+        BEGIN;
+
+        DELETE FROM active_path_aggregations;
+        INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+        SELECT path, crawler_type, segment, MAX(crawled), COUNT(*)
+        FROM active_parsed_logs GROUP BY path, crawler_type, segment;
+
+        DELETE FROM active_status_aggregations;
+        INSERT INTO active_status_aggregations (status, segment, hit_count)
+        SELECT status, segment, COUNT(*) FROM active_parsed_logs GROUP BY status, segment;
+
+        DELETE FROM active_method_aggregations;
+        INSERT INTO active_method_aggregations (method, segment, hit_count)
+        SELECT method, segment, COUNT(*) FROM active_parsed_logs GROUP BY method, segment;
+
+        DELETE FROM active_user_agent_aggregations;
+        INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
+        SELECT user_agent, segment, COUNT(*) FROM active_parsed_logs GROUP BY user_agent, segment;
+
+        DELETE FROM active_referer_aggregations;
+        INSERT INTO active_referer_aggregations (referer, segment, hit_count)
+        SELECT COALESCE(referer, '-'), segment, COUNT(*)
+        FROM active_parsed_logs GROUP BY COALESCE(referer, '-'), segment;
+
+        DELETE FROM active_browser_aggregations;
+        INSERT INTO active_browser_aggregations (browser, segment, hit_count)
+        SELECT browser, segment, COUNT(*) FROM active_parsed_logs GROUP BY browser, segment;
+
+        DELETE FROM active_path_verified_aggregations;
+        INSERT INTO active_path_verified_aggregations (path, crawler_type, verified, segment, hit_count)
+        SELECT path, crawler_type, verified, segment, COUNT(*)
+        FROM active_parsed_logs WHERE crawler_type != 'Human'
+        GROUP BY path, crawler_type, verified, segment;
+
+        DELETE FROM active_path_human_aggregations;
+        INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
+        SELECT path, browser, COALESCE(country, '-'), segment, COUNT(*)
+        FROM active_parsed_logs WHERE crawler_type = 'Human'
+        GROUP BY path, browser, COALESCE(country, '-'), segment;
+
+        COMMIT;
+    ").map_err(|e| e.to_string())
+}
+
 pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_mut().ok_or("DB not initialized")?;
@@ -398,17 +464,6 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             )
             .map_err(|e| e.to_string())?;
-
-        // Pre-aggregate the batch in memory to minimize DB hits for the aggregation table
-        let mut path_aggs: std::collections::HashMap<(String, String, String, bool), i64> = std::collections::HashMap::new();
-        let mut status_aggs: HashMap<(i32, String), i64> = HashMap::new();
-        let mut method_aggs: HashMap<(String, String), i64> = HashMap::new();
-        let mut ua_aggs: HashMap<(String, String), i64> = HashMap::new();
-        let mut referer_aggs: HashMap<(String, String), i64> = HashMap::new();
-        let mut browser_aggs: HashMap<(String, String), i64> = HashMap::new();
-        let mut path_verified_aggs: HashMap<(String, String, bool, String), i64> = HashMap::new();
-        let mut path_ip_aggs: HashMap<(String, String, String), i64> = HashMap::new();
-        let mut path_human_aggs: HashMap<(String, String, String, String), i64> = HashMap::new();
 
         for entry in entries {
             stmt.execute(params![
@@ -438,134 +493,6 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
                 entry.crawled
             ])
             .map_err(|e| e.to_string())?;
-
-            // Track aggregations
-            let key = (entry.path.clone(), entry.crawler_type.clone(), entry.segment.clone(), entry.crawled);
-            *path_aggs.entry(key).or_insert(0) += 1;
-
-            let status_key = (entry.status as i32, entry.segment.clone());
-            *status_aggs.entry(status_key).or_insert(0) += 1;
-
-            let method_key = (entry.method.clone(), entry.segment.clone());
-            *method_aggs.entry(method_key).or_insert(0) += 1;
-
-            let ua_key = (entry.user_agent.clone(), entry.segment.clone());
-            *ua_aggs.entry(ua_key).or_insert(0) += 1;
-
-            let referer_key = (entry.referer.clone().unwrap_or_else(|| "-".to_string()), entry.segment.clone());
-            *referer_aggs.entry(referer_key).or_insert(0) += 1;
-
-            let browser_key = (entry.browser.clone(), entry.segment.clone());
-            *browser_aggs.entry(browser_key).or_insert(0) += 1;
-
-            if entry.crawler_type != "Human" {
-                let verified_key = (entry.path.clone(), entry.crawler_type.clone(), entry.verified, entry.segment.clone());
-                *path_verified_aggs.entry(verified_key).or_insert(0) += 1;
-            }
-
-            let ip_key = (entry.path.clone(), entry.ip.clone(), entry.segment.clone());
-            *path_ip_aggs.entry(ip_key).or_insert(0) += 1;
-
-            if entry.crawler_type == "Human" {
-                let human_key = (
-                    entry.path.clone(), 
-                    entry.browser.clone(), 
-                    entry.country.clone().unwrap_or_else(|| "-".to_string()), 
-                    entry.segment.clone()
-                );
-                *path_human_aggs.entry(human_key).or_insert(0) += 1;
-            }
-        }
-
-        // Update the aggregation table in bulk
-        let mut agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(path, crawler_type, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count, crawled = excluded.crawled"
-        ).map_err(|e| e.to_string())?;
-
-        for ((path, crawler, segment, crawled), count) in path_aggs {
-            agg_stmt.execute(params![path, crawler, segment, crawled, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut status_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_status_aggregations (status, segment, hit_count)
-             VALUES (?, ?, ?)
-             ON CONFLICT(status, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((status, segment), count) in status_aggs {
-            status_agg_stmt.execute(params![status, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut method_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_method_aggregations (method, segment, hit_count)
-             VALUES (?, ?, ?)
-             ON CONFLICT(method, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((method, segment), count) in method_aggs {
-            method_agg_stmt.execute(params![method, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut ua_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
-             VALUES (?, ?, ?)
-             ON CONFLICT(user_agent, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((ua, segment), count) in ua_aggs {
-            ua_agg_stmt.execute(params![ua, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut referer_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_referer_aggregations (referer, segment, hit_count)
-             VALUES (?, ?, ?)
-             ON CONFLICT(referer, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((referer, segment), count) in referer_aggs {
-            referer_agg_stmt.execute(params![referer, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut browser_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_browser_aggregations (browser, segment, hit_count)
-             VALUES (?, ?, ?)
-             ON CONFLICT(browser, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((browser, segment), count) in browser_aggs {
-            browser_agg_stmt.execute(params![browser, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut verified_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_verified_aggregations (path, crawler_type, verified, segment, hit_count)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(path, crawler_type, verified, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((path, crawler, verified, segment), count) in path_verified_aggs {
-            verified_agg_stmt.execute(params![path, crawler, verified, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut ip_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_ip_aggregations (path, ip, segment, hit_count)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(path, ip, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((path, ip, segment), count) in path_ip_aggs {
-            ip_agg_stmt.execute(params![path, ip, segment, count]).map_err(|e| e.to_string())?;
-        }
-
-        let mut human_agg_stmt = tx.prepare_cached(
-            "INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(path, browser, country, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count"
-        ).map_err(|e| e.to_string())?;
-
-        for ((path, browser, country, segment), count) in path_human_aggs {
-            human_agg_stmt.execute(params![path, browser, country, segment, count]).map_err(|e| e.to_string())?;
         }
     }
     tx.commit().map_err(|e| e.to_string())?;
@@ -2891,8 +2818,28 @@ pub fn get_active_path_ip_aggregations(
     search_query: Option<String>,
 ) -> Result<ActivePathIPAggregationsPage, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+
+    // Lazy rebuild: if the IP table is empty but we have parsed logs, rebuild it now.
+    // This table is skipped during bulk ingest (too high-cardinality) and built on first access.
+    let ip_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |r| r.get(0))
+        .unwrap_or(0);
+    if ip_count == 0 {
+        let log_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM active_parsed_logs LIMIT 1", [], |r| r.get(0))
+            .unwrap_or(0);
+        if log_count > 0 {
+            let _ = conn.execute_batch("
+                BEGIN;
+                DELETE FROM active_path_ip_aggregations;
+                INSERT INTO active_path_ip_aggregations (path, ip, segment, hit_count)
+                SELECT path, ip, segment, COUNT(*) FROM active_parsed_logs GROUP BY path, ip, segment;
+                COMMIT;
+            ");
+        }
+    }
 
     let mut clauses = vec!["1=1".to_string()];
     let mut params: Vec<rusqlite::types::Value> = Vec::new();

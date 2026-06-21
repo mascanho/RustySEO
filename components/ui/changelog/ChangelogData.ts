@@ -13,6 +13,8 @@ export const changelogData = [
       "Deep Crawler: Backend deduplication of URLs",
       "Deep Crawler: Pause, Resume and Stop crawl controls",
       "Deep Crawler: Fixed bug that was causing the crawler to stall on some websites",
+      "Deep Crawler: Fixed bug slowing crawls on very large websites",
+      "Deep Crawler: Dashboard Tab with historical data **Experimental**",
     ],
   },
   {

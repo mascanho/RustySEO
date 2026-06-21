@@ -173,6 +173,16 @@ pub async fn get_aggregated_crawl_data_command(data_type: String) -> Result<Valu
 }
 
 #[tauri::command]
+pub async fn get_links_page_command(
+    data_type: String,
+    limit: i64,
+    offset: i64,
+) -> Result<Value, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    db.get_links_page(data_type, limit, offset).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn get_incoming_links_command(target_url: String) -> Result<Value, String> {
     let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
     db.get_incoming_links(target_url).await.map_err(|e| e.to_string())

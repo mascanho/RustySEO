@@ -171,7 +171,7 @@ export default function Home() {
   });
 
   // Fetch aggregated data when tab changes
-  const { setAggregatedData } = useDataActions();
+  const { setAggregatedData, appendAggregatedData } = useDataActions();
   const aggregatedData = useGlobalCrawlStore(
     (state) => state.aggregatedData,
     shallow,
@@ -202,15 +202,39 @@ export default function Home() {
             });
             if (isSubscribed) setAggregatedData({ css: res || [] });
           } else if (activeTab === "internalLinks") {
-            const res = await invoke("get_aggregated_crawl_data_command", {
+            const PAGE_SIZE = 5000;
+            const first = (await invoke("get_links_page_command", {
               dataType: "internal_links",
-            });
-            if (isSubscribed) setAggregatedData({ internalLinks: res || [] });
+              limit: PAGE_SIZE,
+              offset: 0,
+            })) as any[];
+            if (isSubscribed) setAggregatedData({ internalLinks: first || [] });
+            if ((first?.length ?? 0) === PAGE_SIZE) {
+              const rest = (await invoke("get_links_page_command", {
+                dataType: "internal_links",
+                limit: 0,
+                offset: PAGE_SIZE,
+              })) as any[];
+              if (isSubscribed && rest?.length)
+                appendAggregatedData({ internalLinks: rest });
+            }
           } else if (activeTab === "externalLinks") {
-            const res = await invoke("get_aggregated_crawl_data_command", {
+            const PAGE_SIZE = 5000;
+            const first = (await invoke("get_links_page_command", {
               dataType: "external_links",
-            });
-            if (isSubscribed) setAggregatedData({ externalLinks: res || [] });
+              limit: PAGE_SIZE,
+              offset: 0,
+            })) as any[];
+            if (isSubscribed) setAggregatedData({ externalLinks: first || [] });
+            if ((first?.length ?? 0) === PAGE_SIZE) {
+              const rest = (await invoke("get_links_page_command", {
+                dataType: "external_links",
+                limit: 0,
+                offset: PAGE_SIZE,
+              })) as any[];
+              if (isSubscribed && rest?.length)
+                appendAggregatedData({ externalLinks: rest });
+            }
           } else if (activeTab === "keywords") {
             const res = await invoke("get_aggregated_crawl_data_command", {
               dataType: "keywords",

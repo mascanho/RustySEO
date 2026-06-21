@@ -338,7 +338,6 @@ pub async fn crawl_domain(
             continue;
         }
 
-        // The ActiveTaskGuard is created inside the tokio::spawn block to ensure it covers the entire task life
         for (url, depth) in to_spawn {
             let client_clone = client.clone();
             let base_url_clone = base_url.clone();
@@ -355,12 +354,11 @@ pub async fn crawl_domain(
 
             tokio::spawn(async move {
                 let url_str = url.to_string();
-                let _active_guard = {
+                {
                     let mut state_guard = state_clone.lock().await;
                     state_guard.active_tasks += 1;
                     state_guard.active_urls.insert(url_str.clone());
-                    CrawlerState::enter_task(state_clone.clone(), url_str.clone())
-                };
+                }
                 let _permit = semaphore_clone.acquire().await.unwrap();
 
                 loop {
@@ -466,7 +464,9 @@ pub async fn crawl_domain(
                             
                             tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms and pausing new tasks for {}ms", status, new_val, cooldown_ms);
                         } else if status >= 200 && status < 300 {
-                            // Speed up (decrease delay) — only decrease by 3% for stability
+                            // Speed up (decrease delay) — 3% per success to stay conservative.
+                            // Recovering faster risks more frequent 429s which trigger
+                            // 5000ms+ cooldowns, hurting overall throughput.
                             let current = current_atomic_delay_clone.load(Ordering::Relaxed);
                             let decrement = std::cmp::max((current as f32 * 0.03) as u64, 25);
                             let new_val = current.saturating_sub(decrement).max(min_crawl_delay);
@@ -504,6 +504,8 @@ pub async fn crawl_domain(
 
                 let mut state_guard = state_clone.lock().await;
                 state_guard.pending_urls.remove(&url_str);
+                state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
+                state_guard.active_urls.remove(&url_str);
 
                 if let Err(e) = result {
                     tracing::error!("Failed to process {}: {}", url_str, e);

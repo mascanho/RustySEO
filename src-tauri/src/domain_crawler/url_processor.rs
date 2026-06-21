@@ -8,7 +8,7 @@ use std::time::Instant;
 use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
-use tokio::time::{sleep, Duration};
+use tokio::time::Duration;
 use url::Url;
 
 use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
@@ -188,13 +188,6 @@ pub async fn process_url(
 
     let mut cookies_data = cookies::extract_cookies(&response);
 
-    if response.headers().contains_key("cf-ray")
-        || response.headers().contains_key("x-cdn")
-        || response.headers().contains_key("x-cache")
-    {
-        // Increased for better politeness on CDNs
-        sleep(Duration::from_millis(500)).await;
-    }
 
     // Skip binary content types early to avoid downloading large non-HTML payloads.
     if let Some(ref ct) = content_type {
@@ -277,12 +270,9 @@ pub async fn process_url(
             short_lower.contains("access denied")
             || short_lower.contains("rate limit")
             || short_lower.contains("too many requests")
-            || short_lower.contains("forbidden")
             || short_lower.contains("one more step") // Cloudflare short
             || short_lower.contains("unusual traffic") // Google/AWS block
             || short_lower.contains("bot detection")
-            || short_lower.contains("error")
-            || short_lower.contains("blocked")
         );
         is_large_block || is_short_block
     };
