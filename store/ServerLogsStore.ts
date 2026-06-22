@@ -166,6 +166,7 @@ interface LogAnalysisState {
   overview: LogAnalysisOverview;
   widgetAggs: WidgetAggregations | null;
   isLoading: boolean;
+  isProcessingLogs: boolean;
   error: string | null;
   filters: Filters;
   activeFilters: ActiveFilters;
@@ -264,6 +265,7 @@ interface LogAnalysisActions {
   resetFilters: () => void;
   resetAll: () => void;
   setLoading: (isLoading: boolean) => void;
+  setIsProcessingLogs: (processing: boolean) => void;
   setError: (error: string | null) => void;
   clearEntries: () => void;
   setTotalCount: (count: number) => void;
@@ -337,6 +339,7 @@ const defaultTotals: CrawlerTotals = {
 const initialState: LogAnalysisState = {
   entries: [],
   allFilteredLogs: [],
+  isProcessingLogs: false,
   overview: {
     message: "",
     line_count: 0,
@@ -765,6 +768,11 @@ export const useLogAnalysisStore = create<
     setLoading: (isLoading) =>
       set((state) => {
         state.isLoading = isLoading;
+      }),
+
+    setIsProcessingLogs: (processing) =>
+      set((state) => {
+        state.isProcessingLogs = processing;
       }),
 
     setError: (error) =>

@@ -107,6 +107,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const { allProjects, setAllProjects } = useAllProjects();
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
+  const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
   const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
@@ -243,6 +245,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           [projectName]: true,
           [`${projectName}-${action}`]: true,
         }));
+        setIsProcessingLogs(true);
 
         if (action === "replace") {
           resetAll();
@@ -258,12 +261,16 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         toast.success(`Project ${projectName} processed successfully`);
       } catch (err) {
         console.error("Processing failed:", err);
+        setIsProcessingLogs(false);
         toast.error(
           <section className="w-full">
             {err instanceof Error ? err.message : String(err)}
           </section>,
         );
       } finally {
+        // Only clear the button spinner here. The global isProcessingLogs flag
+        // is cleared by page.tsx after fetchLogsFromDb + fetchWidgetAggregations
+        // finish — keeping the loader alive until data is truly ready.
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: false,
@@ -286,6 +293,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           ...prev,
           [loadingKey]: true,
         }));
+        setIsProcessingLogs(true);
 
         if (action === "replace") {
           resetAll();
@@ -303,6 +311,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         toast.success("Log processed successfully");
       } catch (err) {
         console.error("Processing failed:", err);
+        setIsProcessingLogs(false);
         toast.error(
           <section className="w-full">
             {err instanceof Error ? err.message : String(err)}
@@ -411,9 +420,17 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
               {/* Right Column - Project Logs */}
               <div>
-                <h3 className="text-lg dark:text-white font-semibold text-left">
-                  Assigned Logs
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg dark:text-white font-semibold text-left">
+                    Assigned Logs
+                  </h3>
+                  {isProcessingLogs && (
+                    <span className="flex items-center gap-1 text-[10px] text-brand-bright">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading data…
+                    </span>
+                  )}
+                </div>
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[29rem] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />

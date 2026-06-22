@@ -16,7 +16,7 @@ import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
 import WidgetLogs from "./_components/WidgetLogs";
 import { toast, Toaster } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLogAnalysisStore } from "@/store/ServerLogsStore";
@@ -98,6 +98,12 @@ export default function Page() {
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
   const setTotalCount = useLogAnalysisStore((state) => state.setTotalCount);
+  const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
+
+  // Throttle chunk state updates — log-analysis-complete always does a full replace,
+  // so intermediate chunk updates only need to fire occasionally for progress display.
+  const lastChunkUpdateRef = useRef<number>(0);
+  const CHUNK_THROTTLE_MS = 1500;
   // const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
@@ -137,13 +143,10 @@ export default function Page() {
 
   // FETCH THE GOOGLE'S IP AND HAVE IT READY TO BE USED BY THE BE
   useEffect(() => {
-    try {
-      // Fetch all IP ranges to verify IPs from Google, OpenAI and BING
-      invoke("fetch_all_bot_ranges", {});
-    } catch (error) {
-      console.error("Error loading taxonomies:", error);
+    invoke("fetch_all_bot_ranges", {}).catch((error) => {
+      console.error("Error loading bot IP ranges:", error);
       toast.error("RustySEO failed to load Google's IP ranges");
-    }
+    });
   }, []);
 
   // SHORTCUT TO CLEAR ALL THE LOGS
@@ -182,10 +185,10 @@ export default function Page() {
   // Listen to TAURI EVENTS STREAMING THE DATA FROM THE BACKEND
   useEffect(() => {
     let isMounted = true;
+    let cleanupListeners: (() => void) | undefined;
 
     const setupListeners = async () => {
       try {
-        //TODO: IMPLEMENT A LOADER HERE
         const unlistenProgress = await listen<ProgressUpdate>(
           "progress-update",
           ({ payload }) => isMounted && setProgress(payload),
@@ -195,7 +198,14 @@ export default function Page() {
           "log-analysis-chunk",
           ({ payload }) => {
             if (!isMounted) return;
-            // Single setLogData call per chunk — avoids 2x state updates + re-renders
+            // Throttle to at most once per CHUNK_THROTTLE_MS. With large datasets
+            // (e.g. 21 logs × 200k lines) chunks arrive faster than the JS main
+            // thread can merge and reconcile, causing the beach ball. The
+            // log-analysis-complete handler does a full replace anyway, so skipping
+            // intermediate chunks only reduces progress granularity, not correctness.
+            const now = Date.now();
+            if (now - lastChunkUpdateRef.current < CHUNK_THROTTLE_MS) return;
+            lastChunkUpdateRef.current = now;
             if (payload.entries?.length || payload.overview) {
               setLogData({
                 entries: payload.entries || [],
@@ -241,12 +251,15 @@ export default function Page() {
               await useLogAnalysisStore
                 .getState()
                 .fetchWidgetAggregations(defaultFilters);
+
+              // Mark processing fully done — after all DB fetches complete.
+              // LogsDBprojectsManager reads this to clear its loader.
+              if (isMounted) setIsProcessingLogs(false);
             }
           },
-          // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
         );
 
-        return () => {
+        cleanupListeners = () => {
           unlistenProgress();
           unlistenChunk();
           unlistenComplete();
@@ -260,8 +273,9 @@ export default function Page() {
 
     return () => {
       isMounted = false;
+      cleanupListeners?.();
     };
-  }, [setLogData, fetchLogsFromDb, setTotalCount]);
+  }, [setLogData, fetchLogsFromDb, setTotalCount, setIsProcessingLogs]);
 
   // useEffect(() => {
   //   if (window) {
@@ -281,20 +295,6 @@ export default function Page() {
   }, []);
 
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
-
-  // CLEAR THE TABLE FROM THE LOGS IN THE DB
-  useEffect(() => {
-    async function clearDB() {
-      try {
-        await invoke("clear_all_log_data_command");
-        resetAll();
-      } catch (error) {
-        console.error("Failed to clear database:", error);
-      }
-    }
-
-    clearDB();
-  }, [resetAll]);
 
   return (
     <section className="flex flex-col dark:bg-brand-darker  w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
