@@ -29,40 +29,54 @@ function computeStats(data: any[]) {
 }
 
 // ─── Single digit cell ────────────────────────────────────────────────────────
-const DigitCell = memo(({ char, paletteKey, size }: {
+// fontSize is computed by DigitRow and passed down — cells are purely presentational
+const DigitCell = memo(({ char, paletteKey, fontSize }: {
   char: string;
   paletteKey: PaletteKey;
-  size: "lg" | "md";
+  fontSize: number;
 }) => {
   const isDark = useContext(DarkCtx);
   const theme  = PALETTE[paletteKey][isDark ? "dark" : "light"];
-  const dims   = size === "lg" ? "w-[30px] h-[50px] text-[30px]" : "w-[22px] h-[38px] text-[22px]";
+  const w = Math.round(fontSize * 1.0);
+  const h = Math.round(fontSize * 1.64);
   return (
-    <span className={`relative inline-flex items-center justify-center ${dims} bg-[#39393a]/60 dark:bg-[#39393a]/60 border border-white/[0.06] rounded-[3px] font-mono font-bold leading-none select-none overflow-hidden`}
-      style={{ background: isDark ? "rgba(57,57,58,0.6)" : "rgba(229,231,235,0.7)" }}
+    <span
+      className="relative inline-flex items-center justify-center rounded-[2px] font-mono font-bold leading-none select-none overflow-hidden border"
+      style={{
+        width: w, height: h, fontSize,
+        background: isDark ? "rgba(57,57,58,0.6)" : "rgba(229,231,235,0.7)",
+        borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+      }}
     >
       <span
-        className={`absolute inset-0 flex items-center justify-center font-mono ${dims.split(" ")[2]} font-bold`}
+        className="absolute inset-0 flex items-center justify-center font-mono font-bold"
         aria-hidden="true"
-        style={{ color: `${theme.color}14` }}
+        style={{ fontSize, color: `${theme.color}14` }}
       >8</span>
-      <span className="relative z-10" style={{ color: theme.color, textShadow: theme.shadow }}>{char}</span>
+      <span className="relative z-10" style={{ fontSize, color: theme.color, textShadow: theme.shadow }}>{char}</span>
     </span>
   );
 });
 DigitCell.displayName = "DigitCell";
 
-// ─── Row of digit cells ───────────────────────────────────────────────────────
-const DigitRow = memo(({ value, paletteKey, size = "md" }: {
+// ─── Row of digit cells — scales down automatically as digit count grows ──────
+const DigitRow = memo(({ value, paletteKey, baseSize = 22 }: {
   value: number;
   paletteKey: PaletteKey;
-  size?: "lg" | "md";
+  baseSize?: number;
 }) => {
-  const str = String(Math.max(0, value)) || "0";
+  const str    = String(Math.max(0, value)) || "0";
+  const count  = str.length;
+  // Start shrinking once digit count exceeds the threshold for this base size
+  const threshold = baseSize >= 28 ? 7 : 5;
+  const minSize   = baseSize >= 28 ? 14 : 9;
+  const scale     = count > threshold ? threshold / count : 1;
+  const fontSize  = Math.max(Math.round(baseSize * scale), minSize);
+  const gap       = Math.max(2, Math.round(4 * scale));
   return (
-    <div className="flex gap-[4px]">
+    <div className="flex justify-center" style={{ gap }}>
       {str.split("").map((c, i) => (
-        <DigitCell key={i} char={c} paletteKey={paletteKey} size={size} />
+        <DigitCell key={i} char={c} paletteKey={paletteKey} fontSize={fontSize} />
       ))}
     </div>
   );
@@ -91,7 +105,7 @@ const StatTile = memo(({ label, value, paletteKey }: {
       >
         {label}
       </span>
-      <DigitRow value={value} paletteKey={paletteKey} size="md" />
+      <DigitRow value={value} paletteKey={paletteKey} baseSize={16} />
     </div>
   );
 });
@@ -195,12 +209,12 @@ function OverviewChart() {
           className="flex flex-col items-center justify-center flex-1 mb-4 rounded shrink-0 min-h-[100px]"
           style={mainPanelStyle}
         >
-          <DigitRow value={streamedTotalPages || 0} paletteKey="cyan" size="lg" />
+          <DigitRow value={crawled} paletteKey="cyan" baseSize={30} />
           <span
-            className="mt-3 text-[9px] font-mono tracking-[0.4em] uppercase"
+            className="mt-3 text-[11px] font-mono tracking-[0.35em] uppercase"
             style={{ color: isDark ? "rgba(0,169,255,0.25)" : "rgba(43,108,196,0.4)" }}
           >
-            PAGES FOUND
+            PAGES CRAWLED
           </span>
         </div>
 
