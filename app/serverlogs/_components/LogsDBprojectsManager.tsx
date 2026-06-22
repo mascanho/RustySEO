@@ -99,9 +99,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const [isLoading, setIsLoading] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState(new Set());
   const [DBprojects, setDBprojects] = useState([]);
-  const [loadingProjects, setLoadingProjects] = useState<
-    Record<string, boolean>
-  >({});
+  const [loadingProjects, setLoadingProjects] = useState<Record<string, boolean>>({});
+  const [activeProject, setActiveProject] = useState<string | null>(null);
 
   // Global store
   const { allProjects, setAllProjects } = useAllProjects();
@@ -109,6 +108,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
   const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
+  const logProgress = useLogAnalysisStore((state) => state.logProgress);
   const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
@@ -214,6 +214,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     handleGetAllProjects();
   }, [handleGetAllProjects]);
 
+  // Clear activeProject once page.tsx signals all DB fetches are done
+  useEffect(() => {
+    if (!isProcessingLogs) setActiveProject(null);
+  }, [isProcessingLogs]);
+
   // Log level color
   const getLogLevelColor = useCallback((level: string) => {
     switch (level) {
@@ -240,17 +245,20 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       }
 
       try {
+        // For replace: clear state before setting processing flags so resetAll()
+        // doesn't overwrite isProcessingLogs(true) that we set immediately after.
+        if (action === "replace") {
+          resetAll();
+          await invoke("clear_active_db_command");
+        }
+
+        setActiveProject(projectName);
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: true,
           [`${projectName}-${action}`]: true,
         }));
         setIsProcessingLogs(true);
-
-        if (action === "replace") {
-          resetAll();
-          await invoke("clear_active_db_command");
-        }
 
         toast.info(`Processing logs for ${projectName}...`);
 
@@ -262,15 +270,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       } catch (err) {
         console.error("Processing failed:", err);
         setIsProcessingLogs(false);
+        setActiveProject(null);
         toast.error(
           <section className="w-full">
             {err instanceof Error ? err.message : String(err)}
           </section>,
         );
       } finally {
-        // Only clear the button spinner here. The global isProcessingLogs flag
-        // is cleared by page.tsx after fetchLogsFromDb + fetchWidgetAggregations
-        // finish — keeping the loader alive until data is truly ready.
         setLoadingProjects((prev) => ({
           ...prev,
           [projectName]: false,
@@ -289,16 +295,18 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     ) => {
       try {
         const loadingKey = `log-${logId}-${action}`;
-        setLoadingProjects((prev) => ({
-          ...prev,
-          [loadingKey]: true,
-        }));
-        setIsProcessingLogs(true);
 
         if (action === "replace") {
           resetAll();
           await invoke("clear_active_db_command");
         }
+
+        setActiveProject(projectName);
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [loadingKey]: true,
+        }));
+        setIsProcessingLogs(true);
 
         toast.info(`Processing single log...`);
 
@@ -312,6 +320,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       } catch (err) {
         console.error("Processing failed:", err);
         setIsProcessingLogs(false);
+        setActiveProject(null);
         toast.error(
           <section className="w-full">
             {err instanceof Error ? err.message : String(err)}
@@ -420,17 +429,9 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
               {/* Right Column - Project Logs */}
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg dark:text-white font-semibold text-left">
-                    Assigned Logs
-                  </h3>
-                  {isProcessingLogs && (
-                    <span className="flex items-center gap-1 text-[10px] text-brand-bright">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading data…
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
+                  Assigned Logs
+                </h3>
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[29rem] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
@@ -442,8 +443,21 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                       return (
                         <div
                           key={`${projectName}-${index}`}
-                          className="border-b dark:border-gray-700"
+                          className="relative border-b dark:border-gray-700"
                         >
+                          <div
+                            className="absolute bottom-0 left-0 h-[2px] bg-brand-bright"
+                            style={{
+                              width:
+                                activeProject === projectName && isProcessingLogs
+                                  ? `${Math.min(logProgress?.value ?? 0, 100)}%`
+                                  : "0%",
+                              transition:
+                                activeProject === projectName && isProcessingLogs
+                                  ? "width 500ms ease-out"
+                                  : "none",
+                            }}
+                          />
                           <div className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 dark:bg-slate-900/50">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center text-sm mb-2">
@@ -479,7 +493,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                     }`}
                                   />
                                 </Button>
+                                {activeProject === projectName && isProcessingLogs && logProgress?.status && (
+                                  <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
+                                    {logProgress.status.split(" — ")[0].replace("Log ", "").replace(" of ", "/")}
+                                  </span>
+                                )}
                               </div>
+
                             </div>
                             {["append", "replace"].map((action) => (
                               <div key={action} className="flex items-center">

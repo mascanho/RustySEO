@@ -41,10 +41,12 @@ export function TimelineChart() {
     (state) => state.fetchTimelineAggregations,
   );
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
 
   React.useEffect(() => {
+    if (isProcessingLogs) return;
     fetchTimelineAggregations(viewMode, activeFilters);
-  }, [viewMode, activeFilters, fetchTimelineAggregations]);
+  }, [viewMode, activeFilters, fetchTimelineAggregations, isProcessingLogs]);
 
   const chartData = React.useMemo(() => {
     if (!timelineData || timelineData.length === 0) return [];

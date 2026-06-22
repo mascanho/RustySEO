@@ -167,6 +167,7 @@ interface LogAnalysisState {
   widgetAggs: WidgetAggregations | null;
   isLoading: boolean;
   isProcessingLogs: boolean;
+  logProgress: { value: number; status: string } | null;
   error: string | null;
   filters: Filters;
   activeFilters: ActiveFilters;
@@ -266,6 +267,7 @@ interface LogAnalysisActions {
   resetAll: () => void;
   setLoading: (isLoading: boolean) => void;
   setIsProcessingLogs: (processing: boolean) => void;
+  setLogProgress: (progress: { value: number; status: string } | null) => void;
   setError: (error: string | null) => void;
   clearEntries: () => void;
   setTotalCount: (count: number) => void;
@@ -340,6 +342,7 @@ const initialState: LogAnalysisState = {
   entries: [],
   allFilteredLogs: [],
   isProcessingLogs: false,
+  logProgress: null,
   overview: {
     message: "",
     line_count: 0,
@@ -628,7 +631,15 @@ export const useLogAnalysisStore = create<
             state.overview.log_finish_time = incomingOverview.log_finish_time;
           }
 
-          // Increment totals
+          // Increment the scalar counters the UI actually reads.
+          // Everything else (bot_stats.page_frequencies, bot_pages arrays,
+          // segmentations, segment_summary) is skipped here because:
+          //  - None of those fields are read by any UI component from overview.totals
+          //    (WidgetTables use widgetAggs fetched from the DB on-demand)
+          //  - mergeFrequencyObjects / mergeBotStatsMap grow O(N²) as logs accumulate,
+          //    which is what causes the progressive slowdown around the 20th log
+          //  - log-analysis-complete's "replace" mode delivers the authoritative
+          //    final state from the backend, making intermediate merges redundant
           state.overview.totals.google += incomingTotals.google || 0;
           state.overview.totals.bing += incomingTotals.bing || 0;
           state.overview.totals.semrush += incomingTotals.semrush || 0;
@@ -637,110 +648,6 @@ export const useLogAnalysisStore = create<
           state.overview.totals.uptime += incomingTotals.uptime || 0;
           state.overview.totals.openai += incomingTotals.openai || 0;
           state.overview.totals.claude += incomingTotals.claude || 0;
-
-          // 2. MERGE additive structures ONLY when appending
-          // These are partial in the backend response when appending
-
-          // Merge Status Codes
-          if (incomingTotals.status_codes) {
-            state.overview.totals.status_codes = mergeStatusCodeCounts(
-              state.overview.totals.status_codes,
-              incomingTotals.status_codes
-            );
-          }
-
-          // Merge Bot Stats
-          if (incomingTotals.bot_stats) {
-            state.overview.totals.bot_stats = mergeBotStatsMap(
-              state.overview.totals.bot_stats,
-              incomingTotals.bot_stats
-            );
-          }
-
-          // Merge Segmentations
-          if (incomingOverview.segmentations) {
-            state.overview.segmentations = mergeSegmentations(
-              state.overview.segmentations,
-              incomingOverview.segmentations
-            );
-          }
-
-          // Merge Page Arrays
-          if (incomingTotals.google_bot_pages) {
-            state.overview.totals.google_bot_pages = [
-              ...new Set([
-                ...state.overview.totals.google_bot_pages,
-                ...incomingTotals.google_bot_pages,
-              ]),
-            ];
-          }
-          if (incomingTotals.bing_bot_pages) {
-            state.overview.totals.bing_bot_pages = [
-              ...new Set([
-                ...state.overview.totals.bing_bot_pages,
-                ...incomingTotals.bing_bot_pages,
-              ]),
-            ];
-          }
-          if (incomingTotals.openai_bot_pages) {
-            state.overview.totals.openai_bot_pages = [
-              ...new Set([
-                ...state.overview.totals.openai_bot_pages,
-                ...incomingTotals.openai_bot_pages,
-              ]),
-            ];
-          }
-          if (incomingTotals.claude_bot_pages) {
-            state.overview.totals.claude_bot_pages = [
-              ...new Set([
-                ...state.overview.totals.claude_bot_pages,
-                ...incomingTotals.claude_bot_pages,
-              ]),
-            ];
-          }
-
-          // Merge Frequencies
-          if (incomingTotals.google_bot_page_frequencies) {
-            state.overview.totals.google_bot_page_frequencies = mergeFrequencyObjects(
-              state.overview.totals.google_bot_page_frequencies,
-              incomingTotals.google_bot_page_frequencies
-            );
-          }
-          if (incomingTotals.bing_bot_page_frequencies) {
-            state.overview.totals.bing_bot_page_frequencies = mergeFrequencyObjects(
-              state.overview.totals.bing_bot_page_frequencies,
-              incomingTotals.bing_bot_page_frequencies
-            );
-          }
-          if (incomingTotals.openai_bot_page_frequencies) {
-            state.overview.totals.openai_bot_page_frequencies = mergeFrequencyObjects(
-              state.overview.totals.openai_bot_page_frequencies,
-              incomingTotals.openai_bot_page_frequencies
-            );
-          }
-          if (incomingTotals.claude_bot_page_frequencies) {
-            state.overview.totals.claude_bot_page_frequencies = mergeFrequencyObjects(
-              state.overview.totals.claude_bot_page_frequencies,
-              incomingTotals.claude_bot_page_frequencies
-            );
-          }
-        }
-
-
-        // Merge Segment Summary
-        if (incomingOverview.segment_summary) {
-          state.overview.segment_summary = {
-            total_segments: Math.max(
-              state.overview.segment_summary.total_segments,
-              incomingOverview.segment_summary.total_segments
-            ),
-            total_segment_requests:
-              state.overview.segment_summary.total_segment_requests +
-              (incomingOverview.segment_summary.total_segment_requests || 0),
-            average_requests_per_segment:
-              incomingOverview.segment_summary.average_requests_per_segment ||
-              state.overview.segment_summary.average_requests_per_segment,
-          };
         }
 
         // Update totalCount to trigger initial loads
@@ -773,6 +680,12 @@ export const useLogAnalysisStore = create<
     setIsProcessingLogs: (processing) =>
       set((state) => {
         state.isProcessingLogs = processing;
+        if (!processing) state.logProgress = null;
+      }),
+
+    setLogProgress: (progress) =>
+      set((state) => {
+        state.logProgress = progress;
       }),
 
     setError: (error) =>

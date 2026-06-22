@@ -122,6 +122,7 @@ export function LogAnalyzer() {
   );
   const tableIsFiltered = useLogAnalysisStore((state) => state.tableIsFiltered);
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -318,8 +319,14 @@ export function LogAnalyzer() {
     }
   };
 
-  // Fetch logs from DB when filters or page change
+  // Fetch logs from DB when filters or page change.
+  // Skipped while isProcessingLogs — the log-analysis-complete handler in page.tsx
+  // is the single source for DB fetches during processing, so running these
+  // concurrently on every totalCount change would fire 7+ queries per log (and grow
+  // with DB size), causing the progressive slowdown around the 20th log.
   useEffect(() => {
+    if (isProcessingLogs) return;
+
     const filters = {
       search_term: activeSearchTerm,
       status_filter: statusFilter,
@@ -355,7 +362,7 @@ export function LogAnalyzer() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [totalCount, activeSearchTerm, localFilters, currentPage, itemsPerPage]);
+  }, [totalCount, activeSearchTerm, localFilters, currentPage, itemsPerPage, isProcessingLogs]);
 
   // Reset to first page when search or filters change (except sorting)
   // We use a separate effect to avoid complex logic in the main fetch effect

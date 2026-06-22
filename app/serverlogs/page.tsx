@@ -38,8 +38,11 @@ interface CrawlResult {
 }
 
 interface ProgressUpdate {
-  progress: number;
-  status?: string;
+  currentFile: number;
+  totalFiles: number;
+  percentage: number;
+  filename: string;
+  phase: string;
 }
 
 interface LogEntry {
@@ -92,13 +95,15 @@ export default function Page() {
   const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
     "overall",
   );
-  const [progress, setProgress] = useState<ProgressUpdate | null>(null);
+  // progress is stored in the Zustand store (logProgress) so LogsDBprojectsManager
+  // can display it without prop-drilling
 
   // Select only the method we need to prevent Page from re-rendering on every log chunk
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
   const setTotalCount = useLogAnalysisStore((state) => state.setTotalCount);
   const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
+  const setLogProgress = useLogAnalysisStore((state) => state.setLogProgress);
 
   // Throttle chunk state updates — log-analysis-complete always does a full replace,
   // so intermediate chunk updates only need to fire occasionally for progress display.
@@ -191,7 +196,13 @@ export default function Page() {
       try {
         const unlistenProgress = await listen<ProgressUpdate>(
           "progress-update",
-          ({ payload }) => isMounted && setProgress(payload),
+          ({ payload }) => {
+            if (!isMounted) return;
+            setLogProgress({
+              value: payload.percentage ?? 0,
+              status: `Log ${payload.currentFile} of ${payload.totalFiles} — ${payload.filename} (${payload.phase})`,
+            });
+          },
         );
 
         const unlistenChunk = await listen<LogResult>(
@@ -207,9 +218,23 @@ export default function Page() {
             if (now - lastChunkUpdateRef.current < CHUNK_THROTTLE_MS) return;
             lastChunkUpdateRef.current = now;
             if (payload.entries?.length || payload.overview) {
+              // Strip the same large unused fields as the complete handler
+              const { totals, ...restOverview } = (payload.overview || {}) as any;
+              const {
+                google_bot_page_frequencies: _gbf,
+                bing_bot_page_frequencies: _bbf,
+                openai_bot_page_frequencies: _obf,
+                claude_bot_page_frequencies: _cbf,
+                google_bot_pages: _gbp,
+                bing_bot_pages: _bbp,
+                openai_bot_pages: _obp,
+                claude_bot_pages: _cbp,
+                bot_stats: _bs,
+                ...restTotals
+              } = totals || {};
               setLogData({
                 entries: payload.entries || [],
-                overview: payload.overview || {},
+                overview: { ...restOverview, totals: restTotals },
               });
             }
           },
@@ -219,9 +244,27 @@ export default function Page() {
           "log-analysis-complete",
           async ({ payload }) => {
             if (!isMounted) return;
-            console.log("Analysis complete", payload);
             if (payload.overview) {
-              setLogData({ overview: payload.overview }, "replace");
+              // Strip large fields no UI component reads from the store.
+              // bot_stats.page_frequencies, *_bot_page_frequencies, and *_bot_pages
+              // can contain millions of URL entries and are never read from Zustand —
+              // WidgetTables use fetchBotPathsAggregated (DB query) instead.
+              // Keeping them in state causes immer/React to churn on huge objects.
+              const { totals, ...restOverview } = payload.overview as any;
+              const {
+                google_bot_page_frequencies: _gbf,
+                bing_bot_page_frequencies: _bbf,
+                openai_bot_page_frequencies: _obf,
+                claude_bot_page_frequencies: _cbf,
+                google_bot_pages: _gbp,
+                bing_bot_pages: _bbp,
+                openai_bot_pages: _obp,
+                claude_bot_pages: _cbp,
+                bot_stats: _bs,
+                ...restTotals
+              } = totals || {};
+              const slimOverview = { ...restOverview, totals: restTotals };
+              setLogData({ overview: slimOverview }, "replace");
               setTotalCount(payload.overview.line_count || 0);
 
               // Update the latest batch in the history with the line count
@@ -275,7 +318,7 @@ export default function Page() {
       isMounted = false;
       cleanupListeners?.();
     };
-  }, [setLogData, fetchLogsFromDb, setTotalCount, setIsProcessingLogs]);
+  }, [setLogData, fetchLogsFromDb, setTotalCount, setIsProcessingLogs, setLogProgress]);
 
   // useEffect(() => {
   //   if (window) {

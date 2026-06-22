@@ -51,10 +51,12 @@ export function CrawlerTimelineBarChart() {
   const crawlerTimelineData = useLogAnalysisStore((state) => state.crawlerTimelineData);
   const fetchCrawlerAggregations = useLogAnalysisStore((state) => state.fetchCrawlerAggregations);
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
 
   React.useEffect(() => {
+    if (isProcessingLogs) return;
     fetchCrawlerAggregations(viewMode, activeFilters);
-  }, [viewMode, activeFilters, fetchCrawlerAggregations]);
+  }, [viewMode, activeFilters, fetchCrawlerAggregations, isProcessingLogs]);
 
   const chartData = React.useMemo(() => {
     if (!crawlerTimelineData || crawlerTimelineData.length === 0) return [];

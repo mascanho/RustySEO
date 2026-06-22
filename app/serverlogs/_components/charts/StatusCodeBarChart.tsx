@@ -47,10 +47,12 @@ export function StatusCodeBarChart() {
   const statusTimelineData = useLogAnalysisStore((state) => state.statusTimelineData);
   const fetchStatusAggregations = useLogAnalysisStore((state) => state.fetchStatusAggregations);
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
 
   React.useEffect(() => {
+    if (isProcessingLogs) return;
     fetchStatusAggregations(viewMode, activeFilters);
-  }, [viewMode, activeFilters, fetchStatusAggregations]);
+  }, [viewMode, activeFilters, fetchStatusAggregations, isProcessingLogs]);
 
   const chartData = React.useMemo(() => {
     if (!statusTimelineData || statusTimelineData.length === 0) return [];
