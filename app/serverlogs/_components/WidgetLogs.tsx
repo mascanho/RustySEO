@@ -629,7 +629,7 @@ export default function WidgetLogs() {
           type: "verified",
         },
         {
-          name: "IP Addresses Freqneucy",
+          name: "IP Addresses Frequency",
           value: data.ip_count || 0,
           type: "ip",
         },

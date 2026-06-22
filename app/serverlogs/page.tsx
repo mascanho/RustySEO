@@ -38,8 +38,8 @@ interface CrawlResult {
 }
 
 interface ProgressUpdate {
-  currentFile: number;
-  totalFiles: number;
+  current_file: number;
+  total_files: number;
   percentage: number;
   filename: string;
   phase: string;
@@ -200,7 +200,7 @@ export default function Page() {
             if (!isMounted) return;
             setLogProgress({
               value: payload.percentage ?? 0,
-              status: `Log ${payload.currentFile} of ${payload.totalFiles} — ${payload.filename} (${payload.phase})`,
+              status: `Log ${payload.current_file} of ${payload.total_files} — ${payload.filename} (${payload.phase})`,
             });
           },
         );

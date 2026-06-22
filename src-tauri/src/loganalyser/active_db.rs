@@ -277,8 +277,9 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     summary.verified_count = conn.query_row("SELECT COUNT(*) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
     summary.verified_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_verified_aggregations", [], |row| row.get(0)).unwrap_or(0);
     
-    summary.ip_count = conn.query_row("SELECT COUNT(*) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
-    summary.ip_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_ip_aggregations", [], |row| row.get(0)).unwrap_or(0);
+    // active_path_ip_aggregations is lazily built on first access — query the raw table instead
+    summary.ip_count = conn.query_row("SELECT COUNT(DISTINCT ip) FROM active_parsed_logs", [], |row| row.get(0)).unwrap_or(0);
+    summary.ip_hits = conn.query_row("SELECT COUNT(*) FROM active_parsed_logs", [], |row| row.get(0)).unwrap_or(0);
     
     summary.path_count = conn.query_row("SELECT COUNT(*) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
     summary.path_hits = conn.query_row("SELECT SUM(hit_count) FROM active_path_aggregations WHERE crawler_type != 'Human'", [], |row| row.get(0)).unwrap_or(0);
@@ -1377,7 +1378,28 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
     let (where_sql, params_vec) = build_where_clause(&filters);
     let mut aggs = WidgetAggregations::default();
 
-    // 1. File Types
+    // When no filters are active, query the pre-built aggregation tables (tiny) instead of
+    // scanning active_parsed_logs (potentially millions of rows). This is the hot path —
+    // every initial load hits here, and holding DB_CONN.lock() for seconds causes the
+    // beach-ball freeze because all other concurrent Tauri DB commands block on the mutex.
+    let use_agg_tables = filters.search_term.trim().is_empty()
+        && filters.status_filter.is_empty()
+        && filters.method_filter.is_empty()
+        && filters.file_type_filter.is_empty()
+        && filters.bot_filter.is_none()
+        && filters.bot_type_filter.is_none()
+        && filters.crawler_type_filter.is_none()
+        && filters.verified_filter.is_none()
+        && filters.taxonomy_filter.is_none()
+        && filters.referer_filter.is_none()
+        && filters.referer_categories.is_empty()
+        && filters.referer_specific.is_empty()
+        && filters.user_agent_filter.is_none()
+        && filters.user_agent_categories.is_empty()
+        && filters.user_agent_specific.is_empty()
+        && filters.crawl_status_filter.is_none();
+
+    // 1. File Types — no aggregation table, query raw table (idx_file_type helps)
     {
         let query = format!(
             "SELECT file_type, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY file_type",
@@ -1389,16 +1411,25 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (ft, count) = row.map_err(|e| e.to_string())?;
-            aggs.file_types
-                .insert(ft.unwrap_or_else(|| "Other".to_string()), count);
+            aggs.file_types.insert(ft.unwrap_or_else(|| "Other".to_string()), count);
         }
     }
 
     // 2. Taxonomy / Content
-    {
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT segment, SUM(hit_count) FROM active_status_aggregations GROUP BY segment")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (seg, count) = row.map_err(|e| e.to_string())?;
+            aggs.content.insert(seg.unwrap_or_else(|| "Other".to_string()), count);
+        }
+    } else {
         let query = format!(
             "SELECT segment, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY segment",
             where_sql
@@ -1409,16 +1440,25 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (tax, count) = row.map_err(|e| e.to_string())?;
-            aggs.content
-                .insert(tax.unwrap_or_else(|| "Other".to_string()), count);
+            aggs.content.insert(tax.unwrap_or_else(|| "Other".to_string()), count);
         }
     }
 
     // 3. Status Codes
-    {
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT status, SUM(hit_count) FROM active_status_aggregations GROUP BY status")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (st, count) = row.map_err(|e| e.to_string())?;
+            if st > 0 { aggs.status_codes.insert(st, count); }
+        }
+    } else {
         let query = format!(
             "SELECT status, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY status",
             where_sql
@@ -1429,17 +1469,25 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, u16>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (st, count) = row.map_err(|e| e.to_string())?;
-            if st > 0 {
-                aggs.status_codes.insert(st, count);
-            }
+            if st > 0 { aggs.status_codes.insert(st, count); }
         }
     }
 
-    // 4. User Agents (Top Strings for dropdown/examples)
-    {
+    // 4. User Agents (Top 500 for dropdown)
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT user_agent, SUM(hit_count) FROM active_user_agent_aggregations GROUP BY user_agent ORDER BY SUM(hit_count) DESC LIMIT 500")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (ua, count) = row.map_err(|e| e.to_string())?;
+            aggs.user_agents.insert(ua.unwrap_or_else(|| "Unknown".to_string()), count);
+        }
+    } else {
         let query = format!(
             "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 500",
             where_sql
@@ -1450,16 +1498,25 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (ua, count) = row.map_err(|e| e.to_string())?;
-            aggs.user_agents
-                .insert(ua.unwrap_or_else(|| "Unknown".to_string()), count);
+            aggs.user_agents.insert(ua.unwrap_or_else(|| "Unknown".to_string()), count);
         }
     }
 
-    // 5. User Agent Categories (Accurate Totals for Charts)
-    {
+    // 5. User Agent Categories — browser column is pre-computed during parsing, use agg table
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT browser, SUM(hit_count) FROM active_browser_aggregations GROUP BY browser ORDER BY SUM(hit_count) DESC")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (browser, count) = row.map_err(|e| e.to_string())?;
+            aggs.user_agent_categories.insert(browser.unwrap_or_else(|| "Other".to_string()), count);
+        }
+    } else {
         let bot_patterns = [
             ("googlebot", "Googlebot"),
             ("bingbot", "Bingbot"),
@@ -1472,21 +1529,16 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
             ("linkedinbot", "LinkedIn Bot"),
             ("applebot", "Apple Bot"),
         ];
-
         let mut case_parts = Vec::new();
         case_parts.push("WHEN (user_agent IS NULL OR user_agent = '' OR user_agent = '-' OR user_agent = 'Unknown') THEN 'Unknown/Empty'".to_string());
         for (p, cat) in bot_patterns {
-            case_parts.push(format!(
-                "WHEN LOWER(user_agent) LIKE '%{}%' THEN '{}'",
-                p, cat
-            ));
+            case_parts.push(format!("WHEN LOWER(user_agent) LIKE '%{}%' THEN '{}'", p, cat));
         }
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%bot%' OR LOWER(user_agent) LIKE '%crawler%' OR LOWER(user_agent) LIKE '%spider%') THEN 'Other Bots'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%curl%' THEN 'cURL'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%wget%' THEN 'Wget'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%postman%' THEN 'Postman'".to_string());
-        case_parts
-            .push("WHEN LOWER(user_agent) LIKE '%python%' THEN 'Python Requests'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%python%' THEN 'Python Requests'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Chrome'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%chrome%' AND LOWER(user_agent) LIKE '%mobile%') THEN 'Chrome Mobile'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%firefox%' AND LOWER(user_agent) NOT LIKE '%mobile%') THEN 'Firefox'".to_string());
@@ -1496,17 +1548,14 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         case_parts.push("WHEN LOWER(user_agent) LIKE '%edge%' THEN 'Microsoft Edge'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%opera%' THEN 'Opera'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%trident%' OR LOWER(user_agent) LIKE '%msie%') THEN 'Internet Explorer'".to_string());
-        case_parts
-            .push("WHEN LOWER(user_agent) LIKE '%android%' THEN 'Android Browser'".to_string());
+        case_parts.push("WHEN LOWER(user_agent) LIKE '%android%' THEN 'Android Browser'".to_string());
         case_parts.push("WHEN (LOWER(user_agent) LIKE '%iphone%' OR LOWER(user_agent) LIKE '%ipad%' OR LOWER(user_agent) LIKE '%ipod%') THEN 'iOS Browser'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%windows%' THEN 'Windows'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%mac os%' THEN 'macOS'".to_string());
         case_parts.push("WHEN LOWER(user_agent) LIKE '%linux%' THEN 'Linux'".to_string());
-
         let query = format!(
             "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
-            case_parts.join(" "),
-            where_sql
+            case_parts.join(" "), where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
         let rows = stmt
@@ -1514,15 +1563,25 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (cat, count) = row.map_err(|e| e.to_string())?;
             aggs.user_agent_categories.insert(cat, count);
         }
     }
 
-    // 6. Referrers (Top Strings for dropdown/examples)
-    {
+    // 6. Referrers (Top 500 for dropdown)
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT referer, SUM(hit_count) FROM active_referer_aggregations GROUP BY referer ORDER BY SUM(hit_count) DESC LIMIT 500")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (ref_str, count) = row.map_err(|e| e.to_string())?;
+            aggs.referrers.insert(ref_str.unwrap_or_else(|| "Direct/None".to_string()), count);
+        }
+    } else {
         let query = format!(
             "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 500",
             where_sql
@@ -1533,15 +1592,13 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (ref_str, count) = row.map_err(|e| e.to_string())?;
-            aggs.referrers
-                .insert(ref_str.unwrap_or_else(|| "Direct/None".to_string()), count);
+            aggs.referrers.insert(ref_str.unwrap_or_else(|| "Direct/None".to_string()), count);
         }
     }
 
-    // 7. Referrer Categories (Accurate Totals for Charts)
+    // 7. Referrer Categories — LIKE on the small agg table (not millions of raw rows)
     {
         let ref_patterns = [
             ("google.com", "Google"),
@@ -1575,37 +1632,60 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
             ("etsy.com", "Etsy"),
             ("shopify.com", "Shopify"),
         ];
-
         let mut case_parts = Vec::new();
         case_parts.push(
-            "WHEN (referer IS NULL OR referer = '' OR referer = '-') THEN 'Direct/None'"
-                .to_string(),
+            "WHEN (referer IS NULL OR referer = '' OR referer = '-') THEN 'Direct/None'".to_string(),
         );
         for (p, cat) in ref_patterns {
             case_parts.push(format!("WHEN LOWER(referer) LIKE '%{}%' THEN '{}'", p, cat));
         }
         case_parts.push("WHEN (LOWER(referer) LIKE '%localhost%' OR LOWER(referer) LIKE '%127.0.0.1%' OR LOWER(referer) LIKE '%::1%') THEN 'Local/Internal'".to_string());
 
-        let query = format!(
-            "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
-            case_parts.join(" "),
-            where_sql
-        );
-        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-        let rows = stmt
-            .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+        if use_agg_tables {
+            // LIKE on active_referer_aggregations (hundreds of rows) not millions of raw logs
+            let query = format!(
+                "SELECT CASE {} ELSE 'Other' END as cat, SUM(hit_count) FROM active_referer_aggregations GROUP BY cat",
+                case_parts.join(" ")
+            );
+            let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+            let rows = stmt.query_map([], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
-            })
-            .map_err(|e| e.to_string())?;
-
-        for row in rows {
-            let (cat, count) = row.map_err(|e| e.to_string())?;
-            aggs.referrer_categories.insert(cat, count);
+            }).map_err(|e| e.to_string())?;
+            for row in rows {
+                let (cat, count) = row.map_err(|e| e.to_string())?;
+                aggs.referrer_categories.insert(cat, count);
+            }
+        } else {
+            let query = format!(
+                "SELECT CASE {} ELSE 'Other' END as cat, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY cat",
+                case_parts.join(" "), where_sql
+            );
+            let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+                })
+                .map_err(|e| e.to_string())?;
+            for row in rows {
+                let (cat, count) = row.map_err(|e| e.to_string())?;
+                aggs.referrer_categories.insert(cat, count);
+            }
         }
     }
 
-    // 8. Crawler Types (Robots Only)
-    {
+    // 8. Crawler Types — use active_path_aggregations (pre-grouped, tiny)
+    if use_agg_tables {
+        let mut stmt = conn
+            .prepare("SELECT crawler_type, SUM(hit_count) FROM active_path_aggregations WHERE crawler_type != 'Human' AND crawler_type IS NOT NULL AND crawler_type != '' GROUP BY crawler_type")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+        }).map_err(|e| e.to_string())?;
+        for row in rows {
+            let (ct, count) = row.map_err(|e| e.to_string())?;
+            aggs.crawler_types.insert(ct, count);
+        }
+    } else {
         let query = format!(
             "SELECT crawler_type, COUNT(*) FROM active_parsed_logs WHERE {} AND crawler_type != 'Human' AND crawler_type IS NOT NULL AND crawler_type != '' GROUP BY crawler_type",
             where_sql
@@ -1616,7 +1696,6 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
                 Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
             })
             .map_err(|e| e.to_string())?;
-
         for row in rows {
             let (ct, count) = row.map_err(|e| e.to_string())?;
             aggs.crawler_types.insert(ct, count);

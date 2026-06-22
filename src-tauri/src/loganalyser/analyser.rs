@@ -377,6 +377,11 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         }
 
         if let Some(mut overview) = overview {
+            // Rebuild aggregation tables BEFORE emitting so get_widget_aggregations
+            // can query the small agg tables instead of scanning millions of raw rows.
+            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                println!("Warning: Background aggregation rebuild failed: {}", e);
+            }
             if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
                 overview.line_count = stats.line_count;
                 overview.unique_ips = stats.unique_ips;
@@ -395,7 +400,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 overview.totals.claude = stats.totals.claude;
                 overview.totals.status_codes = stats.totals.status_codes;
             }
-            // Emit first — UI loads from active_parsed_logs immediately, no need to wait for aggregations
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -403,11 +407,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     entries: Vec::new(),
                 },
             );
-            // Rebuild aggregation tables after emitting so the UI isn't blocked.
-            // active_path_ip_aggregations is rebuilt lazily on first access (too high-cardinality).
-            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
-                println!("Warning: Background aggregation rebuild failed: {}", e);
-            }
         }
     });
 
@@ -767,6 +766,11 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         }
 
         if let Some(mut overview) = overview {
+            // Rebuild aggregation tables BEFORE emitting so get_widget_aggregations
+            // can query the small agg tables instead of scanning millions of raw rows.
+            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                println!("Warning: Background aggregation rebuild failed: {}", e);
+            }
             if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
                 overview.line_count = stats.line_count;
                 overview.unique_ips = stats.unique_ips;
@@ -785,7 +789,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 overview.totals.claude = stats.totals.claude;
                 overview.totals.status_codes = stats.totals.status_codes;
             }
-            // Emit first — UI loads from active_parsed_logs immediately, no need to wait for aggregations
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -793,11 +796,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                     entries: Vec::new(),
                 },
             );
-            // Rebuild aggregation tables after emitting so the UI isn't blocked.
-            // active_path_ip_aggregations is rebuilt lazily on first access (too high-cardinality).
-            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
-                println!("Warning: Background aggregation rebuild failed: {}", e);
-            }
         }
     });
 
