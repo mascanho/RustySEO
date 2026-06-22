@@ -576,7 +576,10 @@ pub async fn crawl_domain(
     // Emit final 100% progress update before completion
     let final_progress = {
         let state_guard = state.lock().await;
-        let completed = state_guard.crawled_urls + state_guard.total_failed_count;
+        // Include in-flight URLs (pending_urls) that didn't finish before stall/timeout triggered.
+        // Without this, stall-terminated crawls report e.g. 97% even though crawl_complete fires.
+        let pending_at_end = state_guard.pending_urls.len();
+        let completed = state_guard.crawled_urls + state_guard.total_failed_count + pending_at_end;
         let progress = ProgressData {
             total_urls: std::cmp::max(state_guard.total_urls, 1),
             crawled_urls: completed,
@@ -591,10 +594,11 @@ pub async fn crawl_domain(
         };
 
         tracing::info!(
-            "Final crawl stats: {} total processed ({} succeeded, {} failed)",
+            "Final crawl stats: {} total processed ({} succeeded, {} failed, {} pending at end)",
             completed,
             state_guard.crawled_urls,
-            state_guard.total_failed_count
+            state_guard.total_failed_count,
+            pending_at_end
         );
 
         if let Err(err) = app_handle.emit("progress_update", progress.clone()) {
