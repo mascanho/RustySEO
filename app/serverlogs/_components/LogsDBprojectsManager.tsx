@@ -34,17 +34,42 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Mock data for demonstration
-const mockProjectsData: ProjectEntry[] = [
-  {
-    id: "proj_001",
-    name: "www.slimstock.com",
-    status: "active",
-    createdAt: "2024-01-15T10:30:00Z",
-    logCount: 23,
-    description: "Complete overhaul of the shopping experience",
-  },
-];
+// Isolated progress components — each uses a combined selector that returns a
+// STABLE value for inactive projects. Zustand compares with Object.is: if the
+// returned value didn't change the component is NOT re-rendered. This means
+// only the single active project's bar/counter re-renders on each 50ms tick
+// instead of all N project cards re-rendering simultaneously.
+const ProjectProgressBar = React.memo(({ projectName, activeProject }: { projectName: string; activeProject: string | null }) => {
+  const width = useLogAnalysisStore((state) => {
+    if (activeProject !== projectName || !state.isProcessingLogs) return "0%";
+    return `${Math.min(state.logProgress?.value ?? 0, 100)}%`;
+  });
+  const active = activeProject === projectName;
+  return (
+    <div
+      className="absolute bottom-0 left-0 h-[2px] bg-brand-bright"
+      style={{
+        width,
+        transition: active ? "width 500ms ease-out" : "none",
+      }}
+    />
+  );
+});
+ProjectProgressBar.displayName = "ProjectProgressBar";
+
+const ProjectProgressCounter = React.memo(({ projectName, activeProject }: { projectName: string; activeProject: string | null }) => {
+  const label = useLogAnalysisStore((state) => {
+    if (activeProject !== projectName || !state.isProcessingLogs || !state.logProgress?.status) return null;
+    return state.logProgress.status.split(" — ")[0].replace("Log ", "").replace(" of ", "/");
+  });
+  if (!label) return null;
+  return (
+    <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
+      {label}
+    </span>
+  );
+});
+ProjectProgressCounter.displayName = "ProjectProgressCounter";
 
 // Memoized Project Item Component
 const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
@@ -107,8 +132,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
+  // isProcessingLogs is read only to clear activeProject when processing ends.
+  // Do NOT read logProgress here — that would cause this entire component to
+  // re-render on every progress tick (20×/sec). Use the isolated child components.
   const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
-  const logProgress = useLogAnalysisStore((state) => state.logProgress);
   const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
@@ -445,19 +472,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                           key={`${projectName}-${index}`}
                           className="relative border-b dark:border-gray-700"
                         >
-                          <div
-                            className="absolute bottom-0 left-0 h-[2px] bg-brand-bright"
-                            style={{
-                              width:
-                                activeProject === projectName && isProcessingLogs
-                                  ? `${Math.min(logProgress?.value ?? 0, 100)}%`
-                                  : "0%",
-                              transition:
-                                activeProject === projectName && isProcessingLogs
-                                  ? "width 500ms ease-out"
-                                  : "none",
-                            }}
-                          />
+                          <ProjectProgressBar projectName={projectName} activeProject={activeProject} />
                           <div className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 dark:bg-slate-900/50">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center text-sm mb-2">
@@ -493,11 +508,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                     }`}
                                   />
                                 </Button>
-                                {activeProject === projectName && isProcessingLogs && logProgress?.status && (
-                                  <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
-                                    {logProgress.status.split(" — ")[0].replace("Log ", "").replace(" of ", "/")}
-                                  </span>
-                                )}
+                                <ProjectProgressCounter projectName={projectName} activeProject={activeProject} />
                               </div>
 
                             </div>

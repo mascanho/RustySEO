@@ -97,6 +97,30 @@ fn classify_segment_match_internal(
     None
 }
 
+/// Single-pass classify: returns (segment_name, segment_match, taxonomy_path) in one scan.
+/// Replaces three separate calls to avoid iterating sorted_taxonomies three times per line.
+fn classify_all_internal(
+    path: &str,
+    sorted_taxonomies: &[TaxonomyInfo],
+) -> (String, Option<String>, String) {
+    for taxonomy in sorted_taxonomies {
+        let matches = match taxonomy.match_type.as_str() {
+            "startsWith" => path.starts_with(&taxonomy.path),
+            "contains" => path.contains(&taxonomy.path),
+            "exactMatch" => path == taxonomy.path,
+            _ => path.starts_with(&taxonomy.path),
+        };
+        if matches {
+            return (
+                taxonomy.name.clone(),
+                Some(taxonomy.match_type.clone()),
+                taxonomy.path.clone(),
+            );
+        }
+    }
+    ("Other".to_string(), None, "other".to_string())
+}
+
 // Public wrappers that use the CACHED sorted taxonomies
 pub fn classify_taxonomy(path: &str) -> String {
     if let Ok(sorted) = SORTED_TAXONOMIES.lock() {
@@ -489,10 +513,19 @@ fn is_verified_crawler_snapshot(ip: &str, crawler_type: &str, snapshot: &Crawler
     }
 }
 
-/// Check if an IP is from any verified search engine
+/// Check if an IP is from any verified search engine.
+///
+/// The snapshot is cached per thread: cloning 5 × Vec<IpNet> on every one of
+/// 4 million log lines causes progressive allocator fragmentation that visibly
+/// slows parsing at ~15-16 files. The thread-local cache eliminates those clones.
 fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
-    let snapshot = CrawlerIpSnapshot::new();
-    is_verified_crawler_snapshot(ip, crawler_type, &snapshot)
+    thread_local! {
+        static SNAPSHOT: std::cell::OnceCell<CrawlerIpSnapshot> = std::cell::OnceCell::new();
+    }
+    SNAPSHOT.with(|cell| {
+        let snapshot = cell.get_or_init(CrawlerIpSnapshot::new);
+        is_verified_crawler_snapshot(ip, crawler_type, snapshot)
+    })
 }
 
 fn detect_file_type(path: &str) -> Option<String> {
@@ -731,8 +764,12 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
 
     let (crawled, _) = crate::loganalyser::helpers::crawl_log::check_crawl_match(path);
 
-    // Get sorted taxonomies from CACHE - much faster than sorting every line
-    let sorted_taxonomies = SORTED_TAXONOMIES.lock().ok()?;
+    // Single-pass taxonomy classification: lock, classify all three fields in one scan,
+    // then immediately release the lock before building the LogEntry struct.
+    let (segment, segment_match, taxonomy) = {
+        let sorted = SORTED_TAXONOMIES.lock().ok()?;
+        classify_all_internal(path, &sorted)
+    };
 
     Some(LogEntry {
         ip,
@@ -753,9 +790,9 @@ pub fn parse_log_line(line: &str) -> Option<LogEntry> {
         browser,
         file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
         verified,
-        segment: classify_segment_name_internal(path, &sorted_taxonomies),
-        segment_match: classify_segment_match_internal(path, &sorted_taxonomies),
-        taxonomy: classify_taxonomy_internal(path, &sorted_taxonomies),
+        segment,
+        segment_match,
+        taxonomy,
         crawled,
     })
 }

@@ -278,7 +278,6 @@ export default function Page() {
                 }
               }
 
-              // Fetch first page of logs from DB
               const defaultFilters = {
                 search_term: "",
                 status_filter: [],
@@ -290,15 +289,37 @@ export default function Page() {
                 sort_key: "timestamp",
                 sort_dir: "ascending",
               };
-              await fetchLogsFromDb(1, 100, defaultFilters);
-              await useLogAnalysisStore
-                .getState()
-                .fetchWidgetAggregations(defaultFilters);
 
-              // Mark processing fully done — after all DB fetches complete.
-              // LogsDBprojectsManager reads this to clear its loader.
+              // Fetch first page of entries immediately — aggregation tables may
+              // still be empty at this point (rebuild runs in background).
+              await fetchLogsFromDb(1, 100, defaultFilters);
+
+              // Mark processing done so the modal progress bar clears.
               if (isMounted) setIsProcessingLogs(false);
             }
+          },
+        );
+
+        // Fires when the background aggregation rebuild (GROUP BY tables) finishes.
+        // At this point widget tables have data and charts can load.
+        const unlistenAggReady = await listen(
+          "log-aggregations-ready",
+          async () => {
+            if (!isMounted) return;
+            const defaultFilters = {
+              search_term: "",
+              status_filter: [],
+              method_filter: [],
+              file_type_filter: [],
+              bot_filter: null,
+              bot_type_filter: null,
+              verified_filter: null,
+              sort_key: "timestamp",
+              sort_dir: "ascending",
+            };
+            await useLogAnalysisStore
+              .getState()
+              .fetchWidgetAggregations(defaultFilters);
           },
         );
 
@@ -306,6 +327,7 @@ export default function Page() {
           unlistenProgress();
           unlistenChunk();
           unlistenComplete();
+          unlistenAggReady();
         };
       } catch (error) {
         console.error("Listener error:", error);

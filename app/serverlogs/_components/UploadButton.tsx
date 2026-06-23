@@ -39,7 +39,6 @@ function UploadButton() {
   const resetAll = useLogAnalysisStore((state) => state.resetAll);
   const { setServerLogsStore, setUploadedLogFiles, reset } =
     useServerLogsStore();
-  const { overview, widgetAggs, timelineData } = useLogAnalysisStore();
 
   const handleClearStoreLogs = async () => {
     try {

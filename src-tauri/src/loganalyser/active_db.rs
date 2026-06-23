@@ -500,6 +500,46 @@ pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
     Ok(())
 }
 
+/// Drop the five indexes on active_parsed_logs before a bulk load.
+/// Without indexes, each INSERT is O(1) instead of O(log N) × 5, so
+/// insert throughput stays constant even as the table grows into millions of rows.
+pub fn drop_parsed_log_indexes() -> Result<(), String> {
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+    // Disable WAL auto-checkpoint for the duration of the bulk load.
+    // Default threshold (1000 pages ≈ 4 MB) fires after every ~3 batches and
+    // forces random writes into the main DB file as the file grows — that
+    // I/O pressure is the cause of progressive slowdown at ~12-16 files.
+    // A single TRUNCATE checkpoint at the end (in recreate_parsed_log_indexes)
+    // handles the cleanup in one sequential pass instead.
+    conn.execute_batch(
+        "PRAGMA wal_autocheckpoint = 0;
+         DROP INDEX IF EXISTS idx_timestamp;
+         DROP INDEX IF EXISTS idx_status;
+         DROP INDEX IF EXISTS idx_crawler;
+         DROP INDEX IF EXISTS idx_segment;
+         DROP INDEX IF EXISTS idx_file_type;",
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Recreate the indexes dropped by drop_parsed_log_indexes.
+/// Call this once after all bulk inserts are complete.
+pub fn recreate_parsed_log_indexes() -> Result<(), String> {
+    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+    let conn = lock.as_mut().ok_or("DB not initialized")?;
+    conn.execute_batch(
+        "CREATE INDEX IF NOT EXISTS idx_timestamp ON active_parsed_logs(timestamp);
+         CREATE INDEX IF NOT EXISTS idx_status ON active_parsed_logs(status);
+         CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
+         CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
+         CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
+         PRAGMA wal_checkpoint(TRUNCATE);
+         PRAGMA wal_autocheckpoint = 1000;",
+    )
+    .map_err(|e| e.to_string())
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ActiveFilters {
     pub search_term: String,

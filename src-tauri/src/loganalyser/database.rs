@@ -5,7 +5,7 @@ use tauri::{Emitter, Window};
 
 use crate::{
     crawler::db::open_db_connection,
-    loganalyser::analyser::analyse_log,
+    loganalyser::analyser::analyse_log_from_paths,
     settings,
 };
 
@@ -287,21 +287,16 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
 
     let mut stmt = db
         .conn
-        .prepare("SELECT id, date, filename, log FROM server_logs WHERE project = ?1")
+        .prepare("SELECT id, date, filename FROM server_logs WHERE project = ?1")
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
     let logs = stmt
         .query_map([project], |row| {
-            let _log_text: String = row.get(3)?;
-            // Raw text, no parsing needed here as DatabaseResults doesn't include the log field anyway
-            // (Wait, the struct has no log field, but it was being parsed? Cleaned up.)
-
             Ok(DatabaseResults {
                 id: row.get(0)?,
                 date: row.get(1)?,
                 project: project.to_string(),
                 filename: row.get(2)?,
-                // log: log_value,
             })
         })
         .map_err(|e| format!("Query execution failed: {}", e))?
@@ -431,38 +426,73 @@ pub async fn process_project_logs_directly_command(
         let db = Database::new("serverlog.db")
             .map_err(|e| format!("Database initialization failed: {}", e))?;
 
-        let mut stmt = db
+        // Fetch only metadata first — no log content loaded yet
+        let mut meta_stmt = db
             .conn
-            .prepare("SELECT filename, log FROM server_logs WHERE project = ?1")
-            .map_err(|e| format!("Failed to prepare query: {}", e))?;
+            .prepare("SELECT id, filename FROM server_logs WHERE project = ?1")
+            .map_err(|e| format!("Failed to prepare metadata query: {}", e))?;
 
-        let mut log_contents: Vec<(String, String)> = Vec::new();
-        let mut rows = stmt
-            .query(params![project.as_str()])
-            .map_err(|e| format!("Query execution failed: {}", e))?;
+        let log_meta: Vec<(i64, String)> = meta_stmt
+            .query_map(params![project.as_str()], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(|e| format!("Metadata query failed: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Metadata collection failed: {}", e))?;
 
-        while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
-            let filename: String = row
-                .get(0)
-                .map_err(|e| format!("Failed to get filename: {}", e))?;
-            let log_text: String = row
-                .get(1)
-                .map_err(|e| format!("Failed to get log text: {}", e))?;
-            log_contents.push((filename, log_text));
-        }
-
-        if log_contents.is_empty() {
+        if log_meta.is_empty() {
             return Err("No logs found for this project".to_string());
         }
 
         println!(
-            "Processing {} log file(s) for project '{}' directly (no IPC round-trip)",
-            log_contents.len(),
+            "Processing {} log file(s) for project '{}' — writing to temp files to avoid OOM",
+            log_meta.len(),
             project
         );
 
-        let data = LogInput { log_contents };
-        analyse_log(data, app)
+        // Write each log to a temp file one at a time so only one log's content
+        // is held in memory at a time instead of all files simultaneously.
+        let temp_dir = std::env::temp_dir().join("rustyseo_project_logs");
+        std::fs::create_dir_all(&temp_dir)
+            .map_err(|e| format!("Failed to create temp dir: {}", e))?;
+
+        let mut temp_paths: Vec<String> = Vec::with_capacity(log_meta.len());
+        for (id, filename) in &log_meta {
+            let log_text: String = db
+                .conn
+                .query_row(
+                    "SELECT log FROM server_logs WHERE id = ?1",
+                    params![id],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to read log id={}: {}", id, e))?;
+
+            let safe_name = std::path::Path::new(filename)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(filename.as_str());
+            let temp_path = temp_dir.join(format!("{}_{}", id, safe_name));
+            std::fs::write(&temp_path, log_text.as_bytes())
+                .map_err(|e| format!("Failed to write temp file: {}", e))?;
+            // Drop the large string immediately after writing
+            drop(log_text);
+
+            temp_paths.push(
+                temp_path
+                    .to_str()
+                    .ok_or_else(|| "Non-UTF8 temp path".to_string())?
+                    .to_string(),
+            );
+        }
+
+        let result = analyse_log_from_paths(temp_paths.clone(), app);
+
+        // Best-effort cleanup of temp files
+        for p in &temp_paths {
+            let _ = std::fs::remove_file(p);
+        }
+
+        result
     })
     .await
     .map_err(|e| format!("Blocking task failed: {}", e))?
@@ -479,39 +509,41 @@ pub async fn process_single_log_from_db_command(
         let db = Database::new("serverlog.db")
             .map_err(|e| format!("Database initialization failed: {}", e))?;
 
-        let mut stmt = db
+        let (filename, log_text): (String, String) = db
             .conn
-            .prepare("SELECT filename, log FROM server_logs WHERE id = ?1 AND project = ?2")
-            .map_err(|e| format!("Failed to prepare query: {}", e))?;
-
-        let mut log_contents: Vec<(String, String)> = Vec::new();
-        let mut rows = stmt
-            .query(params![log_id, project.as_str()])
-            .map_err(|e| format!("Query execution failed: {}", e))?;
-
-        if let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
-            let filename: String = row
-                .get(0)
-                .map_err(|e| format!("Failed to get filename: {}", e))?;
-            let log_text: String = row
-                .get(1)
-                .map_err(|e| format!("Failed to get log text: {}", e))?;
-            log_contents.push((filename, log_text));
-        }
-
-        if log_contents.is_empty() {
-            return Err("Log not found".to_string());
-        }
+            .query_row(
+                "SELECT filename, log FROM server_logs WHERE id = ?1 AND project = ?2",
+                params![log_id, project.as_str()],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .map_err(|_| "Log not found".to_string())?;
 
         println!(
-            "Processing {} log file(s) for project '{}' (action: {})",
-            log_contents.len(),
-            project,
-            action
+            "Processing single log for project '{}' (action: {})",
+            project, action
         );
 
-        let data = LogInput { log_contents };
-        analyse_log(data, app)
+        let temp_dir = std::env::temp_dir().join("rustyseo_project_logs");
+        std::fs::create_dir_all(&temp_dir)
+            .map_err(|e| format!("Failed to create temp dir: {}", e))?;
+
+        let safe_name = std::path::Path::new(&filename)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(filename.as_str());
+        let temp_path = temp_dir.join(format!("{}_{}", log_id, safe_name));
+        std::fs::write(&temp_path, log_text.as_bytes())
+            .map_err(|e| format!("Failed to write temp file: {}", e))?;
+        drop(log_text);
+
+        let temp_path_str = temp_path
+            .to_str()
+            .ok_or_else(|| "Non-UTF8 temp path".to_string())?
+            .to_string();
+
+        let result = analyse_log_from_paths(vec![temp_path_str.clone()], app);
+        let _ = std::fs::remove_file(&temp_path_str);
+        result
     })
     .await
     .map_err(|e| format!("Blocking task failed: {}", e))?

@@ -12,7 +12,7 @@ use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::{parse_log_entries, parse_log_line, preload_all_ip_ranges_sync};
-use crate::loganalyser::active_db::{get_active_logs_stats, init_active_db, insert_active_logs_batch};
+use crate::loganalyser::active_db::{init_active_db, insert_active_logs_batch};
 use crate::settings::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -341,6 +341,10 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
 
+        if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
+            println!("Warning: could not drop indexes before bulk load: {}", e);
+        }
+
         for entry in entry_rx {
             match entry {
                 StreamEntry::LogEntry(e) => {
@@ -350,13 +354,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                         if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                             println!("Failed to insert active logs chunk: {}", e);
                         }
-                        let _chunk = LogResult {
-                            overview: LogAnalysisResult::default(),
-                            entries: Vec::new(),
-                        };
-
                         entries_buffer.clear();
-                        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
                 }
                 StreamEntry::Overview(o) => {
@@ -369,37 +367,15 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                 println!("Failed to insert final active logs chunk: {}", e);
             }
-            let _chunk = LogResult {
-                overview: LogAnalysisResult::default(),
-                entries: Vec::new(),
-            };
-
         }
 
-        if let Some(mut overview) = overview {
-            // Rebuild aggregation tables BEFORE emitting so get_widget_aggregations
-            // can query the small agg tables instead of scanning millions of raw rows.
-            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
-                println!("Warning: Background aggregation rebuild failed: {}", e);
-            }
-            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
-                overview.line_count = stats.line_count;
-                overview.unique_ips = stats.unique_ips;
-                overview.unique_user_agents = stats.unique_user_agents;
-                overview.crawler_count = stats.crawler_count;
-                overview.success_rate = stats.success_rate;
-                overview.log_start_time = stats.log_start_time.clone();
-                overview.log_finish_time = stats.log_finish_time.clone();
-                overview.totals.google = stats.totals.google;
-                overview.totals.bing = stats.totals.bing;
-                overview.totals.semrush = stats.totals.semrush;
-                overview.totals.hrefs = stats.totals.hrefs;
-                overview.totals.moz = stats.totals.moz;
-                overview.totals.uptime = stats.totals.uptime;
-                overview.totals.openai = stats.totals.openai;
-                overview.totals.claude = stats.totals.claude;
-                overview.totals.status_codes = stats.totals.status_codes;
-            }
+        if let Err(e) = crate::loganalyser::active_db::recreate_parsed_log_indexes() {
+            println!("Warning: could not recreate indexes after bulk load: {}", e);
+        }
+
+        if let Some(overview) = overview {
+            // Emit immediately — overview is built from in-memory counters,
+            // so no DB round-trip is needed on the hot path.
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -407,6 +383,17 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     entries: Vec::new(),
                 },
             );
+
+            // Rebuild aggregation tables off the critical path so the frontend
+            // is unblocked. When rebuild finishes emit log-aggregations-ready
+            // so the frontend can refresh widget tables.
+            let app_handle_bg = app_handle_stream.clone();
+            thread::spawn(move || {
+                if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                    println!("Warning: Background aggregation rebuild failed: {}", e);
+                }
+                let _ = app_handle_bg.emit("log-aggregations-ready", ());
+            });
         }
     });
 
@@ -421,6 +408,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
+
+    let mut unique_ips: HashSet<String> = HashSet::new();
+    let mut unique_user_agents: HashSet<String> = HashSet::new();
 
     // SEGMENTATION - Initialize segment tracking
     let mut segments: HashMap<String, Segmentation> = HashMap::new();
@@ -512,6 +502,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
             // Update overall status code counts
             status_code_counts.add_status(entry.status);
+            unique_ips.insert(entry.ip.clone());
+            unique_user_agents.insert(entry.user_agent.clone());
 
             // Update bot counts and their status codes
             let crawler_type = entry.crawler_type.to_lowercase();
@@ -603,81 +595,44 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
     bot_stats.strip_heavy_data();
 
-    // GET CUMULATIVE STATS FROM DB TO PROVIDE A TRUE "APPEND" EXPERIENCE
-    // We'll merge our current segmentation/frequency data with the global stats from DB
-    let cumulative_overview = if let Ok(stats) = get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
-        LogAnalysisResult {
-            message: "Log analysis completed (cumulative)".to_string(),
-            line_count: stats.line_count,
-            unique_ips: stats.unique_ips,
-            unique_user_agents: stats.unique_user_agents,
-            crawler_count: stats.crawler_count,
-            success_rate: stats.success_rate,
-            totals: Totals {
-                google: stats.totals.google,
-                bing: stats.totals.bing,
-                semrush: stats.totals.semrush,
-                hrefs: stats.totals.hrefs,
-                moz: stats.totals.moz,
-                uptime: stats.totals.uptime,
-                openai: stats.totals.openai,
-                claude: stats.totals.claude,
-                bot_stats, // Use current batch's detailed stats for segments, but we should really merge them too if we want true append. For now, counts are most important.
-                status_codes: stats.totals.status_codes,
-                google_bot_pages: Vec::new(),
-                google_bot_page_frequencies: HashMap::new(),
-                bing_bot_pages: Vec::new(),
-                bing_bot_page_frequencies: HashMap::new(),
-                openai_bot_pages: Vec::new(),
-                openai_bot_page_frequencies: HashMap::new(),
-                claude_bot_pages: Vec::new(),
-                claude_bot_page_frequencies: HashMap::new(),
-            },
-            log_start_time: stats.log_start_time,
-            log_finish_time: stats.log_finish_time,
-            file_count: stats.file_count, // Updated later if needed
-            segmentations, // We keep the current batch's segmentations or we'd need to re-scan the whole DB
-            segment_summary,
-        }
-    } else {
-        // Fallback to current batch if DB stats fail
-        LogAnalysisResult {
-            message: "Log analysis completed".to_string(),
-            line_count: total_requests,
-            unique_ips: 0,
-            unique_user_agents: 0,
-            crawler_count: 0,
-            success_rate: if total_requests > 0 {
-                (success_count as f32 / total_requests as f32) * 100.0
-            } else {
-                0.0
-            },
-            totals: Totals {
-                google: bot_counts[0],
-                bing: bot_counts[1],
-                semrush: bot_counts[2],
-                hrefs: bot_counts[3],
-                moz: bot_counts[4],
-                uptime: bot_counts[5],
-                openai: bot_counts[6],
-                claude: bot_counts[7],
-                bot_stats,
-                status_codes: status_code_counts,
-                google_bot_pages: Vec::new(),
-                google_bot_page_frequencies: HashMap::new(),
-                bing_bot_pages: Vec::new(),
-                bing_bot_page_frequencies: HashMap::new(),
-                openai_bot_pages: Vec::new(),
-                openai_bot_page_frequencies: HashMap::new(),
-                claude_bot_pages: Vec::new(),
-                claude_bot_page_frequencies: HashMap::new(),
-            },
-            log_start_time,
-            log_finish_time,
-            file_count,
-            segmentations,
-            segment_summary,
-        }
+    // Build overview from in-memory counters — no DB round-trip on the hot path.
+    let crawler_count = bot_counts.iter().sum::<usize>();
+    let cumulative_overview = LogAnalysisResult {
+        message: "Log analysis completed".to_string(),
+        line_count: total_requests,
+        unique_ips: unique_ips.len(),
+        unique_user_agents: unique_user_agents.len(),
+        crawler_count,
+        success_rate: if total_requests > 0 {
+            (success_count as f32 / total_requests as f32) * 100.0
+        } else {
+            0.0
+        },
+        totals: Totals {
+            google: bot_counts[0],
+            bing: bot_counts[1],
+            semrush: bot_counts[2],
+            hrefs: bot_counts[3],
+            moz: bot_counts[4],
+            uptime: bot_counts[5],
+            openai: bot_counts[6],
+            claude: bot_counts[7],
+            bot_stats,
+            status_codes: status_code_counts,
+            google_bot_pages: Vec::new(),
+            google_bot_page_frequencies: HashMap::new(),
+            bing_bot_pages: Vec::new(),
+            bing_bot_page_frequencies: HashMap::new(),
+            openai_bot_pages: Vec::new(),
+            openai_bot_page_frequencies: HashMap::new(),
+            claude_bot_pages: Vec::new(),
+            claude_bot_page_frequencies: HashMap::new(),
+        },
+        log_start_time,
+        log_finish_time,
+        file_count,
+        segmentations,
+        segment_summary,
     };
 
     let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
@@ -734,6 +689,13 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
 
+        // Drop indexes before bulk loading so inserts stay O(1) regardless of
+        // how large the table grows. They are rebuilt once after all entries are
+        // written, so query performance during the load phase is unaffected.
+        if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
+            println!("Warning: could not drop indexes before bulk load: {}", e);
+        }
+
         for entry in entry_rx {
             match entry {
                 StreamEntry::LogEntry(e) => {
@@ -745,7 +707,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                         }
 
                         entries_buffer.clear();
-                        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
                 }
                 StreamEntry::Overview(o) => {
@@ -758,37 +719,17 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
             if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                 println!("Failed to insert final active logs chunk: {}", e);
             }
-            let _chunk = LogResult {
-                overview: LogAnalysisResult::default(),
-                entries: Vec::new(),
-            };
-
         }
 
-        if let Some(mut overview) = overview {
-            // Rebuild aggregation tables BEFORE emitting so get_widget_aggregations
-            // can query the small agg tables instead of scanning millions of raw rows.
-            if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
-                println!("Warning: Background aggregation rebuild failed: {}", e);
-            }
-            if let Ok(stats) = crate::loganalyser::active_db::get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
-                overview.line_count = stats.line_count;
-                overview.unique_ips = stats.unique_ips;
-                overview.unique_user_agents = stats.unique_user_agents;
-                overview.crawler_count = stats.crawler_count;
-                overview.success_rate = stats.success_rate;
-                overview.log_start_time = stats.log_start_time.clone();
-                overview.log_finish_time = stats.log_finish_time.clone();
-                overview.totals.google = stats.totals.google;
-                overview.totals.bing = stats.totals.bing;
-                overview.totals.semrush = stats.totals.semrush;
-                overview.totals.hrefs = stats.totals.hrefs;
-                overview.totals.moz = stats.totals.moz;
-                overview.totals.uptime = stats.totals.uptime;
-                overview.totals.openai = stats.totals.openai;
-                overview.totals.claude = stats.totals.claude;
-                overview.totals.status_codes = stats.totals.status_codes;
-            }
+        // Recreate indexes now that all rows are in — one pass, O(N log N) total
+        // instead of O(N log N) × number_of_batches.
+        if let Err(e) = crate::loganalyser::active_db::recreate_parsed_log_indexes() {
+            println!("Warning: could not recreate indexes after bulk load: {}", e);
+        }
+
+        if let Some(overview) = overview {
+            // Emit immediately — overview is built from in-memory counters,
+            // so no DB round-trip is needed on the hot path.
             let _ = app_handle_stream.emit(
                 "log-analysis-complete",
                 LogResult {
@@ -796,6 +737,17 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                     entries: Vec::new(),
                 },
             );
+
+            // Rebuild aggregation tables off the critical path so the frontend
+            // is unblocked. When rebuild finishes emit log-aggregations-ready
+            // so the frontend can refresh widget tables.
+            let app_handle_bg = app_handle_stream.clone();
+            thread::spawn(move || {
+                if let Err(e) = crate::loganalyser::active_db::rebuild_core_aggregations_internal() {
+                    println!("Warning: Background aggregation rebuild failed: {}", e);
+                }
+                let _ = app_handle_bg.emit("log-aggregations-ready", ());
+            });
         }
     });
 
@@ -810,6 +762,10 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
     let mut bot_counts = [0; 8];
+
+    // Track unique IPs and UAs in-memory to avoid slow COUNT(DISTINCT) DB queries later
+    let mut unique_ips: HashSet<String> = HashSet::new();
+    let mut unique_user_agents: HashSet<String> = HashSet::new();
 
     // SEGMENTATION
     let mut segments: HashMap<String, Segmentation> = HashMap::new();
@@ -945,6 +901,8 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                     success_count += 1;
                 }
                 status_code_counts.add_status(entry.status);
+                unique_ips.insert(entry.ip.clone());
+                unique_user_agents.insert(entry.user_agent.clone());
 
                 let crawler_type = entry.crawler_type.to_lowercase();
                 if crawler_type.contains("google") {
@@ -1032,80 +990,46 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     // Sending it over IPC causes the frontend to freeze trying to merge/deep-clone it.
     bot_stats.strip_heavy_data();
 
-    let cumulative_overview = if let Ok(stats) = get_active_logs_stats(crate::loganalyser::active_db::ActiveFilters::default()) {
-        LogAnalysisResult {
-            message: "Log analysis completed (cumulative)".to_string(),
-            line_count: stats.line_count,
-            unique_ips: stats.unique_ips,
-            unique_user_agents: stats.unique_user_agents,
-            crawler_count: stats.crawler_count,
-            success_rate: stats.success_rate,
-            totals: Totals {
-                google: stats.totals.google,
-                bing: stats.totals.bing,
-                semrush: stats.totals.semrush,
-                hrefs: stats.totals.hrefs,
-                moz: stats.totals.moz,
-                uptime: stats.totals.uptime,
-                openai: stats.totals.openai,
-                claude: stats.totals.claude,
-                bot_stats,
-                status_codes: stats.totals.status_codes,
-                // Send empty page lists — data is in DB, query on demand
-                google_bot_pages: Vec::new(),
-                google_bot_page_frequencies: HashMap::new(),
-                bing_bot_pages: Vec::new(),
-                bing_bot_page_frequencies: HashMap::new(),
-                openai_bot_pages: Vec::new(),
-                openai_bot_page_frequencies: HashMap::new(),
-                claude_bot_pages: Vec::new(),
-                claude_bot_page_frequencies: HashMap::new(),
-            },
-            log_start_time: stats.log_start_time,
-            log_finish_time: stats.log_finish_time,
-            file_count: stats.file_count,
-            segmentations,
-            segment_summary,
-        }
-    } else {
-        // Fallback to current batch if DB stats fail
-        LogAnalysisResult {
-            message: "Log analysis completed".to_string(),
-            line_count: total_requests,
-            unique_ips: 0,
-            unique_user_agents: 0,
-            crawler_count: 0,
-            success_rate: if total_requests > 0 {
-                (success_count as f32 / total_requests as f32) * 100.0
-            } else {
-                0.0
-            },
-            totals: Totals {
-                google: bot_counts[0],
-                bing: bot_counts[1],
-                semrush: bot_counts[2],
-                hrefs: bot_counts[3],
-                moz: bot_counts[4],
-                uptime: bot_counts[5],
-                openai: bot_counts[6],
-                claude: bot_counts[7],
-                bot_stats,
-                status_codes: status_code_counts,
-                google_bot_pages: Vec::new(),
-                google_bot_page_frequencies: HashMap::new(),
-                bing_bot_pages: Vec::new(),
-                bing_bot_page_frequencies: HashMap::new(),
-                openai_bot_pages: Vec::new(),
-                openai_bot_page_frequencies: HashMap::new(),
-                claude_bot_pages: Vec::new(),
-                claude_bot_page_frequencies: HashMap::new(),
-            },
-            log_start_time,
-            log_finish_time,
-            file_count,
-            segmentations,
-            segment_summary,
-        }
+    // Build overview entirely from in-memory data — no DB round-trip here.
+    // unique_ips and unique_user_agents are tracked via HashSets during parsing,
+    // which is cheaper than COUNT(DISTINCT …) on 2M+ rows after the fact.
+    let crawler_count = bot_counts.iter().sum::<usize>();
+    let cumulative_overview = LogAnalysisResult {
+        message: "Log analysis completed".to_string(),
+        line_count: total_requests,
+        unique_ips: unique_ips.len(),
+        unique_user_agents: unique_user_agents.len(),
+        crawler_count,
+        success_rate: if total_requests > 0 {
+            (success_count as f32 / total_requests as f32) * 100.0
+        } else {
+            0.0
+        },
+        totals: Totals {
+            google: bot_counts[0],
+            bing: bot_counts[1],
+            semrush: bot_counts[2],
+            hrefs: bot_counts[3],
+            moz: bot_counts[4],
+            uptime: bot_counts[5],
+            openai: bot_counts[6],
+            claude: bot_counts[7],
+            bot_stats,
+            status_codes: status_code_counts,
+            google_bot_pages: Vec::new(),
+            google_bot_page_frequencies: HashMap::new(),
+            bing_bot_pages: Vec::new(),
+            bing_bot_page_frequencies: HashMap::new(),
+            openai_bot_pages: Vec::new(),
+            openai_bot_page_frequencies: HashMap::new(),
+            claude_bot_pages: Vec::new(),
+            claude_bot_page_frequencies: HashMap::new(),
+        },
+        log_start_time,
+        log_finish_time,
+        file_count,
+        segmentations,
+        segment_summary,
     };
 
     let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
