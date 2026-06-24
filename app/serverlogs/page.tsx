@@ -101,7 +101,6 @@ export default function Page() {
   // Select only the method we need to prevent Page from re-rendering on every log chunk
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
   const fetchLogsFromDb = useLogAnalysisStore((state) => state.fetchLogsFromDb);
-  const setTotalCount = useLogAnalysisStore((state) => state.setTotalCount);
   const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
   const setLogProgress = useLogAnalysisStore((state) => state.setLogProgress);
 
@@ -264,8 +263,10 @@ export default function Page() {
                 ...restTotals
               } = totals || {};
               const slimOverview = { ...restOverview, totals: restTotals };
+              // setLogData already updates state.totalCount internally — no
+              // separate setTotalCount call needed (that would flush a second
+              // React reconciliation for every subscriber unnecessarily).
               setLogData({ overview: slimOverview }, "replace");
-              setTotalCount(payload.overview.line_count || 0);
 
               // Update the latest batch in the history with the line count
               if (payload.overview.line_count) {
@@ -290,18 +291,26 @@ export default function Page() {
                 sort_dir: "ascending",
               };
 
-              // Fetch first page of entries immediately — aggregation tables may
-              // still be empty at this point (rebuild runs in background).
+              // Fetch first page BEFORE releasing the processing lock.
+              // setLogData("replace") sets totalCount = overview.line_count (this
+              // batch only), but fetchLogsFromDb sets totalCount = DB row count
+              // (cumulative across all appended batches). If those two values differ
+              // (e.g. on a second append of the same project, N vs 2N), the second
+              // totalCount change would fire the useEffect in log-analyzer again
+              // AFTER isProcessingLogs is false, bypassing the justFinishedProcessing
+              // guard and scheduling redundant fetchLogsFromDb + fetchWidgetAggregations
+              // calls that pile up on DB_CONN and freeze the UI.
+              // Keeping isProcessingLogs=true until AFTER the DB fetch means both
+              // totalCount changes happen while the guard blocks the effect, and the
+              // single true→false transition at the end is the only trigger.
               await fetchLogsFromDb(1, 100, defaultFilters);
-
-              // Mark processing done so the modal progress bar clears.
               if (isMounted) setIsProcessingLogs(false);
             }
           },
         );
 
         // Fires when the background aggregation rebuild (GROUP BY tables) finishes.
-        // At this point widget tables have data and charts can load.
+        // At this point widget tables AND timeline aggregation tables have data.
         const unlistenAggReady = await listen(
           "log-aggregations-ready",
           async () => {
@@ -317,9 +326,9 @@ export default function Page() {
               sort_key: "timestamp",
               sort_dir: "ascending",
             };
-            await useLogAnalysisStore
-              .getState()
-              .fetchWidgetAggregations(defaultFilters);
+            const store = useLogAnalysisStore.getState();
+            await store.fetchWidgetAggregations(defaultFilters);
+            store.bumpChartRefreshToken();
           },
         );
 
@@ -340,7 +349,7 @@ export default function Page() {
       isMounted = false;
       cleanupListeners?.();
     };
-  }, [setLogData, fetchLogsFromDb, setTotalCount, setIsProcessingLogs, setLogProgress]);
+  }, [setLogData, fetchLogsFromDb, setIsProcessingLogs, setLogProgress]);
 
   // useEffect(() => {
   //   if (window) {

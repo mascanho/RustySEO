@@ -331,12 +331,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     // Entry streaming thread
     let app_handle_stream = app_handle.clone();
     thread::spawn(move || {
-        let settings = match tokio::task::block_in_place(|| {
-            tauri::async_runtime::block_on(settings::load_settings())
-        }) {
-            Ok(s) => s,
-            Err(_) => return,
-        };
+        let chunk_size = tauri::async_runtime::block_on(settings::load_settings())
+            .map(|s| s.log_chunk_size)
+            .unwrap_or(5000);
 
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
@@ -350,7 +347,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 StreamEntry::LogEntry(e) => {
                     entries_buffer.push(e);
 
-                    if entries_buffer.len() >= settings.log_chunk_size {
+                    if entries_buffer.len() >= chunk_size {
                         if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                             println!("Failed to insert active logs chunk: {}", e);
                         }
@@ -676,15 +673,16 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         return Err(e);
     }
 
-    // Entry streaming thread
+    // Entry streaming thread — captured so we can join it before returning.
+    // This guarantees that log-analysis-complete is emitted (and all DB writes
+    // are flushed) before process_project_logs_directly_command resolves on the
+    // JS side, preventing race conditions when the user loads a second project
+    // immediately after the first.
     let app_handle_stream = app_handle.clone();
-    thread::spawn(move || {
-        let settings = match tokio::task::block_in_place(|| {
-            tauri::async_runtime::block_on(settings::load_settings())
-        }) {
-            Ok(s) => s,
-            Err(_) => return,
-        };
+    let stream_handle = thread::spawn(move || {
+        let chunk_size = tauri::async_runtime::block_on(settings::load_settings())
+            .map(|s| s.log_chunk_size)
+            .unwrap_or(5000);
 
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
@@ -701,7 +699,7 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
                 StreamEntry::LogEntry(e) => {
                     entries_buffer.push(e);
 
-                    if entries_buffer.len() >= settings.log_chunk_size {
+                    if entries_buffer.len() >= chunk_size {
                         if let Err(e) = insert_active_logs_batch(&entries_buffer) {
                             println!("Failed to insert active logs chunk: {}", e);
                         }
@@ -1033,6 +1031,12 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
     };
 
     let _ = entry_tx.send(StreamEntry::Overview(cumulative_overview));
+    // Close the channel so the streaming thread can exit its receive loop,
+    // then wait for it to finish (emitting log-analysis-complete and flushing
+    // all DB writes) before returning. This prevents a second project load from
+    // calling clear_active_db while the first load's thread is still writing.
+    drop(entry_tx);
+    let _ = stream_handle.join();
 
     Ok(())
 }

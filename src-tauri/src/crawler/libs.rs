@@ -454,9 +454,9 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
 
     let data = fs::read_to_string(&secret_file)
         .await
-        .expect("Failed to read client secret file");
+        .map_err(|e| format!("Failed to read client secret file: {e}"))?;
     let secret: ClientSecret =
-        serde_json::from_str(&data).expect("Failed to parse client secret file");
+        serde_json::from_str(&data).map_err(|e| format!("Failed to parse client secret file: {e}"))?;
 
     let result = InstalledInfo {
         client_id: secret.installed.client_id,
@@ -553,7 +553,7 @@ pub async fn get_google_search_console(
     // READ THE FILE ON THE DISK
     let gsc_settings_info = read_credentials_file()
         .await
-        .expect("Failed to read credentials file");
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     let credentials_url = gsc_settings_info.url;
     let search_type = gsc_settings_info.search_type;
     let credentials_client_id = gsc_settings_info.client_id;

@@ -272,10 +272,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       }
 
       try {
-        // For replace: clear state before setting processing flags so resetAll()
-        // doesn't overwrite isProcessingLogs(true) that we set immediately after.
+        // For replace: resetAll() resets isProcessingLogs to false, then we
+        // immediately set it back to true (both synchronous, batched by React)
+        // BEFORE the async await so there's no render window where
+        // isProcessingLogs=false + totalCount=0 triggers spurious DB queries.
         if (action === "replace") {
           resetAll();
+          setIsProcessingLogs(true);
           await invoke("clear_active_db_command");
         }
 
@@ -325,6 +328,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
         if (action === "replace") {
           resetAll();
+          setIsProcessingLogs(true);
           await invoke("clear_active_db_command");
         }
 

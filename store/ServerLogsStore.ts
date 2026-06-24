@@ -181,6 +181,7 @@ interface LogAnalysisState {
   botTypes: string[];
   tableIsFiltered: boolean;
   trendTotals: any | null;
+  chartRefreshToken: number;
 }
 
 export interface BotPathDetail {
@@ -263,6 +264,7 @@ interface LogAnalysisActions {
   setActiveFilters: (filters: ActiveFilters) => void;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   setTableIsFiltered: (isFiltered: boolean) => void;
+  bumpChartRefreshToken: () => void;
   resetFilters: () => void;
   resetAll: () => void;
   setLoading: (isLoading: boolean) => void;
@@ -407,6 +409,7 @@ const initialState: LogAnalysisState = {
   botTypes: [],
   tableIsFiltered: false,
   trendTotals: null,
+  chartRefreshToken: 0,
 };
 
 // Helper functions for merging complex objects
@@ -930,6 +933,11 @@ export const useLogAnalysisStore = create<
     setTableIsFiltered: (isFiltered) =>
       set((state) => {
         state.tableIsFiltered = isFiltered;
+      }),
+
+    bumpChartRefreshToken: () =>
+      set((state) => {
+        state.chartRefreshToken += 1;
       }),
 
     setTotalCount: (count) =>

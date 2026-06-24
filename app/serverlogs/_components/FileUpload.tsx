@@ -50,6 +50,7 @@ export function FileUpload({
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
   const setLogData = useLogAnalysisStore((state) => state.setLogData);
+  const setIsProcessingLogs = useLogAnalysisStore((state) => state.setIsProcessingLogs);
   const [progress, setProgress] = useState({
     current: 0,
     total: 0,
@@ -178,6 +179,7 @@ export function FileUpload({
     if (files.length === 0) return;
 
     setUploading(true);
+    setIsProcessingLogs(true);
     uploadingRef.current = true;
     setOverallProgress(0);
     setProgress({
@@ -259,6 +261,7 @@ export function FileUpload({
       console.error("Error during upload:", err);
       setError(err instanceof Error ? err.message : String(err));
       toast.error("Upload failed: " + (err instanceof Error ? err.message : String(err)));
+      setIsProcessingLogs(false);
     } finally {
       setUploading(false);
       uploadingRef.current = false;

@@ -10,6 +10,17 @@ lazy_static::lazy_static! {
 }
 
 pub fn init_active_db() -> Result<(), String> {
+    // Fast path: if already initialized, skip. Every query command calls this as a
+    // guard, but reopening a connection on each call is wasteful and—critically—
+    // running CREATE TABLE / CREATE INDEX DDL while the background aggregation thread
+    // holds a write transaction causes SQLITE_BUSY on the first project load.
+    {
+        let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
+        if lock.is_some() {
+            return Ok(());
+        }
+    }
+
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
 
@@ -89,6 +100,7 @@ pub fn init_active_db() -> Result<(), String> {
         PRAGMA journal_mode = WAL;
         PRAGMA cache_size = 32768;
         PRAGMA temp_store = MEMORY;
+        PRAGMA busy_timeout = 60000;
 
         CREATE TABLE IF NOT EXISTS active_parsed_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -188,6 +200,24 @@ pub fn init_active_db() -> Result<(), String> {
             PRIMARY KEY (path, ip, segment)
         ) WITHOUT ROWID;
 
+        -- Pre-built timeline aggregations so the three chart queries never do a
+        -- full raw-table scan. Rebuilt by rebuild_core_aggregations_internal.
+        CREATE TABLE IF NOT EXISTS active_timeline_aggregations (
+            date TEXT,
+            granularity TEXT,
+            human_count INTEGER DEFAULT 0,
+            crawler_count INTEGER DEFAULT 0,
+            success_count INTEGER DEFAULT 0,
+            redirect_count INTEGER DEFAULT 0,
+            client_error_count INTEGER DEFAULT 0,
+            server_error_count INTEGER DEFAULT 0,
+            google_count INTEGER DEFAULT 0,
+            bing_count INTEGER DEFAULT 0,
+            openai_count INTEGER DEFAULT 0,
+            claude_count INTEGER DEFAULT 0,
+            PRIMARY KEY (date, granularity)
+        ) WITHOUT ROWID;
+
         CREATE INDEX IF NOT EXISTS idx_timestamp ON active_parsed_logs(timestamp);
         CREATE INDEX IF NOT EXISTS idx_status ON active_parsed_logs(status);
         CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
@@ -253,9 +283,22 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
         let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
     }
 
-    init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    // Use a dedicated read-only connection so this long-running query does NOT
+    // hold DB_CONN's mutex. Every other Tauri command (fetchLogsFromDb,
+    // fetchWidgetAggregations, …) blocks on DB_CONN.lock(), so holding it for
+    // the ~20 queries below caused the 5-second freeze observed when the
+    // "Trend Totals" / "Crawl Sync" tab is visible and the polling interval fires.
+    // WAL mode allows concurrent readers on separate connections with no blocking.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;",
+    ).map_err(|e| e.to_string())?;
 
     let mut summary = TrendTotalsSummary::default();
 
@@ -401,7 +444,8 @@ pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
         "PRAGMA synchronous = OFF;
          PRAGMA journal_mode = WAL;
          PRAGMA cache_size = 32768;
-         PRAGMA temp_store = MEMORY;",
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
     )
     .map_err(|e| e.to_string())?;
 
@@ -445,6 +489,53 @@ pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
         SELECT path, browser, COALESCE(country, '-'), segment, COUNT(*)
         FROM active_parsed_logs WHERE crawler_type = 'Human'
         GROUP BY path, browser, COALESCE(country, '-'), segment;
+
+        -- Timeline aggregations — pre-computes daily and hourly buckets so the
+        -- three chart queries never do a full raw-table GROUP BY scan at load time.
+        DELETE FROM active_timeline_aggregations;
+        INSERT INTO active_timeline_aggregations
+            (date, granularity, human_count, crawler_count,
+             success_count, redirect_count, client_error_count, server_error_count,
+             google_count, bing_count, openai_count, claude_count)
+        SELECT
+            substr(timestamp, 1, 10),
+            'daily',
+            SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%'
+                          OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%'
+                          OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%') THEN 1 ELSE 0 END)
+        FROM active_parsed_logs
+        GROUP BY substr(timestamp, 1, 10);
+
+        INSERT INTO active_timeline_aggregations
+            (date, granularity, human_count, crawler_count,
+             success_count, redirect_count, client_error_count, server_error_count,
+             google_count, bing_count, openai_count, claude_count)
+        SELECT
+            substr(timestamp, 1, 13) || ':00:00',
+            'hourly',
+            SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%'
+                          OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%'
+                          OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%') THEN 1 ELSE 0 END)
+        FROM active_parsed_logs
+        GROUP BY substr(timestamp, 1, 13);
 
         COMMIT;
     ").map_err(|e| e.to_string())
@@ -751,6 +842,21 @@ fn get_user_agent_category_sql(cat: &str) -> (String, Vec<rusqlite::types::Value
             ("LOWER(user_agent) LIKE ?".to_string(), vec![pattern.into()])
         }
     }
+}
+
+fn is_unfiltered(filters: &ActiveFilters) -> bool {
+    filters.search_term.trim().is_empty()
+        && filters.status_filter.is_empty()
+        && filters.method_filter.is_empty()
+        && filters.file_type_filter.is_empty()
+        && filters.bot_filter.is_none()
+        && filters.bot_type_filter.is_none()
+        && filters.crawler_type_filter.is_none()
+        && filters.verified_filter.is_none()
+        && filters.taxonomy_filter.is_none()
+        && filters.referer_filter.is_none()
+        && filters.referer_categories.is_empty()
+        && filters.referer_specific.is_empty()
 }
 
 fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::Value>) {
@@ -1181,50 +1287,53 @@ pub fn get_timeline_aggregations(
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
-    let (where_sql, params_vec) = build_where_clause(&filters);
-
-    let date_modifier = if view_mode == "daily" {
-        "substr(timestamp, 1, 10)"
-    } else {
-        "substr(timestamp, 1, 13) || ':00:00'"
-    };
-
-    let query = format!(
-        "
-        SELECT
-            {} as d,
-            SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END) as human_count,
-            SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END) as crawler_count
-        FROM active_parsed_logs
-        WHERE {}
-        GROUP BY d
-        ORDER BY d ASC
-    ",
-        date_modifier, where_sql
-    );
-
-    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    let use_agg = is_unfiltered(&filters);
+    let granularity = if view_mode == "daily" { "daily" } else { "hourly" };
 
     let mut result = Vec::new();
-    let mut rows = stmt
-        .query(rusqlite::params_from_iter(params_vec.iter()))
-        .map_err(|e| e.to_string())?;
 
-    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
-        // Daily output from substr is YYYY-MM-DD
-        // Hourly output is YYYY-MM-DD HH:00:00, we format appropriately for FE or just send raw
-        let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
-        let date_str = if view_mode == "daily" {
-            raw_date
+    if use_agg {
+        let mut stmt = conn.prepare(
+            "SELECT date, human_count, crawler_count
+             FROM active_timeline_aggregations
+             WHERE granularity = ?1
+             ORDER BY date ASC",
+        ).map_err(|e| e.to_string())?;
+        let mut rows = stmt.query(rusqlite::params![granularity]).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+            let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+            result.push(TimelinePoint {
+                date: date_str,
+                human: row.get(1).map_err(|e| e.to_string())?,
+                crawler: row.get(2).map_err(|e| e.to_string())?,
+            });
+        }
+    } else {
+        let (where_sql, params_vec) = build_where_clause(&filters);
+        let date_modifier = if view_mode == "daily" {
+            "substr(timestamp, 1, 10)"
         } else {
-            raw_date.replace(" ", "T") // FE expects YYYY-MM-DDTHH:00
+            "substr(timestamp, 1, 13) || ':00:00'"
         };
-
-        result.push(TimelinePoint {
-            date: date_str,
-            human: row.get(1).map_err(|e| e.to_string())?,
-            crawler: row.get(2).map_err(|e| e.to_string())?,
-        });
+        let query = format!(
+            "SELECT {} as d,
+                SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END),
+                SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END)
+             FROM active_parsed_logs WHERE {} GROUP BY d ORDER BY d ASC",
+            date_modifier, where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let mut rows = stmt.query(rusqlite::params_from_iter(params_vec.iter())).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+            let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+            result.push(TimelinePoint {
+                date: date_str,
+                human: row.get(1).map_err(|e| e.to_string())?,
+                crawler: row.get(2).map_err(|e| e.to_string())?,
+            });
+        }
     }
 
     Ok(result)
@@ -1239,61 +1348,54 @@ pub fn get_status_aggregations(
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
 
-    let (where_sql, params_vec) = build_where_clause(&filters);
-    let date_modifier = if view_mode == "daily" {
-        "substr(timestamp, 1, 10)"
-    } else {
-        "substr(timestamp, 1, 13) || ':00:00'"
-    };
-
-    let query = format!(
-        "
-        SELECT
-            {} as d,
-            SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END) as succ,
-            SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END) as redir,
-            SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END) as cli,
-            SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END) as srv
-        FROM active_parsed_logs
-        WHERE {}
-        GROUP BY d
-        ORDER BY d ASC
-    ",
-        date_modifier, where_sql
-    );
-
-    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    let use_agg = is_unfiltered(&filters);
+    let granularity = if view_mode == "daily" { "daily" } else { "hourly" };
     let mut result = Vec::new();
-    let mut rows = stmt
-        .query(rusqlite::params_from_iter(params_vec.iter()))
-        .map_err(|e| e.to_string())?;
 
-    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
-        let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
-        let date_str = if view_mode == "daily" {
-            raw_date
-        } else {
-            raw_date.replace(" ", "T")
-        };
-        result.push(StatusPoint {
-            date: date_str,
-            success: row
-                .get::<_, Option<usize>>(1)
-                .map_err(|e| e.to_string())?
-                .unwrap_or(0),
-            redirect: row
-                .get::<_, Option<usize>>(2)
-                .map_err(|e| e.to_string())?
-                .unwrap_or(0),
-            clientError: row
-                .get::<_, Option<usize>>(3)
-                .map_err(|e| e.to_string())?
-                .unwrap_or(0),
-            serverError: row
-                .get::<_, Option<usize>>(4)
-                .map_err(|e| e.to_string())?
-                .unwrap_or(0),
-        });
+    if use_agg {
+        let mut stmt = conn.prepare(
+            "SELECT date, success_count, redirect_count, client_error_count, server_error_count
+             FROM active_timeline_aggregations
+             WHERE granularity = ?1
+             ORDER BY date ASC",
+        ).map_err(|e| e.to_string())?;
+        let mut rows = stmt.query(rusqlite::params![granularity]).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+            let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+            result.push(StatusPoint {
+                date: date_str,
+                success: row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0),
+                redirect: row.get::<_, Option<usize>>(2).map_err(|e| e.to_string())?.unwrap_or(0),
+                clientError: row.get::<_, Option<usize>>(3).map_err(|e| e.to_string())?.unwrap_or(0),
+                serverError: row.get::<_, Option<usize>>(4).map_err(|e| e.to_string())?.unwrap_or(0),
+            });
+        }
+    } else {
+        let (where_sql, params_vec) = build_where_clause(&filters);
+        let date_modifier = if view_mode == "daily" { "substr(timestamp, 1, 10)" } else { "substr(timestamp, 1, 13) || ':00:00'" };
+        let query = format!(
+            "SELECT {} as d,
+                SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END)
+             FROM active_parsed_logs WHERE {} GROUP BY d ORDER BY d ASC",
+            date_modifier, where_sql
+        );
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let mut rows = stmt.query(rusqlite::params_from_iter(params_vec.iter())).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+            let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+            result.push(StatusPoint {
+                date: date_str,
+                success: row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0),
+                redirect: row.get::<_, Option<usize>>(2).map_err(|e| e.to_string())?.unwrap_or(0),
+                clientError: row.get::<_, Option<usize>>(3).map_err(|e| e.to_string())?.unwrap_or(0),
+                serverError: row.get::<_, Option<usize>>(4).map_err(|e| e.to_string())?.unwrap_or(0),
+            });
+        }
     }
     Ok(result)
 }
@@ -3227,26 +3329,20 @@ pub fn clear_active_db_internal() -> Result<(), String> {
         None => return Ok(()),
     };
 
-    conn.execute("DELETE FROM active_parsed_logs", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_status_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_method_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_user_agent_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_referer_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_browser_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_verified_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_ip_aggregations", [])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM active_path_human_aggregations", [])
-        .map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "DELETE FROM active_parsed_logs;
+         DELETE FROM active_path_aggregations;
+         DELETE FROM active_status_aggregations;
+         DELETE FROM active_method_aggregations;
+         DELETE FROM active_user_agent_aggregations;
+         DELETE FROM active_referer_aggregations;
+         DELETE FROM active_browser_aggregations;
+         DELETE FROM active_path_verified_aggregations;
+         DELETE FROM active_path_ip_aggregations;
+         DELETE FROM active_path_human_aggregations;
+         DELETE FROM active_timeline_aggregations;",
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 

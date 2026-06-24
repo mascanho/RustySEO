@@ -42,11 +42,14 @@ export function TimelineChart() {
   );
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
   const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
+  const totalCount = useLogAnalysisStore((state) => state.totalCount);
+  const chartRefreshToken = useLogAnalysisStore((state) => state.chartRefreshToken);
 
   React.useEffect(() => {
     if (isProcessingLogs) return;
+    if (totalCount === 0) return;
     fetchTimelineAggregations(viewMode, activeFilters);
-  }, [viewMode, activeFilters, fetchTimelineAggregations, isProcessingLogs]);
+  }, [viewMode, activeFilters, fetchTimelineAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
 
   const chartData = React.useMemo(() => {
     if (!timelineData || timelineData.length === 0) return [];

@@ -159,6 +159,16 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
+  // Tracks whether isProcessingLogs just transitioned true→false so we can
+  // skip the 300ms-deferred queries in that case. page.tsx's log-analysis-complete
+  // handler already calls fetchLogsFromDb immediately after processing ends,
+  // and log-aggregations-ready calls fetchWidgetAggregations once the rebuild
+  // finishes. Firing the same queries 300ms later is redundant and —
+  // because fetchOverviewStats holds DB_CONN for COUNT(DISTINCT) scans on the
+  // full table — serialises every other pending query behind it, causing the
+  // freeze that appears when appending the same project a second time.
+  const prevIsProcessingRef = useRef(isProcessingLogs);
+
   // Load bot types on mount
   useEffect(() => {
     fetchBotTypes();
@@ -324,8 +334,19 @@ export function LogAnalyzer() {
   // is the single source for DB fetches during processing, so running these
   // concurrently on every totalCount change would fire 7+ queries per log (and grow
   // with DB size), causing the progressive slowdown around the 20th log.
+  // Also skipped for the single render cycle where isProcessingLogs transitions
+  // true→false: page.tsx already called fetchLogsFromDb immediately, and
+  // log-aggregations-ready called fetchWidgetAggregations once the rebuild finished.
+  // The only extra query here would be fetchOverviewStats, which does two full-table
+  // COUNT(DISTINCT) scans and holds DB_CONN for seconds on large datasets — exactly
+  // what serialises every other pending query and causes the freeze on second append.
   useEffect(() => {
+    const justFinishedProcessing = prevIsProcessingRef.current === true && isProcessingLogs === false;
+    prevIsProcessingRef.current = isProcessingLogs;
+
     if (isProcessingLogs) return;
+    // page.tsx + log-aggregations-ready already handled the post-processing fetch.
+    if (justFinishedProcessing) return;
 
     const filters = {
       search_term: activeSearchTerm,
@@ -346,7 +367,6 @@ export function LogAnalyzer() {
       store.fetchLogsFromDb(currentPage, itemsPerPage, filters);
       store.setActiveFilters(filters);
       store.fetchWidgetAggregations(filters);
-      store.fetchOverviewStats();
 
       // Check if any filter is active
       const hasFilter =
@@ -358,6 +378,15 @@ export function LogAnalyzer() {
         botTypeFilter !== "all" ||
         crawlerTypeFilter !== null ||
         verifiedFilter !== null;
+
+      // fetchOverviewStats does two COUNT(DISTINCT) full-table scans and holds
+      // DB_CONN for the entire duration. Without active filters the stats are
+      // already accurate from setLogData(replace) in the complete handler, so
+      // only run this expensive query when the user has actually applied a filter.
+      if (hasFilter) {
+        store.fetchOverviewStats();
+      }
+
       store.setTableIsFiltered(!!hasFilter);
     }, 300);
 
