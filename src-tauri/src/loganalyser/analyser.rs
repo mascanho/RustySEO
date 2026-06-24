@@ -328,6 +328,15 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         return Err(e);
     }
 
+    // Drop indexes on the calling thread (which is a spawn_blocking thread and
+    // can safely block). Doing this inside the stream thread would deadlock:
+    // the stream thread would block on the SQLite busy-wait while the main
+    // thread fills the sync_channel(10000) buffer trying to send entries,
+    // and neither thread could make progress.
+    if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
+        println!("Warning: could not drop indexes before bulk load: {}", e);
+    }
+
     // Entry streaming thread
     let app_handle_stream = app_handle.clone();
     thread::spawn(move || {
@@ -337,10 +346,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
-
-        if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
-            println!("Warning: could not drop indexes before bulk load: {}", e);
-        }
 
         for entry in entry_rx {
             match entry {
@@ -673,6 +678,15 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
         return Err(e);
     }
 
+    // Drop indexes on the calling (spawn_blocking) thread so we can safely
+    // wait for any prior background aggregation to release the write lock.
+    // If this were done inside the stream thread the busy-wait would stall
+    // entry_rx reads, causing the sync_channel(10000) sender to block once
+    // the buffer fills — deadlocking both threads.
+    if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
+        println!("Warning: could not drop indexes before bulk load: {}", e);
+    }
+
     // Entry streaming thread — captured so we can join it before returning.
     // This guarantees that log-analysis-complete is emitted (and all DB writes
     // are flushed) before process_project_logs_directly_command resolves on the
@@ -686,13 +700,6 @@ pub fn analyse_log_from_paths(file_paths: Vec<String>, app_handle: AppHandle) ->
 
         let mut entries_buffer = Vec::new();
         let mut overview: Option<LogAnalysisResult> = None;
-
-        // Drop indexes before bulk loading so inserts stay O(1) regardless of
-        // how large the table grows. They are rebuilt once after all entries are
-        // written, so query performance during the load phase is unaffected.
-        if let Err(e) = crate::loganalyser::active_db::drop_parsed_log_indexes() {
-            println!("Warning: could not drop indexes before bulk load: {}", e);
-        }
 
         for entry in entry_rx {
             match entry {
