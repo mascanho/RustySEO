@@ -277,7 +277,7 @@ pub struct TrendTotalsSummary {
 }
 
 #[tauri::command]
-pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
+pub async fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     // If the crawl is not loaded, try loading it from the database first
     if !crate::loganalyser::helpers::crawl_log::is_crawl_loaded() {
         let _ = crate::loganalyser::helpers::crawl_log::load_crawl_from_database();
@@ -296,8 +296,7 @@ pub fn get_trend_totals_summary() -> Result<TrendTotalsSummary, String> {
     conn.execute_batch(
         "PRAGMA journal_mode = WAL;
          PRAGMA synchronous = OFF;
-         PRAGMA cache_size = 8192;
-         PRAGMA temp_store = MEMORY;",
+         PRAGMA cache_size = 8192;",
     ).map_err(|e| e.to_string())?;
 
     let mut summary = TrendTotalsSummary::default();
@@ -440,23 +439,34 @@ pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
     let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
 
     let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    // No temp_store = MEMORY — let SQLite spill large GROUP BY temp tables to
+    // disk. Forcing them into RAM caused OOM on large log batches (≥700k rows).
     conn.execute_batch(
         "PRAGMA synchronous = OFF;
          PRAGMA journal_mode = WAL;
-         PRAGMA cache_size = 32768;
-         PRAGMA temp_store = MEMORY;
+         PRAGMA cache_size = 8192;
          PRAGMA busy_timeout = 60000;",
     )
     .map_err(|e| e.to_string())?;
 
-    conn.execute_batch("
-        BEGIN;
+    // Split into per-table transactions so a failure in one table doesn't roll
+    // back the others. Each table is small enough to commit independently.
 
+    // path aggregations
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_path_aggregations;
         INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
         SELECT path, crawler_type, segment, MAX(crawled), COUNT(*)
         FROM active_parsed_logs GROUP BY path, crawler_type, segment;
+        COMMIT;
+    ") {
+        println!("Warning: active_path_aggregations rebuild failed: {}", e);
+    }
 
+    // status / method / browser — small tables, one transaction
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_status_aggregations;
         INSERT INTO active_status_aggregations (status, segment, hit_count)
         SELECT status, segment, COUNT(*) FROM active_parsed_logs GROUP BY status, segment;
@@ -465,33 +475,68 @@ pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
         INSERT INTO active_method_aggregations (method, segment, hit_count)
         SELECT method, segment, COUNT(*) FROM active_parsed_logs GROUP BY method, segment;
 
+        DELETE FROM active_browser_aggregations;
+        INSERT INTO active_browser_aggregations (browser, segment, hit_count)
+        SELECT browser, segment, COUNT(*) FROM active_parsed_logs GROUP BY browser, segment;
+        COMMIT;
+    ") {
+        println!("Warning: status/method/browser aggregations rebuild failed: {}", e);
+    }
+
+    // user agent aggregations
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_user_agent_aggregations;
         INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
         SELECT user_agent, segment, COUNT(*) FROM active_parsed_logs GROUP BY user_agent, segment;
+        COMMIT;
+    ") {
+        println!("Warning: active_user_agent_aggregations rebuild failed: {}", e);
+    }
 
+    // referrer aggregations
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_referer_aggregations;
         INSERT INTO active_referer_aggregations (referer, segment, hit_count)
         SELECT COALESCE(referer, '-'), segment, COUNT(*)
         FROM active_parsed_logs GROUP BY COALESCE(referer, '-'), segment;
+        COMMIT;
+    ") {
+        println!("Warning: active_referer_aggregations rebuild failed: {}", e);
+    }
 
-        DELETE FROM active_browser_aggregations;
-        INSERT INTO active_browser_aggregations (browser, segment, hit_count)
-        SELECT browser, segment, COUNT(*) FROM active_parsed_logs GROUP BY browser, segment;
-
+    // verified path aggregations (non-human only)
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_path_verified_aggregations;
         INSERT INTO active_path_verified_aggregations (path, crawler_type, verified, segment, hit_count)
         SELECT path, crawler_type, verified, segment, COUNT(*)
         FROM active_parsed_logs WHERE crawler_type != 'Human'
         GROUP BY path, crawler_type, verified, segment;
+        COMMIT;
+    ") {
+        println!("Warning: active_path_verified_aggregations rebuild failed: {}", e);
+    }
 
+    // human path aggregations — high-cardinality 4-column GROUP BY; keep in its
+    // own transaction so an OOM/timeout here doesn't affect the other tables.
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_path_human_aggregations;
         INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
         SELECT path, browser, COALESCE(country, '-'), segment, COUNT(*)
         FROM active_parsed_logs WHERE crawler_type = 'Human'
         GROUP BY path, browser, COALESCE(country, '-'), segment;
+        COMMIT;
+    ") {
+        println!("Warning: active_path_human_aggregations rebuild failed: {}", e);
+    }
 
-        -- Timeline aggregations — pre-computes daily and hourly buckets so the
-        -- three chart queries never do a full raw-table GROUP BY scan at load time.
+    // Timeline aggregations — two full scans with many CASE WHEN expressions.
+    // Kept together (daily+hourly use same DELETE) but in their own transaction.
+    if let Err(e) = conn.execute_batch("
+        BEGIN;
         DELETE FROM active_timeline_aggregations;
         INSERT INTO active_timeline_aggregations
             (date, granularity, human_count, crawler_count,
@@ -536,9 +581,200 @@ pub fn rebuild_core_aggregations_internal() -> Result<(), String> {
             SUM(CASE WHEN (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%') THEN 1 ELSE 0 END)
         FROM active_parsed_logs
         GROUP BY substr(timestamp, 1, 13);
-
         COMMIT;
-    ").map_err(|e| e.to_string())
+    ") {
+        println!("Warning: active_timeline_aggregations rebuild failed: {}", e);
+    }
+
+    Ok(())
+}
+
+/// Incremental variant: upserts aggregations for only the newly-uploaded files.
+/// O(new_rows) instead of O(all_rows) — essential when the DB already has hundreds
+/// of thousands of rows from previous uploads.
+///
+/// Uses a temp table `_new_files` to hold the filename list, then `INSERT …
+/// ON CONFLICT DO UPDATE` to add new counts without a full DELETE+rebuild.
+pub fn rebuild_core_aggregations_incremental(new_filenames: &[String]) -> Result<(), String> {
+    if new_filenames.is_empty() {
+        return rebuild_core_aggregations_internal();
+    }
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA synchronous = OFF;
+         PRAGMA journal_mode = WAL;
+         PRAGMA cache_size = 8192;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
+
+    // Load new filenames into a temp table for efficient IN-queries.
+    conn.execute_batch("CREATE TEMP TABLE IF NOT EXISTS _new_files (filename TEXT PRIMARY KEY);")
+        .map_err(|e| e.to_string())?;
+    conn.execute_batch("DELETE FROM _new_files;").map_err(|e| e.to_string())?;
+    for fname in new_filenames {
+        conn.execute("INSERT OR IGNORE INTO _new_files (filename) VALUES (?1)", [fname])
+            .map_err(|e| e.to_string())?;
+    }
+
+    // path aggregations
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_path_aggregations (path, crawler_type, segment, crawled, hit_count)
+        SELECT path, crawler_type, segment, MAX(crawled), COUNT(*)
+        FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY path, crawler_type, segment
+        ON CONFLICT(path, crawler_type, segment) DO UPDATE SET
+          hit_count = hit_count + excluded.hit_count,
+          crawled = CASE WHEN excluded.crawled THEN TRUE ELSE crawled END;
+    ") {
+        println!("Warning: incremental active_path_aggregations failed: {}", e);
+    }
+
+    // status / method / browser
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_status_aggregations (status, segment, hit_count)
+        SELECT status, segment, COUNT(*) FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY status, segment
+        ON CONFLICT(status, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count;
+
+        INSERT INTO active_method_aggregations (method, segment, hit_count)
+        SELECT method, segment, COUNT(*) FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY method, segment
+        ON CONFLICT(method, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count;
+
+        INSERT INTO active_browser_aggregations (browser, segment, hit_count)
+        SELECT browser, segment, COUNT(*) FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY browser, segment
+        ON CONFLICT(browser, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count;
+    ") {
+        println!("Warning: incremental status/method/browser aggregations failed: {}", e);
+    }
+
+    // user agent
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_user_agent_aggregations (user_agent, segment, hit_count)
+        SELECT user_agent, segment, COUNT(*) FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY user_agent, segment
+        ON CONFLICT(user_agent, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count;
+    ") {
+        println!("Warning: incremental active_user_agent_aggregations failed: {}", e);
+    }
+
+    // referrer
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_referer_aggregations (referer, segment, hit_count)
+        SELECT COALESCE(referer, '-'), segment, COUNT(*) FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY COALESCE(referer, '-'), segment
+        ON CONFLICT(referer, segment) DO UPDATE SET hit_count = hit_count + excluded.hit_count;
+    ") {
+        println!("Warning: incremental active_referer_aggregations failed: {}", e);
+    }
+
+    // verified path aggregations (bots only)
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_path_verified_aggregations (path, crawler_type, verified, segment, hit_count)
+        SELECT path, crawler_type, verified, segment, COUNT(*) FROM active_parsed_logs
+        WHERE crawler_type != 'Human' AND filename IN (SELECT filename FROM _new_files)
+        GROUP BY path, crawler_type, verified, segment
+        ON CONFLICT(path, crawler_type, verified, segment) DO UPDATE SET
+          hit_count = hit_count + excluded.hit_count;
+    ") {
+        println!("Warning: incremental active_path_verified_aggregations failed: {}", e);
+    }
+
+    // human path aggregations
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_path_human_aggregations (path, browser, country, segment, hit_count)
+        SELECT path, browser, COALESCE(country, '-'), segment, COUNT(*) FROM active_parsed_logs
+        WHERE crawler_type = 'Human' AND filename IN (SELECT filename FROM _new_files)
+        GROUP BY path, browser, COALESCE(country, '-'), segment
+        ON CONFLICT(path, browser, country, segment) DO UPDATE SET
+          hit_count = hit_count + excluded.hit_count;
+    ") {
+        println!("Warning: incremental active_path_human_aggregations failed: {}", e);
+    }
+
+    // timeline aggregations — upsert daily and hourly buckets
+    if let Err(e) = conn.execute_batch("
+        INSERT INTO active_timeline_aggregations
+            (date, granularity, human_count, crawler_count,
+             success_count, redirect_count, client_error_count, server_error_count,
+             google_count, bing_count, openai_count, claude_count)
+        SELECT
+            substr(timestamp, 1, 10), 'daily',
+            SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%'
+                          OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%'
+                          OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%') THEN 1 ELSE 0 END)
+        FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY substr(timestamp, 1, 10)
+        ON CONFLICT(date, granularity) DO UPDATE SET
+          human_count    = human_count    + excluded.human_count,
+          crawler_count  = crawler_count  + excluded.crawler_count,
+          success_count  = success_count  + excluded.success_count,
+          redirect_count = redirect_count + excluded.redirect_count,
+          client_error_count = client_error_count + excluded.client_error_count,
+          server_error_count = server_error_count + excluded.server_error_count,
+          google_count   = google_count   + excluded.google_count,
+          bing_count     = bing_count     + excluded.bing_count,
+          openai_count   = openai_count   + excluded.openai_count,
+          claude_count   = claude_count   + excluded.claude_count;
+
+        INSERT INTO active_timeline_aggregations
+            (date, granularity, human_count, crawler_count,
+             success_count, redirect_count, client_error_count, server_error_count,
+             google_count, bing_count, openai_count, claude_count)
+        SELECT
+            substr(timestamp, 1, 13) || ':00:00', 'hourly',
+            SUM(CASE WHEN crawler_type = 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN crawler_type != 'Human' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 200 AND status < 300 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 300 AND status < 400 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 400 AND status < 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%google%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN LOWER(crawler_type) LIKE '%bing%' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%openai%' OR LOWER(crawler_type) LIKE '%gpt%'
+                          OR LOWER(user_agent) LIKE '%chatgpt%' OR LOWER(user_agent) LIKE '%gptbot%'
+                          OR LOWER(user_agent) LIKE '%oai-%') THEN 1 ELSE 0 END),
+            SUM(CASE WHEN (LOWER(crawler_type) LIKE '%claude%' OR LOWER(user_agent) LIKE '%claude%') THEN 1 ELSE 0 END)
+        FROM active_parsed_logs
+        WHERE filename IN (SELECT filename FROM _new_files)
+        GROUP BY substr(timestamp, 1, 13)
+        ON CONFLICT(date, granularity) DO UPDATE SET
+          human_count    = human_count    + excluded.human_count,
+          crawler_count  = crawler_count  + excluded.crawler_count,
+          success_count  = success_count  + excluded.success_count,
+          redirect_count = redirect_count + excluded.redirect_count,
+          client_error_count = client_error_count + excluded.client_error_count,
+          server_error_count = server_error_count + excluded.server_error_count,
+          google_count   = google_count   + excluded.google_count,
+          bing_count     = bing_count     + excluded.bing_count,
+          openai_count   = openai_count   + excluded.openai_count,
+          claude_count   = claude_count   + excluded.claude_count;
+    ") {
+        println!("Warning: incremental active_timeline_aggregations failed: {}", e);
+    }
+
+    conn.execute_batch("DROP TABLE IF EXISTS _new_files;").ok();
+    Ok(())
 }
 
 pub fn insert_active_logs_batch(entries: &[LogEntry]) -> Result<(), String> {
@@ -616,9 +852,27 @@ pub fn drop_parsed_log_indexes() -> Result<(), String> {
 
 /// Recreate the indexes dropped by drop_parsed_log_indexes.
 /// Call this once after all bulk inserts are complete.
+///
+/// Uses a DEDICATED connection (not DB_CONN) so that the potentially long-running
+/// CREATE INDEX + WAL checkpoint does not hold DB_CONN's mutex. Without this, every
+/// Tauri command (fetchLogsFromDb, fetchWidgetAggregations, chart queries) blocks on
+/// DB_CONN.lock() for the entire duration, causing the frontend "beach ball" freeze
+/// that appears when appending 30+ large log files.
 pub fn recreate_parsed_log_indexes() -> Result<(), String> {
-    let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_mut().ok_or("DB not initialized")?;
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA synchronous = OFF;
+         PRAGMA journal_mode = WAL;
+         PRAGMA cache_size = 32768;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    )
+    .map_err(|e| e.to_string())?;
+
     conn.execute_batch(
         "CREATE INDEX IF NOT EXISTS idx_timestamp ON active_parsed_logs(timestamp);
          CREATE INDEX IF NOT EXISTS idx_status ON active_parsed_logs(status);
@@ -628,7 +882,18 @@ pub fn recreate_parsed_log_indexes() -> Result<(), String> {
          PRAGMA wal_checkpoint(TRUNCATE);
          PRAGMA wal_autocheckpoint = 1000;",
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+
+    // Re-enable auto-checkpoint on the shared DB_CONN as well.
+    {
+        if let Ok(mut lock) = DB_CONN.lock() {
+            if let Some(conn) = lock.as_mut() {
+                let _ = conn.execute_batch("PRAGMA wal_autocheckpoint = 1000;");
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -1077,14 +1342,25 @@ pub struct FilteredLogsPage {
 }
 
 #[tauri::command]
-pub fn get_active_logs_page(
+pub async fn get_active_logs_page(
     page: u32,
     limit: u32,
     filters: ActiveFilters,
 ) -> Result<FilteredLogsPage, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    // Use a dedicated read-only connection so this COUNT(*) + SELECT do NOT hold
+    // DB_CONN's mutex. In WAL mode concurrent readers on separate connections
+    // never block each other or the writer, so this is safe.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;",
+    ).map_err(|e| e.to_string())?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
 
@@ -1165,10 +1441,18 @@ pub fn get_active_logs_page(
 }
 
 #[tauri::command]
-pub fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsPage, String> {
+pub async fn get_all_logs_with_filters(filters: ActiveFilters) -> Result<FilteredLogsPage, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;",
+    ).map_err(|e| e.to_string())?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
 
@@ -1279,13 +1563,24 @@ pub struct CrawlerPoint {
 }
 
 #[tauri::command]
-pub fn get_timeline_aggregations(
+pub async fn get_timeline_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<TimelinePoint>, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    // Dedicated connection — never holds DB_CONN.lock() so insert_active_logs_batch
+    // and other DB_CONN commands can run concurrently without blocking each other.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
 
     let use_agg = is_unfiltered(&filters);
     let granularity = if view_mode == "daily" { "daily" } else { "hourly" };
@@ -1336,17 +1631,36 @@ pub fn get_timeline_aggregations(
         }
     }
 
+    // Cap to the most recent 2000 points. Charts show at most 1000 and data is
+    // already sorted ASC, so drop the oldest rows. This prevents multi-year hourly
+    // datasets (8760+ rows/year) from producing large IPC payloads and slow
+    // JavaScript date-sorting on the frontend.
+    if result.len() > 2000 {
+        let excess = result.len() - 2000;
+        result.drain(..excess);
+    }
+
     Ok(result)
 }
 
 #[tauri::command]
-pub fn get_status_aggregations(
+pub async fn get_status_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<StatusPoint>, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    // Dedicated connection — same rationale as get_timeline_aggregations.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
 
     let use_agg = is_unfiltered(&filters);
     let granularity = if view_mode == "daily" { "daily" } else { "hourly" };
@@ -1397,20 +1711,80 @@ pub fn get_status_aggregations(
             });
         }
     }
+
+    // Cap to the most recent 2000 points — same rationale as get_timeline_aggregations.
+    if result.len() > 2000 {
+        let excess = result.len() - 2000;
+        result.drain(..excess);
+    }
+
     Ok(result)
 }
 
 #[tauri::command]
-pub fn get_crawler_aggregations(
+pub async fn get_crawler_aggregations(
     view_mode: String,
     filters: ActiveFilters,
 ) -> Result<Vec<CrawlerPoint>, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+
+    let use_agg = is_unfiltered(&filters);
+    let granularity = if view_mode == "daily" { "daily" } else { "hourly" };
+
+    // Fast path: use pre-built active_timeline_aggregations (tiny, ~30-365 rows) instead
+    // of scanning active_parsed_logs (millions of rows) with expensive LIKE expressions.
+    // This is the same optimisation applied to get_timeline_aggregations and
+    // get_status_aggregations. Without it, get_crawler_aggregations held DB_CONN.lock()
+    // for several seconds at 2M+ rows, causing a WebKit IPC timeout / beach-ball freeze.
+    if use_agg {
+        let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+            .ok_or_else(|| "Failed to get project directories".to_string())?;
+        let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+        let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = OFF;
+             PRAGMA cache_size = 8192;
+             PRAGMA temp_store = MEMORY;",
+        ).map_err(|e| e.to_string())?;
+
+        let mut stmt = conn.prepare(
+            "SELECT date, google_count, bing_count, openai_count, claude_count, crawler_count
+             FROM active_timeline_aggregations
+             WHERE granularity = ?1
+             ORDER BY date ASC",
+        ).map_err(|e| e.to_string())?;
+        let mut result = Vec::new();
+        let mut rows = stmt.query(rusqlite::params![granularity]).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+            let ggl: usize = row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0);
+            let bng: usize = row.get::<_, Option<usize>>(2).map_err(|e| e.to_string())?.unwrap_or(0);
+            let oai: usize = row.get::<_, Option<usize>>(3).map_err(|e| e.to_string())?.unwrap_or(0);
+            let cld: usize = row.get::<_, Option<usize>>(4).map_err(|e| e.to_string())?.unwrap_or(0);
+            let total_crawlers: usize = row.get::<_, Option<usize>>(5).map_err(|e| e.to_string())?.unwrap_or(0);
+            let other = total_crawlers.saturating_sub(ggl + bng + oai + cld);
+            let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+            result.push(CrawlerPoint { date: date_str, google: ggl, bing: bng, openai: oai, claude: cld, other });
+        }
+        return Ok(result);
+    }
+
+    // Slow path (filtered): open a dedicated connection so we don't hold DB_CONN.lock()
+    // for the duration of two expensive full-table scans.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 16384;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
-    // Ignore human
     let where_sql = format!(
         "{} AND (is_crawler = 1 OR crawler_type != 'Human')",
         where_sql
@@ -1435,63 +1809,44 @@ pub fn get_crawler_aggregations(
         ORDER BY d ASC
     ", date_modifier, where_sql);
 
+    let total_query = format!(
+        "SELECT {} as d, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY d",
+        date_modifier, where_sql
+    );
+
+    let mut total_map = std::collections::HashMap::new();
+    {
+        let mut total_stmt = conn.prepare(&total_query).map_err(|e| e.to_string())?;
+        let mut t_rows = total_stmt
+            .query(rusqlite::params_from_iter(params_vec.iter()))
+            .map_err(|e| e.to_string())?;
+        while let Some(tr) = t_rows.next().map_err(|e| e.to_string())? {
+            let d: String = tr.get(0).map_err(|e| e.to_string())?;
+            let t: usize = tr.get(1).map_err(|e| e.to_string())?;
+            total_map.insert(d, t);
+        }
+    }
+
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
     let mut result = Vec::new();
     let mut rows = stmt
         .query(rusqlite::params_from_iter(params_vec.iter()))
         .map_err(|e| e.to_string())?;
 
-    // In SQL we can't easily get 'other' generically by subtracting inside sum without a CTE, let's just do a second query for Total
-    let total_query = format!(
-        "SELECT {} as d, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY d",
-        date_modifier, where_sql
-    );
-    let mut total_stmt = conn.prepare(&total_query).map_err(|e| e.to_string())?;
-    let mut total_map = std::collections::HashMap::new();
-    let mut t_rows = total_stmt
-        .query(rusqlite::params_from_iter(params_vec.iter()))
-        .map_err(|e| e.to_string())?;
-    while let Some(tr) = t_rows.next().map_err(|e| e.to_string())? {
-        let d: String = tr.get(0).map_err(|e| e.to_string())?;
-        let t: usize = tr.get(1).map_err(|e| e.to_string())?;
-        total_map.insert(d, t);
-    }
-
     while let Some(row) = rows.next().map_err(|e| e.to_string())? {
         let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
-        let ggl: usize = row
-            .get::<_, Option<usize>>(1)
-            .map_err(|e| e.to_string())?
-            .unwrap_or(0);
-        let bng: usize = row
-            .get::<_, Option<usize>>(2)
-            .map_err(|e| e.to_string())?
-            .unwrap_or(0);
-        let oai: usize = row
-            .get::<_, Option<usize>>(3)
-            .map_err(|e| e.to_string())?
-            .unwrap_or(0);
-        let cld: usize = row
-            .get::<_, Option<usize>>(4)
-            .map_err(|e| e.to_string())?
-            .unwrap_or(0);
-
+        let ggl: usize = row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0);
+        let bng: usize = row.get::<_, Option<usize>>(2).map_err(|e| e.to_string())?.unwrap_or(0);
+        let oai: usize = row.get::<_, Option<usize>>(3).map_err(|e| e.to_string())?.unwrap_or(0);
+        let cld: usize = row.get::<_, Option<usize>>(4).map_err(|e| e.to_string())?.unwrap_or(0);
         let total = total_map.get(&raw_date).copied().unwrap_or(0);
         let other = total.saturating_sub(ggl + bng + oai + cld);
-
         let date_str = if view_mode == "daily" {
             raw_date
         } else {
             raw_date.replace(" ", "T")
         };
-        result.push(CrawlerPoint {
-            date: date_str,
-            google: ggl,
-            bing: bng,
-            openai: oai,
-            claude: cld,
-            other,
-        });
+        result.push(CrawlerPoint { date: date_str, google: ggl, bing: bng, openai: oai, claude: cld, other });
     }
     Ok(result)
 }
@@ -1512,10 +1867,20 @@ pub struct WidgetAggregations {
 }
 
 #[tauri::command]
-pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregations, String> {
+pub async fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregations, String> {
     init_active_db()?;
-    let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
-    let conn = lock.as_ref().ok_or("DB not initialized")?;
+    // Use a dedicated read-only connection — same rationale as get_active_logs_page.
+    // This function runs many queries and must not block DB_CONN for other callers.
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;",
+    ).map_err(|e| e.to_string())?;
 
     let (where_sql, params_vec) = build_where_clause(&filters);
     let mut aggs = WidgetAggregations::default();
@@ -1617,10 +1982,10 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     }
 
-    // 4. User Agents (Top 500 for dropdown)
+    // 4. User Agents (Top 100 for dropdown — enough for practical filtering)
     if use_agg_tables {
         let mut stmt = conn
-            .prepare("SELECT user_agent, SUM(hit_count) FROM active_user_agent_aggregations GROUP BY user_agent ORDER BY SUM(hit_count) DESC LIMIT 500")
+            .prepare("SELECT user_agent, SUM(hit_count) FROM active_user_agent_aggregations GROUP BY user_agent ORDER BY SUM(hit_count) DESC LIMIT 100")
             .map_err(|e| e.to_string())?;
         let rows = stmt.query_map([], |row| {
             Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
@@ -1631,7 +1996,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     } else {
         let query = format!(
-            "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 500",
+            "SELECT user_agent, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY user_agent ORDER BY COUNT(*) DESC LIMIT 100",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -1711,10 +2076,10 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     }
 
-    // 6. Referrers (Top 500 for dropdown)
+    // 6. Referrers (Top 100 for dropdown — enough for practical filtering)
     if use_agg_tables {
         let mut stmt = conn
-            .prepare("SELECT referer, SUM(hit_count) FROM active_referer_aggregations GROUP BY referer ORDER BY SUM(hit_count) DESC LIMIT 500")
+            .prepare("SELECT referer, SUM(hit_count) FROM active_referer_aggregations GROUP BY referer ORDER BY SUM(hit_count) DESC LIMIT 100")
             .map_err(|e| e.to_string())?;
         let rows = stmt.query_map([], |row| {
             Ok((row.get::<_, Option<String>>(0)?, row.get::<_, usize>(1)?))
@@ -1725,7 +2090,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
         }
     } else {
         let query = format!(
-            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 500",
+            "SELECT referer, COUNT(*) FROM active_parsed_logs WHERE {} GROUP BY referer ORDER BY COUNT(*) DESC LIMIT 100",
             where_sql
         );
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -1849,7 +2214,7 @@ pub fn get_widget_aggregations(filters: ActiveFilters) -> Result<WidgetAggregati
 
 
 #[tauri::command]
-pub fn get_active_logs_stats(filters: ActiveFilters) -> Result<LogAnalysisResult, String> {
+pub async fn get_active_logs_stats(filters: ActiveFilters) -> Result<LogAnalysisResult, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
@@ -2118,7 +2483,7 @@ pub struct ActivePathIPAggregationsPage {
 }
 
 #[tauri::command]
-pub fn get_active_path_aggregations(
+pub async fn get_active_path_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2375,7 +2740,7 @@ pub fn get_active_path_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_status_aggregations(
+pub async fn get_active_path_status_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2465,7 +2830,7 @@ pub fn get_active_path_status_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_method_aggregations(
+pub async fn get_active_path_method_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2555,7 +2920,7 @@ pub fn get_active_path_method_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_user_agent_aggregations(
+pub async fn get_active_path_user_agent_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2645,7 +3010,7 @@ pub fn get_active_path_user_agent_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_referer_aggregations(
+pub async fn get_active_path_referer_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2735,7 +3100,7 @@ pub fn get_active_path_referer_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_browser_aggregations(
+pub async fn get_active_path_browser_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2825,7 +3190,7 @@ pub fn get_active_path_browser_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_human_aggregations(
+pub async fn get_active_path_human_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -2929,7 +3294,7 @@ pub fn get_active_path_human_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_verified_aggregations(
+pub async fn get_active_path_verified_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -3029,7 +3394,7 @@ pub fn get_active_path_verified_aggregations(
 }
 
 #[tauri::command]
-pub fn get_active_path_ip_aggregations(
+pub async fn get_active_path_ip_aggregations(
     page: u32,
     limit: u32,
     sort_by: Option<String>,
@@ -3142,7 +3507,7 @@ pub fn get_active_path_ip_aggregations(
 }
 
 #[tauri::command]
-pub fn rebuild_path_aggregations() -> Result<(), String> {
+pub async fn rebuild_path_aggregations() -> Result<(), String> {
     init_active_db()?;
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_mut().ok_or("DB not initialized")?;
@@ -3304,7 +3669,7 @@ pub fn update_crawled_status_from_cache() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn get_distinct_bot_types() -> Result<Vec<String>, String> {
+pub async fn get_distinct_bot_types() -> Result<Vec<String>, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
@@ -3354,7 +3719,7 @@ pub async fn clear_active_db_command() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn clear_all_log_data_command() -> Result<(), String> {
+pub async fn clear_all_log_data_command() -> Result<(), String> {
     // Only clear the active session logs
     clear_active_db_internal()
 }
@@ -3367,7 +3732,7 @@ pub struct PathAggregationsPage {
 }
 
 #[tauri::command]
-pub fn get_path_aggregations_page(
+pub async fn get_path_aggregations_page(
     page: u32,
     limit: u32,
     filters: ActiveFilters,
@@ -3477,7 +3842,7 @@ pub fn get_path_aggregations_page(
 }
 
 #[tauri::command]
-pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
+pub async fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
@@ -3547,7 +3912,7 @@ pub fn get_bot_paths_aggregated(filters: ActiveFilters) -> Result<Vec<BotPathDet
 }
 
 #[tauri::command]
-pub fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
+pub async fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDetail>, String> {
     init_active_db()?;
     let lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_ref().ok_or("DB not initialized")?;
@@ -3631,7 +3996,7 @@ pub fn get_all_path_aggregations(filters: ActiveFilters) -> Result<Vec<BotPathDe
 use super::analyser::{LogAnalysisResult, SegmentSummary, StatusCodeCounts, Totals};
 
 #[tauri::command]
-pub fn reclassify_all_segments() -> Result<(), String> {
+pub async fn reclassify_all_segments() -> Result<(), String> {
     init_active_db()?;
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     let conn = lock.as_mut().ok_or("DB not initialized")?;
@@ -3697,7 +4062,7 @@ pub fn reclassify_all_segments() -> Result<(), String> {
 /// Export all logs from the active database directly to an Excel file.
 /// This runs entirely on the backend, avoiding IPC serialization limits.
 #[tauri::command]
-pub fn export_active_logs_excel(
+pub async fn export_active_logs_excel(
     file_path: String,
     include_gsc: bool,
 ) -> Result<usize, String> {
@@ -3861,7 +4226,7 @@ fn add_query_to_sheet(
 }
 
 #[tauri::command]
-pub fn export_server_logs_trends_excel(
+pub async fn export_server_logs_trends_excel(
     file_path: String,
     _include_gsc: bool,
 ) -> Result<usize, String> {
@@ -3933,7 +4298,7 @@ pub fn export_server_logs_trends_excel(
 /// Export all logs from the active database directly to a CSV file.
 /// This runs entirely on the backend, bypassing Excel row limits.
 #[tauri::command]
-pub fn export_active_logs_csv(
+pub async fn export_active_logs_csv(
     file_path: String,
     include_gsc: bool,
 ) -> Result<usize, String> {
@@ -4041,7 +4406,7 @@ pub fn export_active_logs_csv(
 
 /// Export aggregated logs from a specific table directly to a CSV file.
 #[tauri::command]
-pub fn export_aggregated_logs_csv(
+pub async fn export_aggregated_logs_csv(
     file_path: String,
     agg_type: String,
     segment_filter: Option<String>,

@@ -51,9 +51,15 @@ export function StatusCodeBarChart() {
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const chartRefreshToken = useLogAnalysisStore((state) => state.chartRefreshToken);
 
+  const prevIsProcessingRef = React.useRef(isProcessingLogs);
+
   React.useEffect(() => {
+    const justFinishedProcessing = prevIsProcessingRef.current === true && isProcessingLogs === false;
+    prevIsProcessingRef.current = isProcessingLogs;
+
     if (isProcessingLogs) return;
     if (totalCount === 0) return;
+    if (justFinishedProcessing) return;
     fetchStatusAggregations(viewMode, activeFilters);
   }, [viewMode, activeFilters, fetchStatusAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
 
@@ -74,13 +80,19 @@ export function StatusCodeBarChart() {
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return statusTimelineData
+    // Data arrives pre-sorted ORDER BY date ASC from the DB — no need to re-sort.
+    const filtered = statusTimelineData
       .filter((item) => {
         if (timeRange === "all") return true;
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      });
+
+    // Cap at 1000 points to prevent Recharts SVG from blocking the JS main thread.
+    if (filtered.length > 1000) {
+      return filtered.slice(filtered.length - 1000);
+    }
+    return filtered;
   }, [statusTimelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {

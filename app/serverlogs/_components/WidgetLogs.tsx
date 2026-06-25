@@ -247,9 +247,7 @@ export default function WidgetLogs() {
   const overview = useLogAnalysisStore((state) => state.overview);
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const widgetAggs = useLogAnalysisStore((state) => state.widgetAggs);
-  const { entries } = useLogAnalysisStore((state) => ({
-    entries: state.entries,
-  }));
+  const entries = useLogAnalysisStore((state) => state.entries);
   const pathAggregations = useLogAnalysisStore(
     (state) => state.pathAggregations,
   );
@@ -297,19 +295,26 @@ export default function WidgetLogs() {
     fetchAgenticBots();
   }, []);
 
+  const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (activeTab === "Trend Totals" || activeTab === "Crawl Sync") {
+    if ((activeTab === "Trend Totals" || activeTab === "Crawl Sync") && !isProcessingLogs) {
       fetchTrendTotals();
-      // Poll every 5 seconds while active
-      interval = setInterval(fetchTrendTotals, 5000);
+      // Poll every 5 seconds while active — skipped during log processing to avoid
+      // competing for DB_CONN with fetchLogsFromDb / aggregation queries.
+      interval = setInterval(() => {
+        if (!useLogAnalysisStore.getState().isProcessingLogs) {
+          fetchTrendTotals();
+        }
+      }, 5000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [activeTab, fetchTrendTotals]);
+  }, [activeTab, fetchTrendTotals, isProcessingLogs]);
 
   useEffect(() => {
     const loadTaxonomies = () => {

@@ -55,9 +55,15 @@ export function CrawlerTimelineBarChart() {
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
   const chartRefreshToken = useLogAnalysisStore((state) => state.chartRefreshToken);
 
+  const prevIsProcessingRef = React.useRef(isProcessingLogs);
+
   React.useEffect(() => {
+    const justFinishedProcessing = prevIsProcessingRef.current === true && isProcessingLogs === false;
+    prevIsProcessingRef.current = isProcessingLogs;
+
     if (isProcessingLogs) return;
     if (totalCount === 0) return;
+    if (justFinishedProcessing) return;
     fetchCrawlerAggregations(viewMode, activeFilters);
   }, [viewMode, activeFilters, fetchCrawlerAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
 
@@ -78,13 +84,22 @@ export function CrawlerTimelineBarChart() {
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    return crawlerTimelineData
+    // Data arrives pre-sorted ORDER BY date ASC from the DB — no need to re-sort.
+    const filtered = crawlerTimelineData
       .filter((item) => {
         if (timeRange === "all") return true;
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      });
+
+    // Cap at 1000 points to prevent Recharts SVG rendering from freezing the JS
+    // main thread. With hourly data spanning many months (e.g. 33 log files × 30
+    // days = 720+ hourly buckets, or years of data = 8760+), the synchronous SVG
+    // generation blocks WebKit and causes the macOS beach ball.
+    if (filtered.length > 1000) {
+      return filtered.slice(filtered.length - 1000);
+    }
+    return filtered;
   }, [crawlerTimelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {

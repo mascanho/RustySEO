@@ -265,6 +265,10 @@ export function FileUpload({
     } finally {
       setUploading(false);
       uploadingRef.current = false;
+      // Safety net: ensure the processing spinner is never permanently stuck.
+      // The normal path clears this via the log-analysis-complete event handler,
+      // but if that event is missed (race or error) the UI would freeze otherwise.
+      setIsProcessingLogs(false);
     }
   };
 
