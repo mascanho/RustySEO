@@ -302,13 +302,13 @@ export default function WidgetLogs() {
 
     if ((activeTab === "Trend Totals" || activeTab === "Crawl Sync") && !isProcessingLogs) {
       fetchTrendTotals();
-      // Poll every 5 seconds while active — skipped during log processing to avoid
+      // Poll every 30 seconds while active — skipped during log processing to avoid
       // competing for DB_CONN with fetchLogsFromDb / aggregation queries.
       interval = setInterval(() => {
         if (!useLogAnalysisStore.getState().isProcessingLogs) {
           fetchTrendTotals();
         }
-      }, 5000);
+      }, 30000);
     }
 
     return () => {
@@ -477,20 +477,24 @@ export default function WidgetLogs() {
     }
 
     if (widgetAggs.user_agents) {
-      Object.entries(widgetAggs.user_agents).forEach(([ua, count]) => {
+      const hasCats = !!widgetAggs.user_agent_categories;
+      const entries = Object.entries(widgetAggs.user_agents);
+      // Cap at 500 unique UAs for example collection — beyond that we have
+      // diminishing returns since each category only shows 5 examples.
+      const limit = hasCats ? Math.min(entries.length, 500) : entries.length;
+      for (let i = 0; i < limit; i++) {
+        const [ua, count] = entries[i];
         const cat = categorizeUserAgent(ua);
         if (!acc[cat]) {
           acc[cat] = { count: 0, examples: [] };
         }
-
-        if (!widgetAggs.user_agent_categories) {
+        if (!hasCats) {
           acc[cat].count += count;
         }
-
-        if (acc[cat].examples.length < 5 && !acc[cat].examples.includes(ua)) {
+        if (acc[cat].examples.length < 5) {
           acc[cat].examples.push(ua);
         }
-      });
+      }
     }
 
     return acc;
@@ -509,23 +513,28 @@ export default function WidgetLogs() {
     }
 
     if (widgetAggs.referrers) {
-      Object.entries(widgetAggs.referrers).forEach(([referrer, count]) => {
-        const cat = categorizeReferrer(referrer);
+      const hasCats = !!widgetAggs.referrer_categories;
+      // Read domain once outside the loop — localStorage.getItem is synchronous
+      // and calling it per-entry multiplies the cost across thousands of referrers.
+      const domain =
+        typeof window !== "undefined"
+          ? (localStorage.getItem("domain") ?? "").toLowerCase()
+          : "";
+      const entries = Object.entries(widgetAggs.referrers);
+      const limit = hasCats ? Math.min(entries.length, 500) : entries.length;
+      for (let i = 0; i < limit; i++) {
+        const [referrer, count] = entries[i];
+        const cat = categorizeReferrer(referrer, domain);
         if (!acc[cat]) {
           acc[cat] = { count: 0, referrers: [] };
         }
-
-        if (!widgetAggs.referrer_categories) {
+        if (!hasCats) {
           acc[cat].count += count;
         }
-
-        if (
-          acc[cat].referrers.length < 5 &&
-          !acc[cat].referrers.includes(referrer)
-        ) {
+        if (acc[cat].referrers.length < 5) {
           acc[cat].referrers.push(referrer);
         }
-      });
+      }
     }
 
     return acc;

@@ -57,7 +57,13 @@ export function TimelineChart() {
     if (isProcessingLogs) return;
     if (totalCount === 0) return;
     if (justFinishedProcessing) return;
-    fetchTimelineAggregations(viewMode, activeFilters);
+
+    // Debounce: if filters/viewMode change rapidly (e.g. user typing in search),
+    // wait 300ms before firing the expensive timeline query.
+    const timer = setTimeout(() => {
+      fetchTimelineAggregations(viewMode, activeFilters);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [viewMode, activeFilters, fetchTimelineAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
 
   const chartData = React.useMemo(() => {

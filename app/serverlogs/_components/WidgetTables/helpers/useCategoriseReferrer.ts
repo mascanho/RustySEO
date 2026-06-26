@@ -1,4 +1,4 @@
-export const categorizeReferrer = (referrer: string): string => {
+export const categorizeReferrer = (referrer: string, cachedDomain?: string): string => {
   if (!referrer || referrer.trim() === "" || referrer === "-") {
     return "Direct/None";
   }
@@ -57,13 +57,12 @@ export const categorizeReferrer = (referrer: string): string => {
     return "Local/Internal";
   }
 
-  // Check if it's from the same domain
-  if (typeof window !== "undefined") {
-    const domain = localStorage.getItem("domain");
-    if (domain && ref.includes(domain.toLowerCase())) {
-      // Return "Other" because Rust backend groups it in "Other"
-      return "Other";
-    }
+  // Check if it's from the same domain (use pre-read cachedDomain to avoid
+  // repeated localStorage.getItem calls when categorising thousands of referrers)
+  const domain = cachedDomain ?? (typeof window !== "undefined" ? (localStorage.getItem("domain") ?? "") : "");
+  if (domain && ref.includes(domain.toLowerCase())) {
+    // Return "Other" because Rust backend groups it in "Other"
+    return "Other";
   }
 
   // Try to extract domain for more specific categorization

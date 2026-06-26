@@ -1,7 +1,7 @@
 export const changelogData = [
   {
     version: "0.3.9",
-    date: "2026-05-28",
+    date: "2026-06-28",
     type: "feature",
     changes: [
       "Tool: Log Analyser - Totals Overview CSV Download",
@@ -12,7 +12,6 @@ export const changelogData = [
       "Deep Crawler: Fixed bug on History tab tracking the crawls",
       "Deep Crawler: Backend deduplication of URLs",
       "Deep Crawler: Pause, Resume and Stop crawl controls",
-      "Deep Crawler: Fixed bug that was causing the crawler to stall on some websites",
       "Deep Crawler: Fixed bug slowing crawls on very large websites",
       "Deep Crawler: Dashboard Tab with historical data **Experimental**",
     ],
