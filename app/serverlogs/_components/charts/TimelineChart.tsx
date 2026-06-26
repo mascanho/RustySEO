@@ -78,18 +78,28 @@ export function TimelineChart() {
     }
 
     // Data arrives pre-sorted ORDER BY date ASC from the DB — no need to re-sort.
-    const filtered = timelineData
-      .filter((item) => {
-        if (timeRange === "all") return true;
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
+    const filtered = timelineData.filter((item) => {
+      if (timeRange === "all") return true;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
 
-    // Cap at 1000 points to prevent Recharts SVG from blocking the JS main thread.
-    if (filtered.length > 1000) {
-      return filtered.slice(filtered.length - 1000);
+    // Downsample to ≤1000 points by merging consecutive entries into buckets
+    // and summing their counts — preserves full time range without blocking the UI.
+    const TARGET = 1000;
+    if (filtered.length <= TARGET) return filtered;
+
+    const bucketSize = Math.ceil(filtered.length / TARGET);
+    const downsampled = [];
+    for (let i = 0; i < filtered.length; i += bucketSize) {
+      const bucket = filtered.slice(i, i + bucketSize);
+      downsampled.push({
+        date: bucket[0].date,
+        human: bucket.reduce((sum, d) => sum + (d.human ?? 0), 0),
+        crawler: bucket.reduce((sum, d) => sum + (d.crawler ?? 0), 0),
+      });
     }
-    return filtered;
+    return downsampled;
   }, [timelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {

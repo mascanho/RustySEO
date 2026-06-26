@@ -32,6 +32,14 @@ pub fn init_active_db() -> Result<(), String> {
     let db_path = db_dir.join("active_logs.db");
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
+    // Migration: detect existing DBs that pre-date the FTS5 search index so we can
+    // rebuild it after table creation below.
+    let fts_existed: bool = conn.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='active_logs_fts'",
+        [],
+        |row| Ok(row.get::<_, i32>(0)? > 0),
+    ).unwrap_or(false);
+
     // Migration: If active_path_aggregations exists but lacks 'segment' column, drop it.
     // SQLite WITHOUT ROWID tables cannot be easily altered.
     let table_exists: bool = conn.query_row(
@@ -223,6 +231,8 @@ pub fn init_active_db() -> Result<(), String> {
         CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
         CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
         CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
+        CREATE INDEX IF NOT EXISTS idx_method ON active_parsed_logs(method);
+        CREATE INDEX IF NOT EXISTS idx_verified ON active_parsed_logs(verified);
         CREATE INDEX IF NOT EXISTS idx_path_agg_count ON active_path_aggregations(hit_count DESC);
         CREATE INDEX IF NOT EXISTS idx_path_status_agg_count ON active_status_aggregations(hit_count DESC);
         CREATE INDEX IF NOT EXISTS idx_path_method_agg_count ON active_method_aggregations(hit_count DESC);
@@ -234,6 +244,29 @@ pub fn init_active_db() -> Result<(), String> {
         ",
     )
     .map_err(|e| e.to_string())?;
+
+    // FTS5 virtual table for fast substring search across ip, path, user_agent.
+    // Uses the trigram tokenizer so any ≥3-char substring is indexed without leading
+    // wildcards (unlike LIKE '%term%' which forces a full table scan).
+    // content= links it to active_parsed_logs so the data is not duplicated; after
+    // bulk loads we call 'rebuild' to re-sync the index.
+    conn.execute_batch(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS active_logs_fts USING fts5(
+            ip, path, user_agent,
+            content='active_parsed_logs',
+            content_rowid='id',
+            tokenize='trigram'
+        );",
+    ).map_err(|e| format!("FTS5 table creation failed: {}", e))?;
+
+    // If the FTS table was just created on an existing DB, populate it from the
+    // existing rows in active_parsed_logs so search works immediately.
+    if !fts_existed {
+        let _ = conn.execute(
+            "INSERT INTO active_logs_fts(active_logs_fts) VALUES('rebuild')",
+            [],
+        );
+    }
 
     let mut lock = DB_CONN.lock().map_err(|e| e.to_string())?;
     *lock = Some(conn);
@@ -879,10 +912,19 @@ pub fn recreate_parsed_log_indexes() -> Result<(), String> {
          CREATE INDEX IF NOT EXISTS idx_crawler ON active_parsed_logs(is_crawler, crawler_type);
          CREATE INDEX IF NOT EXISTS idx_segment ON active_parsed_logs(segment);
          CREATE INDEX IF NOT EXISTS idx_file_type ON active_parsed_logs(file_type);
+         CREATE INDEX IF NOT EXISTS idx_method ON active_parsed_logs(method);
+         CREATE INDEX IF NOT EXISTS idx_verified ON active_parsed_logs(verified);
          PRAGMA wal_checkpoint(TRUNCATE);
          PRAGMA wal_autocheckpoint = 1000;",
     )
     .map_err(|e| e.to_string())?;
+
+    // Rebuild the FTS5 trigram index from the current content of active_parsed_logs.
+    // This runs on the same dedicated connection so it doesn't block DB_CONN.
+    conn.execute(
+        "INSERT INTO active_logs_fts(active_logs_fts) VALUES('rebuild')",
+        [],
+    ).map_err(|e| e.to_string())?;
 
     // Re-enable auto-checkpoint on the shared DB_CONN as well.
     {
@@ -1129,13 +1171,25 @@ fn build_where_clause(filters: &ActiveFilters) -> (String, Vec<rusqlite::types::
     let mut params = Vec::new();
 
     if !filters.search_term.trim().is_empty() {
-        let term = format!("%{}%", filters.search_term.to_lowercase());
-        clauses.push(
-            "(LOWER(ip) LIKE ? OR LOWER(path) LIKE ? OR LOWER(user_agent) LIKE ?)".to_string(),
-        );
-        params.push(term.clone().into());
-        params.push(term.clone().into());
-        params.push(term.into());
+        let term = filters.search_term.trim();
+        if term.len() >= 3 {
+            // FTS5 trigram: any ≥3-char substring is indexed. Wrap in double quotes
+            // so the whole phrase is treated as a literal (handles . / - in IPs/paths).
+            let fts_query = format!("\"{}\"", term.replace('"', " "));
+            clauses.push(
+                "id IN (SELECT rowid FROM active_logs_fts WHERE active_logs_fts MATCH ?)".to_string(),
+            );
+            params.push(fts_query.into());
+        } else {
+            // Trigram requires ≥3 chars; fall back to LIKE for very short terms.
+            let like_term = format!("%{}%", term.to_lowercase());
+            clauses.push(
+                "(LOWER(ip) LIKE ? OR LOWER(path) LIKE ? OR LOWER(user_agent) LIKE ?)".to_string(),
+            );
+            params.push(like_term.clone().into());
+            params.push(like_term.clone().into());
+            params.push(like_term.into());
+        }
     }
 
     if !filters.status_filter.is_empty() {
@@ -3708,6 +3762,13 @@ pub fn clear_active_db_internal() -> Result<(), String> {
          DELETE FROM active_timeline_aggregations;",
     )
     .map_err(|e| e.to_string())?;
+
+    // Purge the FTS5 index — content table is empty so 'delete-all' removes the
+    // stale trigram entries. Without this, FTS would return ghost rowids.
+    let _ = conn.execute(
+        "INSERT INTO active_logs_fts(active_logs_fts) VALUES('delete-all')",
+        [],
+    );
     Ok(())
 }
 
