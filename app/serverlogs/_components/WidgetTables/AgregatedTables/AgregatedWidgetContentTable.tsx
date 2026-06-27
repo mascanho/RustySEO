@@ -643,6 +643,16 @@ export const AgregatedWidgetContentTable: React.FC<
         </Badge>
       );
     }
+    if (key === "user_agent") {
+      return (
+        <span
+          className="truncate max-w-[250px] block dark:text-white/70 text-xs pl-5"
+          title={val}
+        >
+          {val || "-"}
+        </span>
+      );
+    }
     if (key === "referer") {
       return (
         <span
@@ -746,7 +756,7 @@ export const AgregatedWidgetContentTable: React.FC<
                       <TableHead
                         key={col.key}
                         className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-brand-dark transition-colors h-10 ${
-                          !["path", "referer", "status"].includes(col.key)
+                          !["path", "referer", "status", "user_agent"].includes(col.key)
                             ? "text-center"
                             : ""
                         } ${col.key === "status" ? "pl-4" : ""}`}
@@ -754,7 +764,7 @@ export const AgregatedWidgetContentTable: React.FC<
                       >
                         <div
                           className={`flex items-center gap-2 mt-2 ${
-                            !["path", "referer", "status"].includes(col.key)
+                            !["path", "referer", "status", "user_agent"].includes(col.key)
                               ? "justify-center"
                               : ""
                           }`}
@@ -798,12 +808,12 @@ export const AgregatedWidgetContentTable: React.FC<
                         {getColumns().map((col) => (
                           <TableCell
                             key={col.key}
-                            className={`py-2 ${!["path", "referer", "status"].includes(col.key) ? "text-center" : ""} ${
+                            className={`py-2 ${!["path", "referer", "status", "user_agent"].includes(col.key) ? "text-center" : ""} ${
                               col.key === "status" ? "pl-4" : ""
                             }`}
                           >
                             <div
-                              className={`flex items-center ${!["path", "referer", "status"].includes(col.key) ? "justify-center" : ""}`}
+                              className={`flex items-center ${!["path", "referer", "status", "user_agent"].includes(col.key) ? "justify-center" : ""}`}
                             >
                               {renderValue(item, col.key)}
                             </div>
