@@ -389,6 +389,8 @@ async fn main() {
             loganalyser::active_db::get_timeline_aggregations,
             loganalyser::active_db::get_status_aggregations,
             loganalyser::active_db::get_crawler_aggregations,
+            loganalyser::active_db::get_filetype_aggregations,
+            loganalyser::active_db::get_bandwidth_aggregations,
             loganalyser::active_db::get_widget_aggregations,
             loganalyser::active_db::get_active_logs_stats,
             loganalyser::active_db::clear_active_db_command,

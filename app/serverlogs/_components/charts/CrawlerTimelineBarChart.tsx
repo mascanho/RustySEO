@@ -47,7 +47,7 @@ const chartConfig = {
 
 export function CrawlerTimelineBarChart() {
   const [timeRange, setTimeRange] = React.useState("all");
-  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
+  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("daily");
   const crawlerTimelineData = useLogAnalysisStore((state) => state.crawlerTimelineData);
   const fetchCrawlerAggregations = useLogAnalysisStore((state) => state.fetchCrawlerAggregations);
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);

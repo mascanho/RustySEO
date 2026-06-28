@@ -11,6 +11,8 @@ import {
 import { TimelineChart } from "./_components/charts/TimelineChart";
 import { CrawlerTimelineBarChart } from "./_components/charts/CrawlerTimelineBarChart";
 import { StatusCodeBarChart } from "./_components/charts/StatusCodeBarChart";
+import { FileTypeTimelineChart } from "./_components/charts/FileTypeTimelineChart";
+import { BandwidthTimelineChart } from "./_components/charts/BandwidthTimelineChart";
 import InputZone from "./_components/InputZone";
 import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
@@ -92,7 +94,7 @@ interface LogResult {
 }
 
 export default function Page() {
-  const [chartView, setChartView] = useState<"overall" | "crawlers" | "status">(
+  const [chartView, setChartView] = useState<"overall" | "crawlers" | "status" | "filetype" | "bandwidth">(
     "overall",
   );
   // progress is stored in the Zustand store (logProgress) so LogsDBprojectsManager
@@ -411,13 +413,33 @@ export default function Page() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setChartView("status")}
-                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
                       chartView === "status"
                         ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
                     }`}
                   >
                     HTTP Status
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setChartView("filetype")}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg mb-0.5 ${
+                      chartView === "filetype"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
+                  >
+                    File Types
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setChartView("bandwidth")}
+                    className={`text-[9px] uppercase tracking-wider font-black cursor-pointer transition-all px-3 py-2 rounded-lg ${
+                      chartView === "bandwidth"
+                        ? "bg-brand-bright text-white shadow-md focus:bg-brand-bright focus:text-white"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-gray-100 dark:focus:bg-slate-800"
+                    }`}
+                  >
+                    Bandwidth
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -426,8 +448,12 @@ export default function Page() {
               <TimelineChart />
             ) : chartView === "crawlers" ? (
               <CrawlerTimelineBarChart />
-            ) : (
+            ) : chartView === "status" ? (
               <StatusCodeBarChart />
+            ) : chartView === "filetype" ? (
+              <FileTypeTimelineChart />
+            ) : (
+              <BandwidthTimelineChart />
             )}
           </div>
           <WidgetLogs />

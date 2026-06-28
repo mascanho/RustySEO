@@ -714,7 +714,7 @@ export default function WidgetLogs() {
         "Human Traffic": [
           {
             name: "Human Path Frequency",
-            value: trendTotals.human_count || 0,
+            value: trendTotals?.human_count || 0,
             type: "human",
           },
         ],

@@ -37,6 +37,20 @@ export interface CrawlerPoint {
   other: number;
 }
 
+export interface FileTypePoint {
+  date: string;
+  html: number;
+  css: number;
+  js: number;
+  image: number;
+  other: number;
+}
+
+export interface BandwidthPoint {
+  date: string;
+  bytes: number;
+}
+
 interface BotStats {
   count: number;
   status_codes: StatusCodeCounts;
@@ -177,6 +191,8 @@ interface LogAnalysisState {
   timelineData: TimelinePoint[];
   statusTimelineData: StatusPoint[];
   crawlerTimelineData: CrawlerPoint[];
+  fileTypeTimelineData: FileTypePoint[];
+  bandwidthTimelineData: BandwidthPoint[];
   pathAggregations: PathAggregationsPage;
   botTypes: string[];
   tableIsFiltered: boolean;
@@ -280,6 +296,8 @@ interface LogAnalysisActions {
   fetchTimelineAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchStatusAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchCrawlerAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
+  fetchFileTypeAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
+  fetchBandwidthAggregations: (viewMode: string, filters: ActiveFilters) => Promise<void>;
   fetchBotTypes: () => Promise<void>;
   fetchTrendTotals: () => Promise<void>;
 }
@@ -406,6 +424,8 @@ const initialState: LogAnalysisState = {
   timelineData: [],
   statusTimelineData: [],
   crawlerTimelineData: [],
+  fileTypeTimelineData: [],
+  bandwidthTimelineData: [],
   botTypes: [],
   tableIsFiltered: false,
   trendTotals: null,
@@ -911,6 +931,30 @@ export const useLogAnalysisStore = create<
         set({ crawlerTimelineData });
       } catch (error) {
         console.error("Failed to fetch crawler aggregations:", error);
+      }
+    },
+
+    fetchFileTypeAggregations: async (viewMode, filters) => {
+      try {
+        const fileTypeTimelineData = await invoke<FileTypePoint[]>(
+          "get_filetype_aggregations",
+          { viewMode, filters }
+        );
+        set({ fileTypeTimelineData });
+      } catch (error) {
+        console.error("Failed to fetch file type aggregations:", error);
+      }
+    },
+
+    fetchBandwidthAggregations: async (viewMode, filters) => {
+      try {
+        const bandwidthTimelineData = await invoke<BandwidthPoint[]>(
+          "get_bandwidth_aggregations",
+          { viewMode, filters }
+        );
+        set({ bandwidthTimelineData });
+      } catch (error) {
+        console.error("Failed to fetch bandwidth aggregations:", error);
       }
     },
 

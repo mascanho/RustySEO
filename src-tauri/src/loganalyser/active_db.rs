@@ -1905,6 +1905,135 @@ pub async fn get_crawler_aggregations(
     Ok(result)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FileTypePoint {
+    pub date: String,
+    pub html: usize,
+    pub css: usize,
+    pub js: usize,
+    pub image: usize,
+    pub other: usize,
+}
+
+#[tauri::command]
+pub async fn get_filetype_aggregations(
+    view_mode: String,
+    filters: ActiveFilters,
+) -> Result<Vec<FileTypePoint>, String> {
+    init_active_db()?;
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
+
+    let date_modifier = if view_mode == "daily" {
+        "substr(timestamp, 1, 10)"
+    } else {
+        "substr(timestamp, 1, 13) || ':00:00'"
+    };
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    let query = format!(
+        "SELECT {} as d,
+            SUM(CASE WHEN file_type = 'HTML' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN file_type = 'CSS' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN file_type = 'JS' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN file_type = 'Image' THEN 1 ELSE 0 END),
+            SUM(CASE WHEN file_type NOT IN ('HTML','CSS','JS','Image') THEN 1 ELSE 0 END)
+         FROM active_parsed_logs WHERE {} GROUP BY d ORDER BY d ASC",
+        date_modifier, where_sql
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    let mut result = Vec::new();
+    let mut rows = stmt.query(rusqlite::params_from_iter(params_vec.iter())).map_err(|e| e.to_string())?;
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+        let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+        result.push(FileTypePoint {
+            date: date_str,
+            html: row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0),
+            css: row.get::<_, Option<usize>>(2).map_err(|e| e.to_string())?.unwrap_or(0),
+            js: row.get::<_, Option<usize>>(3).map_err(|e| e.to_string())?.unwrap_or(0),
+            image: row.get::<_, Option<usize>>(4).map_err(|e| e.to_string())?.unwrap_or(0),
+            other: row.get::<_, Option<usize>>(5).map_err(|e| e.to_string())?.unwrap_or(0),
+        });
+    }
+
+    if result.len() > 2000 {
+        let excess = result.len() - 2000;
+        result.drain(..excess);
+    }
+
+    Ok(result)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BandwidthPoint {
+    pub date: String,
+    pub bytes: usize,
+}
+
+#[tauri::command]
+pub async fn get_bandwidth_aggregations(
+    view_mode: String,
+    filters: ActiveFilters,
+) -> Result<Vec<BandwidthPoint>, String> {
+    init_active_db()?;
+    let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let db_path = project_dirs.data_dir().join("db").join("active_logs.db");
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = OFF;
+         PRAGMA cache_size = 8192;
+         PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 60000;",
+    ).map_err(|e| e.to_string())?;
+
+    let date_modifier = if view_mode == "daily" {
+        "substr(timestamp, 1, 10)"
+    } else {
+        "substr(timestamp, 1, 13) || ':00:00'"
+    };
+
+    let (where_sql, params_vec) = build_where_clause(&filters);
+
+    let query = format!(
+        "SELECT {} as d, SUM(COALESCE(response_size, 0))
+         FROM active_parsed_logs WHERE {} GROUP BY d ORDER BY d ASC",
+        date_modifier, where_sql
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    let mut result = Vec::new();
+    let mut rows = stmt.query(rusqlite::params_from_iter(params_vec.iter())).map_err(|e| e.to_string())?;
+    while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let raw_date: String = row.get(0).map_err(|e| e.to_string())?;
+        let date_str = if view_mode == "hourly" { raw_date.replace(' ', "T") } else { raw_date };
+        result.push(BandwidthPoint {
+            date: date_str,
+            bytes: row.get::<_, Option<usize>>(1).map_err(|e| e.to_string())?.unwrap_or(0),
+        });
+    }
+
+    if result.len() > 2000 {
+        let excess = result.len() - 2000;
+        result.drain(..excess);
+    }
+
+    Ok(result)
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct WidgetAggregations {
     pub file_types: std::collections::HashMap<String, usize>,

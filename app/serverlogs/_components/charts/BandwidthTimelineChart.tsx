@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useLogAnalysisStore } from "@/store/ServerLogsStore";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -23,29 +23,24 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig = {
-  success: {
-    label: "2xx",
-    color: "#22c55e",
-  },
-  redirect: {
-    label: "3xx",
-    color: "#3b82f6",
-  },
-  clientError: {
-    label: "4xx",
-    color: "#f59e0b",
-  },
-  serverError: {
-    label: "5xx",
-    color: "#ef4444",
+  bytes: {
+    label: "Bandwidth",
+    color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig;
 
-export function StatusCodeBarChart() {
+function formatBytes(bytes: number): string {
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`;
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`;
+  if (bytes >= 1_024) return `${(bytes / 1_024).toFixed(1)} KB`;
+  return `${bytes} B`;
+}
+
+export function BandwidthTimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("daily");
-  const statusTimelineData = useLogAnalysisStore((state) => state.statusTimelineData);
-  const fetchStatusAggregations = useLogAnalysisStore((state) => state.fetchStatusAggregations);
+  const bandwidthTimelineData = useLogAnalysisStore((state) => state.bandwidthTimelineData);
+  const fetchBandwidthAggregations = useLogAnalysisStore((state) => state.fetchBandwidthAggregations);
   const activeFilters = useLogAnalysisStore((state) => state.activeFilters);
   const isProcessingLogs = useLogAnalysisStore((state) => state.isProcessingLogs);
   const totalCount = useLogAnalysisStore((state) => state.totalCount);
@@ -60,14 +55,18 @@ export function StatusCodeBarChart() {
     if (isProcessingLogs) return;
     if (totalCount === 0) return;
     if (justFinishedProcessing) return;
-    fetchStatusAggregations(viewMode, activeFilters);
-  }, [viewMode, activeFilters, fetchStatusAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
+
+    const timer = setTimeout(() => {
+      fetchBandwidthAggregations(viewMode, activeFilters);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [viewMode, activeFilters, fetchBandwidthAggregations, isProcessingLogs, totalCount, chartRefreshToken]);
 
   const chartData = React.useMemo(() => {
-    if (!statusTimelineData || statusTimelineData.length === 0) return [];
+    if (!bandwidthTimelineData || bandwidthTimelineData.length === 0) return [];
 
     const endDate = new Date();
-    let startDate = new Date(0); // All time
+    let startDate = new Date(0);
 
     if (timeRange === "7d") {
       startDate = new Date();
@@ -80,33 +79,33 @@ export function StatusCodeBarChart() {
       startDate.setDate(startDate.getDate() - 90);
     }
 
-    // Data arrives pre-sorted ORDER BY date ASC from the DB — no need to re-sort.
-    const filtered = statusTimelineData
-      .filter((item) => {
-        if (timeRange === "all") return true;
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
+    const filtered = bandwidthTimelineData.filter((item) => {
+      if (timeRange === "all") return true;
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
 
-    // Cap at 1000 points to prevent Recharts SVG from blocking the JS main thread.
     if (filtered.length > 1000) {
-      return filtered.slice(filtered.length - 1000);
+      const bucketSize = Math.ceil(filtered.length / 1000);
+      const downsampled = [];
+      for (let i = 0; i < filtered.length; i += bucketSize) {
+        const bucket = filtered.slice(i, i + bucketSize);
+        downsampled.push({
+          date: bucket[0].date,
+          bytes: bucket.reduce((sum, d) => sum + (d.bytes ?? 0), 0),
+        });
+      }
+      return downsampled;
     }
     return filtered;
-  }, [statusTimelineData, timeRange]);
+  }, [bandwidthTimelineData, timeRange]);
 
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
     if (viewMode === "daily") {
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     } else {
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        hour12: true,
-      });
+      return date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
     }
   };
 
@@ -116,23 +115,15 @@ export function StatusCodeBarChart() {
         <ToggleGroup
           type="single"
           value={viewMode}
-          onValueChange={(value) =>
-            value && setViewMode(value as "daily" | "hourly")
-          }
+          onValueChange={(value) => value && setViewMode(value as "daily" | "hourly")}
           variant="outline"
           size="sm"
           className="h-8 z-0"
         >
-          <ToggleGroupItem
-            value="daily"
-            className="text-[9px] px-2 h-6 dark:bg-slate-950"
-          >
+          <ToggleGroupItem value="daily" className="text-[9px] px-2 h-6 dark:bg-slate-950">
             Day
           </ToggleGroupItem>
-          <ToggleGroupItem
-            value="hourly"
-            className="text-[9px] px-2 h-6 dark:bg-slate-950"
-          >
+          <ToggleGroupItem value="hourly" className="text-[9px] px-2 h-6 dark:bg-slate-950">
             Hour
           </ToggleGroupItem>
         </ToggleGroup>
@@ -141,33 +132,24 @@ export function StatusCodeBarChart() {
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent className="dark:bg-slate-950 dark:border-brand-dark">
-            <SelectItem value="all" className="text-[9px]">
-              All time
-            </SelectItem>
-            <SelectItem value="7d" className="text-[9px]">
-              Last 7 days
-            </SelectItem>
-            <SelectItem value="30d" className="text-[9px]">
-              Last 30 days
-            </SelectItem>
-            <SelectItem value="90d" className="text-[9px]">
-              Last 90 days
-            </SelectItem>
+            <SelectItem value="all" className="text-[9px]">All time</SelectItem>
+            <SelectItem value="7d" className="text-[9px]">Last 7 days</SelectItem>
+            <SelectItem value="30d" className="text-[9px]">Last 30 days</SelectItem>
+            <SelectItem value="90d" className="text-[9px]">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <CardContent className="mt-0 w-full h-[255px] p-0">
         <ChartContainer config={chartConfig} className="w-full h-full">
-          <BarChart
-            data={chartData}
-            margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="hsl(var(--border))"
-            />
+          <AreaChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorBandwidth" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-bytes)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-bytes)" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
             <XAxis
               dataKey="date"
               tickFormatter={xAxisTickFormatter}
@@ -175,13 +157,15 @@ export function StatusCodeBarChart() {
               axisLine={false}
               tick={{ fontSize: 9 }}
               tickMargin={8}
+              minTickGap={viewMode === "hourly" ? 4 : 32}
               stroke="hsl(var(--muted-foreground))"
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              width={26}
+              width={36}
               tick={{ fontSize: 8 }}
+              tickFormatter={(v) => formatBytes(v)}
               stroke="hsl(var(--muted-foreground))"
             />
             <ChartTooltip
@@ -190,26 +174,14 @@ export function StatusCodeBarChart() {
                   labelFormatter={(value) => {
                     const date = new Date(value);
                     return viewMode === "daily"
-                      ? date.toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                      : date.toLocaleTimeString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      });
+                      ? date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                      : date.toLocaleTimeString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "numeric", hour12: true });
                   }}
+                  formatter={(value) => [formatBytes(Number(value)), "Bandwidth"]}
                 />
               }
-              cursor={false}
+              cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "3 3" }}
             />
-            {/* THE SUBTITLES WITH THE NAMES OF THE CHART */}
             <ChartLegend
               content={<ChartLegendContent />}
               verticalAlign="top"
@@ -217,44 +189,26 @@ export function StatusCodeBarChart() {
                 fontSize: "10px",
                 position: "absolute",
                 top: 14,
-                left: 8,
+                left: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "20px",
-                width: "280px",
+                width: "120px",
                 borderRadius: "20px",
                 backgroundColor: "hsl(var(--card))",
-                padding: "0 4px",
-                columnGap: "2px",
+                padding: "0 6px",
               }}
             />
-            <Bar
-              dataKey="success"
-              stackId="a"
-              fill="var(--color-success)"
-              activeBar={{ fillOpacity: 0.8 }}
+            <Area
+              type="monotone"
+              dataKey="bytes"
+              stroke="var(--color-bytes)"
+              strokeWidth={2}
+              fill="url(#colorBandwidth)"
+              fillOpacity={0.8}
             />
-            <Bar
-              dataKey="redirect"
-              stackId="a"
-              fill="var(--color-redirect)"
-              activeBar={{ fillOpacity: 0.8 }}
-            />
-            <Bar
-              dataKey="clientError"
-              stackId="a"
-              fill="var(--color-clientError)"
-              activeBar={{ fillOpacity: 0.8 }}
-            />
-            <Bar
-              dataKey="serverError"
-              stackId="a"
-              fill="var(--color-serverError)"
-              radius={[2, 2, 0, 0]}
-              activeBar={{ fillOpacity: 0.8 }}
-            />
-          </BarChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>
