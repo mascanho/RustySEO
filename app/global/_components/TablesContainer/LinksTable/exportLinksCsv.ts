@@ -21,6 +21,7 @@ export const exportLinksCSV = async (data) => {
     "Target",
     "Status",
     "Page",
+    "Link Score",
   ];
 
   // Helper function to safely prepare CSV values
@@ -57,6 +58,9 @@ export const exportLinksCSV = async (data) => {
 
       // Page (7)
       prepareValue(row?.page),
+
+      // Link Score (8)
+      prepareValue(row?.linkScore),
     ];
   });
 

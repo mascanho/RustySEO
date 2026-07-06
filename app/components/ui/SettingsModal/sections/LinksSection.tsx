@@ -6,9 +6,10 @@ import { AppSettings } from "../useSettings";
 import {
     SettingField,
     NumberInput,
+    ToggleSwitch,
     SectionHeader,
 } from "../fields/SettingFields";
-import { Link2, Zap } from "lucide-react";
+import { Link2, Zap, TrendingUp } from "lucide-react";
 
 interface Props {
     settings: AppSettings;
@@ -120,6 +121,21 @@ const LinksSection = ({ settings, onUpdate }: Props) => (
                 onChange={(v) => onUpdate("links_max_idle_per_host", v)}
                 min={1}
                 max={50}
+            />
+        </SettingField>
+
+        <SectionHeader
+            title="Crawl Analysis"
+            icon={<TrendingUp className="w-3.5 h-3.5" />}
+        />
+
+        <SettingField
+            label="Link Score"
+            description="Compute internal PageRank-style authority score (1-100) at the end of every crawl"
+        >
+            <ToggleSwitch
+                checked={settings.link_score_enabled}
+                onChange={(v) => onUpdate("link_score_enabled", v)}
             />
         </SettingField>
     </div>

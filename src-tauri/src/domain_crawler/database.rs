@@ -4,6 +4,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
@@ -581,6 +582,7 @@ impl Database {
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
+            ensure_link_score_column(&conn)?;
 
             let json_path = match data_type.as_str() {
                 "internal_links" => "$.inoutlinks_status_codes.internal",
@@ -591,8 +593,12 @@ impl Database {
             // SQLite: LIMIT -1 means "no limit"; OFFSET still works correctly.
             let effective_limit = if limit <= 0 { -1i64 } else { limit };
 
+            // The correlated subquery looks up the Link Score of the linked-to (target) URL,
+            // so the Links tab can show how strong the destination page is.
             let sql = format!(
-                "SELECT json_extract(data, '$.url'), json_each.value \
+                "SELECT json_extract(data, '$.url'), json_each.value, \
+                    (SELECT link_score FROM domain_crawl AS target \
+                     WHERE target.url = json_extract(json_each.value, '$.url')) \
                  FROM domain_crawl, json_each(data, '{}') \
                  LIMIT {} OFFSET {}",
                 json_path, effective_limit, offset
@@ -602,15 +608,20 @@ impl Database {
             let rows = stmt.query_map([], |row| {
                 let page_url: String = row.get(0)?;
                 let link_json: String = row.get(1)?;
-                Ok((page_url, link_json))
+                let link_score: Option<i64> = row.get(2)?;
+                Ok((page_url, link_json, link_score))
             })?;
 
             let mut links = Vec::new();
             for row_res in rows {
-                if let Ok((page_url, link_json)) = row_res {
+                if let Ok((page_url, link_json, link_score)) = row_res {
                     if let Ok(mut link_obj) = serde_json::from_str::<Value>(&link_json) {
                         if let Some(obj_map) = link_obj.as_object_mut() {
                             obj_map.insert("page".to_string(), Value::String(page_url));
+                            obj_map.insert(
+                                "link_score".to_string(),
+                                link_score.map(Value::from).unwrap_or(Value::Null),
+                            );
                         }
                         links.push(link_obj);
                     }
@@ -722,20 +733,21 @@ impl Database {
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
+            ensure_link_score_column(&conn)?;
 
             let like_pattern = search.map(|s| format!("%{}%", s.to_lowercase()));
 
-            let rows_result: Result<Vec<String>, rusqlite::Error> = if let Some(ref pattern) = like_pattern {
-                let mut stmt = conn.prepare("SELECT data FROM domain_crawl WHERE LOWER(data) LIKE ?1 LIMIT ?2 OFFSET ?3")?;
+            let rows_result: Result<Vec<(String, Option<i64>)>, rusqlite::Error> = if let Some(ref pattern) = like_pattern {
+                let mut stmt = conn.prepare("SELECT data, link_score FROM domain_crawl WHERE LOWER(data) LIKE ?1 LIMIT ?2 OFFSET ?3")?;
                 let mut rows = Vec::new();
-                for row_res in stmt.query_map(params![pattern, limit, offset], |row| row.get::<_, String>(0))? {
+                for row_res in stmt.query_map(params![pattern, limit, offset], |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<i64>>(1)?)))? {
                     rows.push(row_res?);
                 }
                 Ok(rows)
             } else {
-                let mut stmt = conn.prepare("SELECT data FROM domain_crawl LIMIT ?1 OFFSET ?2")?;
+                let mut stmt = conn.prepare("SELECT data, link_score FROM domain_crawl LIMIT ?1 OFFSET ?2")?;
                 let mut rows = Vec::new();
-                for row_res in stmt.query_map(params![limit, offset], |row| row.get::<_, String>(0))? {
+                for row_res in stmt.query_map(params![limit, offset], |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<i64>>(1)?)))? {
                     rows.push(row_res?);
                 }
                 Ok(rows)
@@ -750,7 +762,7 @@ impl Database {
             };
 
             let mut results = Vec::with_capacity(limit as usize);
-            for data_json in rows {
+            for (data_json, link_score) in rows {
                 let data: Value = match serde_json::from_str(&data_json) {
                     Ok(v) => v,
                     Err(_) => continue,
@@ -810,6 +822,7 @@ impl Database {
                         .and_then(|v| v.as_array())
                         .map(|a| Value::from(a.len()))
                         .unwrap_or(Value::from(0)),
+                    "link_score": link_score.map(Value::from).unwrap_or(Value::Null),
                 });
 
                 results.push(light);
@@ -866,8 +879,87 @@ impl Database {
         })
         .await?
     }
+
+    /// Persists computed Link Score values (1-100) back onto their crawled page rows,
+    /// keyed by URL. Adds the `link_score` column on first use if it isn't there yet.
+    pub async fn store_link_scores(&self, scores: HashMap<String, u32>) -> Result<(), DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            ensure_link_score_column(&conn)?;
+
+            let tx = conn.transaction()?;
+            {
+                let mut stmt = tx.prepare("UPDATE domain_crawl SET link_score = ?1 WHERE url = ?2")?;
+                for (url, score) in &scores {
+                    stmt.execute(params![score, url])?;
+                }
+            }
+            tx.commit()?;
+            Ok(())
+        })
+        .await?
+    }
+
+    /// Returns the persisted Link Score for every URL that has one, keyed by URL.
+    /// Used by the frontend to pull already-computed scores into the live tables
+    /// after a crawl finishes, without recomputing them.
+    pub async fn get_link_scores(&self) -> Result<HashMap<String, u32>, DatabaseError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            ensure_link_score_column(&conn)?;
+
+            let mut stmt = conn
+                .prepare("SELECT url, link_score FROM domain_crawl WHERE link_score IS NOT NULL")?;
+            let rows = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
+            })?;
+
+            let mut scores = HashMap::new();
+            for row_res in rows {
+                if let Ok((url, score)) = row_res {
+                    scores.insert(url, score);
+                }
+            }
+            Ok(scores)
+        })
+        .await?
+    }
 }
 
+/// Ensures the `domain_crawl` table has a `link_score` column, adding it if missing.
+/// No-op (rather than an error) if the table doesn't exist yet, since that's the
+/// normal state before any crawl has run.
+fn ensure_link_score_column(conn: &Connection) -> Result<(), DatabaseError> {
+    let table_exists: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='domain_crawl'",
+            [],
+            |row| row.get::<_, i64>(0),
+        )
+        .map(|count| count > 0)
+        .unwrap_or(false);
+
+    if !table_exists {
+        return Ok(());
+    }
+
+    let mut stmt = conn.prepare("PRAGMA table_info(domain_crawl)")?;
+    let has_column = stmt
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .any(|name| name == "link_score");
+    drop(stmt);
+
+    if !has_column {
+        conn.execute("ALTER TABLE domain_crawl ADD COLUMN link_score INTEGER", [])?;
+    }
+
+    Ok(())
+}
 
 // Helper for file extension check
 fn has_file_extension(url: &str) -> bool {

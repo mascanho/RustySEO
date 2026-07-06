@@ -573,6 +573,23 @@ pub async fn crawl_domain(
         handle.await.unwrap_or_default();
     }
 
+    // Crawl Analysis: Link Score. Runs automatically at the end of every crawl when
+    // enabled in Settings, and must complete before `crawl_complete` is emitted below
+    // so the frontend's post-crawl refetch already sees the persisted scores.
+    if settings.link_score_enabled {
+        if let Ok(db) = &db {
+            match db.get_all_crawl_data().await {
+                Ok(all_pages) => {
+                    let scores = super::link_score::compute_link_scores(&all_pages);
+                    if let Err(e) = db.store_link_scores(scores).await {
+                        tracing::error!("Failed to persist link scores: {}", e);
+                    }
+                }
+                Err(e) => tracing::error!("Failed to load crawl data for link score: {}", e),
+            }
+        }
+    }
+
     // Emit final 100% progress update before completion
     let final_progress = {
         let state_guard = state.lock().await;

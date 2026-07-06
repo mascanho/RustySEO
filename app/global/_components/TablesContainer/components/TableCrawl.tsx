@@ -262,6 +262,7 @@ const TableRow = memo(
               ? row.cookies.length
               : 0, // Cookies
         row?.page_size?.[0]?.kb ? row.page_size[0].kb + " KB" : "",
+        row?.link_score ?? "", // Link Score
       ],
       [row, index],
     );

@@ -210,6 +210,16 @@ pub async fn get_crawl_summary_stats_command() -> Result<Value, String> {
     db.get_summary_stats().await.map_err(|e| e.to_string())
 }
 
+// Returns already-persisted Link Score values (computed automatically at the end of
+// the crawl, when enabled in Settings), keyed by URL, so the frontend can merge them
+// into the live tables once a crawl finishes.
+#[tauri::command]
+pub async fn get_link_scores_command() -> Result<Value, String> {
+    let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;
+    let scores = db.get_link_scores().await.map_err(|e| e.to_string())?;
+    serde_json::to_value(&scores).map_err(|e| e.to_string())
+}
+
 // EXPORT DATA DIRECTLY FROM DATABASE - BYPASS FRONTEND MEMORY LIMITS
 
 #[tauri::command]

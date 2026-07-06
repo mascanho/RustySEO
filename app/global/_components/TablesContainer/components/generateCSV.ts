@@ -37,7 +37,8 @@ export const exportSEODataCSV = async (data) => {
     "Depth", // 21
     "Opengraph", // 22
     "Cookies", // 23
-    "Size", // 23
+    "Size", // 24
+    "Link Score", // 25
   ];
 
   // Debug: Log first item structure and check for depth
@@ -146,7 +147,11 @@ export const exportSEODataCSV = async (data) => {
           : 0
       ).toString(),
 
+      // Size (24)
       item.page_size?.[0]?.kb || "",
+
+      // Link Score (25)
+      item.link_score?.toString() || "",
     ];
   });
 

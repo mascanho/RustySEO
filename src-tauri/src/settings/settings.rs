@@ -98,6 +98,11 @@ pub struct Settings {
     /// Max idle connections per host
     pub links_max_idle_per_host: usize,
 
+    // --- Crawl Analysis ---
+    /// Automatically compute Link Score (internal PageRank-style authority, 1-100)
+    /// at the end of every crawl
+    pub link_score_enabled: bool,
+
     // --- Extraction & Content ---
     /// Enable N-gram extraction
     pub extract_ngrams: bool,
@@ -188,6 +193,9 @@ impl Settings {
             links_jitter_factor: 0.6, // Increased from 0.5
             links_pool_idle_timeout: 60,
             links_max_idle_per_host: 5, // Reduced from 10
+
+            // --- Crawl Analysis ---
+            link_score_enabled: true,
 
             // --- Extraction & Content ---
             extract_ngrams: false,
@@ -359,6 +367,13 @@ impl Settings {
         s.push_str(&format!(
             "links_max_idle_per_host = {}\n",
             self.links_max_idle_per_host
+        ));
+
+        s.push_str("\n# --- Crawl Analysis ---\n");
+        s.push_str("# Automatically compute Link Score at the end of every crawl\n");
+        s.push_str(&format!(
+            "link_score_enabled = {}\n",
+            self.link_score_enabled
         ));
 
         s.push_str("\n# --- Extraction & Content ---\n");
@@ -852,6 +867,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.links_max_idle_per_host = val as usize;
+    }
+
+    if let Some(val) = updates.get("link_score_enabled").and_then(|v| v.as_bool()) {
+        settings.link_score_enabled = val;
     }
 
     if let Some(val) = updates

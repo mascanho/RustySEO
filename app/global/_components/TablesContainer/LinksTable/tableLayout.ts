@@ -8,6 +8,7 @@ export const initialColumnWidths = [
   "100px", // Target
   "110px", // Status Code
   "320px", // Page
+  "90px", // Link Score
 ];
 
 export const initialColumnAlignments = [
@@ -19,6 +20,7 @@ export const initialColumnAlignments = [
   "left", // Target
   "center", // Status Code
   "left", // Status Code
+  "center", // Link Score
 ];
 
 export const headerTitles = [
@@ -30,4 +32,5 @@ export const headerTitles = [
   "Target",
   "Status Code",
   "Page",
+  "Link Score",
 ];

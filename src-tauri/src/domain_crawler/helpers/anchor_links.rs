@@ -3,6 +3,8 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use super::links_selector::is_same_or_subdomain;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InternalExternalLinks {
     pub internal: LinksAnchors,
@@ -180,7 +182,10 @@ fn resolve_relative_url(href: &str, base_url: &Url) -> Url {
 fn is_internal_link(url: &Url, base_url: &Url) -> bool {
     let base_domain = base_url.domain().unwrap_or("");
     let url_domain = url.domain().unwrap_or("");
-    url_domain.ends_with(base_domain)
+    if base_domain.is_empty() || url_domain.is_empty() {
+        return false;
+    }
+    is_same_or_subdomain(url_domain, base_domain)
 }
 
 #[cfg(test)]
@@ -206,5 +211,27 @@ mod tests {
         // Different TLD
         let url4 = Url::parse("https://example.org").unwrap();
         assert!(!is_internal_link(&url4, &base_url));
+    }
+
+    #[test]
+    fn test_is_internal_link_rejects_suffix_lookalike_domain() {
+        // Regression: a naive `ends_with` check would wrongly treat this as internal
+        // since "fakeexample.com" ends with "example.com".
+        let base_url = Url::parse("https://example.com").unwrap();
+        let lookalike = Url::parse("https://fakeexample.com/page").unwrap();
+        assert!(!is_internal_link(&lookalike, &base_url));
+    }
+
+    #[test]
+    fn test_is_internal_link_handles_www_mismatch() {
+        // Regression: crawling from a `www.` root shouldn't classify the bare
+        // domain (or vice versa) as external.
+        let base_url = Url::parse("https://www.example.com").unwrap();
+        let bare = Url::parse("https://example.com/page").unwrap();
+        assert!(is_internal_link(&bare, &base_url));
+
+        let base_url_bare = Url::parse("https://example.com").unwrap();
+        let with_www = Url::parse("https://www.example.com/page").unwrap();
+        assert!(is_internal_link(&with_www, &base_url_bare));
     }
 }

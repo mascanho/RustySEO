@@ -45,6 +45,9 @@ export interface AppSettings {
     links_pool_idle_timeout: number;
     links_max_idle_per_host: number;
 
+    // Crawl Analysis
+    link_score_enabled: boolean;
+
     // Extraction & Content
     extract_ngrams: boolean;
     stop_words: string[];

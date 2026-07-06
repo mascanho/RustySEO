@@ -25,6 +25,7 @@ export const initialColumnWidths = [
   "70px", //  OpenGraph
   "70px", //  Cookies
   "70px", //  Page Size
+  "90px", //  Link Score
 ];
 
 export const initialColumnAlignments = [
@@ -53,6 +54,7 @@ export const initialColumnAlignments = [
   "center", //  OpenGraph
   "center", //  Cookies
   "center", //  Page Size
+  "center", //  Link Score
 ];
 
 export const headerTitles = [
@@ -81,4 +83,5 @@ export const headerTitles = [
   "OpenGraph",
   "Cookies",
   "Size",
+  "Link Score",
 ];

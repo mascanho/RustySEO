@@ -272,6 +272,7 @@ const TableRow = memo(
         row?.target || "",
         row?.status || "",
         row?.page || "",
+        row?.linkScore ?? "",
       ],
       [row, index],
     );

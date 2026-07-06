@@ -378,6 +378,7 @@ export default function Home() {
       status: link.status || null,
       error: link.error || null,
       page: link.page || "",
+      linkScore: link.link_score ?? null,
     }));
   }, [aggregatedData.internalLinks, activeTab]);
 
@@ -393,6 +394,7 @@ export default function Home() {
       status: link.status || null,
       error: link.error || null,
       page: link.page || "",
+      linkScore: link.link_score ?? null,
     }));
   }, [aggregatedData.externalLinks, activeTab]);
 

@@ -242,6 +242,47 @@ export default function Page() {
       setFinishedDeepCrawl(true);
       setIsFinishedDeepCrawl(true);
 
+      // If "Link Score" is enabled in Settings, the backend computes and persists it
+      // as part of finishing this crawl (before this event fires). Pull the persisted
+      // scores into the live tables so they show up without a manual refresh.
+      (async () => {
+        try {
+          const scores: Record<string, number> =
+            (await invoke("get_link_scores_command")) || {};
+          if (Object.keys(scores).length === 0) return;
+
+          const store = useGlobalCrawlStore.getState();
+          const updatedCrawlData = (store.crawlData || []).map((row: any) =>
+            row?.url && scores[row.url] !== undefined
+              ? { ...row, link_score: scores[row.url] }
+              : row,
+          );
+          useGlobalCrawlStore.setState({
+            crawlData: updatedCrawlData,
+            crawlDataVersion: store.crawlDataVersion + 1,
+          });
+
+          const [internalLinks, externalLinks] = await Promise.all([
+            invoke("get_links_page_command", {
+              dataType: "internal_links",
+              limit: 0,
+              offset: 0,
+            }),
+            invoke("get_links_page_command", {
+              dataType: "external_links",
+              limit: 0,
+              offset: 0,
+            }),
+          ]);
+          store.setAggregatedData({
+            internalLinks: (internalLinks as any[]) || [],
+            externalLinks: (externalLinks as any[]) || [],
+          });
+        } catch (error) {
+          console.error("Failed to refresh link scores:", error);
+        }
+      })();
+
       // Update session storage for totals
       const totalUrlsCrawled = event.payload?.crawled_urls || 0;
       const crawledLinks = JSON.parse(

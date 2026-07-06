@@ -7,6 +7,7 @@ pub mod excel;
 pub mod extractors;
 pub mod helpers;
 pub mod issues_report;
+pub mod link_score;
 pub mod models;
 pub mod page_speed;
 pub mod state;
