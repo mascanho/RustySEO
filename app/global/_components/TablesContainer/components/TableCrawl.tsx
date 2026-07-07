@@ -232,12 +232,14 @@ const TableRow = memo(
         row?.word_count || "", // Word Count
         !isNaN(Number(row?.text_ratio)) && row?.text_ratio !== null
           ? Number(row.text_ratio).toFixed(1)
-          : !isNaN(Number(row?.text_ratio?.[0]?.text_ratio)) && row?.text_ratio?.[0]?.text_ratio !== null
+          : !isNaN(Number(row?.text_ratio?.[0]?.text_ratio)) &&
+              row?.text_ratio?.[0]?.text_ratio !== null
             ? Number(row.text_ratio[0].text_ratio).toFixed(1)
             : "", // Text Ratio
         !isNaN(Number(row?.flesch)) && row?.flesch !== null
           ? Number(row.flesch).toFixed(1)
-          : !isNaN(Number(row?.flesch?.Ok?.[0])) && row?.flesch?.Ok?.[0] !== null
+          : !isNaN(Number(row?.flesch?.Ok?.[0])) &&
+              row?.flesch?.Ok?.[0] !== null
             ? Number(row.flesch.Ok[0]).toFixed(1)
             : "", // Flesch Score
         row?.flesch_grade || row?.flesch?.Ok?.[1] || "", // Flesch Grade
@@ -262,7 +264,7 @@ const TableRow = memo(
               ? row.cookies.length
               : 0, // Cookies
         row?.page_size?.[0]?.kb ? row.page_size[0].kb + " KB" : "",
-        row?.link_score ?? "", // Link Score
+        row?.link_score ?? 0, // Link Score
       ],
       [row, index],
     );
@@ -503,7 +505,8 @@ const TableCrawl = ({
     if (!content) return;
     navigator.clipboard.writeText(content).then(() => {
       toast.success("Cell copied to clipboard", {
-        description: content.length > 50 ? `${content.slice(0, 50)}...` : content,
+        description:
+          content.length > 50 ? `${content.slice(0, 50)}...` : content,
         position: "bottom-right",
       });
     });
@@ -535,7 +538,8 @@ const TableCrawl = ({
   filteredRowsRef.current = filteredRows;
 
   const stableGetItemKey = useCallback(
-    (index: number) => `${filteredRowsRef.current[index]?.url || "row"}-${index}`,
+    (index: number) =>
+      `${filteredRowsRef.current[index]?.url || "row"}-${index}`,
     [],
   );
 
