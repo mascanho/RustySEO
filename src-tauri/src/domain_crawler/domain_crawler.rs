@@ -640,6 +640,12 @@ pub async fn crawl_domain(
 
     // --- RECORD HISTORY (Backend-driven) ---
     if let Ok(db) = &db {
+        // Idempotent — ensures the table (and any newly-added columns) exist
+        // even if the user has never opened the Dashboard/History tab yet,
+        // which is otherwise the only place this migration gets triggered.
+        if let Err(e) = super::db_deep::db::create_domain_results_table() {
+            tracing::error!("Failed to prepare history table before recording: {}", e);
+        }
         match db.get_summary_stats().await {
             Ok(stats) => {
                 let history_entry = super::db_deep::db::DeepCrawlHistory {
@@ -665,6 +671,17 @@ pub async fn crawl_domain(
                     total_secure_pages: stats["total_secure_pages"].as_i64().unwrap_or(0) as i32,
                     total_schema_pages: stats["total_schema_pages"].as_i64().unwrap_or(0) as i32,
                     total_mobile_pages: stats["total_mobile_pages"].as_i64().unwrap_or(0) as i32,
+                    missing_h1: stats["missing_h1"].as_i64().unwrap_or(0) as i32,
+                    missing_canonical: stats["missing_canonical"].as_i64().unwrap_or(0) as i32,
+                    thin_content_pages: stats["thin_content_pages"].as_i64().unwrap_or(0) as i32,
+                    noindex_pages: stats["noindex_pages"].as_i64().unwrap_or(0) as i32,
+                    mixed_content_pages: stats["mixed_content_pages"].as_i64().unwrap_or(0) as i32,
+                    cookies_pages: stats["cookies_pages"].as_i64().unwrap_or(0) as i32,
+                    avg_word_count: stats["avg_word_count"].as_i64().unwrap_or(0) as i32,
+                    avg_readability: stats["avg_readability"].as_i64().unwrap_or(0) as i32,
+                    avg_page_size_kb: stats["avg_page_size_kb"].as_i64().unwrap_or(0) as i32,
+                    duplicate_titles: stats["duplicate_titles"].as_i64().unwrap_or(0) as i32,
+                    duplicate_descriptions: stats["duplicate_descriptions"].as_i64().unwrap_or(0) as i32,
                 };
                 
                 println!("Backend recording history for {}: {:?}", domain, history_entry);

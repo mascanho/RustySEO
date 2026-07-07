@@ -317,7 +317,26 @@ impl Database {
                     MAX(COALESCE(CAST(json_extract(data, '$.url_depth') AS INTEGER), 0)) as max_crawl_depth,
                     COUNT(*) FILTER (WHERE json_extract(data, '$.https') = 1 OR json_extract(data, '$.https') = 'true') as total_secure_pages,
                     COUNT(*) FILTER (WHERE json_extract(data, '$.schema') IS NOT NULL AND json_extract(data, '$.schema') != '' AND json_extract(data, '$.schema') != 'null') as total_schema_pages,
-                    COUNT(*) FILTER (WHERE json_extract(data, '$.mobile') = 1 OR json_extract(data, '$.mobile') = 'true') as total_mobile_pages
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.mobile') = 1 OR json_extract(data, '$.mobile') = 'true') as total_mobile_pages,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.headings.h1') IS NULL OR json_extract(data, '$.headings.h1') = '[]') as missing_h1,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.canonicals') IS NULL OR json_extract(data, '$.canonicals') = '[]') as missing_canonical,
+                    COUNT(*) FILTER (WHERE COALESCE(CAST(json_extract(data, '$.word_count') AS INTEGER), 0) < 300) as thin_content_pages,
+                    COUNT(*) FILTER (WHERE json_extract(data, '$.meta_robots.meta_robots') LIKE '%noindex%') as noindex_pages,
+                    COUNT(*) FILTER (WHERE COALESCE(CAST(json_extract(data, '$.cross_origin.total_mixed_content') AS INTEGER), 0) > 0) as mixed_content_pages,
+                    COUNT(*) FILTER (WHERE COALESCE(json_array_length(data, '$.cookies.Ok'), 0) > 0) as cookies_pages,
+                    CAST(AVG(COALESCE(CAST(json_extract(data, '$.word_count') AS REAL), 0)) AS INTEGER) as avg_word_count,
+                    CAST(AVG(CASE WHEN json_extract(data, '$.flesch.Ok[0]') IS NOT NULL THEN CAST(json_extract(data, '$.flesch.Ok[0]') AS REAL) END) AS INTEGER) as avg_readability,
+                    CAST(AVG(COALESCE(CAST(json_extract(data, '$.page_size[0].kb') AS REAL), 0)) AS INTEGER) as avg_page_size_kb,
+                    (
+                        (SELECT COUNT(*) FROM domain_crawl WHERE json_extract(data, '$.title[0].title') IS NOT NULL AND json_extract(data, '$.title[0].title') != '')
+                        -
+                        (SELECT COUNT(DISTINCT json_extract(data, '$.title[0].title')) FROM domain_crawl WHERE json_extract(data, '$.title[0].title') IS NOT NULL AND json_extract(data, '$.title[0].title') != '')
+                    ) as duplicate_titles,
+                    (
+                        (SELECT COUNT(*) FROM domain_crawl WHERE json_extract(data, '$.description') IS NOT NULL AND json_extract(data, '$.description') != '')
+                        -
+                        (SELECT COUNT(DISTINCT json_extract(data, '$.description')) FROM domain_crawl WHERE json_extract(data, '$.description') IS NOT NULL AND json_extract(data, '$.description') != '')
+                    ) as duplicate_descriptions
                 FROM domain_crawl
                 "#
             )?;
@@ -342,6 +361,17 @@ impl Database {
                     "total_secure_pages": row.get::<_, i64>(14).unwrap_or(0),
                     "total_schema_pages": row.get::<_, i64>(15).unwrap_or(0),
                     "total_mobile_pages": row.get::<_, i64>(16).unwrap_or(0),
+                    "missing_h1": row.get::<_, i64>(17).unwrap_or(0),
+                    "missing_canonical": row.get::<_, i64>(18).unwrap_or(0),
+                    "thin_content_pages": row.get::<_, i64>(19).unwrap_or(0),
+                    "noindex_pages": row.get::<_, i64>(20).unwrap_or(0),
+                    "mixed_content_pages": row.get::<_, i64>(21).unwrap_or(0),
+                    "cookies_pages": row.get::<_, i64>(22).unwrap_or(0),
+                    "avg_word_count": row.get::<_, i64>(23).unwrap_or(0),
+                    "avg_readability": row.get::<_, i64>(24).unwrap_or(0),
+                    "avg_page_size_kb": row.get::<_, i64>(25).unwrap_or(0),
+                    "duplicate_titles": row.get::<_, i64>(26).unwrap_or(0),
+                    "duplicate_descriptions": row.get::<_, i64>(27).unwrap_or(0),
                 }))
             })?;
 

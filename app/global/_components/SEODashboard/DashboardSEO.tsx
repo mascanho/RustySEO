@@ -66,6 +66,17 @@ type DeepCrawlHistory = {
   total_secure_pages?: number;
   total_schema_pages?: number;
   total_mobile_pages?: number;
+  missing_h1?: number;
+  missing_canonical?: number;
+  thin_content_pages?: number;
+  noindex_pages?: number;
+  mixed_content_pages?: number;
+  cookies_pages?: number;
+  avg_word_count?: number;
+  avg_readability?: number;
+  avg_page_size_kb?: number;
+  duplicate_titles?: number;
+  duplicate_descriptions?: number;
 };
 
 export default function DashboardSEO() {
@@ -146,6 +157,24 @@ export default function DashboardSEO() {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
   }, [filteredHistory]);
+
+  // Coverage percentages (indexable/HTTPS/schema/mobile as a share of pages
+  // crawled) rather than raw counts — raw counts alone are misleading once
+  // the number of pages crawled changes between runs.
+  const chronologicalHistoryWithRatios = useMemo(() => {
+    return chronologicalHistory.map((item) => {
+      const pages = item.pages || 0;
+      const pct = (n?: number) =>
+        pages > 0 ? Math.round(((n || 0) / pages) * 1000) / 10 : 0;
+      return {
+        ...item,
+        indexable_pct: pct(item.indexable_pages),
+        https_pct: pct(item.total_secure_pages),
+        schema_pct: pct(item.total_schema_pages),
+        mobile_pct: pct(item.total_mobile_pages),
+      };
+    });
+  }, [chronologicalHistory]);
 
   // Latest crawl metrics for selected domain
   const latestCrawl = useMemo(() => {
@@ -1101,6 +1130,934 @@ export default function DashboardSEO() {
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 5: Internal vs External Links */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Internal vs External Links
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Link profile composition over time — a shrinking internal
+                    share can signal weakening site architecture.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_internal_links"
+                        name="Internal Links"
+                        stroke="#6366f1"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_external_links"
+                        name="External Links"
+                        stroke="#a78bfa"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 6: Technical Assets Growth */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Technical Assets Growth
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    CSS, JavaScript, and image assets discovered per crawl.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_css"
+                        name="CSS Files"
+                        stroke="#a855f7"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_javascript"
+                        name="JavaScript Files"
+                        stroke="#eab308"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total_images"
+                        name="Images"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 7: Compliance Coverage Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Compliance Coverage Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    HTTPS, structured data, and mobile-friendly coverage as a
+                    share of pages crawled — normalised so crawl-size changes
+                    don't distort the trend.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistoryWithRatios}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        unit="%"
+                        domain={[0, 100]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="https_pct"
+                        name="HTTPS Coverage"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="schema_pct"
+                        name="Structured Data Coverage"
+                        stroke="#6366f1"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="mobile_pct"
+                        name="Mobile-Friendly Coverage"
+                        stroke="#38bdf8"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 8: Indexability Ratio Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Indexability Ratio Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Share of crawled pages that are indexable, over time.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={chronologicalHistoryWithRatios}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorIndexablePct"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        unit="%"
+                        domain={[0, 100]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Area
+                        type="natural"
+                        dataKey="indexable_pct"
+                        name="Indexable Pages (%)"
+                        stroke="#10b981"
+                        fillOpacity={1}
+                        fill="url(#colorIndexablePct)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 9: Crawl Depth Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Crawl Depth Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Maximum click-depth reached from the start URL per crawl —
+                    a growing depth can mean a flattening or a sprawling site.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Bar
+                        dataKey="max_crawl_depth"
+                        name="Max Crawl Depth"
+                        fill="#14b8a6"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 10: Duplicate Content Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Duplicate Content Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Extra title/description occurrences beyond the first
+                    unique one — the same issue the General tab's Page
+                    Titles and Meta Description dropdowns flag per-crawl.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="duplicate_titles"
+                        name="Duplicate Titles"
+                        stroke="#f97316"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="duplicate_descriptions"
+                        name="Duplicate Descriptions"
+                        stroke="#eab308"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 11: Content Structure Issues */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Content Structure Issues
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Pages missing an H1 heading or a canonical tag — the same
+                    checks as the General tab's H1 and Canonicals dropdowns.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="missing_h1"
+                        name="Missing H1"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="missing_canonical"
+                        name="Missing Canonical"
+                        stroke="#6366f1"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 12: Thin Content & Noindex Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Thin Content & Noindex Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Pages under 300 words, and pages explicitly blocked from
+                    indexing via a noindex directive — same idea as the
+                    General tab's Word Count and Meta Robots dropdowns.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="thin_content_pages"
+                        name="Thin Content (<300 words)"
+                        stroke="#f97316"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="noindex_pages"
+                        name="Noindex Pages"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 13: Average Word Count Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Average Word Count Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Mean content length per crawl — same metric as the
+                    General tab's Word Count dropdown, tracked over time.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorAvgWordCount"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#38bdf8"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#38bdf8"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Area
+                        type="natural"
+                        dataKey="avg_word_count"
+                        name="Avg Word Count"
+                        stroke="#38bdf8"
+                        fillOpacity={1}
+                        fill="url(#colorAvgWordCount)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 14: Average Readability Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Average Readability Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Mean Flesch Reading Ease score per crawl (0-100, higher is
+                    easier to read) — same metric as the General tab's
+                    Readability dropdown.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorAvgReadability"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Area
+                        type="natural"
+                        dataKey="avg_readability"
+                        name="Avg Reading Ease"
+                        stroke="#10b981"
+                        fillOpacity={1}
+                        fill="url(#colorAvgReadability)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 15: Average Page Size Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Average Page Size Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Mean HTML transfer size per crawl — same metric as the
+                    General tab's Page Weight dropdown.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorAvgPageSize"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#ec4899"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#ec4899"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        unit="KB"
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Area
+                        type="natural"
+                        dataKey="avg_page_size_kb"
+                        name="Avg Page Size (KB)"
+                        stroke="#ec4899"
+                        fillOpacity={1}
+                        fill="url(#colorAvgPageSize)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 16: Security & Privacy Trend */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    Security & Privacy Trend
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Pages serving mixed content, and pages setting cookies —
+                    same checks as the General tab's Security and Cookies
+                    dropdowns.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        style={{ fontSize: "11px" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="mixed_content_pages"
+                        name="Mixed Content Pages"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="cookies_pages"
+                        name="Pages Setting Cookies"
+                        stroke="#a78bfa"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
