@@ -283,6 +283,21 @@ export default function Page() {
         }
       })();
 
+      // Single canonical source of truth for "pages crawled" and friends —
+      // read straight from SQLite once the crawl is done, and hand it to every
+      // widget that shows these numbers (Summary, Overview, Footer) so they
+      // can't independently derive conflicting figures anymore.
+      (async () => {
+        try {
+          const stats = await invoke("get_crawl_summary_stats_command");
+          if (stats && typeof stats.pages === "number") {
+            useGlobalCrawlStore.getState().setFinalCrawlStats(stats);
+          }
+        } catch (error) {
+          console.error("Failed to fetch final crawl stats:", error);
+        }
+      })();
+
       // Update session storage for totals
       const totalUrlsCrawled = event.payload?.crawled_urls || 0;
       const crawledLinks = JSON.parse(

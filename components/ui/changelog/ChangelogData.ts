@@ -15,6 +15,7 @@ export const changelogData = [
       "Deep Crawler: Fixed bug slowing crawls on very large websites",
       "Deep Crawler: Dashboard Tab with historical data **Experimental**",
       "Deep Crawler: Link Score Metric",
+      "Deep Crawler: Visualisations **Experimental**",
     ],
   },
   {

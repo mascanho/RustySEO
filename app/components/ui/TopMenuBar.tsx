@@ -770,6 +770,25 @@ const TopMenuBar = () => {
             </MenubarContent>
           </MenubarMenu>
 
+
+
+          {/* VISUALISATIONS */}
+
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3 text-xs">Visualisations</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
+              <MenubarItem
+                className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
+                onClick={showCustomSearch}
+                disabled={pathname !== "/global"}
+              >
+                <GiRobotGrab className="mr-2" />
+                Visualisations
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">

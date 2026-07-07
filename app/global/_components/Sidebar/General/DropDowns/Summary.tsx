@@ -9,8 +9,7 @@ import React, {
   useRef,
 } from "react";
 import debounce from "lodash.debounce";
-import useGlobalCrawlStore, { useCrawlDataVersion } from "@/store/GlobalCrawlDataStore";
-import { invoke } from "@tauri-apps/api/core";
+import useGlobalCrawlStore, { useCrawlDataVersion, useFinalCrawlStats } from "@/store/GlobalCrawlDataStore";
 
 import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
 
@@ -30,15 +29,6 @@ interface SummaryItem {
   value: number | string;
   percentage: string;
   loading?: boolean;
-}
-
-interface BackendStats {
-  pages: number;
-  total_internal_links: number;
-  total_external_links: number;
-  total_links: number;
-  indexable_pages: number;
-  not_indexable_pages: number;
 }
 
 const SummaryItemRow: React.FC<SummaryItem> = memo(
@@ -131,38 +121,12 @@ const Summary: React.FC = () => {
     (state) => state.streamedTotalPages,
   );
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [backendStats, setBackendStats] = useState<BackendStats | null>(null);
-  
-  const isFetching = useRef(false);
-  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Authoritative post-crawl stats — fetched once, centrally, in page.tsx's
+  // crawl_complete handler, and shared with Overview/Footer so all three agree.
+  const backendStats = useFinalCrawlStats();
 
   const stableCrawlData = useMemo(() => crawlData || [], [crawlData]);
   const isCrawling = domainCrawlLoading && !isFinishedDeepCrawl;
-
-  // Fetch real stats from SQLite via backend
-  const fetchBackendStats = useCallback(async () => {
-    if (isFetching.current) return;
-    isFetching.current = true;
-    try {
-      const stats: BackendStats = await invoke(
-        "get_crawl_summary_stats_command",
-      );
-      if (stats && typeof stats.pages === "number") {
-        setBackendStats(stats);
-      }
-    } catch (e) {
-      // Silently fall back to crawlData-based stats
-    } finally {
-      isFetching.current = false;
-    }
-  }, []);
-
-  // Fetch backend stats once when crawl completes
-  useEffect(() => {
-    if (isFinishedDeepCrawl) {
-      fetchBackendStats();
-    }
-  }, [isFinishedDeepCrawl, fetchBackendStats]);
 
   // Stable debounced update function
   const debouncedUpdate = useCallback(

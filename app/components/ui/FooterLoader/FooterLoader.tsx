@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
-import useCrawlStore from "@/store/GlobalCrawlDataStore";
+import useCrawlStore, { useFinalCrawlStats } from "@/store/GlobalCrawlDataStore";
 import { Badge } from "@mantine/core";
 import { debounce } from "lodash";
 
@@ -16,6 +16,9 @@ const FooterLoader = () => {
   const setFinishedDeepCrawl = useCrawlStore((state) => state.setFinishedDeepCrawl);
   
   const crawlDataLength = useCrawlStore((state) => state.crawlData.length);
+  // Authoritative post-crawl count from SQLite — shared with Summary/Overview
+  // so "pages crawled" can't disagree between widgets.
+  const finalCrawlStats = useFinalCrawlStats();
 
   const [failedPages, setFailedPages] = useState(0);
   // Internal state to track if we've shown the "Complete" message for the current session
@@ -82,10 +85,13 @@ const FooterLoader = () => {
 
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
+    if (showComplete && typeof finalCrawlStats?.pages === "number") {
+      return finalCrawlStats.pages;
+    }
     return showComplete
       ? streamedCrawledPages || crawlDataLength || 0
       : streamedCrawledPages || 0;
-  }, [showComplete, crawlDataLength, streamedCrawledPages]);
+  }, [showComplete, crawlDataLength, streamedCrawledPages, finalCrawlStats]);
 
   const displayTotal = useMemo(() => {
     return showComplete

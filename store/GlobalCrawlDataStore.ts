@@ -44,6 +44,19 @@ interface CrawlStore {
   totalUrlsCrawled: number;
   streamedCrawledPages: number;
   streamedTotalPages: number;
+  // Authoritative post-crawl stats read straight from SQLite (COUNT(*) etc.).
+  // Populated once, right after `crawl_complete` fires, and consumed by every
+  // widget that shows a "pages crawled" figure (Summary, Overview, Footer) so
+  // they can never disagree with each other. Null until it's fetched, in which
+  // case widgets should fall back to the live streamed counters.
+  finalCrawlStats: {
+    pages: number;
+    total_internal_links: number;
+    total_external_links: number;
+    total_links: number;
+    indexable_pages: number;
+    not_indexable_pages: number;
+  } | null;
   deepCrawlTab: string;
   inlinks: string[];
   outlinks: string[];
@@ -93,6 +106,7 @@ interface CrawlStore {
   setTotalUrlsCrawled: (total: number) => void;
   setStreamedCrawledPages: (pages: number) => void;
   setStreamedTotalPages: (pages: number) => void;
+  setFinalCrawlStats: (stats: CrawlStore["finalCrawlStats"]) => void;
   setDeepCrawlTab: (tab: string) => void;
   setInlinks: (links: string[]) => void;
   setOutlinks: (links: string[]) => void;
@@ -152,6 +166,7 @@ interface CrawlStore {
       setTotalUrlsCrawled: (total: number) => void;
       setStreamedCrawledPages: (pages: number) => void;
       setStreamedTotalPages: (pages: number) => void;
+      setFinalCrawlStats: (stats: CrawlStore["finalCrawlStats"]) => void;
       updateStreaming: (update: StreamingUpdate) => void;
     };
   };
@@ -265,6 +280,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       set({
         crawlData: [],
         visitedUrls: new Set(),
+        finalCrawlStats: null,
         aggregatedData: {
           images: [],
           scripts: [],
@@ -300,6 +316,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setTotalUrlsCrawled: createSetter<number>("totalUrlsCrawled"),
     setStreamedCrawledPages: createSetter<number>("streamedCrawledPages"),
     setStreamedTotalPages: createSetter<number>("streamedTotalPages"),
+    setFinalCrawlStats: createSetter<CrawlStore["finalCrawlStats"]>("finalCrawlStats"),
     setDeepCrawlTab: createSetter<string>("deepCrawlTab"),
     setInlinks: createSetter<string[]>("inlinks"),
     setOutlinks: createSetter<string[]>("outlinks"),
@@ -392,6 +409,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     totalUrlsCrawled: 0,
     streamedCrawledPages: 0,
     streamedTotalPages: 0,
+    finalCrawlStats: null,
     deepCrawlTab: "",
     inlinks: [],
     outlinks: [],
@@ -522,6 +540,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setTotalUrlsCrawled: setters.setTotalUrlsCrawled,
         setStreamedCrawledPages: setters.setStreamedCrawledPages,
         setStreamedTotalPages: setters.setStreamedTotalPages,
+        setFinalCrawlStats: setters.setFinalCrawlStats,
         updateStreaming: (update: StreamingUpdate) =>
           set((state) => {
             let newCrawlData = state.crawlData;
@@ -653,6 +672,11 @@ export const useStreamingProgress = () => {
 
 export const useCrawlSummary = () => {
   const selector = useCallback((state: CrawlStore) => state.summary, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useFinalCrawlStats = () => {
+  const selector = useCallback((state: CrawlStore) => state.finalCrawlStats, []);
   return useGlobalCrawlStore(selector, shallow);
 };
 

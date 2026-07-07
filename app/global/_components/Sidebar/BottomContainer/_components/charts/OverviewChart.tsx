@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import { useEffect, useState, memo, createContext, useContext } from "react";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, { useFinalCrawlStats } from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
 
 // ─── Brand-matched colour palette ────────────────────────────────────────────
@@ -117,8 +117,10 @@ function OverviewChart() {
   const streamedCrawledPages    = useGlobalCrawlStore((s) => s.streamedCrawledPages);
   const streamedTotalPages      = useGlobalCrawlStore((s) => s.streamedTotalPages);
   const crawlDataLength         = useGlobalCrawlStore((s) => s.crawlData.length);
-  const setStreamedCrawledPages = useGlobalCrawlStore((s) => s.setStreamedCrawledPages);
-  const setStreamedTotalPages   = useGlobalCrawlStore((s) => s.setStreamedTotalPages);
+  // Authoritative post-crawl count from SQLite — shared with Summary/Footer so
+  // "pages crawled" can't disagree between widgets. Falls back to the live
+  // streamed counter while a crawl is still in progress.
+  const finalCrawlStats         = useFinalCrawlStats();
 
   const [failed4xx, setFailed4xx]             = useState(0);
   const [failed5xx, setFailed5xx]             = useState(0);
@@ -136,7 +138,7 @@ function OverviewChart() {
     return () => obs.disconnect();
   }, []);
 
-  const crawled = streamedCrawledPages || 0;
+  const crawled = finalCrawlStats?.pages ?? streamedCrawledPages ?? 0;
 
   // Recompute derived stats whenever crawlData changes (covers mount + live updates)
   useEffect(() => {
@@ -149,24 +151,22 @@ function OverviewChart() {
     setTotalLinks(totalLinks);
   }, [crawlDataLength]);
 
-  // Also lock in final counts when crawl_complete fires
+  // Also lock in final 4xx/5xx/indexability counts once the crawl_complete
+  // flush has landed in crawlData (covers the case where the last batch
+  // didn't bump crawlDataLength quite in time for the effect above).
   useEffect(() => {
     let dead = false;
     const p = listen("crawl_complete", () => {
       if (dead) return;
-      const s    = useGlobalCrawlStore.getState();
-      const data = s.crawlData || [];
+      const data = useGlobalCrawlStore.getState().crawlData || [];
       const { c4, c5, ni, totalLinks } = computeStats(data);
-      const raw  = s.streamedCrawledPages || data.length;
-      setStreamedCrawledPages(Math.max(0, raw - c4 - c5));
-      setStreamedTotalPages(raw);
       setFailed4xx(c4);
       setFailed5xx(c5);
       setNonIndexable(ni);
       setTotalLinks(totalLinks);
     });
     return () => { dead = true; p.then((f) => f()); };
-  }, [setStreamedCrawledPages, setStreamedTotalPages]);
+  }, []);
 
   // Session crawl count
   useEffect(() => {
