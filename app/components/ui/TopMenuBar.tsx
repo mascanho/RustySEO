@@ -71,6 +71,7 @@ import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
 import { CiFolderOn, CiSettings } from "react-icons/ci";
 import { UrlStatusChecker } from "./URLchecker/URLchecker";
 import { MdOutlineHttps } from "react-icons/md";
+import VisualisationsModal from "./Visualisations/VisualisationsModal";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -144,6 +145,12 @@ const TopMenuBar = () => {
   const [
     openedDiffChecker,
     { open: openDiffChecker, close: closeDiffChecker },
+  ] = useDisclosure(false);
+
+  // Visualisations Hub
+  const [
+    openedVisualisations,
+    { open: openVisualisations, close: closeVisualisations },
   ] = useDisclosure(false);
 
   // HANDLE ONBOARDING MODAL
@@ -567,6 +574,9 @@ const TopMenuBar = () => {
         <DiffChecker />
       </Modal>
 
+      {/* Visualisations Hub */}
+      <VisualisationsModal opened={openedVisualisations} onClose={closeVisualisations} />
+
       {/* Extractor Component - Now controlled by global store */}
       {visibility.customSearch && (
         <CustomSearchSelector close={hideCustomSearch} />
@@ -779,11 +789,11 @@ const TopMenuBar = () => {
             <MenubarContent className="z-[999999999999999]">
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
-                onClick={showCustomSearch}
+                onClick={openVisualisations}
                 disabled={pathname !== "/global"}
               >
-                <GiRobotGrab className="mr-2" />
-                Visualisations
+                <FiBarChart2 className="mr-2" />
+                Crawl Visualisations
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
