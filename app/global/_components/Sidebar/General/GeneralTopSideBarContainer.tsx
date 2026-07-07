@@ -26,6 +26,10 @@ import Indexing from "./DropDowns/Indexing";
 import Performance from "./DropDowns/Performance";
 import ResponseTime from "./DropDowns/ResponseTime";
 import CrawlDepth from "./DropDowns/CrawlDepth";
+import MetaRobots from "./DropDowns/MetaRobots";
+import Readability from "./DropDowns/Readability";
+import PageWeight from "./DropDowns/PageWeight";
+import LinkScore from "./DropDowns/LinkScore";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -45,12 +49,14 @@ const GeneralTopSideBarContainer = () => {
         <H1 />
         <H2 />
         <WordCount />
+        <Readability />
         <Images />
         <Css />
         {/* <Iframes /> */}
         <Javascript />
         <Schema />
         <Indexing />
+        <MetaRobots />
         <Canonicals />
         <OpenGraph />
         <Cookies />
@@ -58,10 +64,12 @@ const GeneralTopSideBarContainer = () => {
         <Mobile />
         <Security />
         <Performance />
+        <PageWeight />
         <ResponseTime />
         <URLinfo />
         <StatusCodes />
         <Redirects />
+        <LinkScore />
         <CustomSearch />
       </div>
     </div>
