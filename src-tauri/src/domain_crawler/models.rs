@@ -165,6 +165,7 @@ pub struct LightCrawlResult {
     pub page_size: Vec<Sizes>,
     pub content_type: String,
     pub opengraph: HashMap<String, String>,
+    pub meta_robots: MetaRobots,
     pub flesch: Option<f64>,
     pub flesch_grade: Option<String>,
     pub text_ratio: Option<f64>,
@@ -261,6 +262,7 @@ impl LightCrawlResult {
             page_size: full.page_size.clone(),
             content_type: full.content_type.clone(),
             opengraph: safe_og,
+            meta_robots: full.meta_robots.clone(),
             flesch: full.flesch.as_ref().ok().map(|(s, _)| *s),
             flesch_grade: full.flesch.as_ref().ok().map(|(_, g)| g.clone()),
             text_ratio: full

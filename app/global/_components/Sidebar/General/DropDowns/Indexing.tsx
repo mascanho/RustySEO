@@ -17,16 +17,16 @@ const Indexing = () => {
     const indexingStats = useMemo(() => {
         let indexable = 0;
         let nonIndexable = 0;
-        let partial = 0;
         const reasons = new Map();
 
         crawlData.forEach((item) => {
             const ind = item.indexability?.indexability || 0;
             const reason = item.indexability?.indexability_reason || "Unknown";
 
-            if (ind >= 0.9) indexable++;
-            else if (ind <= 0.1) nonIndexable++;
-            else partial++;
+            // Matches the threshold used everywhere else (table, CSV/xlsx exports):
+            // most pages default to 0.5 (no robots/canonical tag found), which counts as indexable.
+            if (ind >= 0.5) indexable++;
+            else nonIndexable++;
 
             const count = reasons.get(reason) || 0;
             reasons.set(reason, count + 1);
@@ -40,7 +40,6 @@ const Indexing = () => {
         return {
             indexable,
             nonIndexable,
-            partial,
             reasons: topReasons
         };
     }, [crawlData]);

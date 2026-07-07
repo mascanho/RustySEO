@@ -2,7 +2,7 @@
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
-export const exportSEODataCSV = async (data) => {
+export const exportSEODataCSV = async (data, visibleColumns?: boolean[]) => {
   if (!data?.length) {
     await message("No data to export", {
       title: "Export Error",
@@ -12,7 +12,7 @@ export const exportSEODataCSV = async (data) => {
   }
 
   // Define headers (must match tableLayout.ts headerTitles exactly)
-  const headers = [
+  const allHeaders = [
     "ID", // 0
     "URL", // 1
     "Page Title", // 2
@@ -41,6 +41,11 @@ export const exportSEODataCSV = async (data) => {
     "Link Score", // 25
   ];
 
+  // Only export columns currently visible in the table (mirrors the column picker)
+  const isVisible = (i: number) =>
+    !visibleColumns || visibleColumns.length !== allHeaders.length || visibleColumns[i];
+  const headers = allHeaders.filter((_, i) => isVisible(i));
+
   // Debug: Log first item structure and check for depth
   console.log("First data item structure:", data[0]);
   console.log(
@@ -59,7 +64,7 @@ export const exportSEODataCSV = async (data) => {
       );
     };
 
-    return [
+    const row = [
       // ID (0)
       (index + 1).toString(),
 
@@ -153,6 +158,8 @@ export const exportSEODataCSV = async (data) => {
       // Link Score (25)
       item.link_score?.toString() || "",
     ];
+
+    return row.filter((_, i) => isVisible(i));
   });
 
   // Create CSV content

@@ -56,12 +56,15 @@ pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // Generate EXCEL FILE WITH THE DATA FROM THE MAIN TABLE
 
-pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
+pub fn generate_excel_main_table(
+    data: Vec<Value>,
+    visible_columns: Option<Vec<bool>>,
+) -> Result<Vec<u8>, String> {
     if data.is_empty() {
         return Err("No data to generate Excel".to_string());
     }
 
-    let headers = vec![
+    let all_headers = vec![
         "ID",
         "URL",
         "Page Title",
@@ -87,7 +90,23 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         "Opengraph",
         "Cookies",
         "Size",
+        "Link Score",
     ];
+
+    // Only include columns the caller says are currently visible (mirrors the
+    // table's column picker), falling back to "show everything" if the caller
+    // didn't send a matching visibility mask.
+    let visible: Vec<bool> = match &visible_columns {
+        Some(v) if v.len() == all_headers.len() => v.clone(),
+        _ => vec![true; all_headers.len()],
+    };
+
+    let headers: Vec<&str> = all_headers
+        .iter()
+        .zip(visible.iter())
+        .filter(|(_, v)| **v)
+        .map(|(h, _)| *h)
+        .collect();
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
@@ -312,6 +331,14 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             .map(|v| format!("{} KB", v))
             .unwrap_or_default();
 
+        let link_score = get_val(&["link_score"])
+            .and_then(|v| {
+                v.as_i64()
+                    .map(|n| n.to_string())
+                    .or_else(|| v.as_f64().map(|n| n.to_string()))
+            })
+            .unwrap_or_default();
+
         let row_data = vec![
             id,
             url,
@@ -338,9 +365,16 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             opengraph,
             cookies,
             page_size,
+            link_score,
         ];
 
-        for (col_idx, val) in row_data.into_iter().enumerate() {
+        let visible_row_data = row_data
+            .into_iter()
+            .zip(visible.iter())
+            .filter(|(_, v)| **v)
+            .map(|(val, _)| val);
+
+        for (col_idx, val) in visible_row_data.enumerate() {
             worksheet
                 .write((row_idx + 1) as u32, col_idx as u16, val)
                 .map_err(|e| e.to_string())?;

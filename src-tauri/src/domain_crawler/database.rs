@@ -835,25 +835,30 @@ impl Database {
 
     pub async fn get_all_crawl_data(&self) -> Result<Vec<Value>, DatabaseError> {
         let pool = self.pool.clone();
-        
+
         tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
-            let mut stmt = conn.prepare("SELECT data FROM domain_crawl")?;
-            
+            ensure_link_score_column(&conn)?;
+            let mut stmt = conn.prepare("SELECT data, link_score FROM domain_crawl")?;
+
             let mut results = Vec::new();
             let rows = stmt.query_map([], |row| {
                 let data_json: String = row.get(0)?;
-                Ok(data_json)
+                let link_score: Option<i64> = row.get(1)?;
+                Ok((data_json, link_score))
             })?;
-            
+
             for row in rows {
-                if let Ok(data_json) = row {
-                    if let Ok(data) = serde_json::from_str(&data_json) {
+                if let Ok((data_json, link_score)) = row {
+                    if let Ok(mut data) = serde_json::from_str::<Value>(&data_json) {
+                        if let (Some(score), Value::Object(map)) = (link_score, &mut data) {
+                            map.insert("link_score".to_string(), Value::from(score));
+                        }
                         results.push(data);
                     }
                 }
             }
-            
+
             Ok(results)
         })
         .await?

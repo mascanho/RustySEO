@@ -421,7 +421,9 @@ const TableCrawl = ({
       toast.info("Exporting data from database...");
       setIsGeneratingExcel(true);
       try {
-        const fileBuffer = await invoke("export_full_crawl_to_excel_command");
+        const fileBuffer = await invoke("export_full_crawl_to_excel_command", {
+          visibleColumns: columnVisibility,
+        });
 
         setIsGeneratingExcel(false);
         const filePath = await save({
@@ -445,12 +447,13 @@ const TableCrawl = ({
     } else {
       if (rows.length > 0) {
         toast.info("Getting your data ready...");
-        await exportSEODataCSV(rows);
+        await exportSEODataCSV(rows, columnVisibility);
       } else {
         setIsGeneratingExcel(true);
         try {
           const fileBuffer = await invoke("create_excel_main_table", {
             data: rows,
+            visibleColumns: columnVisibility,
           });
 
           setIsGeneratingExcel(false);
@@ -474,7 +477,7 @@ const TableCrawl = ({
         }
       }
     }
-  }, [rows, tabName, setIsGeneratingExcel]);
+  }, [rows, tabName, setIsGeneratingExcel, columnVisibility]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;
