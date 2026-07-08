@@ -53,14 +53,14 @@ export default function Duplicates() {
             </h3>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-lg">
               Clusters pages that share identical headings or near-identical
-              body content, using fingerprints captured during the crawl.
-              Runs on demand — nothing is computed automatically.
+              body content, using fingerprints captured during the crawl. Runs
+              on demand — nothing is computed automatically.
             </p>
           </div>
           <button
             onClick={fetchDuplicateContent}
             disabled={duplicateLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-bright  hover:bg-sky-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shrink-0"
           >
             <Copy className="w-4 h-4" />
             {duplicateLoading ? "Analyzing..." : "Run Duplicate Analysis"}

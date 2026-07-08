@@ -543,14 +543,12 @@ export default function Page() {
             <DashboardSEO />
           </Tabs.Panel>
 
-          {activeTab === "duplicates" && (
-            <Tabs.Panel
-              value="duplicates"
-              className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
-            >
-              <Duplicates />
-            </Tabs.Panel>
-          )}
+          <Tabs.Panel
+            value="duplicates"
+            className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+          >
+            <Duplicates />
+          </Tabs.Panel>
         </Tabs>
       </section>
 
