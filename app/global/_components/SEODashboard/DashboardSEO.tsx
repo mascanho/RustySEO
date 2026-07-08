@@ -774,7 +774,7 @@ export default function DashboardSEO() {
                         >
                           <div className="flex items-center gap-1.5">
                             <div
-                              className="w-2.5 h-2.5 rounded-full"
+                              className="w-[7px] h-[7px] rounded-full"
                               style={{ backgroundColor: item.color }}
                             />
                             <span className="font-medium text-slate-600 dark:text-slate-400">
@@ -887,7 +887,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -959,7 +960,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1052,7 +1054,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1115,7 +1118,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Bar
                         dataKey="errors"
@@ -1181,7 +1185,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1252,7 +1257,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1336,7 +1342,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1438,7 +1445,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1502,7 +1510,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Bar
                         dataKey="max_crawl_depth"
@@ -1564,7 +1573,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1637,7 +1647,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1711,7 +1722,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1803,7 +1815,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1888,7 +1901,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1972,7 +1986,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -2037,7 +2052,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -2312,6 +2328,61 @@ export default function DashboardSEO() {
                           label: "Mobile-Friendly Pages",
                           key: "total_mobile_pages",
                           lowerIsBetter: false,
+                        },
+                        {
+                          label: "Missing H1 Tags",
+                          key: "missing_h1",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Missing Canonical Tags",
+                          key: "missing_canonical",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Thin Content Pages",
+                          key: "thin_content_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Noindex Pages",
+                          key: "noindex_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Mixed Content Pages",
+                          key: "mixed_content_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Cookie-Flagged Pages",
+                          key: "cookies_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Avg Word Count",
+                          key: "avg_word_count",
+                          lowerIsBetter: false,
+                        },
+                        {
+                          label: "Avg Readability Score",
+                          key: "avg_readability",
+                          lowerIsBetter: false,
+                        },
+                        {
+                          label: "Avg Page Size (KB)",
+                          key: "avg_page_size_kb",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Duplicate Titles",
+                          key: "duplicate_titles",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Duplicate Descriptions",
+                          key: "duplicate_descriptions",
+                          lowerIsBetter: true,
                         },
                       ].map((row, idx) => {
                         const val1 = (comparisonCrawl1[
