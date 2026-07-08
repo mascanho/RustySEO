@@ -373,6 +373,7 @@ async fn main() {
             domain_commands::get_crawl_total_count_command,
             domain_commands::get_crawl_summary_stats_command,
             domain_commands::get_link_scores_command,
+            domain_commands::find_duplicate_content_command,
             domain_commands::export_images_to_excel_command,
             domain_commands::export_keywords_to_excel_command,
             domain_commands::export_redirects_to_excel_command,

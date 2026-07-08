@@ -16,6 +16,7 @@ export const changelogData = [
       "Deep Crawler: Dashboard Tab with historical data **Experimental**",
       "Deep Crawler: Link Score Metric",
       "Deep Crawler: Visualisations **Experimental**",
+      "Deep Crawler: Content Duplication check **Experimental**",
     ],
   },
   {

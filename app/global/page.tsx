@@ -430,12 +430,16 @@ export default function Page() {
               </Tabs.Tab>
               <Tabs.Tab value="content">
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
-                Content
+                Planner
               </Tabs.Tab>
 
               <Tabs.Tab value="dashboard">
                 <MdOutlineDashboard className="inline-block mr-2" />
                 Dashboard
+              </Tabs.Tab>
+              <Tabs.Tab value="duplicates">
+                <MdOutlineDashboard className="inline-block mr-2" />
+                Duplicates
               </Tabs.Tab>
             </Tabs.List>
           </aside>

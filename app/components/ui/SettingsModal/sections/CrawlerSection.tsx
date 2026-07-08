@@ -9,7 +9,7 @@ import {
   ToggleSwitch,
   SectionHeader,
 } from "../fields/SettingFields";
-import { Gauge, Layers, ArrowDownUp, TrendingUp } from "lucide-react";
+import { Gauge, Layers, ArrowDownUp, TrendingUp, Copy } from "lucide-react";
 
 interface Props {
   settings: AppSettings;
@@ -146,6 +146,21 @@ const CrawlerSection = ({ settings, onUpdate }: Props) => (
         onChange={(v) => onUpdate("max_pending_time", v)}
         min={30}
         unit="s"
+      />
+    </SettingField>
+
+    <SectionHeader
+      title="Crawl Analysis"
+      icon={<Copy className="w-3.5 h-3.5" />}
+    />
+
+    <SettingField
+      label="Duplicated Content Check"
+      description="Fingerprint each page's headings and body text during crawl so the Duplicate Content dashboard tab can find similar/identical pages. Adds per-page processing time — off by default."
+    >
+      <ToggleSwitch
+        checked={settings.duplicate_content_check_enabled}
+        onChange={(v) => onUpdate("duplicate_content_check_enabled", v)}
       />
     </SettingField>
   </div>

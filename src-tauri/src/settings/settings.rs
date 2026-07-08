@@ -102,6 +102,11 @@ pub struct Settings {
     /// Automatically compute Link Score (internal PageRank-style authority, 1-100)
     /// at the end of every crawl
     pub link_score_enabled: bool,
+    /// Compute a per-page content fingerprint (SimHash of body text + heading hash)
+    /// during crawl so the Duplicate Content dashboard tab can cluster similar/identical
+    /// pages afterwards. Off by default — it's an opt-in, since it does extra text
+    /// processing per page.
+    pub duplicate_content_check_enabled: bool,
 
     // --- Extraction & Content ---
     /// Enable N-gram extraction
@@ -196,6 +201,7 @@ impl Settings {
 
             // --- Crawl Analysis ---
             link_score_enabled: true,
+            duplicate_content_check_enabled: false,
 
             // --- Extraction & Content ---
             extract_ngrams: false,
@@ -374,6 +380,13 @@ impl Settings {
         s.push_str(&format!(
             "link_score_enabled = {}\n",
             self.link_score_enabled
+        ));
+
+        s.push_str("# Compute per-page content fingerprints during crawl to power the\n");
+        s.push_str("# Duplicate Content dashboard tab. Off by default (adds per-page work).\n");
+        s.push_str(&format!(
+            "duplicate_content_check_enabled = {}\n",
+            self.duplicate_content_check_enabled
         ));
 
         s.push_str("\n# --- Extraction & Content ---\n");
@@ -871,6 +884,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("link_score_enabled").and_then(|v| v.as_bool()) {
         settings.link_score_enabled = val;
+    }
+
+    if let Some(val) = updates
+        .get("duplicate_content_check_enabled")
+        .and_then(|v| v.as_bool())
+    {
+        settings.duplicate_content_check_enabled = val;
     }
 
     if let Some(val) = updates
