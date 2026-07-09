@@ -78,6 +78,10 @@ type DeepCrawlHistory = {
   avg_page_size_kb?: number;
   duplicate_titles?: number;
   duplicate_descriptions?: number;
+  status_2xx?: number;
+  status_3xx?: number;
+  status_4xx?: number;
+  status_5xx?: number;
 };
 
 export default function DashboardSEO() {
@@ -1189,6 +1193,89 @@ export default function DashboardSEO() {
                         dataKey="total_redirects"
                         name="Redirects"
                         fill="#f97316"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 4b: HTTP Status Code Breakdown */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    HTTP Status Code Breakdown
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Response distribution per crawl — a growing 4xx/5xx share
+                    signals broken links or server issues.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
+                      />
+                      <Bar
+                        dataKey="status_2xx"
+                        name="2xx Success"
+                        stackId="status"
+                        fill="#22c55e"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_3xx"
+                        name="3xx Redirect"
+                        stackId="status"
+                        fill="#f97316"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_4xx"
+                        name="4xx Client Error"
+                        stackId="status"
+                        fill="#ef4444"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_5xx"
+                        name="5xx Server Error"
+                        stackId="status"
+                        fill="#991b1b"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>

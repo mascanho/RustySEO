@@ -682,6 +682,10 @@ pub async fn crawl_domain(
                     avg_page_size_kb: stats["avg_page_size_kb"].as_i64().unwrap_or(0) as i32,
                     duplicate_titles: stats["duplicate_titles"].as_i64().unwrap_or(0) as i32,
                     duplicate_descriptions: stats["duplicate_descriptions"].as_i64().unwrap_or(0) as i32,
+                    status_2xx: stats["status_2xx"].as_i64().unwrap_or(0) as i32,
+                    status_3xx: stats["status_3xx"].as_i64().unwrap_or(0) as i32,
+                    status_4xx: stats["status_4xx"].as_i64().unwrap_or(0) as i32,
+                    status_5xx: stats["status_5xx"].as_i64().unwrap_or(0) as i32,
                 };
                 
                 println!("Backend recording history for {}: {:?}", domain, history_entry);

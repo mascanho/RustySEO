@@ -76,7 +76,11 @@ pub fn create_domain_results_table() -> Result<(), String> {
             avg_readability INTEGER NOT NULL DEFAULT 0,
             avg_page_size_kb INTEGER NOT NULL DEFAULT 0,
             duplicate_titles INTEGER NOT NULL DEFAULT 0,
-            duplicate_descriptions INTEGER NOT NULL DEFAULT 0
+            duplicate_descriptions INTEGER NOT NULL DEFAULT 0,
+            status_2xx INTEGER NOT NULL DEFAULT 0,
+            status_3xx INTEGER NOT NULL DEFAULT 0,
+            status_4xx INTEGER NOT NULL DEFAULT 0,
+            status_5xx INTEGER NOT NULL DEFAULT 0
         )",
         [],
     )
@@ -105,6 +109,10 @@ pub fn create_domain_results_table() -> Result<(), String> {
     let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN avg_page_size_kb INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN duplicate_titles INTEGER NOT NULL DEFAULT 0", []);
     let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN duplicate_descriptions INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN status_2xx INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN status_3xx INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN status_4xx INTEGER NOT NULL DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE deep_crawls_history ADD COLUMN status_5xx INTEGER NOT NULL DEFAULT 0", []);
 
     Ok(())
 }
@@ -144,6 +152,10 @@ pub struct DeepCrawlHistory {
     pub avg_page_size_kb: i32,
     pub duplicate_titles: i32,
     pub duplicate_descriptions: i32,
+    pub status_2xx: i32,
+    pub status_3xx: i32,
+    pub status_4xx: i32,
+    pub status_5xx: i32,
 }
 
 #[tauri::command]
@@ -154,7 +166,7 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
     // Prepare the SQL query to read data
     let mut stmt = conn
         .prepare(
-            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages, missing_h1, missing_canonical, thin_content_pages, noindex_pages, mixed_content_pages, cookies_pages, avg_word_count, avg_readability, avg_page_size_kb, duplicate_titles, duplicate_descriptions
+            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages, missing_h1, missing_canonical, thin_content_pages, noindex_pages, mixed_content_pages, cookies_pages, avg_word_count, avg_readability, avg_page_size_kb, duplicate_titles, duplicate_descriptions, status_2xx, status_3xx, status_4xx, status_5xx
              FROM deep_crawls_history",
         )
         .map_err(|e| e.to_string())?;
@@ -196,6 +208,10 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
                 avg_page_size_kb: row.get(30)?,
                 duplicate_titles: row.get(31)?,
                 duplicate_descriptions: row.get(32)?,
+                status_2xx: row.get(33)?,
+                status_3xx: row.get(34)?,
+                status_4xx: row.get(35)?,
+                status_5xx: row.get(36)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -237,9 +253,9 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
     for item in &data {
         conn.execute(
             "INSERT INTO deep_crawls_history (
-                domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages, missing_h1, missing_canonical, thin_content_pages, noindex_pages, mixed_content_pages, cookies_pages, avg_word_count, avg_readability, avg_page_size_kb, duplicate_titles, duplicate_descriptions
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32)",
-            [
+                domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages, total_css, total_javascript, total_images, total_redirects, missing_title, missing_description, avg_response_time, max_crawl_depth, total_secure_pages, total_schema_pages, total_mobile_pages, missing_h1, missing_canonical, thin_content_pages, noindex_pages, mixed_content_pages, cookies_pages, avg_word_count, avg_readability, avg_page_size_kb, duplicate_titles, duplicate_descriptions, status_2xx, status_3xx, status_4xx, status_5xx
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36)",
+            params![
                 &item.domain,
                 &item.date,
                 &item.pages.to_string(),
@@ -272,6 +288,10 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
                 &item.avg_page_size_kb.to_string(),
                 &item.duplicate_titles.to_string(),
                 &item.duplicate_descriptions.to_string(),
+                &item.status_2xx.to_string(),
+                &item.status_3xx.to_string(),
+                &item.status_4xx.to_string(),
+                &item.status_5xx.to_string(),
             ],
         )
         .map_err(|e| e.to_string())?;
