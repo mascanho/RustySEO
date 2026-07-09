@@ -7,7 +7,16 @@ import { useState, useEffect, useRef, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, MessageCircle, Ban, UserX } from "lucide-react";
+import {
+  Send,
+  X,
+  MessageCircle,
+  Ban,
+  UserX,
+  MessagesSquare,
+  MessageSquarePlus,
+  ArrowLeft,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { useChatNotificationStore } from "@/store/ChatNotificationStore";
@@ -18,14 +27,27 @@ import { toast } from "sonner";
 type ChatMessage = {
   id: number;
   client_id: string;
+  auth_id?: string | null;
   sender_name: string;
   content: string;
   created_at: string;
 };
 
+type DirectMessage = {
+  id: number;
+  sender_id: string;
+  sender_name: string;
+  recipient_id: string;
+  content: string;
+  created_at: string;
+};
+
+type ChatView = "public" | "dmList" | "dmThread";
+
 const NICKNAME_KEY = "rustyseo_chat_nickname";
 const CLIENT_ID_KEY = "rustyseo_chat_client_id";
 const BLOCKED_KEY = "rustyseo_chat_blocked";
+const DM_PEERS_KEY = "rustyseo_chat_dm_peers";
 // Keep in sync with the `content` check constraint in supabase_chat_schema.sql
 const MAX_MESSAGE_LENGTH = 500;
 const AVATAR_COLORS = [
@@ -63,9 +85,11 @@ const ChatInput = memo(
   ({
     onSend,
     disabled,
+    placeholder = "Message",
   }: {
     onSend: (text: string) => void;
     disabled: boolean;
+    placeholder?: string;
   }) => {
     const [input, setInput] = useState("");
     const remaining = MAX_MESSAGE_LENGTH - input.length;
@@ -94,7 +118,7 @@ const ChatInput = memo(
             }
             onKeyDown={handleKeyDown}
             maxLength={MAX_MESSAGE_LENGTH}
-            placeholder="Message"
+            placeholder={placeholder}
             disabled={disabled}
             className="h-8 flex-1 rounded-sm border-gray-300 bg-white text-sm text-gray-800 focus-visible:ring-blue-500 dark:border-[#444444] dark:bg-[#252525] dark:text-gray-200 dark:focus-visible:ring-blue-400"
           />
@@ -164,14 +188,31 @@ export function ChatBar() {
   const [sending, setSending] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [clientId, setClientId] = useState("");
+  const [authId, setAuthId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Record<string, string>>({});
   const [showBlockedPanel, setShowBlockedPanel] = useState(false);
+
+  // Private direct messages
+  const [view, setView] = useState<ChatView>("public");
+  const [dmPeers, setDmPeers] = useState<Record<string, string>>({});
+  const [dmUnread, setDmUnread] = useState<Record<string, boolean>>({});
+  const [activeDmPeer, setActiveDmPeer] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [dmMessages, setDmMessages] = useState<DirectMessage[]>([]);
+  const [dmLoading, setDmLoading] = useState(false);
+  const [dmSending, setDmSending] = useState(false);
+
   const { theme } = useTheme();
   const pathname = usePathname();
   const { visibility, hideChatbar } = useVisibilityStore();
   const { markUnread, markRead } = useChatNotificationStore();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const dmScrollAreaRef = useRef<HTMLDivElement>(null);
   const blockedUsersRef = useRef<Record<string, string>>({});
+  const viewRef = useRef<ChatView>("public");
+  const activeDmPeerRef = useRef<{ id: string; name: string } | null>(null);
 
   // Load identity + personal block list once on mount. Blocking is a local,
   // per-device filter (there's no auth/moderation backend) — it hides a
@@ -182,17 +223,53 @@ export function ChatBar() {
     try {
       const raw = localStorage.getItem(BLOCKED_KEY);
       if (raw) setBlockedUsers(JSON.parse(raw));
+      const rawPeers = localStorage.getItem(DM_PEERS_KEY);
+      if (rawPeers) setDmPeers(JSON.parse(rawPeers));
     } catch (e) {
-      console.error("Failed to read blocked users:", e);
+      console.error("Failed to read local chat data:", e);
     }
   }, []);
 
-  // Keep a ref mirror of blockedUsers so the realtime subscription callback
-  // (created once per `nickname` change) always sees the latest block list
-  // instead of the stale value captured when the effect first ran.
+  // Private messages need a real, server-verified identity — not just a
+  // self-reported client id — so the database can enforce that only the
+  // sender and recipient can ever read a DM. Supabase's anonymous auth
+  // gives every device a persistent, verified user id at no cost and with
+  // no signup step for the user.
+  useEffect(() => {
+    const initAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        setAuthId(session.user.id);
+        return;
+      }
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        console.error("Anonymous sign-in failed:", error);
+        toast.error(
+          "Direct messages unavailable: " +
+            (error.message || "anonymous sign-in failed"),
+        );
+      } else if (data.user) {
+        setAuthId(data.user.id);
+      }
+    };
+    initAuth();
+  }, []);
+
+  // Keep ref mirrors of state that's read inside long-lived realtime
+  // subscription callbacks, so those callbacks always see the latest
+  // value instead of the one captured when the effect first ran.
   useEffect(() => {
     blockedUsersRef.current = blockedUsers;
   }, [blockedUsers]);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+  useEffect(() => {
+    activeDmPeerRef.current = activeDmPeer;
+  }, [activeDmPeer]);
 
   // Clear the footer's unread indicator as soon as the panel is opened.
   useEffect(() => {
@@ -256,6 +333,90 @@ export function ChatBar() {
     };
   }, [nickname]);
 
+  // Global inbox for private messages: one subscription for everything
+  // addressed to me, regardless of which thread (if any) is open. Updates
+  // the open thread live, otherwise flags that peer's entry as unread.
+  useEffect(() => {
+    if (!authId) return;
+
+    const channel = supabase
+      .channel(`dm:${authId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "direct_messages",
+          filter: `recipient_id=eq.${authId}`,
+        },
+        (payload) => {
+          const incoming = payload.new as DirectMessage;
+
+          setDmPeers((prev) => {
+            if (prev[incoming.sender_id]) return prev;
+            const next = { ...prev, [incoming.sender_id]: incoming.sender_name };
+            localStorage.setItem(DM_PEERS_KEY, JSON.stringify(next));
+            return next;
+          });
+
+          const viewingThisThread =
+            viewRef.current === "dmThread" &&
+            activeDmPeerRef.current?.id === incoming.sender_id;
+
+          if (viewingThisThread) {
+            setDmMessages((prev) => [...prev, incoming]);
+          } else {
+            setDmUnread((prev) => ({ ...prev, [incoming.sender_id]: true }));
+          }
+
+          const chatbarOpen = useVisibilityStore.getState().visibility.chatbar;
+          if (!chatbarOpen || !viewingThisThread) {
+            markUnread();
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authId]);
+
+  // Fetch the two-person history whenever a DM thread is opened.
+  useEffect(() => {
+    if (!activeDmPeer || !authId) return;
+
+    let active = true;
+    setDmLoading(true);
+
+    const loadThread = async () => {
+      const { data, error } = await supabase
+        .from("direct_messages")
+        .select("*")
+        .or(
+          `and(sender_id.eq.${authId},recipient_id.eq.${activeDmPeer.id}),and(sender_id.eq.${activeDmPeer.id},recipient_id.eq.${authId})`,
+        )
+        .order("created_at", { ascending: true })
+        .limit(200);
+
+      if (!active) return;
+      if (error) {
+        console.error("Failed to load direct messages:", error);
+        toast.error("Failed to load conversation");
+      } else {
+        setDmMessages(data as DirectMessage[]);
+      }
+      setDmLoading(false);
+    };
+
+    loadThread();
+    setDmUnread((prev) => ({ ...prev, [activeDmPeer.id]: false }));
+
+    return () => {
+      active = false;
+    };
+  }, [activeDmPeer, authId]);
+
   // Keep scrolled to bottom on new messages — scroll only the chat's own
   // viewport directly. Radix ScrollArea's viewport toggles its overflow
   // style dynamically, so scrollIntoView() can miss it and scroll an
@@ -269,16 +430,30 @@ export function ChatBar() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const viewport = dmScrollAreaRef.current?.querySelector<HTMLDivElement>(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, [dmMessages]);
+
   const handleSaveNickname = (name: string) => {
     localStorage.setItem(NICKNAME_KEY, name);
     setNickname(name);
   };
 
   const handleSendMessage = async (text: string) => {
-    if (!nickname || sending) return;
+    // Wait for the anonymous auth session before allowing a send — sending
+    // early would save the message with auth_id: null, permanently making
+    // that sender un-DM-able for that message (auth normally resolves in
+    // well under a second, so this is rarely noticeable).
+    if (!nickname || !authId || sending) return;
     setSending(true);
     const { error } = await supabase.from("messages").insert({
       client_id: clientId,
+      auth_id: authId,
       sender_name: nickname,
       content: text,
     });
@@ -294,6 +469,35 @@ export function ChatBar() {
     // mirroring the server's minimum gap between messages from one sender —
     // avoids firing off a burst of attempts the DB would just reject anyway.
     setTimeout(() => setSending(false), 1500);
+  };
+
+  const handleSendDm = async (text: string) => {
+    if (!nickname || !authId || !activeDmPeer || dmSending) return;
+    setDmSending(true);
+    const { data, error } = await supabase
+      .from("direct_messages")
+      .insert({
+        sender_id: authId,
+        sender_name: nickname,
+        recipient_id: activeDmPeer.id,
+        content: text,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to send direct message:", error);
+      if (error.message?.includes("RATE_LIMIT")) {
+        toast.error("You're sending messages too fast — slow down a bit.");
+      } else {
+        toast.error("Failed to send message");
+      }
+    } else if (data) {
+      // The realtime subscription only fires for the recipient, so add our
+      // own outgoing message to the thread directly.
+      setDmMessages((prev) => [...prev, data as DirectMessage]);
+    }
+    setTimeout(() => setDmSending(false), 1500);
   };
 
   const formatTime = (iso: string) => {
@@ -322,7 +526,20 @@ export function ChatBar() {
     });
   };
 
+  const openDmWith = (id: string, name: string) => {
+    if (!id || id === authId) return;
+    setDmPeers((prev) => {
+      if (prev[id]) return prev;
+      const next = { ...prev, [id]: name };
+      localStorage.setItem(DM_PEERS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setActiveDmPeer({ id, name });
+    setView("dmThread");
+  };
+
   const blockedCount = Object.keys(blockedUsers).length;
+  const dmUnreadCount = Object.values(dmUnread).filter(Boolean).length;
   const visibleMessages = messages.filter((m) => !blockedUsers[m.client_id]);
 
   return (
@@ -339,7 +556,23 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
       <div className="relative border-b border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <h2 className="text-sm font-medium">SEO CHAT</h2>
+            {view === "dmThread" ? (
+              <button
+                onClick={() => {
+                  setView("dmList");
+                  setActiveDmPeer(null);
+                }}
+                className="mr-1 flex h-6 w-6 items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="Back"
+              >
+                <ArrowLeft size={14} />
+              </button>
+            ) : null}
+            <h2 className="text-sm font-medium">
+              {view === "public" && "SEO CHAT"}
+              {view === "dmList" && "DIRECT MESSAGES"}
+              {view === "dmThread" && activeDmPeer?.name}
+            </h2>
             <X
               size={16}
               className="ml-2 text-purple-500 cursor-pointer"
@@ -351,6 +584,22 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {nickname}
               </span>
+            )}
+            {nickname && (
+              <button
+                onClick={() =>
+                  setView((v) => (v === "public" ? "dmList" : "public"))
+                }
+                title="Direct messages"
+                className="relative flex h-6 w-6 items-center justify-center rounded-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#2d2d2d] dark:hover:text-gray-200"
+              >
+                <MessagesSquare size={14} />
+                {dmUnreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    {dmUnreadCount}
+                  </span>
+                )}
+              </button>
             )}
             {nickname && (
               <button
@@ -400,6 +649,110 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
 
       {!nickname ? (
         <NicknamePrompt onSave={handleSaveNickname} />
+      ) : view === "dmList" ? (
+        <ScrollArea className="flex-1 bg-white px-3 py-2 dark:bg-[#1a1a1a]">
+          {Object.keys(dmPeers).length === 0 ? (
+            <p className="mt-4 text-center text-xs text-gray-400">
+              No conversations yet. Hover a message in the public chat and
+              tap the DM icon to start one.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {Object.entries(dmPeers).map(([id, name]) => {
+                const color = colorForName(name);
+                return (
+                  <li key={id}>
+                    <button
+                      onClick={() => openDmWith(id, name)}
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#2d2d2d]"
+                    >
+                      <div
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                        style={{ backgroundColor: color }}
+                      >
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="flex-1 truncate text-xs text-gray-800 dark:text-gray-200">
+                        {name}
+                      </span>
+                      {dmUnread[id] && (
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ScrollArea>
+      ) : view === "dmThread" ? (
+        <>
+          <ScrollArea
+            ref={dmScrollAreaRef}
+            className="flex-1 bg-white px-3 py-2 dark:bg-[#1a1a1a]"
+          >
+            <div className="space-y-3">
+              {dmLoading && (
+                <p className="text-center text-xs text-gray-400">
+                  Loading conversation…
+                </p>
+              )}
+              {!dmLoading && dmMessages.length === 0 && (
+                <p className="text-center text-xs text-gray-400">
+                  No messages yet. Say hello privately!
+                </p>
+              )}
+              {dmMessages.map((message) => {
+                const isCurrentUser = message.sender_id === authId;
+                const color = colorForName(message.sender_name);
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                  >
+                    <div className="min-w-0 max-w-[85%]">
+                      <div
+                        className={`min-w-0 rounded-md px-3 py-2 ${
+                          isCurrentUser
+                            ? "bg-blue-600 text-white dark:bg-[#2a4365]"
+                            : "text-gray-800 dark:text-gray-200"
+                        }`}
+                        style={
+                          isCurrentUser
+                            ? undefined
+                            : {
+                                backgroundColor: bubbleTint(
+                                  color,
+                                  theme === "dark",
+                                ),
+                                borderLeft: `3px solid ${color}`,
+                              }
+                        }
+                      >
+                        <p className="whitespace-pre-wrap break-words text-xs [overflow-wrap:anywhere]">
+                          {message.content}
+                        </p>
+                      </div>
+                      <div
+                        className={`mt-1 flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                      >
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatTime(message.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+          <ChatInput
+            onSend={handleSendDm}
+            disabled={dmSending}
+            placeholder={`Message ${activeDmPeer?.name ?? ""}`}
+          />
+        </>
       ) : (
         <>
           {/* Messages */}
@@ -453,6 +806,20 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                               <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {formatTime(message.created_at)}
                               </span>
+                              {message.auth_id && (
+                                <button
+                                  onClick={() =>
+                                    openDmWith(
+                                      message.auth_id as string,
+                                      message.sender_name,
+                                    )
+                                  }
+                                  title={`Message ${message.sender_name} privately`}
+                                  className="hidden text-gray-400 hover:text-blue-500 group-hover:inline-flex"
+                                >
+                                  <MessageSquarePlus size={12} />
+                                </button>
+                              )}
                               <button
                                 onClick={() =>
                                   handleBlockUser(
@@ -507,7 +874,10 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
             </div>
           </ScrollArea>
 
-          <ChatInput onSend={handleSendMessage} disabled={sending} />
+          <ChatInput
+            onSend={handleSendMessage}
+            disabled={sending || !authId}
+          />
         </>
       )}
     </div>
