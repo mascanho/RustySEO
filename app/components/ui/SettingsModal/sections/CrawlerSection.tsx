@@ -156,7 +156,7 @@ const CrawlerSection = ({ settings, onUpdate }: Props) => (
 
     <SettingField
       label="Duplicated Content Check"
-      description="Fingerprint each page's headings and body text during crawl so the Duplicate Content dashboard tab can find similar/identical pages. Adds per-page processing time — off by default."
+      description="Detect similar/identical pages during crawl. Adds per-page processing time."
     >
       <ToggleSwitch
         checked={settings.duplicate_content_check_enabled}

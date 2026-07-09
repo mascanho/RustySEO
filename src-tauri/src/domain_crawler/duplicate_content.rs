@@ -12,6 +12,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 use super::helpers::content_signature::hamming_distance;
+use super::helpers::normalize_url::normalize_url;
 
 /// Two SimHashes within this Hamming distance (out of 64 bits) are treated as
 /// near-duplicate content. ~10% of bits differing is a conventional threshold for
@@ -64,32 +65,42 @@ pub fn find_duplicate_groups(pages: &[Value]) -> Vec<DuplicateGroup> {
 }
 
 fn extract_fingerprints(pages: &[Value]) -> Vec<PageFingerprint> {
-    pages
-        .iter()
-        .filter_map(|page| {
-            let url = page.get("url")?.as_str()?.to_string();
-            let title = page
-                .get("title")
-                .and_then(|t| t.as_array())
-                .and_then(|arr| arr.first())
-                .and_then(|t| t.get("title"))
-                .and_then(|t| t.as_str())
-                .map(|s| s.to_string());
-            let word_count = page
-                .get("word_count")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(0) as usize;
-            let content_simhash = page.get("content_simhash").and_then(|v| v.as_u64());
-            let heading_hash = page.get("heading_hash").and_then(|v| v.as_u64());
-            Some(PageFingerprint {
-                url,
+    let mut by_normalized_url: HashMap<String, PageFingerprint> = HashMap::new();
+
+    for page in pages {
+        let Some(url) = page.get("url").and_then(|u| u.as_str()) else {
+            continue;
+        };
+        let title = page
+            .get("title")
+            .and_then(|t| t.as_array())
+            .and_then(|arr| arr.first())
+            .and_then(|t| t.get("title"))
+            .and_then(|t| t.as_str())
+            .map(|s| s.to_string());
+        let word_count = page
+            .get("word_count")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0) as usize;
+        let content_simhash = page.get("content_simhash").and_then(|v| v.as_u64());
+        let heading_hash = page.get("heading_hash").and_then(|v| v.as_u64());
+
+        // Trailing slash / no trailing slash (and other normalizable differences) refer
+        // to the same page, not two different pages that happen to share content — so
+        // only the first-seen variant is kept for clustering, avoiding false-positive
+        // "duplicate" pairs like https://x.com/a vs https://x.com/a/.
+        by_normalized_url
+            .entry(normalize_url(url))
+            .or_insert(PageFingerprint {
+                url: url.to_string(),
                 title,
                 word_count,
                 content_simhash,
                 heading_hash,
-            })
-        })
-        .collect()
+            });
+    }
+
+    by_normalized_url.into_values().collect()
 }
 
 fn find_heading_duplicates(fingerprints: &[PageFingerprint]) -> Vec<DuplicateGroup> {
@@ -231,6 +242,31 @@ mod tests {
         let content_group = groups.iter().find(|g| g.kind == "content").unwrap();
         assert_eq!(content_group.pages.len(), 2);
         assert_eq!(content_group.similarity, 100);
+
+        let heading_group = groups.iter().find(|g| g.kind == "headings").unwrap();
+        assert_eq!(heading_group.pages.len(), 2);
+    }
+
+    #[test]
+    fn does_not_flag_trailing_slash_variant_as_a_duplicate() {
+        let pages = vec![
+            json!({"url": "https://a.com/page", "title": [{"title": "Page"}], "word_count": 100, "content_simhash": 12345u64, "heading_hash": 999u64}),
+            json!({"url": "https://a.com/page/", "title": [{"title": "Page"}], "word_count": 100, "content_simhash": 12345u64, "heading_hash": 999u64}),
+        ];
+        assert!(find_duplicate_groups(&pages).is_empty());
+    }
+
+    #[test]
+    fn trailing_slash_variant_collapses_into_the_real_duplicate_cluster() {
+        let pages = vec![
+            json!({"url": "https://a.com/page", "title": [{"title": "Page"}], "word_count": 100, "content_simhash": 12345u64, "heading_hash": 999u64}),
+            json!({"url": "https://a.com/page/", "title": [{"title": "Page"}], "word_count": 100, "content_simhash": 12345u64, "heading_hash": 999u64}),
+            json!({"url": "https://a.com/other", "title": [{"title": "Other"}], "word_count": 100, "content_simhash": 12345u64, "heading_hash": 999u64}),
+        ];
+
+        let groups = find_duplicate_groups(&pages);
+        let content_group = groups.iter().find(|g| g.kind == "content").unwrap();
+        assert_eq!(content_group.pages.len(), 2);
 
         let heading_group = groups.iter().find(|g| g.kind == "headings").unwrap();
         assert_eq!(heading_group.pages.len(), 2);
