@@ -26,6 +26,7 @@ import { Drawer as MantineDrawer } from "@mantine/core";
 import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
 import { useVisibilityStore } from "@/store/VisibilityStore";
+import { useChatNotificationStore } from "@/store/ChatNotificationStore";
 import { GiSurprisedSkull } from "react-icons/gi";
 import FooterLoader from "./FooterLoader/FooterLoader";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
@@ -83,6 +84,16 @@ const Footer = () => {
 
   // HTTP CHECKER FOOTER LOADER
   const { loaders, toggleHttpChecker } = useLoaderStore();
+
+  // CHAT UNREAD NOTIFICATION
+  const hasUnreadChat = useChatNotificationStore((state) => state.hasUnread);
+  const [chatBurst, setChatBurst] = useState(false);
+  useEffect(() => {
+    if (!hasUnreadChat) return;
+    setChatBurst(true);
+    const timer = setTimeout(() => setChatBurst(false), 1200);
+    return () => clearTimeout(timer);
+  }, [hasUnreadChat]);
 
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -340,14 +351,26 @@ const Footer = () => {
               onClick={() =>
                 visibility.chatbar ? hideChatbar() : showChatbar()
               }
-              className={`flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.chatbar ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+              className={`relative flex items-center justify-center h-7 w-8 rounded transition-all cursor-pointer ${visibility.chatbar ? "bg-brand-bright/10" : "hover:bg-black/5 dark:hover:bg-white/5"} ${chatBurst ? "animate-bounce" : ""}`}
             >
               <BsPeopleFill
-                className={`text-[16px] transition-colors ${visibility.chatbar ? "text-brand-bright" : "dark:text-white/60 group-hover:dark:text-white"}`}
+                className={`text-[16px] transition-colors ${
+                  visibility.chatbar
+                    ? "text-brand-bright"
+                    : hasUnreadChat
+                      ? "text-red-500"
+                      : "dark:text-white/60 group-hover:dark:text-white"
+                }`}
               />
+              {hasUnreadChat && !visibility.chatbar && (
+                <span className="absolute -right-0.5 top-0 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+              )}
             </div>
             <div className="absolute bottom-[calc(100%+8px)] left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50">
-              AI Chat
+              {hasUnreadChat ? "Rusty Chat • New message" : "Rusty Chat"}
             </div>
           </div>
 

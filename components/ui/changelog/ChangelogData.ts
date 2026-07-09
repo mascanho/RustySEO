@@ -17,6 +17,7 @@ export const changelogData = [
       "Deep Crawler: Link Score Metric",
       "Deep Crawler: Visualisations **Experimental**",
       "Deep Crawler: Content Duplication detection **Experimental**",
+      "Global: SEO CHAT **VERY Experimental**",
     ],
   },
   {
