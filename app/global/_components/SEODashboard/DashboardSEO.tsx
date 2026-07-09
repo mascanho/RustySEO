@@ -24,6 +24,7 @@ import {
   Database,
   BarChart4,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -86,6 +87,8 @@ export default function DashboardSEO() {
   const [activeSubTab, setActiveSubTab] = useState<
     "overview" | "trends" | "comparison" | "issues"
   >("overview");
+  const [confirmDeleteDomain, setConfirmDeleteDomain] = useState(false);
+  const [deletingDomain, setDeletingDomain] = useState(false);
 
   // Comparison State
   const [compCrawl1Id, setCompCrawl1Id] = useState<string>("");
@@ -119,6 +122,29 @@ export default function DashboardSEO() {
       toast.error("Failed to load historical analytics");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteDomainHistory = async () => {
+    if (selectedDomain === "all" || selectedDomain === "none") return;
+
+    if (!confirmDeleteDomain) {
+      setConfirmDeleteDomain(true);
+      return;
+    }
+
+    setDeletingDomain(true);
+    try {
+      await invoke("delete_domain_results_history", { domain: selectedDomain });
+      toast.success(`Historical data for ${selectedDomain} deleted`);
+      setSelectedDomain("all");
+      await fetchHistoryData();
+    } catch (e) {
+      console.error("Failed to delete domain history:", e);
+      toast.error("Failed to delete historical data");
+    } finally {
+      setDeletingDomain(false);
+      setConfirmDeleteDomain(false);
     }
   };
 
@@ -325,7 +351,10 @@ export default function DashboardSEO() {
             <Globe className="w-4 h-4 text-sky-500" />
             <select
               value={selectedDomain}
-              onChange={(e) => setSelectedDomain(e.target.value)}
+              onChange={(e) => {
+                setSelectedDomain(e.target.value);
+                setConfirmDeleteDomain(false);
+              }}
               className="bg-transparent border-0 outline-0 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[150px]"
             >
               {domainsList.length === 0 && (
@@ -345,6 +374,35 @@ export default function DashboardSEO() {
             title="Refresh history data"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={handleDeleteDomainHistory}
+            onBlur={() => setConfirmDeleteDomain(false)}
+            disabled={
+              selectedDomain === "all" ||
+              selectedDomain === "none" ||
+              deletingDomain
+            }
+            className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              confirmDeleteDomain
+                ? "bg-rose-500 border-rose-500 text-white hover:bg-rose-600"
+                : "border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+            }`}
+            title={
+              confirmDeleteDomain
+                ? `Click again to permanently delete all history for ${selectedDomain}`
+                : `Delete historical data for ${selectedDomain}`
+            }
+          >
+            {confirmDeleteDomain ? (
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-1">
+                <Trash2 className="w-4 h-4" />
+                Confirm
+              </span>
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
           </button>
         </div>
       </header>

@@ -212,6 +212,21 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
 }
 
 #[tauri::command]
+pub fn delete_domain_results_history(domain: String) -> Result<(), String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "DELETE FROM deep_crawls_history WHERE domain = ?1",
+        params![&domain],
+    )
+    .map_err(|e| e.to_string())?;
+
+    println!("Deleted historical data for domain: {}", domain);
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<String, String> {
     println!("Data to insert: {:?}", &data);
 
