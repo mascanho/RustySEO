@@ -8,14 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Send,
   X,
   MessageCircle,
   Ban,
   UserX,
-  MessagesSquare,
   MessageSquarePlus,
   ArrowLeft,
+  Globe,
+  Lock,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useVisibilityStore } from "@/store/VisibilityStore";
@@ -86,10 +93,12 @@ const ChatInput = memo(
     onSend,
     disabled,
     placeholder = "Message",
+    accent = "blue",
   }: {
     onSend: (text: string) => void;
     disabled: boolean;
     placeholder?: string;
+    accent?: "blue" | "purple";
   }) => {
     const [input, setInput] = useState("");
     const remaining = MAX_MESSAGE_LENGTH - input.length;
@@ -109,7 +118,13 @@ const ChatInput = memo(
     };
 
     return (
-      <div className="border-t border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
+      <div
+        className={`border-t px-3 py-2 ${
+          accent === "purple"
+            ? "border-purple-200 bg-purple-50/40 dark:border-purple-900/40 dark:bg-purple-950/10"
+            : "border-gray-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]"
+        }`}
+      >
         <div className="flex items-center space-x-2">
           <Input
             value={input}
@@ -120,13 +135,21 @@ const ChatInput = memo(
             maxLength={MAX_MESSAGE_LENGTH}
             placeholder={placeholder}
             disabled={disabled}
-            className="h-8 flex-1 rounded-sm border-gray-300 bg-white text-sm text-gray-800 focus-visible:ring-blue-500 dark:border-[#444444] dark:bg-[#252525] dark:text-gray-200 dark:focus-visible:ring-blue-400"
+            className={`h-8 flex-1 rounded-sm border-gray-300 bg-white text-sm text-gray-800 dark:border-[#444444] dark:bg-[#252525] dark:text-gray-200 ${
+              accent === "purple"
+                ? "focus-visible:ring-purple-500 dark:focus-visible:ring-purple-400"
+                : "focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
+            }`}
           />
           <Button
             size="sm"
             onClick={handleSubmit}
             disabled={disabled || input.trim() === ""}
-            className="h-8 w-8 rounded-sm bg-blue-600 p-0 hover:bg-blue-700 dark:bg-[#333333] dark:hover:bg-[#444444]"
+            className={`h-8 w-8 rounded-sm p-0 dark:bg-[#333333] dark:hover:bg-[#444444] ${
+              accent === "purple"
+                ? "bg-purple-600 hover:bg-purple-700"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
             <Send className="h-4 w-4 dark:text-sky-bright" />
           </Button>
@@ -553,55 +576,48 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
 `}
     >
       {/* Header */}
-      <div className="relative border-b border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
+      <div
+        className={`relative border-b px-3 py-2 transition-colors ${
+          view === "public"
+            ? "border-gray-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]"
+            : "border-purple-200 bg-purple-50 dark:border-purple-900/40 dark:bg-purple-950/20"
+        }`}
+      >
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex min-w-0 items-center gap-1">
             {view === "dmThread" ? (
               <button
                 onClick={() => {
                   setView("dmList");
                   setActiveDmPeer(null);
                 }}
-                className="mr-1 flex h-6 w-6 items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                title="Back"
+                className="flex h-6 w-6 shrink-0 items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="Back to conversations"
               >
                 <ArrowLeft size={14} />
               </button>
-            ) : null}
-            <h2 className="text-sm font-medium">
+            ) : (
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+                {view === "public" ? (
+                  <Globe size={13} className="text-blue-500" />
+                ) : (
+                  <Lock size={13} className="text-purple-500" />
+                )}
+              </div>
+            )}
+            <h2 className="truncate text-sm font-medium">
               {view === "public" && "SEO CHAT"}
               {view === "dmList" && "DIRECT MESSAGES"}
               {view === "dmThread" && activeDmPeer?.name}
             </h2>
-            <X
-              size={16}
-              className="ml-2 text-purple-500 cursor-pointer"
-              onClick={() => hideChatbar()}
-            />
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex shrink-0 items-center space-x-2">
             {nickname && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="hidden text-xs text-gray-500 dark:text-gray-400 sm:inline">
                 {nickname}
               </span>
             )}
-            {nickname && (
-              <button
-                onClick={() =>
-                  setView((v) => (v === "public" ? "dmList" : "public"))
-                }
-                title="Direct messages"
-                className="relative flex h-6 w-6 items-center justify-center rounded-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#2d2d2d] dark:hover:text-gray-200"
-              >
-                <MessagesSquare size={14} />
-                {dmUnreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                    {dmUnreadCount}
-                  </span>
-                )}
-              </button>
-            )}
-            {nickname && (
+            {nickname && view === "public" && (
               <button
                 onClick={() => setShowBlockedPanel((v) => !v)}
                 title="Blocked users"
@@ -615,6 +631,11 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                 )}
               </button>
             )}
+            <X
+              size={16}
+              className="text-gray-400 hover:text-purple-500 cursor-pointer"
+              onClick={() => hideChatbar()}
+            />
           </div>
         </div>
 
@@ -647,15 +668,55 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
         )}
       </div>
 
+      {/* Mode tabs — always visible once joined, so it's never ambiguous
+          whether you're looking at the public room or a private thread. */}
+      {nickname && (
+        <div className="flex border-b border-gray-200 bg-white text-xs font-medium dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <button
+            onClick={() => {
+              setView("public");
+              setActiveDmPeer(null);
+            }}
+            className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2 transition-colors ${
+              view === "public"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            }`}
+          >
+            <Globe size={13} />
+            Public
+          </button>
+          <button
+            onClick={() => setView(view === "public" ? "dmList" : view)}
+            className={`relative flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2 transition-colors ${
+              view !== "public"
+                ? "border-purple-500 text-purple-600 dark:text-purple-400"
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            }`}
+          >
+            <Lock size={13} />
+            Direct
+            {dmUnreadCount > 0 && (
+              <span className="absolute right-[28%] top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                {dmUnreadCount}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
       {!nickname ? (
         <NicknamePrompt onSave={handleSaveNickname} />
       ) : view === "dmList" ? (
-        <ScrollArea className="flex-1 bg-white px-3 py-2 dark:bg-[#1a1a1a]">
+        <ScrollArea className="flex-1 bg-purple-50/40 px-3 py-2 dark:bg-purple-950/10">
           {Object.keys(dmPeers).length === 0 ? (
-            <p className="mt-4 text-center text-xs text-gray-400">
-              No conversations yet. Hover a message in the public chat and
-              tap the DM icon to start one.
-            </p>
+            <div className="mt-6 flex flex-col items-center gap-2 text-center">
+              <Lock className="h-6 w-6 text-purple-300 dark:text-purple-800" />
+              <p className="text-xs text-gray-400">
+                No conversations yet. Hover a message in the public chat and
+                tap the DM icon to start one.
+              </p>
+            </div>
           ) : (
             <ul className="space-y-1">
               {Object.entries(dmPeers).map(([id, name]) => {
@@ -664,7 +725,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                   <li key={id}>
                     <button
                       onClick={() => openDmWith(id, name)}
-                      className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#2d2d2d]"
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-purple-100/60 dark:hover:bg-purple-900/20"
                     >
                       <div
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
@@ -689,7 +750,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
         <>
           <ScrollArea
             ref={dmScrollAreaRef}
-            className="flex-1 bg-white px-3 py-2 dark:bg-[#1a1a1a]"
+            className="flex-1 bg-purple-50/40 px-3 py-2 dark:bg-purple-950/10"
           >
             <div className="space-y-3">
               {dmLoading && (
@@ -751,6 +812,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
             onSend={handleSendDm}
             disabled={dmSending}
             placeholder={`Message ${activeDmPeer?.name ?? ""}`}
+            accent="purple"
           />
         </>
       ) : (
@@ -787,12 +849,37 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                     <div className="min-w-0 max-w-[85%]">
                       <div className="flex min-w-0 items-start space-x-2">
                         {!isCurrentUser && (
-                          <div
-                            className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                            style={{ backgroundColor: color }}
-                          >
-                            {message.sender_name.charAt(0).toUpperCase()}
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                title={`${message.sender_name} — options`}
+                                className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ring-offset-1 transition-shadow hover:ring-2"
+                                style={{
+                                  backgroundColor: color,
+                                  "--tw-ring-color": color,
+                                }}
+                              >
+                                {message.sender_name.charAt(0).toUpperCase()}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="start"
+                              className="z-[1000000] w-44"
+                            >
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleBlockUser(
+                                    message.client_id,
+                                    message.sender_name,
+                                  )
+                                }
+                                className="text-red-500 focus:text-red-500"
+                              >
+                                <UserX className="mr-2 h-3.5 w-3.5" />
+                                Block {message.sender_name}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                         <div className="min-w-0">
                           {!isCurrentUser && (
@@ -815,23 +902,11 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                                     )
                                   }
                                   title={`Message ${message.sender_name} privately`}
-                                  className="hidden text-gray-400 hover:text-blue-500 group-hover:inline-flex"
+                                  className="inline-flex shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-blue-500 group-hover:opacity-100"
                                 >
                                   <MessageSquarePlus size={12} />
                                 </button>
                               )}
-                              <button
-                                onClick={() =>
-                                  handleBlockUser(
-                                    message.client_id,
-                                    message.sender_name,
-                                  )
-                                }
-                                title={`Block ${message.sender_name}`}
-                                className="inline-flex shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
-                              >
-                                <UserX size={12} />
-                              </button>
                             </div>
                           )}
                           <div className="flex min-w-0 items-end space-x-2">
