@@ -1,5 +1,11 @@
 export const changelogData = [
   {
+    version: "0.4.0",
+    date: "2026-08-12",
+    type: "feature",
+    changes: ["Global: SEO CHAT username selection **VERY Experimental**"],
+  },
+  {
     version: "0.3.9",
     date: "2026-07-12",
     type: "feature",

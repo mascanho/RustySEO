@@ -3,7 +3,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Globe,
   Lock,
+  Users,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useVisibilityStore } from "@/store/VisibilityStore";
@@ -57,6 +58,9 @@ const BLOCKED_KEY = "rustyseo_chat_blocked";
 const DM_PEERS_KEY = "rustyseo_chat_dm_peers";
 // Keep in sync with the `content` check constraint in supabase_chat_schema.sql
 const MAX_MESSAGE_LENGTH = 500;
+// Kept dark/saturated enough that white avatar-letter text and colored
+// sender-name text both stay readable on light and dark backgrounds. A
+// larger palette means fewer unrelated users land on the same color.
 const AVATAR_COLORS = [
   "#3a86ff",
   "#38b000",
@@ -65,6 +69,15 @@ const AVATAR_COLORS = [
   "#ef476f",
   "#06b6d4",
   "#f59e0b",
+  "#8338ec",
+  "#e63946",
+  "#2a9d8f",
+  "#ff006e",
+  "#457b9d",
+  "#588157",
+  "#b5179e",
+  "#ca8a04",
+  "#3f37c9",
 ];
 
 const getClientId = () => {
@@ -214,6 +227,7 @@ export function ChatBar() {
   const [authId, setAuthId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Record<string, string>>({});
   const [showBlockedPanel, setShowBlockedPanel] = useState(false);
+  const [showUsersPanel, setShowUsersPanel] = useState(false);
 
   // Private direct messages
   const [view, setView] = useState<ChatView>("public");
@@ -226,6 +240,7 @@ export function ChatBar() {
   const [dmMessages, setDmMessages] = useState<DirectMessage[]>([]);
   const [dmLoading, setDmLoading] = useState(false);
   const [dmSending, setDmSending] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, string>>({});
 
   const { theme } = useTheme();
   const pathname = usePathname();
@@ -236,6 +251,10 @@ export function ChatBar() {
   const blockedUsersRef = useRef<Record<string, string>>({});
   const viewRef = useRef<ChatView>("public");
   const activeDmPeerRef = useRef<{ id: string; name: string } | null>(null);
+  const usersButtonRef = useRef<HTMLButtonElement>(null);
+  const usersPanelRef = useRef<HTMLDivElement>(null);
+  const blockedButtonRef = useRef<HTMLButtonElement>(null);
+  const blockedPanelRef = useRef<HTMLDivElement>(null);
 
   // Load identity + personal block list once on mount. Blocking is a local,
   // per-device filter (there's no auth/moderation backend) — it hides a
@@ -298,6 +317,36 @@ export function ChatBar() {
   useEffect(() => {
     if (visibility.chatbar) markRead();
   }, [visibility.chatbar, markRead]);
+
+  // Close the People/Blocked dropdowns on an outside click, so they behave
+  // like normal overlays instead of only toggling via their own icon again.
+  // Listens on "mousedown" (fires before the icon's own onClick, which runs
+  // on the paired "click") so re-clicking the same icon still just toggles
+  // it, rather than this handler closing it first and the onClick reopening it.
+  useEffect(() => {
+    if (!showUsersPanel && !showBlockedPanel) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        showUsersPanel &&
+        !usersButtonRef.current?.contains(target) &&
+        !usersPanelRef.current?.contains(target)
+      ) {
+        setShowUsersPanel(false);
+      }
+      if (
+        showBlockedPanel &&
+        !blockedButtonRef.current?.contains(target) &&
+        !blockedPanelRef.current?.contains(target)
+      ) {
+        setShowBlockedPanel(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUsersPanel, showBlockedPanel]);
 
   // Fetch history + subscribe to realtime inserts once we have an identity
   useEffect(() => {
@@ -404,6 +453,39 @@ export function ChatBar() {
       supabase.removeChannel(channel);
     };
   }, [authId]);
+
+  // Broadcast our presence (auth id + nickname) so other open chat panels can
+  // list "who's online now" and let people start a DM without having to post
+  // in the public room first. Keyed by authId so re-renders/reconnects from
+  // the same device collapse to one entry instead of duplicating it.
+  useEffect(() => {
+    if (!authId || !nickname) return;
+
+    const channel = supabase.channel("chat-presence", {
+      config: { presence: { key: authId } },
+    });
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const users: Record<string, string> = {};
+        Object.entries(state).forEach(([id, presences]) => {
+          if (id === authId) return;
+          const presence = (presences as Array<{ name?: string }>)[0];
+          if (presence?.name) users[id] = presence.name;
+        });
+        setOnlineUsers(users);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({ name: nickname });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authId, nickname]);
 
   // Fetch the two-person history whenever a DM thread is opened.
   useEffect(() => {
@@ -561,9 +643,45 @@ export function ChatBar() {
     setView("dmThread");
   };
 
+  // Removes a peer from the conversations list only — it's a local,
+  // per-device list of who to show, not a delete of the actual DM history.
+  // If they message again, the inbox subscription re-adds them.
+  const handleRemoveDmPeer = (id: string) => {
+    setDmPeers((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      localStorage.setItem(DM_PEERS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setDmUnread((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const blockedCount = Object.keys(blockedUsers).length;
   const dmUnreadCount = Object.values(dmUnread).filter(Boolean).length;
   const visibleMessages = messages.filter((m) => !blockedUsers[m.client_id]);
+
+  // Everyone who has posted in the public room, keyed by their DM-able
+  // auth_id (not client_id — that's what openDmWith needs). Built from
+  // message history rather than presence, so it still lists someone who
+  // posted earlier and has since closed their chat panel.
+  const presentUsers = useMemo(() => {
+    const users: Record<string, string> = {};
+    messages.forEach((m) => {
+      if (
+        m.auth_id &&
+        m.auth_id !== authId &&
+        !blockedUsers[m.client_id]
+      ) {
+        users[m.auth_id] = m.sender_name;
+      }
+    });
+    return users;
+  }, [messages, authId, blockedUsers]);
+  const presentUserCount = Object.keys(presentUsers).length;
 
   return (
     <div
@@ -619,7 +737,29 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
             )}
             {nickname && view === "public" && (
               <button
-                onClick={() => setShowBlockedPanel((v) => !v)}
+                ref={usersButtonRef}
+                onClick={() => {
+                  setShowUsersPanel((v) => !v);
+                  setShowBlockedPanel(false);
+                }}
+                title="People in this chat"
+                className="relative flex h-6 w-6 items-center justify-center rounded-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#2d2d2d] dark:hover:text-gray-200"
+              >
+                <Users size={14} />
+                {presentUserCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white">
+                    {presentUserCount}
+                  </span>
+                )}
+              </button>
+            )}
+            {nickname && view === "public" && (
+              <button
+                ref={blockedButtonRef}
+                onClick={() => {
+                  setShowBlockedPanel((v) => !v);
+                  setShowUsersPanel(false);
+                }}
                 title="Blocked users"
                 className="relative flex h-6 w-6 items-center justify-center rounded-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#2d2d2d] dark:hover:text-gray-200"
               >
@@ -639,8 +779,54 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
           </div>
         </div>
 
+        {showUsersPanel && (
+          <div
+            ref={usersPanelRef}
+            className="absolute right-11 top-full z-10 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg dark:border-[#333333] dark:bg-[#1f1f1f]"
+          >
+            <p className="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+              People in this chat
+            </p>
+            {presentUserCount === 0 ? (
+              <p className="text-xs text-gray-400">
+                No one else has posted yet.
+              </p>
+            ) : (
+              <ul className="max-h-48 space-y-1 overflow-y-auto">
+                {Object.entries(presentUsers).map(([id, name]) => {
+                  const color = colorForName(name);
+                  return (
+                    <li key={id}>
+                      <button
+                        onClick={() => {
+                          setShowUsersPanel(false);
+                          openDmWith(id, name);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-sm px-1.5 py-1.5 text-left hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                      >
+                        <div
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="flex-1 truncate text-xs text-gray-700 dark:text-gray-200">
+                          {name}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
         {showBlockedPanel && (
-          <div className="absolute right-3 top-full z-10 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg dark:border-[#333333] dark:bg-[#1f1f1f]">
+          <div
+            ref={blockedPanelRef}
+            className="absolute right-3 top-full z-10 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg dark:border-[#333333] dark:bg-[#1f1f1f]"
+          >
             <p className="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">
               Blocked users
             </p>
@@ -676,6 +862,8 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
             onClick={() => {
               setView("public");
               setActiveDmPeer(null);
+              setShowUsersPanel(false);
+              setShowBlockedPanel(false);
             }}
             className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2 transition-colors ${
               view === "public"
@@ -687,7 +875,11 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
             Public
           </button>
           <button
-            onClick={() => setView(view === "public" ? "dmList" : view)}
+            onClick={() => {
+              setView(view === "public" ? "dmList" : view);
+              setShowUsersPanel(false);
+              setShowBlockedPanel(false);
+            }}
             className={`relative flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2 transition-colors ${
               view !== "public"
                 ? "border-purple-500 text-purple-600 dark:text-purple-400"
@@ -709,12 +901,52 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
         <NicknamePrompt onSave={handleSaveNickname} />
       ) : view === "dmList" ? (
         <ScrollArea className="flex-1 bg-purple-50/40 px-3 py-2 dark:bg-purple-950/10">
+          <div className="mb-3">
+            <p className="mb-1 flex items-center gap-1 px-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <Users size={12} />
+              Online now
+            </p>
+            {Object.keys(onlineUsers).length === 0 ? (
+              <p className="px-2 text-xs text-gray-400">
+                Nobody else is online right now.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {Object.entries(onlineUsers).map(([id, name]) => {
+                  const color = colorForName(name);
+                  return (
+                    <li key={id}>
+                      <button
+                        onClick={() => openDmWith(id, name)}
+                        className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-purple-100/60 dark:hover:bg-purple-900/20"
+                      >
+                        <div
+                          className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {name.charAt(0).toUpperCase()}
+                          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-purple-50 bg-green-500 dark:border-[#1a1a1a]" />
+                        </div>
+                        <span className="flex-1 truncate text-xs text-gray-800 dark:text-gray-200">
+                          {name}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          <p className="mb-1 px-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+            Conversations
+          </p>
           {Object.keys(dmPeers).length === 0 ? (
-            <div className="mt-6 flex flex-col items-center gap-2 text-center">
+            <div className="mt-2 flex flex-col items-center gap-2 text-center">
               <Lock className="h-6 w-6 text-purple-300 dark:text-purple-800" />
               <p className="text-xs text-gray-400">
-                No conversations yet. Hover a message in the public chat and
-                tap the DM icon to start one.
+                No conversations yet. Click someone online, or hover a message
+                in the public chat and tap the DM icon.
               </p>
             </div>
           ) : (
@@ -722,10 +954,13 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
               {Object.entries(dmPeers).map(([id, name]) => {
                 const color = colorForName(name);
                 return (
-                  <li key={id}>
+                  <li
+                    key={id}
+                    className="group flex items-center gap-1 rounded-sm hover:bg-purple-100/60 dark:hover:bg-purple-900/20"
+                  >
                     <button
                       onClick={() => openDmWith(id, name)}
-                      className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-purple-100/60 dark:hover:bg-purple-900/20"
+                      className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
                     >
                       <div
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
@@ -739,6 +974,13 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.6rem)]"}
                       {dmUnread[id] && (
                         <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
                       )}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveDmPeer(id)}
+                      title={`Remove ${name} from conversations`}
+                      className="mr-1 shrink-0 rounded-sm p-1 text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <X size={12} />
                     </button>
                   </li>
                 );
