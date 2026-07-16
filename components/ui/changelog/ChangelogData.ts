@@ -1,11 +1,12 @@
 export const changelogData = [
   {
     version: "0.4.0",
-    date: "2026-08-12",
+    date: "2026-08-19",
     type: "feature",
     changes: [
       "Global: SEO CHAT username selection **VERY Experimental**",
       "Global: Content Planner Calendar bug fix",
+      "Deep Crawler: Schema detection export",
     ],
   },
   {

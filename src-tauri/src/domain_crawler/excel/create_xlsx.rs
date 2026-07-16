@@ -273,7 +273,7 @@ pub fn generate_excel_main_table(
                 }
             }
             Some(Value::String(s)) => {
-                if s.to_lowercase() == "yes" {
+                if !s.is_empty() {
                     "Yes"
                 } else {
                     "No"
