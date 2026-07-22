@@ -6,11 +6,28 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 
 const MSClarity = ({ onSubmit, close }) => {
-  const [endpoint, setEndpoint] = useState("");
+  const defaultEndpoint = "www.clarity.ms/export-data/api/v1/project-live-insights";
+  const [endpoint, setEndpoint] = useState(defaultEndpoint);
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleChange = (e) => {
+  // Load saved credentials on mount
+  React.useEffect(() => {
+    invoke<Vec<string>>("get_microsoft_clarity_command")
+      .then((result) => {
+        if (result && result.length >= 2) {
+          setEndpoint(result[0]);
+          setToken(result[1]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load Clarity config:", err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "endpoint") {
       setEndpoint(value);
@@ -20,21 +37,41 @@ const MSClarity = ({ onSubmit, close }) => {
   };
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Call the Tauri command with the number parameter
-    const result = await invoke("set_microsoft_clarity_command", {
-      endpoint,
-      token,
-    });
-    toast("Microsoft Clarity Credentials saved successfully");
-    console.log(endpoint, token);
-    close();
+    e.preventDefault();
+    
+    // Validation: both fields required
+    if (!endpoint.trim()) {
+      setError("Endpoint is required");
+      return;
+    }
+    if (!token.trim()) {
+      setError("Token is required");
+      return;
+    }
+
+    setError("");
+    try {
+      await invoke("set_microsoft_clarity_command", {
+        endpoint: endpoint.trim(),
+        token: token.trim(),
+      });
+      toast("Microsoft Clarity Credentials saved successfully");
+      close();
+    } catch (err: any) {
+      setError(err || "Failed to save credentials");
+    }
   };
 
   return (
     <section>
+
       <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-2 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
         <p className="text-gray-600 dark:text-gray-400 text-[10px] font-medium mt-1">
-          Get your token from: <span className="font-bold text-gray-700 dark:text-gray-200">Settings &gt; Data Export &gt; Create API Key</span>
+          Get your token: <a
+            href="https://clarity.microsoft.com/projects/view"
+            target="_blank"
+            className="text-blue-500 hover:underline"
+        >Microsoft Clarity</a><span className="font-bold text-gray-700 dark:text-gray-200"> &gt; Settings &gt; Data Export &gt; Generate new API Token</span>
         </p>
         <div className="mb-4 relative mt-2 space-y-4">
           <label
@@ -49,6 +86,7 @@ const MSClarity = ({ onSubmit, close }) => {
             name="endpoint"
             value={endpoint}
             onChange={handleChange}
+            disabled={loading}
             className={`w-full px-3 dark:bg-brand-darker dark:border-white/30 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
               error
                 ? "border-red-500 focus:ring-red-200"

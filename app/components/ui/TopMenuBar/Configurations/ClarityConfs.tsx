@@ -12,15 +12,11 @@ import {
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
-interface APIConfig {
-  endpoint: string;
-  key: string;
-}
-
 export default function ClarityConfs() {
   const [isVisible, setIsVisible] = useState(false);
   const [apiEndpoint, setApiEndpoint] = useState<string>("");
   const [apiKey, setApiKey] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   const maskApiKey = (key: string) => {
     if (key?.length <= 8) return "*".repeat(key?.length);
@@ -32,17 +28,18 @@ export default function ClarityConfs() {
   };
 
   useEffect(() => {
-    invoke<APIConfig>("get_microsoft_clarity_command")
-      .then((result: any) => {
-        setApiEndpoint(result);
-        setApiKey(result);
+    invoke<Array<string>>("get_microsoft_clarity_command")
+      .then((result) => {
+        if (result && result.length >= 2) {
+          setApiEndpoint(result[0]);
+          setApiKey(result[1]);
+        }
       })
       .catch((error) => {
         console.error("Error fetching API config:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
-
-  console.log(apiEndpoint, apiKey, "Clkarity stuff");
 
   return (
     <Card className="w-full mt-4 mx-auto border-0 shadow-none bg-transparent">
@@ -50,14 +47,14 @@ export default function ClarityConfs() {
         <section>
           <Text fw={600} size="sm" className="mb-2 text-gray-700 dark:text-gray-300">API Endpoint</Text>
           <div className="bg-gray-50 dark:bg-white/[0.03] p-4 rounded-xl border border-gray-100 dark:border-white/[0.05] font-mono text-xs break-all text-gray-600 dark:text-gray-400">
-            {apiEndpoint && apiEndpoint[0]}
+            {loading ? "Loading..." : apiEndpoint || "Not configured"}
           </div>
         </section>
 
         <section>
           <Text fw={600} size="sm" className="mb-2 text-gray-700 dark:text-gray-300">API Key</Text>
           <div className="bg-gray-50 dark:bg-white/[0.03] p-4 rounded-xl border border-gray-100 dark:border-white/[0.05] font-mono text-sm break-all overflow-hidden text-gray-700 dark:text-gray-300">
-            {isVisible ? apiKey && apiKey[1] : maskApiKey(apiKey && apiKey[1])}
+            {loading ? "Loading..." : isVisible ? apiKey : maskApiKey(apiKey)}
           </div>
         </section>
       </CardContent>
