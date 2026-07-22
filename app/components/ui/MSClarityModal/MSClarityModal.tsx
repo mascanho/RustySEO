@@ -33,13 +33,9 @@ const MSClarity = ({ onSubmit, close }) => {
   return (
     <section>
       <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-2 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
-        <a
-          href=" https://clarity.microsoft.com/projects/view/klulsvnnbr/settings#apiTokens"
-          target="_blank"
-          className="text-blue-500 hover:underline pl-1"
-        >
-          Get your token here
-        </a>
+        <p className="text-gray-600 dark:text-gray-400 text-[10px] font-medium mt-1">
+          Get your token from: <span className="font-bold text-gray-700 dark:text-gray-200">Settings &gt; Data Export &gt; Create API Key</span>
+        </p>
         <div className="mb-4 relative mt-2 space-y-4">
           <label
             htmlFor="number"
