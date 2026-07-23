@@ -27,6 +27,18 @@ use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::state::{to_database_results, CrawlerState, FailedUrl, ProgressData};
 use super::url_processor::process_url;
 
+/// Payload for the `crawl_rate_limited` event so the frontend can surface
+/// server-driven backoff instead of the crawl silently appearing slow.
+#[derive(Clone, serde::Serialize)]
+struct RateLimitedData {
+    /// Adaptive delay now applied between requests, in milliseconds
+    delay_ms: u64,
+    /// How long new task spawning is paused, in milliseconds
+    cooldown_ms: u64,
+    /// HTTP status that triggered the backoff (0 when detected from body content)
+    status: u16,
+}
+
 /// Main entry point for domain crawling
 pub async fn crawl_domain(
     domain: &str,
@@ -463,6 +475,11 @@ pub async fn crawl_domain(
                             rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
                             
                             tracing::warn!("Server responded with {}. Increasing adaptive delay to {}ms and pausing new tasks for {}ms", status, new_val, cooldown_ms);
+
+                            let _ = app_handle_clone.emit(
+                                "crawl_rate_limited",
+                                RateLimitedData { delay_ms: new_val, cooldown_ms, status },
+                            );
                         } else if status >= 200 && status < 300 {
                             // Speed up (decrease delay) — 3% per success to stay conservative.
                             // Recovering faster risks more frequent 429s which trigger
@@ -495,6 +512,11 @@ pub async fn crawl_domain(
                         rate_limit_cooldown_clone.fetch_max(cooldown_until, Ordering::Relaxed);
                         
                         tracing::warn!("Block detected in response content. Increasing adaptive delay to {}ms and pausing tasks for {}ms", new_val, cooldown_ms);
+
+                        let _ = app_handle_clone.emit(
+                            "crawl_rate_limited",
+                            RateLimitedData { delay_ms: new_val, cooldown_ms, status: 0 },
+                        );
                     } else {
                         // Standard network error - slow down slightly
                         let new_val = (current + 500).min(max_delay);

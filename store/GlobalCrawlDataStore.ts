@@ -56,6 +56,10 @@ interface CrawlStore {
     total_links: number;
     indexable_pages: number;
     not_indexable_pages: number;
+    status_2xx?: number;
+    status_3xx?: number;
+    status_4xx?: number;
+    status_5xx?: number;
   } | null;
   deepCrawlTab: string;
   inlinks: string[];

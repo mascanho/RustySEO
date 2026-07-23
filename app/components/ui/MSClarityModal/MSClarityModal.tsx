@@ -34,7 +34,7 @@ const MSClarity = ({ onSubmit, close }) => {
     <section>
       <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-2 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
         <a
-          href=" https://clarity.microsoft.com/projects/view/klulsvnnbr/settings#apiTokens"
+          href="https://clarity.microsoft.com/projects"
           target="_blank"
           className="text-blue-500 hover:underline pl-1"
         >

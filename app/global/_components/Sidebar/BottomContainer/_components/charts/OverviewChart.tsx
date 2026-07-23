@@ -22,7 +22,10 @@ const DarkCtx = createContext(true);
 function computeStats(data: any[]) {
   const c4 = data.filter((p) => { const s = p?.status_code || 0; return s >= 400 && s < 500; }).length;
   const c5 = data.filter((p) => { const s = p?.status_code || 0; return s >= 500; }).length;
-  const ni = data.filter((p) => p?.indexability?.noindex === true).length;
+  // Indexability is a score, not a boolean: < 0.5 means non-indexable — same
+  // rule as the Indexing dropdown and the SQLite summary query. A missing
+  // score defaults to 0.5 (indexable) to match the extractor's default.
+  const ni = data.filter((p) => (p?.indexability?.indexability ?? 0.5) < 0.5).length;
   const totalLinks = data.reduce((sum, p) => sum + (p?.internal_links_count || 0) + (p?.external_links_count || 0), 0);
 
   return { c4, c5, ni, totalLinks };
@@ -140,6 +143,14 @@ function OverviewChart() {
 
   const crawled = finalCrawlStats?.pages ?? streamedCrawledPages ?? 0;
 
+  // Post-crawl, prefer the authoritative SQLite counts over the live-derived
+  // ones: crawlData is capped at maxUrlsStored (default 5000) rows, so on big
+  // crawls the live counters only see a fraction of the pages.
+  const display4xx = finalCrawlStats?.status_4xx ?? failed4xx;
+  const display5xx = finalCrawlStats?.status_5xx ?? failed5xx;
+  const displayNonIndexable = finalCrawlStats?.not_indexable_pages ?? nonIndexable;
+  const displayTotalLinks = finalCrawlStats?.total_links ?? totalLinks;
+
   // Recompute derived stats whenever crawlData changes (covers mount + live updates)
   useEffect(() => {
     const data = useGlobalCrawlStore.getState().crawlData || [];
@@ -220,10 +231,10 @@ function OverviewChart() {
 
         {/* 2×2 stat grid */}
         <div className="grid grid-cols-2 gap-4 mb-4 pb-6 shrink-0">
-          <StatTile label="TOTAL LINKS"    value={totalLinks} paletteKey="green"  />
-          <StatTile label="4XX"            value={failed4xx}       paletteKey="orange" />
-          <StatTile label="5XX"            value={failed5xx}       paletteKey="red"    />
-          <StatTile label="NON-INDEXABLE"  value={nonIndexable}    paletteKey="violet" />
+          <StatTile label="TOTAL LINKS"    value={displayTotalLinks}   paletteKey="green"  />
+          <StatTile label="4XX"            value={display4xx}          paletteKey="orange" />
+          <StatTile label="5XX"            value={display5xx}          paletteKey="red"    />
+          <StatTile label="NON-INDEXABLE"  value={displayNonIndexable} paletteKey="violet" />
         </div>
 
         {/* Footer */}
