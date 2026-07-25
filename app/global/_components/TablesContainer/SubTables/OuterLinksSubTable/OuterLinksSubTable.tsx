@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import LinkContextMenu from "../../components/LinkContextMenu";
 
 interface InlinksSubTableProps {
   data: {
@@ -270,8 +271,21 @@ const OuterLinksSubTable = forwardRef<{ exportCSV: () => Promise<void> }, Inlink
             return (
               <tr key={index} className={`${rowColorClass} text-xs border`}>
                 <td className="text-center border border-l ">{index + 1}</td>
-                <td className="pl-3 border border-l">{data?.[0].url}</td>
-                <td className="pl-3 border border-l">{item?.url}</td>
+                <td className="pl-3 border border-l">
+                  <LinkContextMenu url={data?.[0]?.url} role="source">
+                    {data?.[0].url}
+                  </LinkContextMenu>
+                </td>
+                <td className="pl-3 border border-l">
+                  <LinkContextMenu
+                    url={item?.url}
+                    role="target"
+                    anchorText={item?.anchor_text}
+                    statusCode={item?.status}
+                  >
+                    {item?.url}
+                  </LinkContextMenu>
+                </td>
                 <td className="pl-3 border border-l ">
                   {item.anchor_text || "N/A"}
                 </td>

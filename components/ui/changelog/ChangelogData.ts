@@ -7,6 +7,7 @@ export const changelogData = [
       "Global: SEO CHAT username selection **VERY Experimental**",
       "Global: Content Planner Calendar bug fix",
       "Deep Crawler: Schema detection export",
+      "Deep Crawler: Context menus on Inlinks and Outlinks tables",
     ],
   },
   {
