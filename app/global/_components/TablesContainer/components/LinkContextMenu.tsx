@@ -33,6 +33,11 @@ interface LinkContextMenuProps {
   role: "source" | "target"; // "source" = From column, "target" = To column
   anchorText?: string | null;
   statusCode?: number | string | null;
+  // Set when the parent row is highlighted with a blue background (e.g. the
+  // clicked/selected row in LinksTable). The default hover state tints the
+  // link brand-blue, which becomes unreadable against that background, so
+  // this forces white text instead of the usual hover color.
+  forceWhiteText?: boolean;
   children: React.ReactNode;
 }
 
@@ -56,6 +61,7 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
   role,
   anchorText,
   statusCode,
+  forceWhiteText = false,
   children,
 }) => {
   const actions = useGlobalCrawlStore((state) => state.actions);
@@ -119,9 +125,17 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
       transitionProps={{ transition: "pop", duration: 150 }}
     >
       <Menu.Target>
-        <span className="cursor-pointer hover:underline hover:text-brand-bright decoration-dotted">
+        {/* div (not span) so block-level children, like TruncatedCell in the
+            big Internal/External Links tables, nest without invalid HTML. */}
+        <div
+          className={
+            forceWhiteText
+              ? "cursor-pointer hover:underline decoration-dotted text-white"
+              : "cursor-pointer hover:underline hover:text-brand-bright decoration-dotted"
+          }
+        >
           {children}
-        </span>
+        </div>
       </Menu.Target>
 
       <Menu.Dropdown className="dark:bg-brand-dark dark:border-brand-dark p-1 z-[300]">

@@ -38,6 +38,13 @@ import { FiFilter } from "react-icons/fi";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
+import LinkContextMenu from "../components/LinkContextMenu";
+
+// Column indices in `headerTitles` (see tableLayout.ts) that carry a URL and
+// therefore get the SEO context menu: "Link" = the linked-to page (has this
+// link's anchor text/status), "Page" = the page the link was found on.
+const LINK_COLUMN_INDEX = 3;
+const PAGE_COLUMN_INDEX = 7;
 
 interface TableCrawlProps {
   rows: Array<any>;
@@ -330,7 +337,27 @@ const TableRow = memo(
                   : "bg-gray-50 dark:bg-brand-dark/30"
             }`}
           >
-            <TruncatedCell text={item.cell?.toString()} width="100%" />
+            {item.originalIndex === LINK_COLUMN_INDEX ? (
+              <LinkContextMenu
+                url={row?.link}
+                role="target"
+                anchorText={row?.anchor}
+                statusCode={row?.status}
+                forceWhiteText={isRowClicked}
+              >
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </LinkContextMenu>
+            ) : item.originalIndex === PAGE_COLUMN_INDEX ? (
+              <LinkContextMenu
+                url={row?.page}
+                role="source"
+                forceWhiteText={isRowClicked}
+              >
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </LinkContextMenu>
+            ) : (
+              <TruncatedCell text={item.cell?.toString()} width="100%" />
+            )}
           </div>
         ))}
       </div>

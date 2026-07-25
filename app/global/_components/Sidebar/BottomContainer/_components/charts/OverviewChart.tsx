@@ -151,10 +151,20 @@ function OverviewChart() {
   const displayNonIndexable = finalCrawlStats?.not_indexable_pages ?? nonIndexable;
   const displayTotalLinks = finalCrawlStats?.total_links ?? totalLinks;
 
-  // Recompute derived stats whenever crawlData changes (covers mount + live updates)
+  // Recompute derived stats whenever crawlData changes (covers mount + live updates).
+  // Must also reset to 0 when crawlData empties out (e.g. clearDomainCrawlData()
+  // on a new crawl start) — otherwise these tiles keep showing the previous
+  // crawl's final 4xx/5xx/non-indexable/links counts until enough new results
+  // land to overwrite them.
   useEffect(() => {
     const data = useGlobalCrawlStore.getState().crawlData || [];
-    if (!data.length) return;
+    if (!data.length) {
+      setFailed4xx(0);
+      setFailed5xx(0);
+      setNonIndexable(0);
+      setTotalLinks(0);
+      return;
+    }
     const { c4, c5, ni, totalLinks } = computeStats(data);
     setFailed4xx(c4);
     setFailed5xx(c5);
