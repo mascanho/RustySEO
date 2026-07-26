@@ -196,7 +196,7 @@ const HistoryDomainCrawls = () => {
             <Checkbox
               checked={allSelected ? true : someSelected ? "indeterminate" : false}
               onCheckedChange={toggleSelectAll}
-              className="h-3.5 w-3.5"
+              className="h-3.5 w-3.5 dark:border-gray-500 dark:bg-brand-darker dark:data-[state=checked]:bg-brand-bright dark:data-[state=checked]:border-brand-bright dark:data-[state=checked]:text-white dark:data-[state=indeterminate]:bg-brand-bright dark:data-[state=indeterminate]:border-brand-bright dark:data-[state=indeterminate]:text-white"
             />
             <span className="text-gray-500 dark:text-gray-400">
               {selectedIds.size > 0
@@ -239,7 +239,7 @@ const HistoryDomainCrawls = () => {
                     checked={entry.id !== undefined && selectedIds.has(entry.id)}
                     onCheckedChange={() => toggleSelectRow(entry.id)}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-3.5 w-3.5 flex-none"
+                    className="h-3.5 w-3.5 flex-none dark:border-gray-500 dark:bg-brand-darker dark:data-[state=checked]:bg-brand-bright dark:data-[state=checked]:border-brand-bright dark:data-[state=checked]:text-white"
                   />
 
                   <div
