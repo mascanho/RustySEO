@@ -8,6 +8,7 @@ export const changelogData = [
       "Global: Content Planner Calendar bug fix",
       "Deep Crawler: Schema detection export",
       "Deep Crawler: Context menus on Inlinks and Outlinks tables",
+      "Deep Crawler: Improved GSC Queries tab",
     ],
   },
   {
