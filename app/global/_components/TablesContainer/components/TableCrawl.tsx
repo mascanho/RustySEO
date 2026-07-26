@@ -34,6 +34,9 @@ import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
 import { exportSEODataCSV } from "./generateCSV";
 import ContextTableMenu from "./ContextTableMenu";
+import LinkContextMenu from "./LinkContextMenu";
+
+const URL_COLUMN_INDEX = 1;
 
 interface TableCrawlProps {
   rows: Array<{
@@ -329,9 +332,19 @@ const TableRow = memo(
                   : "bg-gray-50 dark:bg-brand-dark/30"
             }`}
           >
-            <ContextTableMenu data={item.cell}>
-              <TruncatedCell text={item.cell?.toString()} width="100%" />
-            </ContextTableMenu>
+            {item.originalIndex === URL_COLUMN_INDEX ? (
+              <LinkContextMenu
+                url={row?.url}
+                role="source"
+                forceWhiteText={isSelected}
+              >
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </LinkContextMenu>
+            ) : (
+              <ContextTableMenu data={item.cell}>
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </ContextTableMenu>
+            )}
           </div>
         ))}
       </div>

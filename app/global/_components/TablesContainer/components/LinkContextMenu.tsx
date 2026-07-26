@@ -22,9 +22,21 @@ import {
   IconDeviceMobile,
   IconLock,
 } from "@tabler/icons-react";
+import {
+  IoLogoGoogle,
+  IoLogoMicrosoft,
+  IoLogoGithub,
+} from "react-icons/io5";
+import { SiDuckduckgo, SiEcosia, SiBrave } from "react-icons/si";
+import { DiYahooSmall } from "react-icons/di";
+import { GoSearch as GoSearchIcon } from "react-icons/go";
+import { LiaKeySolid } from "react-icons/lia";
 import { toast } from "sonner";
 import { open as openExternalUrl } from "@tauri-apps/plugin-shell";
+import { invoke } from "@tauri-apps/api/core";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useRankinInfoStore from "@/store/RankingInfoStore";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 
 interface LinkContextMenuProps {
   url?: string | null;
@@ -65,6 +77,8 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
   const actions = useGlobalCrawlStore((state) => state.actions);
   const { selectURL } = actions.data;
   const { setDeepCrawlTab } = actions.ui;
+  const { addItem, setActiveSidebarTab } = useRankinInfoStore();
+  const { updateStatus } = useGSCStatusStore();
 
   const code = parseStatus(statusCode);
   const hostname = (() => {
@@ -107,12 +121,51 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
     toast.success("Page focused in crawl table");
   };
 
+  const fetchQueries = async () => {
+    if (!url) return;
+    try {
+      console.log("[See Queries] querying GSC match for URL:", url);
+      const result = await invoke("call_gsc_match_url", { url });
+      console.log("[See Queries] match result:", result);
+      addItem({ url, queries: result });
+      setActiveSidebarTab("queries");
+
+      try {
+        const gscCredentials = await invoke("read_credentials_file");
+        updateStatus(gscCredentials);
+      } catch {
+        // Silently handle GSC status refresh errors
+      }
+
+      if (Array.isArray(result) && result.length > 0) {
+        toast.success(`${result.length} quer${result.length === 1 ? "y" : "ies"} loaded`);
+      } else {
+        toast.info("No GSC queries found for this URL");
+      }
+    } catch (error) {
+      console.error("Error fetching queries:", error);
+      toast.error("Failed to fetch queries");
+    }
+  };
+
   if (!url) return <>{children}</>;
 
   const encoded = encodeURIComponent(url);
   const gscUrl = hostname
     ? `https://search.google.com/search-console/performance/search-analytics?resource_id=sc-domain%3A${hostname}&page=*${encoded}`
     : null;
+
+  const searchEngines = [
+    { name: "Google", icon: <IoLogoGoogle size={14} />, url: `https://www.google.com/search?q=${encoded}` },
+    { name: "Bing", icon: <IoLogoMicrosoft size={14} />, url: `https://www.bing.com/search?q=${encoded}` },
+    { name: "DuckDuckGo", icon: <SiDuckduckgo size={14} />, url: `https://duckduckgo.com/?q=${encoded}` },
+    { name: "Yahoo", icon: <DiYahooSmall size={14} />, url: `https://search.yahoo.com/search?p=${encoded}` },
+    { name: "Ecosia", icon: <SiEcosia size={14} />, url: `https://www.ecosia.org/search?q=${encoded}` },
+    { name: "Brave", icon: <SiBrave size={14} />, url: `https://search.brave.com/search?q=${encoded}` },
+    { name: "Ask", icon: <GoSearchIcon size={14} />, url: `https://www.ask.com/web?q=${encoded}` },
+    { name: "GitHub", icon: <IoLogoGithub size={14} />, url: `https://github.com/search?q=${encoded}` },
+    { name: "LinkedIn", icon: <IconBrandLinkedin size={14} />, url: `https://www.linkedin.com/search/results/all/?keywords=${encoded}` },
+  ];
 
   return (
     <Menu
@@ -201,6 +254,45 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
             Search Console Performance
           </Menu.Item>
         )}
+
+        <Menu.Item
+          leftSection={<LiaKeySolid size={14} className="text-amber-500" />}
+          onClick={fetchQueries}
+          className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs py-1.5"
+        >
+          See Queries
+        </Menu.Item>
+
+        <Divider className="my-1 dark:border-brand-darker" />
+
+        <Menu
+          shadow="xs"
+          width={190}
+          trigger="hover"
+          position="right-start"
+          portalProps={{ className: "z-[310]" }}
+        >
+          <Menu.Target>
+            <Menu.Item
+              leftSection={<GoSearchIcon size={14} className="text-blue-400" />}
+              className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs py-1.5"
+            >
+              Search on...
+            </Menu.Item>
+          </Menu.Target>
+          <Menu.Dropdown className="dark:bg-brand-dark dark:border-brand-dark dark:text-gray-200 p-1">
+            {searchEngines.map((engine) => (
+              <Menu.Item
+                key={engine.name}
+                leftSection={engine.icon}
+                onClick={() => openExternal(engine.url)}
+                className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
+              >
+                {engine.name}
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
 
         <Divider className="my-1 dark:border-brand-darker" />
 

@@ -346,7 +346,7 @@ export default function GSCConnectionWizard({
                 <Button
                   variant="ghost"
                   onClick={handleBack}
-                  className="flex-1 py-6 rounded-xl"
+                  className="flex-1 py-6 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-200 dark:hover:bg-gray-300 dark:text-black"
                 >
                   Back
                 </Button>
