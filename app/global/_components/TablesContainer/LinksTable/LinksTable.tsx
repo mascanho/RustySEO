@@ -342,7 +342,6 @@ const TableRow = memo(
                 url={row?.link}
                 role="target"
                 anchorText={row?.anchor}
-                statusCode={row?.status}
                 forceWhiteText={isRowClicked}
               >
                 <TruncatedCell text={item.cell?.toString()} width="100%" />

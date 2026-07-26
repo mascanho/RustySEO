@@ -23,6 +23,9 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
 import { useIsGeneratingExcel } from "@/store/GlobalCrawlDataStore";
+import LinkContextMenu from "../components/LinkContextMenu";
+
+const URL_COLUMN_INDEX = 2;
 
 interface TruncatedCellProps {
   text: string;
@@ -272,7 +275,21 @@ const TableRow = ({
                   : "bg-gray-50 dark:bg-brand-dark/30"
             }`}
           >
-            <TruncatedCell text={item.cell?.toString()} width="100%" />
+            {item.originalIndex === URL_COLUMN_INDEX ? (
+              <LinkContextMenu
+                url={row[0]}
+                role="target"
+                anchorText={row[1]}
+                forceWhiteText={
+                  clickedCell.row === index &&
+                  clickedCell.cell === item.originalIndex
+                }
+              >
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </LinkContextMenu>
+            ) : (
+              <TruncatedCell text={item.cell?.toString()} width="100%" />
+            )}
           </div>
         ))}
       </div>
