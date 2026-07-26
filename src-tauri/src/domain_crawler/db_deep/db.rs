@@ -243,6 +243,46 @@ pub fn delete_domain_results_history(domain: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn delete_domain_result_by_id(id: i32) -> Result<(), String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "DELETE FROM deep_crawls_history WHERE id = ?1",
+        params![id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    println!("Deleted history row id: {}", id);
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_domain_results_by_ids(ids: Vec<i32>) -> Result<(), String> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+
+    let placeholders: Vec<String> = ids.iter().map(|_| "?".to_string()).collect();
+    let sql = format!(
+        "DELETE FROM deep_crawls_history WHERE id IN ({})",
+        placeholders.join(",")
+    );
+
+    let params: Vec<&dyn rusqlite::ToSql> =
+        ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+
+    conn.execute(&sql, params.as_slice())
+        .map_err(|e| e.to_string())?;
+
+    println!("Deleted {} history row(s): {:?}", ids.len(), ids);
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<String, String> {
     println!("Data to insert: {:?}", &data);
 

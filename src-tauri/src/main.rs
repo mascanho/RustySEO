@@ -359,6 +359,8 @@ async fn main() {
             db::read_domain_results_history_table,
             db::create_domain_results_history,
             db::delete_domain_results_history,
+            db::delete_domain_result_by_id,
+            db::delete_domain_results_by_ids,
             db::store_custom_search,
             domain_crawler::issues_report::store_issues_report,
             domain_crawler::issues_report::get_issues_reports,
