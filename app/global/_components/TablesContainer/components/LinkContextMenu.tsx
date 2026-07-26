@@ -18,8 +18,6 @@ import {
   IconCircleCheck,
   IconCode,
   IconArchive,
-  IconArrowUpRight,
-  IconArrowDownLeft,
   IconQuote,
   IconDeviceMobile,
   IconLock,
@@ -140,39 +138,13 @@ const LinkContextMenu: React.FC<LinkContextMenuProps> = ({
 
       <Menu.Dropdown className="dark:bg-brand-dark dark:border-brand-dark p-1 z-[300]">
         {/* Contextual info header */}
-        <div className="px-2 pt-1 pb-1.5 mb-1 border-b dark:border-brand-darker">
-          <div className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500">
-            {role === "source" ? (
-              <IconArrowUpRight size={11} className="text-emerald-500" />
-            ) : (
-              <IconArrowDownLeft size={11} className="text-sky-500" />
-            )}
-            {role === "source" ? "Source Page" : "Target Page"}
+        {code !== null && (
+          <div className="px-2 pt-1 pb-1.5 mb-1 border-b dark:border-brand-darker">
+            <span className={`text-[10px] font-semibold ${statusColor(code)}`}>
+              {code}
+            </span>
           </div>
-          <div
-            className="text-[11px] font-mono truncate max-w-[210px] dark:text-gray-200"
-            title={url}
-          >
-            {url}
-          </div>
-          {(code !== null || anchorText) && (
-            <div className="flex items-center gap-2 mt-0.5">
-              {code !== null && (
-                <span className={`text-[10px] font-semibold ${statusColor(code)}`}>
-                  {code}
-                </span>
-              )}
-              {anchorText && (
-                <span
-                  className="text-[10px] italic text-gray-400 dark:text-gray-500 truncate max-w-[150px]"
-                  title={anchorText}
-                >
-                  "{anchorText}"
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        )}
 
         <Menu.Item
           leftSection={<IconExternalLink size={14} className="text-blue-500" />}
