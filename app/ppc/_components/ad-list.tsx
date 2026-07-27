@@ -92,11 +92,11 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full min-h-0 gap-0">
       <Tabs
         value={adTypeFilter}
         onValueChange={(v) => setAdTypeFilter(v as any)}
-        className="w-full"
+        className="w-full flex-shrink-0"
       >
         <TabsList>
           <TabsTrigger value="all">All Ads ({processedAds.length})</TabsTrigger>
@@ -116,7 +116,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full  overflow-auto pr-4 h-[calc(100vh-20rem)]">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full content-start overflow-auto pr-4 flex-1 min-h-0 mt-2">
           {filteredAds.map((ad) => (
             <div
               key={ad.id}
