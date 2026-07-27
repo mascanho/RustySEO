@@ -3,7 +3,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,10 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Copy, Edit, Trash } from "lucide-react";
+import { Copy, Edit, Trash, Search, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Ad, AdType } from "@/types/ad";
 import { Badge } from "@/components/ui/badge";
+import { AdStrengthBadge } from "./ad-strength";
+import { computeAdStrength } from "./utils/ad-strength";
+
+type SortKey = "recent" | "name" | "strength";
 
 interface AdListProps {
   ads: Ad[];
@@ -28,6 +32,8 @@ interface AdListProps {
 export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
   const [adTypeFilter, setAdTypeFilter] = useState<AdType | "all">("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("recent");
 
   const processedAds = ads.map((ad) => ({
     ...ad,
@@ -48,6 +54,60 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
         : [],
   }));
 
+  // Precompute ad strength once per ad (used for badges and sorting).
+  const strengthById = useMemo(() => {
+    const map: Record<string, ReturnType<typeof computeAdStrength>> = {};
+    for (const ad of processedAds) map[ad.id] = computeAdStrength(ad);
+    return map;
+  }, [processedAds]);
+
+  // Filter by type, then by free-text search, then sort.
+  const filteredAds = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = processedAds.filter(
+      (ad) => adTypeFilter === "all" || ad.type === adTypeFilter,
+    );
+
+    if (q) {
+      list = list.filter((ad) => {
+        const haystack = [
+          ad.name,
+          ...(ad.headlines || []),
+          ...(ad.descriptions || []),
+          ...(ad.keywords || []),
+          ad.finalUrl,
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
+    const sorted = [...list];
+    if (sortBy === "name") {
+      sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    } else if (sortBy === "strength") {
+      sorted.sort(
+        (a, b) =>
+          (strengthById[b.id]?.score || 0) - (strengthById[a.id]?.score || 0),
+      );
+    } else {
+      // recent — ids are timestamp-based, newest first
+      sorted.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0));
+    }
+    return sorted;
+  }, [processedAds, adTypeFilter, query, sortBy, strengthById]);
+
+  // Count ads by type
+  const searchAdsCount = processedAds.filter(
+    (ad) => ad.type === "search",
+  ).length;
+  const pmaxAdsCount = processedAds.filter((ad) => ad.type === "pmax").length;
+  const displayAdsCount = processedAds.filter(
+    (ad) => ad.type === "display",
+  ).length;
+
+  // Safe to early-return now that all hooks have run.
   if (processedAds.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -60,21 +120,6 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
       </div>
     );
   }
-
-  // Filter ads by type
-  const filteredAds =
-    adTypeFilter === "all"
-      ? processedAds
-      : processedAds.filter((ad) => ad.type === adTypeFilter);
-
-  // Count ads by type
-  const searchAdsCount = processedAds.filter(
-    (ad) => ad.type === "search",
-  ).length;
-  const pmaxAdsCount = processedAds.filter((ad) => ad.type === "pmax").length;
-  const displayAdsCount = processedAds.filter(
-    (ad) => ad.type === "display",
-  ).length;
 
   const handleDeleteClick = (adId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,26 +138,70 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
 
   return (
     <div className="flex flex-col h-full min-h-0 gap-0">
-      <Tabs
-        value={adTypeFilter}
-        onValueChange={(v) => setAdTypeFilter(v as any)}
-        className="w-full flex-shrink-0"
-      >
-        <TabsList>
-          <TabsTrigger value="all">All Ads ({processedAds.length})</TabsTrigger>
-          <TabsTrigger value="search">Search ({searchAdsCount})</TabsTrigger>
-          <TabsTrigger value="pmax">
-            Performance Max ({pmaxAdsCount})
-          </TabsTrigger>
-          <TabsTrigger value="display">Display ({displayAdsCount})</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 flex-shrink-0">
+        <Tabs
+          value={adTypeFilter}
+          onValueChange={(v) => setAdTypeFilter(v as any)}
+          className="flex-shrink-0"
+        >
+          <TabsList>
+            <TabsTrigger value="all">
+              All Ads ({processedAds.length})
+            </TabsTrigger>
+            <TabsTrigger value="search">Search ({searchAdsCount})</TabsTrigger>
+            <TabsTrigger value="pmax">
+              Performance Max ({pmaxAdsCount})
+            </TabsTrigger>
+            <TabsTrigger value="display">
+              Display ({displayAdsCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Search + sort */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search ads, keywords…"
+              className="w-full sm:w-56 h-8 pl-8 pr-7 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="h-8 px-2 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            title="Sort ads"
+          >
+            <option value="recent">Most recent</option>
+            <option value="strength">Ad strength</option>
+            <option value="name">Name (A–Z)</option>
+          </select>
+        </div>
+      </div>
 
       {filteredAds.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10">
-          <h3 className="text-base font-bold">No {adTypeFilter} ads found</h3>
+          <h3 className="text-base font-bold">
+            {query.trim()
+              ? `No ads match "${query.trim()}"`
+              : `No ${adTypeFilter} ads found`}
+          </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Create a new ad or switch to a different category
+            {query.trim()
+              ? "Try a different search term or clear the search."
+              : "Create a new ad or switch to a different category"}
           </p>
         </div>
       ) : (
@@ -142,9 +231,12 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                   <h3 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate pr-14">
                     {ad.name}
                   </h3>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    Updated {new Date(parseInt(ad.id)).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <AdStrengthBadge result={strengthById[ad.id]} />
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      {new Date(parseInt(ad.id)).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-3">

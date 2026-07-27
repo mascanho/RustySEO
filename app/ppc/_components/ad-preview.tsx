@@ -210,7 +210,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   return (
     <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-700">
       <Card className="w-full h-full bg-white/70 dark:bg-brand-darker/70 backdrop-blur-xl border-none rounded-2xl shadow-xl overflow-hidden flex flex-col border border-white/20 dark:border-white/5 max-h-full">
-        <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between p-3 border-b border-gray-200/50 dark:border-white/5 bg-gray-50/50 dark:bg-brand-dark/20">
+        <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between px-3 py-4 border-b border-gray-200/50 dark:border-white/5 bg-gray-50/50 dark:bg-brand-dark/20">
           <div className="flex gap-2.5 items-center">
             <div className="p-1.5 bg-blue-600 rounded-lg shadow-sm">
               <Monitor className="h-4 w-4 text-white" />

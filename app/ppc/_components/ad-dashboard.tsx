@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { AdForm } from "./ad-form";
 import { AdList } from "./ad-list";
+import { AdsOverview } from "./ads-overview";
 import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
@@ -345,11 +346,10 @@ export function AdDashboard() {
       case "dashboard":
       default:
         return (
-          <AdList
+          <AdsOverview
             ads={ads}
             onSelect={handleSelectAd}
-            onClone={handleCloneAd}
-            onDelete={handleDeleteAd}
+            onCreate={handleAddAd}
           />
         );
     }
@@ -385,7 +385,7 @@ export function AdDashboard() {
       //   return "Get help with using the platform";
       case "dashboard":
       default:
-        return "Overview of your Google search ads";
+        return "Portfolio analytics, ad-strength scoring and optimisation insights";
     }
   };
 
