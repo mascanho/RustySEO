@@ -25,109 +25,17 @@ import { readTextFile } from "@tauri-apps/plugin-fs";
 import { open } from "@tauri-apps/plugin-dialog";
 import { writeTextFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { save } from "@tauri-apps/plugin-dialog";
+import { adsToJson, jsonToAds, adsToCsv, csvToAds } from "./utils/file-utils";
 
-// Utility functions
-const adsToJson = (ads: Ad[]): string => JSON.stringify(ads, null, 2);
-
-const adsToCsv = (ads: Ad[]): string => {
-  if (ads.length === 0) return "";
-
-  const headers = Object.keys(ads[0]).join(",");
-  const rows = ads.map((ad) => {
-    return Object.entries(ad)
-      .map(([key, value]) => {
-        let csvValue;
-        if (key === "headlines" || key === "descriptions" || key === "keywords") {
-          csvValue = Array.isArray(value) ? value.join("\n") : value;
-        } else if (key === "sitelinks") {
-          csvValue = Array.isArray(value)
-            ? value
-                .map((sitelink) => {
-                  const parts = [
-                    `Title: ${sitelink.title || ""}`,
-                    `URL: ${sitelink.url || ""}`,
-                  ];
-                  if (sitelink.description1) parts.push(`Desc1: ${sitelink.description1}`);
-                  if (sitelink.description2) parts.push(`Desc2: ${sitelink.description2}`);
-                  return parts.join(" | ");
-                })
-                .join("\n")
-            : "";
-        } else {
-          csvValue = value;
-        }
-        return `"${String(csvValue).replace(/"/g, '""')}"`;
-      })
-      .join(",");
-  });
-
-  return [headers, ...rows].join("\n");
+// Parse a file's contents into ads based on its extension.
+const parseAds = (content: string, filename: string): Ad[] => {
+  const name = filename.toLowerCase();
+  if (name.endsWith(".json")) return jsonToAds(content);
+  if (name.endsWith(".csv")) return csvToAds(content);
+  throw new Error("Unsupported file format. Please use a JSON or CSV file.");
 };
 
-const csvToAds = (csv: string): Ad[] => {
-  const records: string[] = [];
-  let currentRecord = "";
-  let inQuote = false;
-
-  const lines = csv.split('\n');
-
-  for (const line of lines) {
-    currentRecord += line;
-    const quoteCount = (line.match(/"/g) || []).length;
-
-    if (quoteCount % 2 !== 0) {
-      inQuote = !inQuote;
-    }
-
-    if (!inQuote) {
-      records.push(currentRecord);
-      currentRecord = "";
-    } else {
-      currentRecord += '\n';
-    }
-  }
-
-  if (currentRecord.trim().length > 0) {
-    records.push(currentRecord.trim());
-  }
-
-  if (records.length < 2) return [];
-
-  const headers = records[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((h) => h.trim().replace(/^"|"$/g, ""));
-
-  const ads: Ad[] = [];
-  for (let i = 1; i < records.length; i++) {
-    const recordLine = records[i];
-    const values = recordLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-
-    const ad = {} as Ad;
-    headers.forEach((header, idx) => {
-      let value = values[idx] ? values[idx].replace(/^"|"$/g, "") : "";
-      value = value.replace(/""/g, '"');
-
-      if ((header === "headlines" || header === "descriptions" || header === "keywords") && value) {
-        ad[header as keyof Ad] = value.split("\n");
-      } else if (header === "sitelinks" && value) {
-        ad[header as keyof Ad] = value.split("\n").map((sitelinkString) => {
-          const sitelink: Sitelink = { title: "", url: "" };
-          sitelinkString.split(" | ").forEach((part) => {
-            if (part.startsWith("Title: ")) sitelink.title = part.replace("Title: ", "");
-            else if (part.startsWith("URL: ")) sitelink.url = part.replace("URL: ", "");
-            else if (part.startsWith("Desc1: ")) sitelink.description1 = part.replace("Desc1: ", "");
-            else if (part.startsWith("Desc2: ")) sitelink.description2 = part.replace("Desc2: ", "");
-          });
-          return sitelink;
-        });
-      } else {
-        ad[header as keyof Ad] = value;
-      }
-    });
-    ads.push(ad);
-  }
-  return ads;
-};
-
-const downloadFile = async (content: string, filename: string) => {
+const saveToDisk = async (content: string, filename: string) => {
   try {
     // Use Tauri API if available
     if (window.__TAURI__) {
@@ -182,22 +90,41 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
     console.log("Tauri environment:", window.__TAURI__ !== undefined);
   }, []);
 
-  const handleExport = (format: "json" | "csv") => {
+  const handleExport = async (format: "json" | "csv") => {
+    if (!ads || ads.length === 0) {
+      toast({
+        title: "Nothing to export",
+        description: "Create at least one ad before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filename = `ads-export-${timestamp}.${format}`;
 
-      if (format === "json") {
-        const content = adsToJson(ads);
-        downloadFile(content, filename, "application/json");
-      } else {
-        const content = adsToCsv(ads);
-        downloadFile(content, filename, "text/csv");
+      const content = format === "json" ? adsToJson(ads) : adsToCsv(ads);
+
+      // Wait for the file to actually be written before notifying the user.
+      const savedPath = await saveToDisk(content, filename);
+
+      // User dismissed the native save dialog — nothing was written.
+      if (!savedPath) {
+        toast({
+          title: "Export cancelled",
+          description: "No file was saved.",
+        });
+        return;
       }
 
       toast({
         title: "Export successful",
-        description: `Exported ${ads.length} ads as ${format.toUpperCase()}`,
+        description: `Exported ${ads.length} ad${ads.length === 1 ? "" : "s"} as ${format.toUpperCase()}${
+          typeof savedPath === "string" && savedPath.includes("/")
+            ? ` to ${savedPath}`
+            : ""
+        }`,
         variant: "success",
       });
     } catch (error) {
@@ -211,94 +138,53 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
   };
 
   const handleFileChange = async () => {
-    console.log("File input changed");
-
     try {
-      // Use Tauri API if available
+      let content: string;
+      let filename: string;
+
       if (window.__TAURI__) {
-        console.log("Using Tauri filesystem API");
+        // Native file picker.
         const selected = await open({
           multiple: false,
-          filters: [
-            {
-              name: "Data Files",
-              extensions: ["json", "csv"],
-            },
-          ],
+          filters: [{ name: "Ads Data", extensions: ["json", "csv"] }],
         });
 
-        if (!selected) {
-          throw new Error("No file selected");
-        }
+        // User dismissed the picker — leave quietly, no error.
+        if (!selected) return;
 
-        const content = await readTextFile(selected as string);
-        console.log("File content length:", content.length);
-
-        let importedAds: Ad[];
-        if ((selected as string).endsWith(".json")) {
-          importedAds = JSON.parse(content);
-        } else if ((selected as string).endsWith(".csv")) {
-          importedAds = csvToAds(content);
-        } else {
-          throw new Error("Unsupported file format. Please use JSON or CSV.");
-        }
-
-        console.log("Imported ads count:", importedAds.length);
-        onImport(importedAds);
-        setIsImportDialogOpen(false);
-
-        toast({
-          title: "Import successful",
-          description: `Imported ${importedAds.length} ads`,
-          variant: "success",
-        });
+        filename = selected as string;
+        content = await readTextFile(filename);
       } else {
-        // Fallback for web environment
-        if (!fileInputRef.current?.files?.[0]) {
-          console.log("No file selected");
-          return;
-        }
+        // Web fallback.
+        const file = fileInputRef.current?.files?.[0];
+        if (!file) return;
 
-        const file = fileInputRef.current.files[0];
-        console.log("Selected file:", file.name);
-
-        const content = await new Promise<string>((resolve, reject) => {
+        filename = file.name;
+        content = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.onerror = () => reject(new Error("Failed to read file"));
           reader.readAsText(file);
         });
-
-        console.log("File content length:", content.length);
-
-        let importedAds: Ad[];
-        if (file.name.endsWith(".json")) {
-          importedAds = JSON.parse(content);
-        } else if (file.name.endsWith(".csv")) {
-          importedAds = csvToAds(content);
-        } else {
-          throw new Error("Unsupported file format. Please use JSON or CSV.");
-        }
-
-        console.log("Imported ads count:", importedAds.length);
-        onImport(importedAds);
-        setIsImportDialogOpen(false);
-
-        toast({
-          title: "Import successful",
-          description: `Imported ${importedAds.length} ads`,
-          variant: "success",
-        });
       }
+
+      // Parse, validate and normalise. The parent reports the final result
+      // (added vs. skipped) so the message reflects what actually landed.
+      const importedAds = parseAds(content, filename);
+      onImport(importedAds);
+      setIsImportDialogOpen(false);
     } catch (error) {
       console.error("Import error:", error);
       toast({
         title: "Import failed",
-        description: error instanceof Error ? error.message : "Unknown error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "The file could not be read or parsed.",
         variant: "destructive",
       });
     } finally {
-      // Reset input
+      // Reset the input so re-selecting the same file fires onChange again.
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }

@@ -774,9 +774,9 @@ export default function DashboardSEO() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-brand-darker text-slate-800 dark:text-slate-200 overflow-y-auto px-6 py-4 pb-20 select-none">
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-brand-darker text-slate-800 dark:text-slate-200 overflow-y-auto px-6 pt-2 pb-20 select-none">
       {/* Top Filter Bar */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
         <div>
           <h1 className="text-base font-bold dark:text-white flex items-center gap-2">
             <BarChart4 className="w-5 h-5 text-sky-500" />
