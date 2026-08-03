@@ -506,7 +506,7 @@ const Home: React.FC<HomeProps> = () => {
   return (
     <section className="h-full overflow-y-clip flex">
       <Loader />
-      <div className="w-full">
+      <div className="w-full min-w-0">
         <Modal
           opened={openedModal}
           overlayProps={{ backgroundOpacity: 0.5 }}

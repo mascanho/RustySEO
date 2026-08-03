@@ -30,12 +30,16 @@ interface GA4StatusState {
   startDate: Date | null;
   endDate: Date | null;
   selectedDimension: string;
+  rowLimit: number;
+  compareEnabled: boolean;
 
   // Data Actions
   setAnalyticsData: (data: any) => void;
   setStartDate: (date: Date | null) => void;
   setEndDate: (date: Date | null) => void;
   setSelectedDimension: (dimension: string) => void;
+  setRowLimit: (limit: number) => void;
+  setCompareEnabled: (enabled: boolean) => void;
 
   // Getters
   getIsConfigured: () => boolean;
@@ -53,11 +57,15 @@ const useGA4StatusStore = create<GA4StatusState>((set, get) => ({
   startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   endDate: new Date(),
   selectedDimension: "general",
+  rowLimit: 10000,
+  compareEnabled: false,
 
   setAnalyticsData: (analyticsData) => set({ analyticsData }),
   setStartDate: (startDate) => set({ startDate }),
   setEndDate: (endDate) => set({ endDate }),
   setSelectedDimension: (selectedDimension) => set({ selectedDimension }),
+  setRowLimit: (rowLimit) => set({ rowLimit }),
+  setCompareEnabled: (compareEnabled) => set({ compareEnabled }),
 
   setCredentials: (credentials) =>
     set((state) => ({

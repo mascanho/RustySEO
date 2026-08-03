@@ -382,7 +382,7 @@ export default function Page() {
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
-      <section className="w-full border-none h-full dark:bg-brand-dark shadow-none rounded-md">
+      <section className="w-full min-w-0 border-none h-full dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
           <input
             type="text"

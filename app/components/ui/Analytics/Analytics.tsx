@@ -6,13 +6,7 @@ import AnalyticsTable from "./AnalyticsTable";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@mantine/core";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  BarChart3,
-  ShieldCheck,
-  ArrowRight,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+import { BarChart3, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
 import GA4ConnectionWizard from "../GA4container/GA4ConnectionWizard";
 import useGA4StatusStore from "@/store/GA4StatusStore";
 
@@ -23,17 +17,6 @@ const Analytics = () => {
   useEffect(() => {
     refresh();
   }, []);
-
-  const handleRefreshGA4 = async () => {
-    console.log("Refreshing GA4 data...");
-    try {
-      // This would normally trigger a fetch from the backend
-      // For now we just refresh the status
-      await refresh();
-    } catch (error) {
-      console.error("Error refreshing GA4:", error);
-    }
-  };
 
   if (isLoading && !isConfigured) {
     return (
