@@ -47,6 +47,7 @@ export interface AppSettings {
 
     // Crawl Analysis
     link_score_enabled: boolean;
+    duplicate_content_check_enabled: boolean;
 
     // Extraction & Content
     extract_ngrams: boolean;

@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import LinkContextMenu from "../../components/LinkContextMenu";
 
 interface InlinksSubTableProps {
   data: any[]; // [TargetPageObject, SourcePagesArray]
@@ -165,9 +166,9 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
     return obj?.anchor_text || "";
   }
 
-  function getStatusCode(obj) {
-    const raw = obj?.status;
-    if (raw === null || raw === undefined) return <span className="text-gray-400">-</span>;
+  // Shared parsing so the context menu's status badge matches the cell exactly.
+  function parseStatusCode(raw) {
+    if (raw === null || raw === undefined) return null;
 
     const str = String(raw).trim();
     let code: number | null = null;
@@ -186,6 +187,12 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
       const n = parseInt(str, 10);
       code = isNaN(n) ? null : n;
     }
+
+    return code;
+  }
+
+  function getStatusCode(obj) {
+    const code = parseStatusCode(obj?.status);
 
     if (code === null) return <span className="text-gray-400">-</span>;
 
@@ -271,13 +278,26 @@ const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, In
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
                     title={item?.url}
                   >
-                    {item?.url}
+                    <LinkContextMenu
+                      url={item?.url}
+                      role="source"
+                      anchorText={getAnchorText(item)}
+                      statusCode={parseStatusCode(item?.status)}
+                    >
+                      {item?.url}
+                    </LinkContextMenu>
                   </td>
                   <td
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
                     title={data?.[0].url}
                   >
-                    {data?.[0].url}
+                    <LinkContextMenu
+                      url={data?.[0].url}
+                      role="target"
+                      anchorText={getAnchorText(item)}
+                    >
+                      {data?.[0].url}
+                    </LinkContextMenu>
                   </td>
                   <td
                     className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"

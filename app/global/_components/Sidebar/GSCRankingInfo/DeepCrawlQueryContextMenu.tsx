@@ -1,15 +1,6 @@
 // @ts-nocheck
 
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
-  ContextMenuSeparator,
-} from "@/components/ui/context-menu";
+import { Menu, Divider } from "@mantine/core";
 import { useCallback, useEffect } from "react";
 import { FaSearchengin } from "react-icons/fa";
 import { toast } from "sonner";
@@ -21,6 +12,7 @@ import {
   FiClipboard,
   FiExternalLink,
   FiBarChart,
+  FiChevronRight,
 } from "react-icons/fi";
 import { IoKey } from "react-icons/io5";
 import { invoke } from "@tauri-apps/api/core";
@@ -369,30 +361,31 @@ const DeepCrawlQueryContextMenu: React.FC<DeepCrawlQueryContextMenuProps> = ({
   );
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger
-        onContextMenu={() =>
-          console.log("🖱️ Context menu triggered for query:", query)
-        }
-      >
-        {children}
-      </ContextMenuTrigger>
-      <ContextMenuContent className="text-xs rounded-sm p-0 m-0 dark:bg-brand-darker dark:border-brand-dark w-44 z-[9999]">
-        <ContextMenuItem
-          onClick={() => {
-            console.log("🔥 Copy menu item clicked!");
-            handleCopy(query);
-          }}
-          className="text-xs hover:bg-brand-bright hover:text-white"
+    <Menu
+      shadow="md"
+      width={200}
+      position="bottom-start"
+      withArrow
+      transitionProps={{ transition: "pop", duration: 150 }}
+    >
+      <Menu.Target>
+        <div className="cursor-pointer">{children}</div>
+      </Menu.Target>
+
+      <Menu.Dropdown className="text-xs dark:bg-brand-darker dark:border-brand-dark p-1 z-[9999]">
+        <Menu.Item
+          leftSection={<FiClipboard size={14} />}
+          onClick={() => handleCopy(query)}
+          className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs py-1.5"
         >
-          <FiClipboard className="mr-2" /> Copy Query
-        </ContextMenuItem>
+          Copy Query
+        </Menu.Item>
 
-        <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />
+        <Divider className="my-1 dark:border-brand-dark" />
 
-        <ContextMenuItem
-          onClick={() => {
-            console.log("🔥 Add to Tracking clicked!");
+        <Menu.Item
+          leftSection={<IoKey size={14} />}
+          onClick={() =>
             handleTrackKeyword(
               url,
               query,
@@ -400,92 +393,129 @@ const DeepCrawlQueryContextMenu: React.FC<DeepCrawlQueryContextMenuProps> = ({
               impressions,
               clicks,
               credentials,
-            );
-          }}
-          className="text-xs hover:bg-brand-bright hover:text-white"
+            )
+          }
+          className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs py-1.5"
         >
-          <IoKey className="mr-2" />
           Add to Tracking
-        </ContextMenuItem>
+        </Menu.Item>
 
-        <ContextMenuItem
+        <Menu.Item
+          leftSection={<FiBarChart size={14} />}
           onClick={() => openSearchConsoleUrl(query)}
-          className="text-xs hover:bg-brand-bright hover:text-white"
+          className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs py-1.5"
         >
-          <FiBarChart className="mr-2" />
           Open in Search Console
-        </ContextMenuItem>
+        </Menu.Item>
 
-        <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />
+        <Divider className="my-1 dark:border-brand-dark" />
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger className="text-xs hover:bg-brand-bright hover:text-white">
-            <FiCheckSquare className="mr-2" /> SERP Results
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 text-xs dark:bg-brand-darker dark:border-brand-dark">
-            <ContextMenuItem
+        <Menu
+          shadow="xs"
+          width={190}
+          trigger="hover"
+          position="right-start"
+          portalProps={{ className: "z-[9999]" }}
+        >
+          <Menu.Target>
+            <Menu.Item
+              leftSection={<FiCheckSquare size={14} />}
+              rightSection={<FiChevronRight size={12} className="opacity-60" />}
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs py-1.5"
+            >
+              SERP Results
+            </Menu.Item>
+          </Menu.Target>
+          <Menu.Dropdown className="dark:bg-brand-darker dark:border-brand-dark dark:text-gray-200 p-1">
+            <Menu.Item
+              leftSection={<FaSearchengin size={14} />}
               onClick={() =>
                 openBrowserWindow(`https://www.google.com/search?q=${query}`)
               }
-              className="text-xs hover:bg-brand-bright hover:text-white"
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
             >
-              <FaSearchengin className="mr-2" /> Google
-            </ContextMenuItem>
-            <ContextMenuItem
+              Google
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FaSearchengin size={14} />}
               onClick={() =>
                 openBrowserWindow(`https://www.bing.com/search?q=${query}`)
               }
-              className="text-xs hover:bg-brand-bright hover:text-white"
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
             >
-              <FaSearchengin className="mr-2" /> Bing
-            </ContextMenuItem>
-            <ContextMenuItem
+              Bing
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FaSearchengin size={14} />}
               onClick={() =>
                 openBrowserWindow(`https://search.yahoo.com/search?p=${query}`)
               }
-              className="text-xs hover:bg-brand-bright hover:text-white"
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
             >
-              <FaSearchengin className="mr-2" /> Yahoo
-            </ContextMenuItem>
-            <ContextMenuItem
+              Yahoo
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FaSearchengin size={14} />}
               onClick={() =>
                 openBrowserWindow(
                   `https://www.yandex.com/search/?text=${query}`,
                 )
               }
-              className="text-xs hover:bg-brand-bright hover:text-white"
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
             >
-              <FaSearchengin className="mr-2" /> Yandex
-            </ContextMenuItem>
-            <ContextMenuItem
+              Yandex
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FaSearchengin size={14} />}
               onClick={() =>
                 openBrowserWindow(`https://duckduckgo.com/?q=${query}&ia=web`)
               }
-              className="text-xs hover:bg-brand-bright hover:text-white"
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
             >
-              <FaSearchengin className="mr-2" /> DuckDuckGo
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+              DuckDuckGo
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger className="text-xs hover:bg-brand-bright hover:text-white">
-            <FiLink className="mr-2" /> Backlinks
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 text-xs dark:bg-brand-darker dark:border-brand-dark">
-            <ContextMenuItem className="text-xs hover:bg-brand-bright hover:text-white">
-              <FiExternalLink className="mr-2" /> Ahrefs
-            </ContextMenuItem>
-            <ContextMenuItem className="text-xs hover:bg-brand-bright hover:text-white">
-              <FiPlusSquare className="mr-2" /> Moz
-            </ContextMenuItem>
-            <ContextMenuItem className="text-xs hover:bg-brand-bright hover:text-white">
-              <FiGlobe className="mr-2" /> Majestic
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-      </ContextMenuContent>
-    </ContextMenu>
+        <Menu
+          shadow="xs"
+          width={190}
+          trigger="hover"
+          position="right-start"
+          portalProps={{ className: "z-[9999]" }}
+        >
+          <Menu.Target>
+            <Menu.Item
+              leftSection={<FiLink size={14} />}
+              rightSection={<FiChevronRight size={12} className="opacity-60" />}
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs py-1.5"
+            >
+              Backlinks
+            </Menu.Item>
+          </Menu.Target>
+          <Menu.Dropdown className="dark:bg-brand-darker dark:border-brand-dark dark:text-gray-200 p-1">
+            <Menu.Item
+              leftSection={<FiExternalLink size={14} />}
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
+            >
+              Ahrefs
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FiPlusSquare size={14} />}
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
+            >
+              Moz
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<FiGlobe size={14} />}
+              className="dark:text-gray-200 dark:hover:bg-brand-dark hover:bg-brand-bright hover:text-white text-xs"
+            >
+              Majestic
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </Menu.Dropdown>
+    </Menu>
   );
 };
 

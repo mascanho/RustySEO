@@ -1,168 +1,310 @@
 // @ts-nocheck
 import type { Ad, Sitelink } from "@/types/ad";
 
-// Convert ads to JSON string
-export function adsToJson(ads: Ad[]): string {
-  return JSON.stringify(ads, null, 2);
-}
+// ---------------------------------------------------------------------------
+// Ads import / export utilities
+// ---------------------------------------------------------------------------
+// A single, schema-complete source of truth for turning the full `Ad` model to
+// and from JSON / CSV. Both formats round-trip losslessly and every importer
+// normalises unknown / legacy input into a valid Ad so the editor never breaks.
 
-// Parse JSON string to ads
-export function jsonToAds(jsonString: string): Ad[] {
-  try {
-    const parsed = JSON.parse(jsonString);
-    if (!Array.isArray(parsed)) {
-      throw new Error("Invalid JSON format: expected an array");
-    }
+// Fixed column order keeps CSV exports stable and re-importable.
+const CSV_COLUMNS = [
+  "id",
+  "name",
+  "status",
+  "type",
+  "headlines",
+  "descriptions",
+  "finalUrl",
+  "displayPath",
+  "businessName",
+  "keywords",
+  "locations",
+  "languages",
+  "sitelinks",
+  "images",
+  "logos",
+  "extensions",
+  "budget",
+  "currency",
+  "biddingStrategy",
+  "targetCPA",
+  "targetROAS",
+  "startDate",
+  "endDate",
+] as const;
 
-    // Validate each ad
-    return parsed.map((item) => {
-      if (
-        !item.id ||
-        !item.name ||
-        !Array.isArray(item.headlines) ||
-        !Array.isArray(item.descriptions)
-      ) {
-        throw new Error("Invalid ad format in JSON");
-      }
-      return {
-        id: item.id,
-        name: item.name,
-        type: item.type || "search", // Default to search if type is missing
-        headlines: Array.isArray(item.headlines) ? item.headlines : [],
-        descriptions: Array.isArray(item.descriptions) ? item.descriptions : [],
-        keywords: Array.isArray(item.keywords) ? item.keywords : [],
-        finalUrl: item.finalUrl || "",
-        displayPath: item.displayPath || "",
-        sitelinks: Array.isArray(item.sitelinks) ? item.sitelinks : [],
-      };
-    });
-  } catch (error) {
-    throw new Error(`Failed to parse JSON: ${(error as Error).message}`);
-  }
-}
+// Plain string-array columns are stored newline-separated inside the cell so
+// they stay editable in a spreadsheet.
+const STRING_ARRAY_FIELDS = [
+  "headlines",
+  "descriptions",
+  "keywords",
+  "locations",
+  "languages",
+];
+// Object-array columns are JSON-encoded so they round-trip losslessly.
+const JSON_FIELDS = ["sitelinks", "images", "logos", "extensions"];
+const NUMBER_FIELDS = ["budget", "targetCPA", "targetROAS"];
 
-// Convert ads to CSV string
-export function adsToCsv(ads: Ad[]): string {
-  // Create CSV header
-  const header =
-    "id,name,type,headlines,descriptions,keywords,finalUrl,displayPath,sitelinks";
+let idCounter = 0;
+const genId = () =>
+  `ad-${Date.now().toString(36)}-${(idCounter++).toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 7)}`;
 
-  // Create CSV rows
-  const rows = ads.map((ad) => {
-    const headlines = `"${ad.headlines.join("|")}"`; // Join with pipe and wrap in quotes
-    const descriptions = `"${ad.descriptions.join("|")}"`;
-    const keywords = `"${ad.keywords.join("|")}"`;
+// -------------------------- value coercion helpers -------------------------
 
-    // Format sitelinks as JSON string inside CSV
-    const sitelinks =
-      ad.sitelinks && ad.sitelinks.length > 0
-        ? `"${JSON.stringify(ad.sitelinks).replace(/"/g, '""')}"`
-        : '""';
+const asStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value))
+    return value.map((v) => String(v)).filter((v) => v.length > 0);
+  if (typeof value === "string" && value.trim())
+    return value
+      .split(/\r?\n/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+  return [];
+};
 
-    return [
-      ad.id,
-      `"${ad.name.replace(/"/g, '""')}"`, // Escape quotes in CSV
-      ad.type || "search",
-      headlines,
-      descriptions,
-      keywords,
-      `"${ad.finalUrl}"`,
-      `"${ad.displayPath}"`,
-      sitelinks,
-    ].join(",");
-  });
-
-  return [header, ...rows].join("\n");
-}
-
-// Parse CSV string to ads
-export function csvToAds(csvString: string): Ad[] {
-  const lines = csvString.split("\n");
-  if (lines.length < 2) {
-    throw new Error("Invalid CSV format: no data rows found");
-  }
-
-  const header = lines[0].toLowerCase();
-  if (
-    !header.includes("id") ||
-    !header.includes("name") ||
-    !header.includes("headlines")
-  ) {
-    throw new Error("Invalid CSV format: missing required columns");
-  }
-
-  const ads: Ad[] = [];
-
-  // Process each data row
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue; // Skip empty lines
-
-    // Parse CSV row (handling quoted values with commas inside)
-    const values: string[] = [];
-    let currentValue = "";
-    let insideQuotes = false;
-
-    for (let j = 0; j < lines[i].length; j++) {
-      const char = lines[i][j];
-
-      if (char === '"') {
-        insideQuotes = !insideQuotes;
-      } else if (char === "," && !insideQuotes) {
-        values.push(currentValue);
-        currentValue = "";
-      } else {
-        currentValue += char;
-      }
-    }
-    values.push(currentValue); // Add the last value
-
-    // Remove quotes from values
-    const cleanValues = values.map((v) => {
-      if (v.startsWith('"') && v.endsWith('"')) {
-        return v.substring(1, v.length - 1).replace(/""/g, '"');
-      }
-      return v;
-    });
-
-    // Parse sitelinks if available
-    let sitelinks: Sitelink[] = [];
-    if (cleanValues.length > 8 && cleanValues[8]) {
-      try {
-        sitelinks = JSON.parse(cleanValues[8]);
-      } catch (e) {
-        // If sitelinks can't be parsed, use empty array
-        console.error("Error parsing sitelinks:", e);
-      }
-    }
-
-    // Create ad object
+const asObjectArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === "string" && value.trim()) {
     try {
-      const ad: Ad = {
-        id: cleanValues[0] || String(Date.now()),
-        name: cleanValues[1] || "Imported Ad",
-        type: (cleanValues[2] as any) || "search", // Default to search if type is missing
-        headlines: cleanValues[3] ? cleanValues[3].split("|") : [""],
-        descriptions: cleanValues[4] ? cleanValues[4].split("|") : [""],
-        keywords: cleanValues[5] ? cleanValues[5].split("|") : [],
-        finalUrl: cleanValues[6] || "",
-        displayPath: cleanValues[7] || "",
-        sitelinks: sitelinks,
-      };
-      ads.push(ad);
-    } catch (error) {
-      console.error(`Error parsing row ${i}:`, error);
-      // Continue with other rows
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
     }
   }
+  return [];
+};
 
-  if (ads.length === 0) {
-    throw new Error("No valid ads found in CSV");
+const asNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    if (!Number.isNaN(n)) return n;
+  }
+  return fallback;
+};
+
+const asOptionalNumber = (value: unknown): number | undefined => {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = asNumber(value, NaN);
+  return Number.isNaN(n) ? undefined : n;
+};
+
+// Coerce any partial / legacy record into a complete, valid Ad. Missing fields
+// receive sensible defaults so an imported file can never leave the editor in a
+// half-initialised state.
+export function normalizeAd(raw: any): Ad {
+  const src = raw && typeof raw === "object" ? raw : {};
+  return {
+    id: src.id ? String(src.id) : genId(),
+    name: src.name ? String(src.name) : "Imported Ad",
+    status: ["enabled", "paused", "removed"].includes(src.status)
+      ? src.status
+      : "enabled",
+    type: ["search", "pmax", "display"].includes(src.type)
+      ? src.type
+      : "search",
+    headlines: asStringArray(src.headlines),
+    descriptions: asStringArray(src.descriptions),
+    finalUrl: src.finalUrl ? String(src.finalUrl) : "",
+    displayPath: src.displayPath ? String(src.displayPath) : "",
+    businessName: src.businessName ? String(src.businessName) : "",
+    keywords: asStringArray(src.keywords),
+    locations: asStringArray(src.locations),
+    languages: asStringArray(src.languages),
+    sitelinks: asObjectArray<Sitelink>(src.sitelinks),
+    images: asObjectArray(src.images),
+    logos: asObjectArray(src.logos),
+    extensions: asObjectArray(src.extensions),
+    budget: asNumber(src.budget, 0),
+    currency: src.currency ? String(src.currency) : "USD",
+    biddingStrategy: src.biddingStrategy || "manual_cpc",
+    targetCPA: asOptionalNumber(src.targetCPA),
+    targetROAS: asOptionalNumber(src.targetROAS),
+    startDate: src.startDate ? String(src.startDate) : undefined,
+    endDate: src.endDate ? String(src.endDate) : undefined,
+  };
+}
+
+// -------------------------------- JSON -------------------------------------
+
+export interface AdsExport {
+  app: string;
+  kind: "rustyseo-ads";
+  version: number;
+  exportedAt: string;
+  count: number;
+  ads: Ad[];
+}
+
+export function adsToJson(ads: Ad[]): string {
+  const payload: AdsExport = {
+    app: "RustySEO PPC Simulator",
+    kind: "rustyseo-ads",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    count: ads.length,
+    ads,
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
+export function jsonToAds(jsonString: string): Ad[] {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch (e) {
+    throw new Error(`File is not valid JSON: ${(e as Error).message}`);
   }
 
+  // Accept a bare array (legacy exports) or the wrapped { ads: [...] } payload.
+  const list = Array.isArray(parsed)
+    ? parsed
+    : parsed && Array.isArray(parsed.ads)
+      ? parsed.ads
+      : null;
+
+  if (!list) {
+    throw new Error(
+      'Unrecognised JSON structure: expected an array of ads or an object with an "ads" array.',
+    );
+  }
+
+  const ads = list
+    .filter((item) => item && typeof item === "object")
+    .map(normalizeAd);
+
+  if (ads.length === 0) throw new Error("No ads found in the JSON file.");
   return ads;
 }
 
-// Download file helper
+// --------------------------------- CSV -------------------------------------
+
+const escapeCsv = (value: string): string =>
+  `"${String(value).replace(/"/g, '""')}"`;
+
+const serializeCell = (ad: Ad, col: string): string => {
+  const value = (ad as any)[col];
+  if (STRING_ARRAY_FIELDS.includes(col)) {
+    return escapeCsv(Array.isArray(value) ? value.join("\n") : "");
+  }
+  if (JSON_FIELDS.includes(col)) {
+    return escapeCsv(
+      Array.isArray(value) && value.length ? JSON.stringify(value) : "",
+    );
+  }
+  if (NUMBER_FIELDS.includes(col)) {
+    return value === undefined || value === null ? "" : String(value);
+  }
+  return escapeCsv(value === undefined || value === null ? "" : String(value));
+};
+
+export function adsToCsv(ads: Ad[]): string {
+  const header = CSV_COLUMNS.join(",");
+  const rows = ads.map((ad) =>
+    CSV_COLUMNS.map((col) => serializeCell(ad, col)).join(","),
+  );
+  return [header, ...rows].join("\n");
+}
+
+// RFC-4180-style parser: handles quoted fields, escaped quotes ("") and
+// newlines embedded inside quoted cells.
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  const src = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+  for (let i = 0; i < src.length; i++) {
+    const char = src[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (src[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+
+  // Flush any trailing field / row.
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+export function csvToAds(csvString: string): Ad[] {
+  const rows = parseCsv(csvString).filter(
+    (r) => r.length > 1 || (r.length === 1 && r[0].trim() !== ""),
+  );
+  if (rows.length < 2) throw new Error("CSV has no data rows.");
+
+  const headers = rows[0].map((h) => h.trim());
+  const idx = (name: string) => headers.indexOf(name);
+
+  // Require the essential columns.
+  if (idx("name") === -1 || idx("headlines") === -1) {
+    throw new Error(
+      'CSV is missing required columns (at least "name" and "headlines").',
+    );
+  }
+
+  const get = (row: string[], name: string) => {
+    const i = idx(name);
+    return i === -1 ? "" : (row[i] ?? "");
+  };
+
+  const ads: Ad[] = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const record: any = {};
+    for (const col of CSV_COLUMNS) {
+      if (idx(col) === -1) continue;
+      const cell = get(row, col);
+      if (STRING_ARRAY_FIELDS.includes(col)) {
+        record[col] = cell
+          ? cell
+              .split(/\n/)
+              .map((v) => v.trim())
+              .filter(Boolean)
+          : [];
+      } else {
+        // JSON_FIELDS and scalars are passed through; normalizeAd coerces them.
+        record[col] = cell;
+      }
+    }
+    ads.push(normalizeAd(record));
+  }
+
+  if (ads.length === 0) throw new Error("No valid ads found in CSV.");
+  return ads;
+}
+
+// Browser download helper (web fallback when the Tauri fs API is unavailable).
 export function downloadFile(
   content: string,
   filename: string,

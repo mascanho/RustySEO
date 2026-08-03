@@ -38,7 +38,7 @@ export default function ContextTableMenu({ children, data }) {
   }
 
   // GLOBAL RANKING INFO STORE
-  const { addItem } = useRankinInfoStore();
+  const { addItem, setActiveSidebarTab } = useRankinInfoStore();
 
   // GSC STATUS STORE - to refresh status when we successfully fetch data
   const { updateStatus } = useGSCStatusStore();
@@ -160,6 +160,7 @@ export default function ContextTableMenu({ children, data }) {
         url,
         queries: result,
       });
+      setActiveSidebarTab("queries");
 
       // Since we successfully fetched GSC data, refresh the GSC status
       // This will update the ConsoleLog component in real-time

@@ -28,8 +28,9 @@ import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
 import { useDiffStore } from "@/store/DiffStore";
 import DashboardSEO from "./_components/SEODashboard/DashboardSEO";
+import Duplicates from "./_components/Duplicates/Duplicates";
 import { TbDashboard } from "react-icons/tb";
-import { MdOutlineDashboard } from "react-icons/md";
+import { MdControlPointDuplicate, MdOutlineDashboard } from "react-icons/md";
 // import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
 
 interface CrawlResult {
@@ -381,7 +382,7 @@ export default function Page() {
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
-      <section className="w-full border-none h-full dark:bg-brand-dark shadow-none rounded-md">
+      <section className="w-full min-w-0 border-none h-full dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
           <input
             type="text"
@@ -402,6 +403,12 @@ export default function Page() {
                 <FaGlobe className="inline-block mr-2" />
                 Deep Crawl
               </Tabs.Tab>
+
+              <Tabs.Tab value="duplicates">
+                <MdControlPointDuplicate className="inline-block mr-2" />
+                Duplicates
+              </Tabs.Tab>
+
               <Tabs.Tab value="tasks">
                 <FaTasks className="inline-block mr-1 text-sm mb-[2px]" /> Task
                 Manager
@@ -430,7 +437,7 @@ export default function Page() {
               </Tabs.Tab>
               <Tabs.Tab value="content">
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
-                Content
+                Planner
               </Tabs.Tab>
 
               <Tabs.Tab value="dashboard">
@@ -534,6 +541,13 @@ export default function Page() {
             className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
           >
             <DashboardSEO />
+          </Tabs.Panel>
+
+          <Tabs.Panel
+            value="duplicates"
+            className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+          >
+            <Duplicates />
           </Tabs.Panel>
         </Tabs>
       </section>

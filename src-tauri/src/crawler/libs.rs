@@ -8,7 +8,7 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use serde_json::{json, Value};
-use std::{error::Error, path::PathBuf};
+use std::{error::Error, path::PathBuf, time::Duration};
 use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use url::{ParseError, Url};
@@ -1000,6 +1000,7 @@ pub struct DateRange {
 pub async fn get_google_analytics(
     search_type: Vec<serde_json::Value>,
     date_ranges: Vec<DateRange>,
+    row_limit: Option<i64>,
 ) -> Result<AnalyticsData, Box<dyn std::error::Error>> {
     println!("Search Type: {:#?}", search_type[0]);
     println!("Date Ranges: {:#?}", date_ranges[0]);
@@ -1067,29 +1068,9 @@ pub async fn get_google_analytics(
     // Create a client
     let client = reqwest::Client::new();
 
-    // Prepare the request body
-    // let body = json!({
-    //     "dateRanges": [
-    //         {
-    //             "startDate": "2024-01-01",
-    //             "endDate": "today"
-    //         }
-    //     ],
-    //     "dimensions": [
-    //         {"name": "fullPageUrl"},
-    //         // {"name": "sourceMedium"},
-
-    //     ],
-    //     "metrics": [
-    //         {"name": "sessions"},
-    //         {"name": "newUsers"},
-    //         {"name": "totalUsers"},
-    //         {"name": "bounceRate"},
-    //        {"name": "scrolledUsers"},
-    //     ]
-    // });
-
-    let body = &search_type[0];
+    // Request body template supplied by the frontend (dateRanges/dimensions/metrics).
+    // We inject/override "limit" and "offset" on each page to paginate through all rows.
+    let mut body = search_type[0].clone();
 
     let id = if let Some(ref creds) = credentials {
         creds.property_id.clone()
@@ -1103,90 +1084,153 @@ pub async fn get_google_analytics(
 
     println!("Using GA4 ID: {} to fetch Analytics data", id);
 
-    // let client_id = "423125701".to_string();
     let client_id = id;
     let analytics_url = format!(
         "https://analyticsdata.googleapis.com/v1beta/properties/{}:runReport",
         client_id
     );
 
-    // Make the request
-    let mut response_res = client
-        .post(&analytics_url)
-        .bearer_auth(token_val.clone())
-        .json(&body)
-        .send()
-        .await;
+    // GA4's Data API paginates via "limit"/"offset". We page through until either the
+    // caller's requested row_limit is reached or the API reports no more rows (rowCount).
+    let page_size: i64 = 10_000;
+    let total_row_limit = row_limit.unwrap_or(page_size).max(1);
 
-    // If 401 Unauthorized, try to refresh the token
-    if let Ok(ref res) = response_res {
-        if res.status() == reqwest::StatusCode::UNAUTHORIZED {
-            if let Some(ref creds) = credentials {
-                if let Some(ref refresh) = creds.refresh_token {
-                    println!("Access token expired, attempting to refresh...");
-                    match refresh_google_token(&creds.client_id, &creds.client_secret, refresh)
-                        .await
-                    {
-                        Ok(new_token) => {
-                            println!("Token refreshed successfully!");
-                            // Update the token in memory for the retry
-                            token_val = new_token.clone();
+    let mut all_rows: Vec<Value> = Vec::new();
+    let mut base_response: Option<Value> = None;
+    let mut offset: i64 = 0;
+    let mut first_request = true;
 
-                            // Save the new token to disk
-                            let mut updated_creds = creds.clone();
-                            updated_creds.token = Some(new_token);
-                            let _ = set_google_analytics_credentials(updated_creds).await;
+    loop {
+        let remaining = total_row_limit - offset;
+        if remaining <= 0 {
+            break;
+        }
+        let this_page_size = remaining.min(page_size);
 
-                            // Retry the request
-                            response_res = client
-                                .post(&analytics_url)
-                                .bearer_auth(token_val.clone())
-                                .json(&body)
-                                .send()
-                                .await;
-                        }
-                        Err(e) => {
-                            println!("Failed to refresh token: {}", e);
+        if let Some(obj) = body.as_object_mut() {
+            obj.insert("limit".to_string(), json!(this_page_size));
+            obj.insert("offset".to_string(), json!(offset));
+        }
+
+        let mut response_res = client
+            .post(&analytics_url)
+            .bearer_auth(token_val.clone())
+            .json(&body)
+            .send()
+            .await;
+
+        // If 401 Unauthorized, try to refresh the token (only worth doing once, on the first page)
+        if first_request {
+            if let Ok(ref res) = response_res {
+                if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+                    if let Some(ref creds) = credentials {
+                        if let Some(ref refresh) = creds.refresh_token {
+                            println!("Access token expired, attempting to refresh...");
+                            match refresh_google_token(&creds.client_id, &creds.client_secret, refresh)
+                                .await
+                            {
+                                Ok(new_token) => {
+                                    println!("Token refreshed successfully!");
+                                    token_val = new_token.clone();
+
+                                    let mut updated_creds = creds.clone();
+                                    updated_creds.token = Some(new_token);
+                                    let _ = set_google_analytics_credentials(updated_creds).await;
+
+                                    response_res = client
+                                        .post(&analytics_url)
+                                        .bearer_auth(token_val.clone())
+                                        .json(&body)
+                                        .send()
+                                        .await;
+                                }
+                                Err(e) => {
+                                    println!("Failed to refresh token: {}", e);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+        first_request = false;
+
+        // If rate-limited (429), back off briefly and retry once before giving up
+        if let Ok(ref res) = response_res {
+            if res.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                println!("GA4 API rate limited (429), retrying after backoff...");
+                tokio::time::sleep(Duration::from_millis(1500)).await;
+                response_res = client
+                    .post(&analytics_url)
+                    .bearer_auth(token_val.clone())
+                    .json(&body)
+                    .send()
+                    .await;
+            }
+        }
+
+        let response: Value = match response_res {
+            Ok(res) => {
+                let status = res.status();
+                let text = res.text().await.unwrap_or_default();
+                println!("GA4 API Status: {}", status);
+
+                if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                    json!({"error": {"message": "Google Analytics API rate limit reached. Please wait a moment and try again."}})
+                } else {
+                    serde_json::from_str(&text).unwrap_or(
+                        json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}),
+                    )
+                }
+            }
+            Err(e) => {
+                println!("GA4 API Request Error: {}", e);
+                json!({"error": {"message": e.to_string()}})
+            }
+        };
+
+        if response.get("error").is_some() {
+            if base_response.is_none() {
+                // First page failed outright - nothing to salvage, surface the error.
+                return Ok(AnalyticsData {
+                    response: vec![response],
+                });
+            }
+            // A later page failed - keep whatever rows we already collected.
+            break;
+        }
+
+        let page_rows = response["rows"].as_array().cloned().unwrap_or_default();
+        let page_row_count = page_rows.len() as i64;
+        all_rows.extend(page_rows);
+
+        if base_response.is_none() {
+            base_response = Some(response.clone());
+        }
+
+        offset += page_row_count;
+
+        let total_available = response["rowCount"].as_i64().unwrap_or(offset);
+        let got_full_page = page_row_count == this_page_size;
+
+        if page_row_count == 0 || !got_full_page || offset >= total_available {
+            break;
+        }
     }
 
-    let response: Value = match response_res {
-        Ok(res) => {
-            let status = res.status();
-            let text = res.text().await.unwrap_or_default();
-            println!("GA4 API Status: {}", status);
-            // println!("GA4 API Response: {}", text);
-            serde_json::from_str(&text).unwrap_or(
-                json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}),
-            )
-        }
-        Err(e) => {
-            println!("GA4 API Request Error: {}", e);
-            json!({"error": {"message": e.to_string()}})
-        }
-    };
-
-    // Process and print the results
-    if let Some(rows) = response["rows"].as_array() {
-        for row in rows {
-            let _page = &row["dimensionValues"][0]["value"];
-            let _views = &row["metricValues"][0]["value"];
-            // println!("Page: {}, Views: {}", page, views);
-        }
+    let mut final_response = base_response.unwrap_or_else(|| json!({ "rows": [] }));
+    if let Some(obj) = final_response.as_object_mut() {
+        obj.insert("rows".to_string(), json!(all_rows));
     }
-
-    let mut vec_response = Vec::new();
-    vec_response.push(response);
 
     let response_clone = AnalyticsData {
-        response: vec_response,
+        response: vec![final_response],
     };
 
-    println!("Analytics Data: {:#?}", &response_clone);
+    println!(
+        "Analytics Data: fetched {} total row(s) across pagination",
+        all_rows.len()
+    );
 
     Ok(response_clone)
 }

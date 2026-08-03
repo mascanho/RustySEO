@@ -23,6 +23,13 @@ const FooterLoader = () => {
   const [failedPages, setFailedPages] = useState(0);
   // Internal state to track if we've shown the "Complete" message for the current session
   const [showComplete, setShowComplete] = useState(false);
+  // Server-driven backoff info: shown while the adaptive rate limiter is active.
+  // `until` is a wall-clock deadline after which the notice auto-hides.
+  const [rateLimit, setRateLimit] = useState<{
+    until: number;
+    delayMs: number;
+    status: number;
+  } | null>(null);
 
   // Debounced update function to ensure smooth UI and sync with store
   const debouncedUpdate = useCallback(
@@ -66,9 +73,22 @@ const FooterLoader = () => {
       setFinishedDeepCrawl(true);
     });
 
+    // Rate-limit listener — backend emits this whenever the adaptive crawler
+    // backs off after a 429/503 or a detected block. Keep the notice visible
+    // for the cooldown period (min 10s) since the delay decays gradually.
+    const rateLimitUnlistenPromise = listen("crawl_rate_limited", (event: any) => {
+      const { delay_ms, cooldown_ms, status } = event.payload || {};
+      setRateLimit({
+        until: Date.now() + Math.max(cooldown_ms || 0, 10000),
+        delayMs: delay_ms || 0,
+        status: status || 0,
+      });
+    });
+
     return () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
+      rateLimitUnlistenPromise.then((unlisten) => unlisten());
     };
     // Register once — use getState() for fresh data instead of adding crawlData to deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,10 +98,24 @@ const FooterLoader = () => {
   useEffect(() => {
     if (domainCrawlLoading) {
       setShowComplete(false);
+      setRateLimit(null);
     } else if (isFinishedDeepCrawl && crawlDataLength > 0) {
       setShowComplete(true);
+      setRateLimit(null);
     }
   }, [domainCrawlLoading, isFinishedDeepCrawl, crawlDataLength]);
+
+  // Auto-hide the rate-limit notice once its deadline passes
+  useEffect(() => {
+    if (!rateLimit) return;
+    const remaining = rateLimit.until - Date.now();
+    if (remaining <= 0) {
+      setRateLimit(null);
+      return;
+    }
+    const timer = setTimeout(() => setRateLimit(null), remaining);
+    return () => clearTimeout(timer);
+  }, [rateLimit]);
 
   // Derived state for rendering
   const displayCrawled = useMemo(() => {
@@ -156,6 +190,21 @@ const FooterLoader = () => {
             </span>
             <span className="text-red-600 dark:text-red-400 font-mono font-medium">
               {failedPages}
+            </span>
+          </div>
+        )}
+
+        {rateLimit && !showComplete && (
+          <div
+            className="flex items-center space-x-1.5 animate-in fade-in duration-300"
+            title={`${rateLimit.status ? `Server responded with HTTP ${rateLimit.status}` : "Anti-bot block detected"} — crawler backing off (delay now ${(rateLimit.delayMs / 1000).toFixed(1)}s per request)`}
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+            </span>
+            <span className="text-amber-600/80 dark:text-amber-400/70 uppercase font-bold text-[9px]">
+              Rate limited — slowing down
             </span>
           </div>
         )}

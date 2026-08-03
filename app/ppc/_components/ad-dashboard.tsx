@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { AdForm } from "./ad-form";
 import { AdList } from "./ad-list";
+import { AdsOverview } from "./ads-overview";
 import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
@@ -208,24 +209,55 @@ export function AdDashboard() {
   };
 
   const handleImportAds = (importedAds) => {
-    // Add type if missing in imported ads
-    const processedAds = importedAds.map((ad) => ({
-      ...ad,
-      type: ad.type || "search", // Default to search if type is missing
-      sitelinks: ad.sitelinks || [], // Ensure sitelinks exists
-    }));
+    if (!Array.isArray(importedAds) || importedAds.length === 0) {
+      toast({
+        title: "Nothing imported",
+        description: "The file did not contain any ads.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Merge imported ads with existing ads, avoiding duplicates by ID
+    // Merge imported ads, skipping any whose ID already exists.
     const existingIds = new Set(ads.map((ad) => ad.id));
-    const newAds = processedAds.filter((ad) => !existingIds.has(ad.id));
-    const updatedAds = [...ads, ...newAds];
+    const newAds = [];
+    let skipped = 0;
+    for (const ad of importedAds) {
+      if (existingIds.has(ad.id)) {
+        skipped++;
+      } else {
+        existingIds.add(ad.id);
+        newAds.push(ad);
+      }
+    }
 
+    if (newAds.length === 0) {
+      toast({
+        title: "No new ads added",
+        description: `All ${importedAds.length} imported ad${
+          importedAds.length === 1 ? "" : "s"
+        } already exist in your list.`,
+      });
+      return;
+    }
+
+    const updatedAds = [...ads, ...newAds];
     setAds(updatedAds);
     saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
-    if (newAds.length > 0 && !selectedAd) {
+    if (!selectedAd) {
       setSelectedAd(newAds[0]);
     }
+
+    toast({
+      title: "Import successful",
+      description:
+        `Added ${newAds.length} ad${newAds.length === 1 ? "" : "s"}` +
+        (skipped > 0
+          ? ` · skipped ${skipped} duplicate${skipped === 1 ? "" : "s"}`
+          : ""),
+      variant: "success",
+    });
   };
 
   const renderContent = () => {
@@ -314,11 +346,10 @@ export function AdDashboard() {
       case "dashboard":
       default:
         return (
-          <AdList
+          <AdsOverview
             ads={ads}
             onSelect={handleSelectAd}
-            onClone={handleCloneAd}
-            onDelete={handleDeleteAd}
+            onCreate={handleAddAd}
           />
         );
     }
@@ -354,7 +385,7 @@ export function AdDashboard() {
       //   return "Get help with using the platform";
       case "dashboard":
       default:
-        return "Overview of your Google search ads";
+        return "Portfolio analytics, ad-strength scoring and optimisation insights";
     }
   };
 
@@ -364,12 +395,12 @@ export function AdDashboard() {
       activeView={sidebarView}
       onViewChange={setSidebarView}
     >
-      <div className="w-full h-full flex flex-col p-4 md:p-6 min-h-0 overflow-hidden">
+      <div className="w-full h-full flex flex-col px-4 md:px-6 pt-0 pb-4 md:pb-6 min-h-0 overflow-hidden">
         {!(
           sidebarView === "previews" ||
           (sidebarView === "ads" && selectedAd)
         ) && (
-          <div className="flex-shrink-0 mb-6">
+          <div className="flex-shrink-0 -mb-5">
             <DashboardHeader
               heading={getHeaderTitle()}
               description={getHeaderDescription()}

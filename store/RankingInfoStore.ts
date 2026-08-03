@@ -10,6 +10,8 @@ type StoreState = {
   addItem: (item: Item) => void;
   removeItem: (id: number) => void;
   clearItems: () => void;
+  activeSidebarTab: string;
+  setActiveSidebarTab: (tab: string) => void;
 };
 
 const useRankinInfoStore = create<StoreState>((set) => ({
@@ -23,6 +25,8 @@ const useRankinInfoStore = create<StoreState>((set) => ({
       items: state.items.filter((i) => i.id !== id),
     })),
   clearItems: () => set({ items: [] }),
+  activeSidebarTab: "first",
+  setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
 }));
 
 export default useRankinInfoStore;

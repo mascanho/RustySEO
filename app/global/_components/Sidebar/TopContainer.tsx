@@ -8,15 +8,22 @@ import RankingInfo from "@/app/global/_components/Sidebar/GSCRankingInfo/Ranking
 import ConsoleLog from "./ConsoleLog/ConsoleLog";
 import URLTreeContainer from "../URLTree/URLTreeContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
+import useRankinInfoStore from "@/store/RankingInfoStore";
 
 const TopContainer = () => {
   const { showSidebar } = useVisibilityStore();
+  const { activeSidebarTab, setActiveSidebarTab } = useRankinInfoStore();
 
   return (
     <div
       className={`h-full w-full overflow-hidden flex flex-col ${showSidebar ? "block" : "hidden"}`}
     >
-      <Tabs defaultValue="first" keepMounted={false} className="flex flex-col flex-1 min-h-0">
+      <Tabs
+        value={activeSidebarTab}
+        onChange={setActiveSidebarTab}
+        keepMounted={false}
+        className="flex flex-col flex-1 min-h-0"
+      >
         <Tabs.List
           justify="center"
           grow

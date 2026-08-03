@@ -82,6 +82,12 @@ pub struct DomainCrawlResults {
     pub status: Option<u16>,                      // Status of the request
     pub url_depth: Option<usize>,
     pub cookies: Result<Vec<String>, String>,
+    /// SimHash of shingled body text, for near-duplicate content clustering.
+    /// `None` unless `duplicate_content_check_enabled` is on in Settings.
+    pub content_simhash: Option<u64>,
+    /// Exact hash of normalized H1-H3 text, for flagging pages that share the same
+    /// heading structure. `None` when the check is disabled, or the page has no headings.
+    pub heading_hash: Option<u64>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -143,6 +149,8 @@ impl Default for DomainCrawlResults {
             status: None,
             url_depth: Some(0),
             cookies: Ok(Vec::new()),
+            content_simhash: None,
+            heading_hash: None,
         }
     }
 }

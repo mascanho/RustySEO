@@ -1,186 +1,318 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useMemo, useRef, useState } from "react";
 import {
   Search,
   ExternalLink,
-  Book,
-  PenTool as Tools,
-  Newspaper,
-  TrendingUp,
-  FileText,
-  BarChart,
-  Video,
+  X,
+  Compass,
+  Globe,
+  Layers,
+  KeyRound,
+  Wrench,
+  Gauge,
+  Link2,
+  PenTool,
+  LineChart,
+  BarChart3,
+  Braces,
+  MapPin,
+  Puzzle,
+  Chrome,
+  BookOpen,
   Users,
-  Key,
-  FileCheck,
-  Shield,
-  Briefcase,
+  Youtube,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { IoMdCloseCircleOutline } from "react-icons/io";
-import seoResources from "./seo-resources";
+import seoResources, { categories } from "./seo-resources";
 
-type Resource = {
-  title: string;
-  description: string;
-  url: string;
-  tags: string[];
+const categoryIcons: { [key: string]: JSX.Element } = {
+  "All-in-One Suites": <Layers size={11} />,
+  "Keyword Research": <KeyRound size={11} />,
+  "Technical SEO & Audits": <Wrench size={11} />,
+  "Site Speed & Core Web Vitals": <Gauge size={11} />,
+  "Backlinks & Authority": <Link2 size={11} />,
+  "Content & AI Writing": <PenTool size={11} />,
+  "Rank Tracking": <LineChart size={11} />,
+  "Analytics & Webmaster Tools": <BarChart3 size={11} />,
+  "Structured Data & Schema": <Braces size={11} />,
+  "Local SEO": <MapPin size={11} />,
+  "WordPress & CMS Plugins": <Puzzle size={11} />,
+  "Browser Extensions": <Chrome size={11} />,
+  "Learning, Blogs & News": <BookOpen size={11} />,
+  "Community & Forums": <Users size={11} />,
+  "Video & YouTube": <Youtube size={11} />,
 };
 
-const tagIcons: { [key: string]: JSX.Element } = {
-  Tools: <Tools size={14} />,
-  Guides: <Book size={14} />,
-  Blog: <FileText size={14} />,
-  Official: <Shield size={14} />,
-  Guidelines: <FileCheck size={14} />,
-  Documentation: <FileText size={14} />,
-  Tutorials: <Book size={14} />,
-  "Case Studies": <Briefcase size={14} />,
-  News: <Newspaper size={14} />,
-  Trends: <TrendingUp size={14} />,
-  "Best Practices": <FileCheck size={14} />,
-  Strategies: <BarChart size={14} />,
-  Tips: <FileText size={14} />,
-  Analytics: <BarChart size={14} />,
-  Keywords: <Key size={14} />,
-  Community: <Users size={14} />,
-  Videos: <Video size={14} />,
-  Advanced: <BarChart size={14} />,
-  Marketing: <Briefcase size={14} />,
-  SEO: <Search size={14} />,
-  Plugin: <Tools size={14} />,
-  WordPress: <FileText size={14} />,
-  "Rank Tracking": <TrendingUp size={14} />,
-  Affordable: <FileText size={14} />,
-  Content: <FileText size={14} />,
-  Optimization: <BarChart size={14} />,
-  Data: <BarChart size={14} />,
-  Audits: <FileCheck size={14} />,
-  Monitoring: <TrendingUp size={14} />,
-  Competitors: <Users size={14} />,
-  Free: <FileText size={14} />,
-  Inbound: <FileText size={14} />,
-  Automation: <Tools size={14} />,
-  "Technical SEO": <Tools size={14} />,
+const pricingStyles: { [key: string]: string } = {
+  Free: "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400",
+  Freemium: "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
+  Paid: "bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400",
 };
+
+const pricingOptions = ["All", "Free", "Freemium", "Paid"];
+
+function CategoryChip({ active, onClick, icon, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+        active
+          ? "border-brand-bright bg-brand-bright/10 text-brand-bright"
+          : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function ResourceCard({ resource }) {
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const hostname = useMemo(() => {
+    try {
+      return new URL(resource.url).hostname;
+    } catch {
+      return "";
+    }
+  }, [resource.url]);
+
+  return (
+    <a
+      href={resource.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex gap-3 rounded-md border border-gray-200 bg-white p-2.5 transition-colors hover:border-brand-bright/50 hover:shadow-sm dark:border-white/10 dark:bg-brand-dark"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded bg-gray-100 dark:bg-brand-darker">
+        {hostname && !faviconFailed ? (
+          <img
+            src={`https://www.google.com/s2/favicons?sz=32&domain=${hostname}`}
+            alt=""
+            className="h-5 w-5"
+            onError={() => setFaviconFailed(true)}
+          />
+        ) : (
+          <Globe size={16} className="text-gray-400" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <h3 className="truncate text-sm font-medium text-gray-800 dark:text-white">
+            {resource.title}
+          </h3>
+          <ExternalLink
+            size={12}
+            className="shrink-0 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+          />
+        </div>
+        <p className="mt-0.5 line-clamp-2 text-xs text-gray-600 dark:text-white/60">
+          {resource.description}
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600 dark:bg-brand-darker dark:text-white/70">
+            {categoryIcons[resource.category]}
+            {resource.category}
+          </span>
+          <span
+            className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${pricingStyles[resource.pricing]}`}
+          >
+            {resource.pricing}
+          </span>
+        </div>
+      </div>
+    </a>
+  );
+}
 
 export default function SeoToolkit({ showSeoToolkit, hideSeoToolkit }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    null,
+  );
+  const [selectedPricing, setSelectedPricing] = useState<string | null>(null);
+  const chipsRef = useRef<HTMLDivElement>(null);
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    seoResources.forEach((resource) =>
-      resource.tags.forEach((tag) => tags.add(tag)),
-    );
-    return Array.from(tags).sort();
-  }, []);
+  const scrollChips = (direction: 1 | -1) => {
+    chipsRef.current?.scrollBy({ left: direction * 180, behavior: "smooth" });
+  };
 
   const filteredResources = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
     return seoResources.filter((resource) => {
       const matchesSearch =
-        resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resource.tags.some((tag) =>
-          tag.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+        term === "" ||
+        resource.title.toLowerCase().includes(term) ||
+        resource.description.toLowerCase().includes(term) ||
+        resource.category.toLowerCase().includes(term) ||
+        resource.tags.some((tag) => tag.toLowerCase().includes(term));
       const matchesCategory = selectedCategory
-        ? resource.tags.includes(selectedCategory)
+        ? resource.category === selectedCategory
         : true;
-      return matchesSearch && matchesCategory;
+      const matchesPricing = selectedPricing
+        ? resource.pricing === selectedPricing
+        : true;
+      return matchesSearch && matchesCategory && matchesPricing;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, selectedPricing]);
+
+  const hasActiveFilters =
+    searchTerm !== "" || selectedCategory !== null || selectedPricing !== null;
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory(null);
+    setSelectedPricing(null);
+  };
 
   return (
-    <div
-      className={`w-[24rem] h-[calc(100vh-250px)] bg-gray-100 dark:bg-brand-darker border-brand-bright border-2 fixed bottom-10 left-2 transform flex flex-col text-sm`}
-    >
+    <div className="fixed bottom-10 left-2 z-40 flex h-[calc(100vh-200px)] max-h-[42rem] w-[30rem] max-w-[92vw] origin-bottom-left animate-in flex-col rounded-lg border-2 border-brand-bright bg-gray-50 shadow-2xl fade-in zoom-in-95 duration-200 dark:bg-brand-darker">
       {/* Header */}
-      <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-brand-dark">
-        <h2 className="text-base font-semibold text-gray-800 dark:text-white">
-          SEO Resources
-        </h2>
-        <IoMdCloseCircleOutline
+      <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-white/10">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-bright/10 text-brand-bright">
+            <Compass size={16} />
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold text-gray-800 dark:text-white">
+              SEO Toolkit
+            </h2>
+            <p className="text-[11px] text-gray-500 dark:text-white/50">
+              {seoResources.length} curated resources
+            </p>
+          </div>
+        </div>
+        <button
           onClick={hideSeoToolkit}
-          className="text-black dark:text-white cursor-pointer hover:text-red-500"
-          size={20}
-        />
+          className="shrink-0 rounded p-1 text-gray-400 hover:bg-black/5 hover:text-red-500 dark:hover:bg-white/10"
+        >
+          <X size={18} />
+        </button>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex items-center p-2 gap-2 bg-white dark:bg-brand-dark">
-        <div className="relative flex-1">
+      {/* Search */}
+      <div className="px-3 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            size={15}
+          />
           <input
             type="text"
-            placeholder="Search..."
-            className="w-full px-3 py-1 pl-8 text-sm border border-gray-300 dark:border-brand-dark bg-gray-50 dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-gray-800 dark:text-white"
+            placeholder="Search tools, blogs, plugins…"
+            className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-8 text-sm text-gray-800 focus:border-brand-bright focus:outline-none dark:border-white/10 dark:bg-brand-dark dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Search
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={16}
-          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
-        <select
-          value={selectedCategory || ""}
-          onChange={(e) => setSelectedCategory(e.target.value || null)}
-          className="px-2 py-1 text-sm border border-gray-300 dark:border-brand-dark bg-gray-50 dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-gray-800 dark:text-white max-w-[6rem]"
-        >
-          <option value="">All</option>
-          {allTags.map((tag) => (
-            <option key={tag} value={tag}>
-              {tag}
-            </option>
-          ))}
-        </select>
       </div>
 
-      {/* Resources List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-100 dark:bg-brand-darker">
-        {filteredResources.length > 0 ? (
-          filteredResources.map((resource, index) => (
-            <div
-              key={index}
-              className="p-3 border-b border-gray-200 dark:border-brand-darker bg-white dark:bg-brand-dark"
+      {/* Category filter carousel */}
+      <div className="flex items-center gap-1 px-3 py-2">
+        <button
+          onClick={() => scrollChips(-1)}
+          className="shrink-0 rounded-full border border-gray-200 p-1 text-gray-500 hover:border-gray-300 hover:text-gray-800 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20 dark:hover:text-white"
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <div
+          ref={chipsRef}
+          className="flex flex-1 gap-1.5 overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <CategoryChip
+            active={selectedCategory === null}
+            onClick={() => setSelectedCategory(null)}
+          >
+            All
+          </CategoryChip>
+          {categories.map((cat) => (
+            <CategoryChip
+              key={cat}
+              active={selectedCategory === cat}
+              onClick={() =>
+                setSelectedCategory(selectedCategory === cat ? null : cat)
+              }
+              icon={categoryIcons[cat]}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-gray-800 dark:text-white leading-tight">
-                    {resource.title}
-                  </h3>
-                  <p className="text-xs text-gray-600 dark:text-white/70 mt-0.5 break-words">
-                    {resource.description}
-                  </p>
-                </div>
-                <Link
-                  href={resource.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-blue-500 hover:text-blue-700 shrink-0"
-                >
-                  <ExternalLink size={16} />
-                </Link>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {resource.tags.map((tag, tagIndex) => (
-                  <span
-                    key={tagIndex}
-                    className="bg-gray-200 dark:bg-brand-darker text-gray-700 dark:text-white/80 text-xs px-1.5 py-0.5 flex items-center gap-1 whitespace-nowrap"
-                  >
-                    {tagIcons[tag] || <FileText size={14} />}
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
+              {cat}
+            </CategoryChip>
+          ))}
+        </div>
+        <button
+          onClick={() => scrollChips(1)}
+          className="shrink-0 rounded-full border border-gray-200 p-1 text-gray-500 hover:border-gray-300 hover:text-gray-800 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20 dark:hover:text-white"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+
+      {/* Pricing filter chips */}
+      <div className="flex gap-1.5 px-3 pb-2">
+        {pricingOptions.map((option) => {
+          const value = option === "All" ? null : option;
+          const active = selectedPricing === value;
+          return (
+            <button
+              key={option}
+              onClick={() => setSelectedPricing(active ? null : value)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                active
+                  ? "border-brand-bright bg-brand-bright/10 text-brand-bright"
+                  : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Result count */}
+      <div className="flex items-center justify-between px-3 pb-2 text-[11px] text-gray-500 dark:text-white/50">
+        <span>
+          {filteredResources.length} result
+          {filteredResources.length !== 1 ? "s" : ""}
+        </span>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="font-medium text-brand-bright hover:underline"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Resources list */}
+      <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+        {filteredResources.length > 0 ? (
+          filteredResources.map((resource) => (
+            <ResourceCard key={resource.title} resource={resource} />
           ))
         ) : (
-          <p className="text-center text-gray-500 dark:text-white/50 p-3 text-sm">
-            No Resources
-          </p>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <Search className="h-8 w-8 text-gray-300 dark:text-white/20" />
+            <p className="text-sm text-gray-500 dark:text-white/50">
+              No resources match your filters.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="text-xs font-medium text-brand-bright hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
         )}
       </div>
     </div>

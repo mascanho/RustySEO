@@ -33,9 +33,11 @@ use super::helpers::links_status_code_checker::get_links_status_code_from_settin
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
-    alt_tags, anchor_links, check_html_page, css_selector, headings_selector, iframe_selector,
-    images_selector, indexability, javascript_selector, links_selector, mobile_checker, ngrams,
-    page_description, schema_selector, title_selector, word_count::get_word_count,
+    alt_tags, anchor_links, check_html_page,
+    content_signature::compute_content_signature, css_selector, headings_selector,
+    iframe_selector, images_selector, indexability, javascript_selector, links_selector,
+    mobile_checker, ngrams, page_description, schema_selector, title_selector,
+    word_count::get_word_count,
 };
 use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
@@ -395,6 +397,7 @@ pub async fn process_url(
         _ngrams_data,
         opengraph_data,
         body_len,
+        content_signature_val,
     ) = {
         // Parse ngrams before moving `body` into the document parse (ngrams borrows body as &str).
         let ngrams_data_pre = if settings.extract_ngrams {
@@ -412,6 +415,15 @@ pub async fn process_url(
         // async link-checking and image-fetching tasks that follow.
         // At 40K pages, keeping body alive until the end of process_url wastes GBs.
         drop(body);
+
+        // Opt-in (Settings > Crawler > Duplicated Content Check): fingerprints body text
+        // and headings so the Duplicate Content dashboard tab can cluster similar pages
+        // later, purely from these cached hashes — no re-parsing needed.
+        let content_signature_val = if settings.duplicate_content_check_enabled {
+            Some(compute_content_signature(&document))
+        } else {
+            None
+        };
 
         (
             title_selector::extract_title(&document),
@@ -446,6 +458,7 @@ pub async fn process_url(
             ngrams_data_pre,
             opengraph_data_pre,
             body_len_pre,
+            content_signature_val,
         )
     }; // `document` is dropped here
 
@@ -564,6 +577,8 @@ pub async fn process_url(
         status: Some(status_code),
         url_depth: Some(url_depth),
         cookies: Ok(cookies_data),
+        content_simhash: content_signature_val.map(|s| s.content_simhash),
+        heading_hash: content_signature_val.and_then(|s| s.heading_hash),
     };
 
     // Update state and emit progress

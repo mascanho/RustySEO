@@ -6,7 +6,8 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 
 const MSClarity = ({ onSubmit, close }) => {
-  const defaultEndpoint = "www.clarity.ms/export-data/api/v1/project-live-insights";
+  const defaultEndpoint =
+    "www.clarity.ms/export-data/api/v1/project-live-insights";
   const [endpoint, setEndpoint] = useState(defaultEndpoint);
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ const MSClarity = ({ onSubmit, close }) => {
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    
+
     // Validation: both fields required
     if (!endpoint.trim()) {
       setError("Endpoint is required");
@@ -64,14 +65,20 @@ const MSClarity = ({ onSubmit, close }) => {
 
   return (
     <section>
-
       <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-2 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
         <p className="text-gray-600 dark:text-gray-400 text-[10px] font-medium mt-1">
-          Get your token: <a
+          Clarity Settings:{" "}
+          <a
             href="https://clarity.microsoft.com/projects/view"
             target="_blank"
             className="text-blue-500 hover:underline"
-        >Microsoft Clarity</a><span className="font-bold text-gray-700 dark:text-gray-200"> &gt; Settings &gt; Data Export &gt; Generate new API Token</span>
+          >
+            Microsoft Clarity
+          </a>
+          <span className="font-bold text-gray-700 dark:text-gray-200">
+            {" "}
+            &gt; Settings &gt; Data Export &gt; Generate new API Token
+          </span>
         </p>
         <div className="mb-4 relative mt-2 space-y-4">
           <label

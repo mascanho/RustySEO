@@ -3,6 +3,7 @@ pub mod anchor_links;
 pub mod blocked_robots;
 pub mod canonical_selector;
 pub mod check_html_page;
+pub mod content_signature;
 pub mod cookies;
 pub mod cross_origin;
 pub mod css_selector;

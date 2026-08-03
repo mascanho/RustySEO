@@ -1,5 +1,19 @@
 export const changelogData = [
   {
+    version: "0.4.0",
+    date: "2026-08-19",
+    type: "feature",
+    changes: [
+      "Global: SEO CHAT username selection **VERY Experimental**",
+      "Global: Content Planner Calendar bug fix",
+      "Deep Crawler: Schema detection export",
+      "Deep Crawler: Context menus on Inlinks and Outlinks tables",
+      "Deep Crawler: Improved GSC Queries tab",
+      "Deep Crawler: Improved Site Tree",
+      "Deep Crawler: Easier GSC/GA4 Verification",
+    ],
+  },
+  {
     version: "0.3.9",
     date: "2026-07-12",
     type: "feature",
@@ -16,6 +30,8 @@ export const changelogData = [
       "Deep Crawler: Dashboard Tab with historical data **Experimental**",
       "Deep Crawler: Link Score Metric",
       "Deep Crawler: Visualisations **Experimental**",
+      "Deep Crawler: Content Duplication detection **Experimental**",
+      "Global: SEO CHAT **VERY Experimental**",
     ],
   },
   {

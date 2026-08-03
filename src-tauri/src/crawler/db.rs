@@ -462,6 +462,7 @@ pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // URL to query
     let url_to_query = url.to_string();
+    println!("[GSC match] querying gsc_data for url = {:?}", url_to_query);
 
     // Prepare the SQL statement
     let mut stmt = conn.prepare(
@@ -483,6 +484,22 @@ pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // Convert the query result into a vector
     let matched_urls: Vec<GscUrl> = matched_urls.collect::<Result<Vec<_>, _>>()?;
+    println!(
+        "[GSC match] {} row(s) matched in gsc_data for url = {:?}",
+        matched_urls.len(),
+        url_to_query
+    );
+    if matched_urls.is_empty() {
+        let mut sample_stmt = conn.prepare("SELECT url FROM gsc_data LIMIT 5")?;
+        let sample_urls: Vec<String> = sample_stmt
+            .query_map([], |row| row.get::<_, String>(0))?
+            .filter_map(|r| r.ok())
+            .collect();
+        println!(
+            "[GSC match] no match — sample urls stored in gsc_data: {:?}",
+            sample_urls
+        );
+    }
 
     // Insert matched URLs into the 'gsc_matched' table
     insert_matched_urls(&conn, &matched_urls)?;

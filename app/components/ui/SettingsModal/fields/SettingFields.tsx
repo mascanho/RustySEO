@@ -94,7 +94,7 @@ export const NumberInput = ({
         min={min}
         max={max}
         step={step}
-        className={`${width} h-7 px-2 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.04] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-brand-bright/50 focus:border-brand-bright/50 transition-all text-right`}
+        className={`${width} h-7 px-2 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.04] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-brand-bright/50 focus:border-brand-bright/50 transition-all text-right dark:[color-scheme:dark]`}
       />
       {unit && (
         <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono min-w-[18px]">

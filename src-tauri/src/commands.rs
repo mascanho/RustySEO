@@ -166,8 +166,9 @@ pub async fn get_google_analytics_id() -> Result<String, String> {
 pub async fn get_google_analytics_command(
     search_type: Vec<serde_json::Value>,
     date_ranges: Vec<DateRange>,
+    row_limit: Option<i64>,
 ) -> Result<libs::AnalyticsData, String> {
-    match libs::get_google_analytics(search_type, date_ranges).await {
+    match libs::get_google_analytics(search_type, date_ranges, row_limit).await {
         Ok(result) => {
             println!("Successfully called Google Analytics");
             Ok(result)

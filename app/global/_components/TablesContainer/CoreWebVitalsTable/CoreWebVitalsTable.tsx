@@ -24,6 +24,9 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
 import { exportPSIDataCSV } from "./exportPSIDataCsv";
+import LinkContextMenu from "../components/LinkContextMenu";
+
+const URL_COLUMN_INDEX = 1;
 
 interface TableCrawlProps {
   rows: Array<{
@@ -283,10 +286,23 @@ const TableRow = ({
             }}
             className="dark:text-white/50 cursor-pointer"
           >
-            <TruncatedCell
-              text={cell?.toString()}
-              width={columnWidths[cellIndex]}
-            />
+            {cellIndex === URL_COLUMN_INDEX ? (
+              <LinkContextMenu
+                url={row?.url}
+                role="target"
+                forceWhiteText={clickedCell.row === index}
+              >
+                <TruncatedCell
+                  text={cell?.toString()}
+                  width={columnWidths[cellIndex]}
+                />
+              </LinkContextMenu>
+            ) : (
+              <TruncatedCell
+                text={cell?.toString()}
+                width={columnWidths[cellIndex]}
+              />
+            )}
           </td>
         ) : null,
       )}

@@ -14,11 +14,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
 import useGA4StatusStore from "@/store/GA4StatusStore";
+
+const ROW_LIMIT_OPTIONS = [1000, 5000, 10000, 25000, 50000];
+
+// Returns the immediately-preceding period of equal length, used for
+// period-over-period comparison (e.g. "previous 7 days" before the selected range).
+const getPreviousPeriod = (start: Date, end: Date) => {
+  const durationMs = end.getTime() - start.getTime();
+  const prevEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+  const prevStart = new Date(prevEnd.getTime() - durationMs);
+  return { prevStart, prevEnd };
+};
+
+const humanizeHeader = (name: string) =>
+  name.charAt(0).toUpperCase() +
+  name
+    .slice(1)
+    .replace(/([A-Z])/g, " $1")
+    .trim();
+
+const formatMetricValue = (name: string, value: any) => {
+  const numValue = parseFloat(value || "0");
+
+  if (name === "bounceRate" || name === "engagementRate") {
+    return `${(numValue * 100).toFixed(2)}%`;
+  }
+  if (name === "averageSessionDuration") {
+    const totalSeconds = Math.round(numValue);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+  }
+  return numValue.toLocaleString(undefined, { maximumFractionDigits: 1 });
+};
 
 export default function AnalyticsTable() {
   const {
@@ -30,6 +64,10 @@ export default function AnalyticsTable() {
     setEndDate,
     selectedDimension,
     setSelectedDimension,
+    rowLimit,
+    setRowLimit,
+    compareEnabled,
+    setCompareEnabled,
   } = useGA4StatusStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -75,16 +113,37 @@ export default function AnalyticsTable() {
         },
       ];
 
-      let type = [];
+      const dateRanges = [
+        {
+          startDate: startDate?.toISOString()?.split("T")[0],
+          endDate: endDate?.toISOString()?.split("T")[0],
+        },
+      ];
 
-      let params = {
-        landings: {
-          dateRanges: [
-            {
-              startDate: startDate?.toISOString()?.split("T")[0],
-              endDate: endDate?.toISOString()?.split("T")[0],
-            },
+      if (compareEnabled && startDate && endDate) {
+        const { prevStart, prevEnd } = getPreviousPeriod(startDate, endDate);
+        dateRanges.push({
+          startDate: prevStart.toISOString().split("T")[0],
+          endDate: prevEnd.toISOString().split("T")[0],
+        });
+      }
+
+      const presets: Record<string, any> = {
+        general: {
+          dateRanges,
+          dimensions: [{ name: "fullPageUrl" }],
+          metrics: [
+            { name: "sessions" },
+            { name: "newUsers" },
+            { name: "totalUsers" },
+            { name: "screenPageViews" },
+            { name: "averageSessionDuration" },
+            { name: "bounceRate" },
+            { name: "conversions" },
           ],
+        },
+        landings: {
+          dateRanges,
           dimensions: [
             { name: "landingPagePlusQueryString" },
             { name: "country" },
@@ -96,30 +155,27 @@ export default function AnalyticsTable() {
             { name: "sessionsPerUser" },
           ],
         },
-
-        general: {
-          dateRanges: [
-            {
-              startDate: startDate?.toISOString()?.split("T")[0],
-              endDate: endDate?.toISOString()?.split("T")[0],
-            },
+        pages: {
+          dateRanges,
+          dimensions: [{ name: "pagePath" }, { name: "pageTitle" }],
+          metrics: [
+            { name: "screenPageViews" },
+            { name: "averageSessionDuration" },
+            { name: "bounceRate" },
           ],
-          dimensions: [{ name: "fullPageUrl" }],
+        },
+        channels: {
+          dateRanges,
+          dimensions: [{ name: "sessionDefaultChannelGroup" }],
           metrics: [
             { name: "sessions" },
-            { name: "newUsers" },
             { name: "totalUsers" },
-            { name: "bounceRate" },
-            { name: "scrolledUsers" },
+            { name: "engagementRate" },
+            { name: "conversions" },
           ],
         },
         country: {
-          dateRanges: [
-            {
-              startDate: startDate?.toISOString()?.split("T")[0],
-              endDate: endDate?.toISOString()?.split("T")[0],
-            },
-          ],
+          dateRanges,
           dimensions: [{ name: "country" }],
           metrics: [
             { name: "sessions" },
@@ -131,12 +187,7 @@ export default function AnalyticsTable() {
           ],
         },
         city: {
-          dateRanges: [
-            {
-              startDate: startDate?.toISOString()?.split("T")[0],
-              endDate: endDate?.toISOString()?.split("T")[0],
-            },
-          ],
+          dateRanges,
           dimensions: [{ name: "city" }],
           metrics: [
             { name: "sessions" },
@@ -148,12 +199,7 @@ export default function AnalyticsTable() {
           ],
         },
         device: {
-          dateRanges: [
-            {
-              startDate: startDate?.toISOString()?.split("T")[0],
-              endDate: endDate?.toISOString()?.split("T")[0],
-            },
-          ],
+          dateRanges,
           dimensions: [{ name: "deviceCategory" }],
           metrics: [
             { name: "sessions" },
@@ -166,31 +212,13 @@ export default function AnalyticsTable() {
         },
       };
 
-      switch (dimensionVal) {
-        case "general":
-          type.push(params.general);
-          break;
-        case "landings":
-          type.push(params.landings);
-          break;
-        case "country":
-          type.push(params.country);
-          break;
-        case "city":
-          type.push(params.city);
-          break;
-        case "device":
-          type.push(params.device);
-          break;
-        default:
-          type.push(params.general);
-          break;
-      }
+      const type = [presets[dimensionVal] || presets.general];
 
       try {
         const result: any = await invoke("get_google_analytics_command", {
           searchType: type,
           dateRanges: analyticsDateRange,
+          rowLimit,
         });
 
         if (result.response[0]?.error) {
@@ -210,105 +238,157 @@ export default function AnalyticsTable() {
         setIsLoading(false);
       }
     },
-    [startDate, endDate, selectedDimension],
+    [startDate, endDate, selectedDimension, rowLimit, compareEnabled],
   );
 
   // Remove auto-fetch on mount - data will only load when user explicitly requests it
 
   // Only refetch when dates change if user has already fetched data
-  // REMOVED: Auto-fetch logic causing data to reload on tab swap. 
+  // REMOVED: Auto-fetch logic causing data to reload on tab swap.
   // User must explicitly click refresh to update data after changing dates.
 
   // --- Data Transformation ---
 
+  const dimensionHeaders = analyticsData?.response?.[0]?.dimensionHeaders || [];
+  const metricHeaders = analyticsData?.response?.[0]?.metricHeaders || [];
+  const hasComparison = dimensionHeaders.some((h: any) => h.name === "dateRange");
+
   const flattenData = useMemo(() => {
     if (!analyticsData?.response?.[0]?.rows) return [];
-
-    const dimHeaders = analyticsData.response[0].dimensionHeaders || [];
-    const metHeaders = analyticsData.response[0].metricHeaders || [];
 
     return analyticsData.response[0].rows.map((row: any) => {
       const flatRow: any = {};
 
-      // Map dimensions
       row.dimensionValues?.forEach((dim: any, index: number) => {
-        const headerName = dimHeaders[index]?.name || `dim_${index}`;
+        const headerName = dimensionHeaders[index]?.name || `dim_${index}`;
         flatRow[headerName] = dim.value;
       });
 
-      // Map metrics
       row.metricValues?.forEach((met: any, index: number) => {
-        const headerName = metHeaders[index]?.name || `met_${index}`;
+        const headerName = metricHeaders[index]?.name || `met_${index}`;
         flatRow[headerName] = met.value;
       });
 
       return flatRow;
     });
-  }, [analyticsData]);
+  }, [analyticsData, dimensionHeaders, metricHeaders]);
+
+  // When comparison is on, GA4 returns one row per (dimension combo, date range) pair.
+  // Pivot those into a single row per dimension combo with current/previous/delta columns.
+  const tableData = useMemo(() => {
+    if (!hasComparison) return flattenData;
+
+    const groupKeys = dimensionHeaders
+      .map((h: any) => h.name)
+      .filter((name: string) => name !== "dateRange");
+
+    const groups = new Map<string, any>();
+
+    flattenData.forEach((row: any) => {
+      const key = groupKeys.map((k: string) => row[k]).join("||");
+      if (!groups.has(key)) {
+        const base: any = {};
+        groupKeys.forEach((k: string) => (base[k] = row[k]));
+        groups.set(key, base);
+      }
+      const target = groups.get(key);
+      const isCurrent = row.dateRange === "date_range_0";
+
+      metricHeaders.forEach((h: any) => {
+        const numValue = parseFloat(row[h.name] || "0");
+        if (isCurrent) {
+          target[h.name] = row[h.name];
+          target[`__current_${h.name}`] = numValue;
+        } else {
+          target[`${h.name}_previous`] = row[h.name];
+          target[`__previous_${h.name}`] = numValue;
+        }
+      });
+    });
+
+    return Array.from(groups.values()).map((group: any) => {
+      metricHeaders.forEach((h: any) => {
+        const current = group[`__current_${h.name}`] ?? 0;
+        const previous = group[`__previous_${h.name}`] ?? 0;
+        group[`${h.name}_delta`] =
+          previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
+        delete group[`__current_${h.name}`];
+        delete group[`__previous_${h.name}`];
+      });
+      return group;
+    });
+  }, [flattenData, hasComparison, dimensionHeaders, metricHeaders]);
 
   const columns = useMemo<ColumnDef<any>[]>(() => {
     if (!analyticsData?.response?.[0]) return [];
 
-    const dimHeaders = analyticsData.response[0].dimensionHeaders || [];
-    const metHeaders = analyticsData.response[0].metricHeaders || [];
-
     const cols: ColumnDef<any>[] = [];
 
-    // Dimensions Columns
-    dimHeaders.forEach((header: any) => {
+    dimensionHeaders
+      .filter((header: any) => header.name !== "dateRange")
+      .forEach((header: any) => {
+        cols.push({
+          accessorKey: header.name,
+          header: humanizeHeader(header.name),
+          cell: ({ row }) => (
+            <div
+              className="truncate max-w-[400px]"
+              title={row.getValue(header.name)}
+            >
+              {row.getValue(header.name) || "N/A"}
+            </div>
+          ),
+        });
+      });
+
+    metricHeaders.forEach((header: any) => {
       cols.push({
         accessorKey: header.name,
-        header:
-          header.name.charAt(0).toUpperCase() +
-          header.name
-            .slice(1)
-            .replace(/([A-Z])/g, " $1")
-            .trim(),
-        cell: ({ row }) => (
-          <div
-            className="truncate max-w-[400px]"
-            title={row.getValue(header.name)}
-          >
-            {row.getValue(header.name) || "N/A"}
-          </div>
-        ),
+        header: humanizeHeader(header.name),
+        cell: ({ row }) => formatMetricValue(header.name, row.getValue(header.name)),
       });
-    });
 
-    // Metrics Columns
-    metHeaders.forEach((header: any) => {
-      cols.push({
-        accessorKey: header.name,
-        header:
-          header.name.charAt(0).toUpperCase() +
-          header.name
-            .slice(1)
-            .replace(/([A-Z])/g, " $1")
-            .trim(),
-        cell: ({ row }) => {
-          const value: any = row.getValue(header.name);
-          const numValue = parseFloat(value || "0");
-
-          if (
-            header.name === "bounceRate" ||
-            header.name === "engagementRate"
-          ) {
-            return `${(numValue * 100).toFixed(2)}%`;
-          }
-          return numValue.toLocaleString(undefined, {
-            maximumFractionDigits: 1,
-          });
-        },
-      });
+      if (hasComparison) {
+        cols.push({
+          accessorKey: `${header.name}_previous`,
+          header: `${humanizeHeader(header.name)} (Previous)`,
+          cell: ({ row }) =>
+            formatMetricValue(header.name, row.getValue(`${header.name}_previous`)),
+        });
+        cols.push({
+          accessorKey: `${header.name}_delta`,
+          header: `${humanizeHeader(header.name)} Δ%`,
+          cell: ({ row }) => {
+            const delta = row.getValue(`${header.name}_delta`);
+            if (delta === null || delta === undefined) return "N/A";
+            const num = Number(delta);
+            const sign = num > 0 ? "+" : "";
+            return (
+              <span
+                className={
+                  num > 0
+                    ? "text-green-600 dark:text-green-400"
+                    : num < 0
+                      ? "text-red-600 dark:text-red-400"
+                      : ""
+                }
+              >
+                {sign}
+                {num.toFixed(1)}%
+              </span>
+            );
+          },
+        });
+      }
     });
 
     return cols;
-  }, [analyticsData]);
+  }, [analyticsData, dimensionHeaders, metricHeaders, hasComparison]);
 
   return (
     <div className="px-0 h-full flex flex-col dark:text-white/50">
       <UniversalKeywordTable
-        data={flattenData}
+        data={tableData}
         columns={columns}
         searchPlaceholder="Search data..."
         isLoading={isLoading}
@@ -325,9 +405,27 @@ export default function AnalyticsTable() {
               <SelectContent className="dark:text-white text-xs dark:bg-brand-darker dark:border-brand-dark">
                 <SelectItem value="general">General</SelectItem>
                 <SelectItem value="landings">Landings</SelectItem>
+                <SelectItem value="pages">Pages</SelectItem>
+                <SelectItem value="channels">Channels</SelectItem>
                 <SelectItem value="country">Country</SelectItem>
                 <SelectItem value="city">City</SelectItem>
                 <SelectItem value="device">Device</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              onValueChange={(val) => setRowLimit(Number(val))}
+              value={String(rowLimit)}
+            >
+              <SelectTrigger className="w-[110px] h-9 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark focus:ring-1 focus:ring-offset-0 rounded-xl">
+                <SelectValue placeholder="Rows" />
+              </SelectTrigger>
+              <SelectContent className="dark:text-white text-xs dark:bg-brand-darker dark:border-brand-dark">
+                {ROW_LIMIT_OPTIONS.map((limit) => (
+                  <SelectItem key={limit} value={String(limit)}>
+                    {limit.toLocaleString()} rows
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -370,6 +468,17 @@ export default function AnalyticsTable() {
                   className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 font-medium text-right pointer-events-none"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm">
+              <Switch
+                checked={compareEnabled}
+                onCheckedChange={(checked) => setCompareEnabled(checked)}
+                className="scale-75"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                Compare to previous period
+              </span>
             </div>
 
             <button

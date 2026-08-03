@@ -5,6 +5,7 @@ use crate::{domain_crawler::domain_crawler, AppState};
 
 use super::{
     database::{self, DiffAnalysis},
+    duplicate_content::{self, DuplicateGroup},
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
         generate_keywords_excel, generate_links_table_excel, generate_xlsx,
@@ -323,6 +324,40 @@ pub async fn export_files_to_excel_command() -> Result<Vec<u8>, String> {
         }
         _ => Err("Invalid data format for files".to_string()),
     }
+}
+
+#[derive(serde::Serialize)]
+pub struct DuplicateContentReport {
+    /// Mirrors Settings > Crawler > Duplicated Content Check, so the frontend can
+    /// show a "not enabled" state instead of an empty result set.
+    pub enabled: bool,
+    pub groups: Vec<DuplicateGroup>,
+}
+
+// Clusters similar/identical pages from the current crawl using fingerprints computed
+// during crawl (only present when Settings > Crawler > Duplicated Content Check was
+// enabled at crawl time). Purely reads already-persisted data — safe to call repeatedly
+// on demand from the Duplicate Content dashboard tab without re-crawling.
+#[tauri::command]
+pub async fn find_duplicate_content_command() -> Result<DuplicateContentReport, String> {
+    let settings = crate::settings::settings::load_settings().await?;
+    if !settings.duplicate_content_check_enabled {
+        return Ok(DuplicateContentReport {
+            enabled: false,
+            groups: Vec::new(),
+        });
+    }
+
+    let db = database::get_or_create_shared_db()
+        .await
+        .map_err(|e| e.to_string())?;
+    let pages = db.get_all_crawl_data().await.map_err(|e| e.to_string())?;
+    let groups = duplicate_content::find_duplicate_groups(&pages);
+
+    Ok(DuplicateContentReport {
+        enabled: true,
+        groups,
+    })
 }
 
 #[tauri::command]

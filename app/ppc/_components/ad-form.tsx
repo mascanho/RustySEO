@@ -9,6 +9,7 @@ import { SitelinksEditor } from "./sitelinks-editor";
 import { ImageManager } from "./image-manager";
 import { ExtensionsEditor } from "./extensions-editor";
 import { CampaignSettings } from "./campaign-settings";
+import { AdStrengthMeter } from "./ad-strength";
 import { exportAdsToCSV } from "@/utils/ad-export";
 import { importAdsFromCSV } from "@/utils/ad-import";
 import { toast } from "sonner";
@@ -251,6 +252,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 pt-4 space-y-6 pb-32">
         {activeTab === "content" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* AD STRENGTH — live quality feedback */}
+            <AdStrengthMeter ad={formData} />
+
             {/* AD TYPE SELECTION */}
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
               <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">

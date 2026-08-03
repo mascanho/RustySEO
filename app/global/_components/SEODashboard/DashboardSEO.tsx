@@ -24,6 +24,7 @@ import {
   Database,
   BarChart4,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -77,6 +78,179 @@ type DeepCrawlHistory = {
   avg_page_size_kb?: number;
   duplicate_titles?: number;
   duplicate_descriptions?: number;
+  status_2xx?: number;
+  status_3xx?: number;
+  status_4xx?: number;
+  status_5xx?: number;
+};
+
+// ---------------------------------------------------------------------------
+// Scorecard scoring model
+// ---------------------------------------------------------------------------
+// Tone tokens (kept as literal Tailwind strings so they survive purge).
+const TONE: Record<
+  string,
+  { text: string; bar: string; soft: string; ring: string }
+> = {
+  emerald: {
+    text: "text-emerald-500",
+    bar: "bg-emerald-500",
+    soft: "bg-emerald-500/10",
+    ring: "#10b981",
+  },
+  sky: {
+    text: "text-sky-500",
+    bar: "bg-sky-500",
+    soft: "bg-sky-500/10",
+    ring: "#0ea5e9",
+  },
+  amber: {
+    text: "text-amber-500",
+    bar: "bg-amber-500",
+    soft: "bg-amber-500/10",
+    ring: "#f59e0b",
+  },
+  orange: {
+    text: "text-orange-500",
+    bar: "bg-orange-500",
+    soft: "bg-orange-500/10",
+    ring: "#f97316",
+  },
+  rose: {
+    text: "text-rose-500",
+    bar: "bg-rose-500",
+    soft: "bg-rose-500/10",
+    ring: "#f43f5e",
+  },
+  slate: {
+    text: "text-slate-500",
+    bar: "bg-slate-400",
+    soft: "bg-slate-500/10",
+    ring: "#94a3b8",
+  },
+};
+
+const SEV: Record<
+  string,
+  { text: string; dot: string; soft: string; bar: string; label: string }
+> = {
+  critical: {
+    text: "text-rose-500",
+    dot: "bg-rose-500",
+    soft: "bg-rose-500/10",
+    bar: "bg-rose-500",
+    label: "Critical",
+  },
+  high: {
+    text: "text-orange-500",
+    dot: "bg-orange-500",
+    soft: "bg-orange-500/10",
+    bar: "bg-orange-500",
+    label: "High",
+  },
+  medium: {
+    text: "text-amber-500",
+    dot: "bg-amber-500",
+    soft: "bg-amber-500/10",
+    bar: "bg-amber-500",
+    label: "Medium",
+  },
+  low: {
+    text: "text-sky-500",
+    dot: "bg-sky-500",
+    soft: "bg-sky-500/10",
+    bar: "bg-sky-500",
+    label: "Low",
+  },
+};
+
+// Pick a colour tone for any 0–100 score.
+const scoreTone = (v: number) =>
+  v >= 80 ? "emerald" : v >= 60 ? "amber" : v >= 40 ? "orange" : "rose";
+
+// Map an overall score to a letter grade.
+const gradeInfo = (score: number) => {
+  if (score >= 90)
+    return { letter: "A", label: "Excellent", tone: "emerald" };
+  if (score >= 80) return { letter: "B", label: "Good", tone: "sky" };
+  if (score >= 70) return { letter: "C", label: "Fair", tone: "amber" };
+  if (score >= 55) return { letter: "D", label: "Needs Work", tone: "orange" };
+  return { letter: "F", label: "Critical", tone: "rose" };
+};
+
+// Weighted, five-pillar site-health model. Each pillar is 0–100 so an SEO can
+// see not just *that* health moved but *where*. Reused for the current and the
+// previous crawl to produce real trends.
+const computeHealth = (c: DeepCrawlHistory | null) => {
+  const empty = {
+    overall: 100,
+    pillars: {
+      indexability: 100,
+      http: 100,
+      meta: 100,
+      content: 100,
+      security: 100,
+    },
+  };
+  if (!c) return empty;
+  const pages = c.pages || 0;
+  if (pages === 0) return empty;
+
+  const clamp = (v: number) => Math.max(0, Math.min(100, v));
+  const r = (n?: number) => (n || 0) / pages; // share of site affected (0..1)
+
+  // Indexability — share of crawled pages that can actually rank.
+  const indexability = clamp(
+    Math.round(((c.indexable_pages || 0) / pages) * 100),
+  );
+
+  // HTTP health — 5xx is the most damaging, then 4xx, then generic errors.
+  const http = clamp(
+    100 - r(c.status_5xx) * 400 - r(c.status_4xx) * 220 - r(c.errors) * 140,
+  );
+
+  // On-page meta — titles weigh most, then H1s, descriptions and duplicates.
+  const meta = clamp(
+    100 -
+      r(c.missing_title) * 130 -
+      r(c.missing_h1) * 60 -
+      r(c.missing_description) * 55 -
+      r(c.duplicate_titles) * 70 -
+      r(c.duplicate_descriptions) * 40 -
+      r(c.missing_canonical) * 30,
+  );
+
+  // Content quality — blends thin-content rate, depth and readability.
+  const wordScore = Math.min(100, ((c.avg_word_count || 0) / 600) * 100);
+  const readScore =
+    c.avg_readability && c.avg_readability > 0
+      ? Math.min(100, c.avg_readability)
+      : 70;
+  const content = clamp(
+    0.5 * (100 - r(c.thin_content_pages) * 130) +
+      0.25 * wordScore +
+      0.25 * readScore,
+  );
+
+  // Security & mobile — HTTPS + mobile coverage, penalised by mixed content.
+  const httpsCov = ((c.total_secure_pages || 0) / pages) * 100;
+  const mobileCov = ((c.total_mobile_pages || 0) / pages) * 100;
+  const security = clamp(
+    0.55 * httpsCov + 0.45 * mobileCov - r(c.mixed_content_pages) * 90,
+  );
+
+  const overall = Math.round(
+    indexability * 0.2 +
+      http * 0.25 +
+      meta * 0.2 +
+      content * 0.15 +
+      security * 0.2,
+  );
+
+  return {
+    overall,
+    pillars: { indexability, http, meta, content, security },
+  };
 };
 
 export default function DashboardSEO() {
@@ -86,6 +260,8 @@ export default function DashboardSEO() {
   const [activeSubTab, setActiveSubTab] = useState<
     "overview" | "trends" | "comparison" | "issues"
   >("overview");
+  const [confirmDeleteDomain, setConfirmDeleteDomain] = useState(false);
+  const [deletingDomain, setDeletingDomain] = useState(false);
 
   // Comparison State
   const [compCrawl1Id, setCompCrawl1Id] = useState<string>("");
@@ -119,6 +295,29 @@ export default function DashboardSEO() {
       toast.error("Failed to load historical analytics");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteDomainHistory = async () => {
+    if (selectedDomain === "all" || selectedDomain === "none") return;
+
+    if (!confirmDeleteDomain) {
+      setConfirmDeleteDomain(true);
+      return;
+    }
+
+    setDeletingDomain(true);
+    try {
+      await invoke("delete_domain_results_history", { domain: selectedDomain });
+      toast.success(`Historical data for ${selectedDomain} deleted`);
+      setSelectedDomain("all");
+      await fetchHistoryData();
+    } catch (e) {
+      console.error("Failed to delete domain history:", e);
+      toast.error("Failed to delete historical data");
+    } finally {
+      setDeletingDomain(false);
+      setConfirmDeleteDomain(false);
     }
   };
 
@@ -215,28 +414,298 @@ export default function DashboardSEO() {
     return history.find((c) => c.id?.toString() === compCrawl2Id) || null;
   }, [history, compCrawl2Id]);
 
-  // Compute Health Score dynamically out of 100
-  const healthScore = useMemo(() => {
-    if (!latestCrawl) return 100;
-    const {
-      pages,
-      errors = 0,
-      missing_title = 0,
-      missing_description = 0,
-      total_redirects = 0,
-      not_indexable_pages = 0,
-    } = latestCrawl;
+  // Comprehensive five-pillar health for current + previous crawl (real trend).
+  const health = useMemo(() => computeHealth(latestCrawl), [latestCrawl]);
+  const prevHealth = useMemo(
+    () => (previousCrawl ? computeHealth(previousCrawl) : null),
+    [previousCrawl],
+  );
+  const healthScore = health.overall;
+  const grade = useMemo(() => gradeInfo(healthScore), [healthScore]);
 
-    if (pages === 0) return 100;
+  // Prioritised action plan — every detected issue, ranked by severity tier
+  // then by the number of pages affected, so the biggest wins float to the top.
+  const prioritizedIssues = useMemo(() => {
+    if (!latestCrawl) return [];
+    const c = latestCrawl;
+    const p = previousCrawl;
+    const pages = c.pages || 0;
 
-    let penalty = 0;
-    penalty += (errors / pages) * 25; // Critical issues (errors) have high weight
-    penalty += (missing_title / pages) * 15; // SEO crucial
-    penalty += (missing_description / pages) * 8; // Secondary SEO
-    penalty += (total_redirects / pages) * 5; // Internal links redirects penalty
-    penalty += (not_indexable_pages / pages) * 5; // Indexability checks
+    const defs = [
+      {
+        key: "5xx",
+        label: "Server Errors (5xx)",
+        count: c.status_5xx || 0,
+        prev: p?.status_5xx,
+        severity: "critical",
+        icon: AlertTriangle,
+        recommendation:
+          "Pages returning server errors can't be crawled or indexed. Fix these first — they signal instability to search engines.",
+      },
+      {
+        key: "4xx",
+        label: "Broken Pages (4xx)",
+        count: c.status_4xx || 0,
+        prev: p?.status_4xx,
+        severity: "critical",
+        icon: AlertTriangle,
+        recommendation:
+          "Broken URLs waste crawl budget and lose link equity. Redirect or restore them and fix internal links pointing to them.",
+      },
+      {
+        key: "errors",
+        label: "Crawl Errors",
+        count: c.errors || 0,
+        prev: p?.errors,
+        severity: "critical",
+        icon: AlertTriangle,
+        recommendation:
+          "Resolve connection, DNS or timeout errors so search engines can reliably reach your content.",
+      },
+      {
+        key: "missing_title",
+        label: "Missing Title Tags",
+        count: c.missing_title || 0,
+        prev: p?.missing_title,
+        severity: "high",
+        icon: FileText,
+        recommendation:
+          "The title is the strongest on-page ranking factor. Write a unique, keyword-led title for every page.",
+      },
+      {
+        key: "dup_title",
+        label: "Duplicate Titles",
+        count: c.duplicate_titles || 0,
+        prev: p?.duplicate_titles,
+        severity: "high",
+        icon: Code2,
+        recommendation:
+          "Duplicate titles cause keyword cannibalisation. Differentiate each title so pages target distinct queries.",
+      },
+      {
+        key: "not_indexable",
+        label: "Non-Indexable Pages",
+        count: c.not_indexable_pages || 0,
+        prev: p?.not_indexable_pages,
+        severity: "high",
+        icon: Globe,
+        recommendation:
+          "Confirm these exclusions are intentional. Any valuable page that's non-indexable is invisible in search.",
+      },
+      {
+        key: "mixed",
+        label: "Mixed Content",
+        count: c.mixed_content_pages || 0,
+        prev: p?.mixed_content_pages,
+        severity: "high",
+        icon: Shield,
+        recommendation:
+          "HTTPS pages loading HTTP assets break the padlock and can be blocked by browsers. Serve every asset over HTTPS.",
+      },
+      {
+        key: "nohttps",
+        label: "Pages Without HTTPS",
+        count: Math.max(0, pages - (c.total_secure_pages || 0)),
+        prev: p
+          ? Math.max(0, (p.pages || 0) - (p.total_secure_pages || 0))
+          : undefined,
+        severity: "high",
+        icon: Shield,
+        recommendation:
+          "HTTPS is a confirmed ranking signal and a trust requirement. Migrate any remaining HTTP pages.",
+      },
+      {
+        key: "missing_h1",
+        label: "Missing H1",
+        count: c.missing_h1 || 0,
+        prev: p?.missing_h1,
+        severity: "medium",
+        icon: FileText,
+        recommendation:
+          "Add a single descriptive H1 to clarify each page's primary topic for users and crawlers.",
+      },
+      {
+        key: "missing_desc",
+        label: "Missing Meta Descriptions",
+        count: c.missing_description || 0,
+        prev: p?.missing_description,
+        severity: "medium",
+        icon: FileText,
+        recommendation:
+          "Compelling meta descriptions lift click-through rate from the SERP even though they aren't a direct ranking factor.",
+      },
+      {
+        key: "dup_desc",
+        label: "Duplicate Descriptions",
+        count: c.duplicate_descriptions || 0,
+        prev: p?.duplicate_descriptions,
+        severity: "medium",
+        icon: Code2,
+        recommendation:
+          "Rewrite duplicated descriptions so each SERP snippet is unique and relevant to that page.",
+      },
+      {
+        key: "thin",
+        label: "Thin Content Pages",
+        count: c.thin_content_pages || 0,
+        prev: p?.thin_content_pages,
+        severity: "medium",
+        icon: FileText,
+        recommendation:
+          "Expand or consolidate low-word-count pages — thin content rarely ranks and can drag down site quality signals.",
+      },
+      {
+        key: "canonical",
+        label: "Missing Canonical Tags",
+        count: c.missing_canonical || 0,
+        prev: p?.missing_canonical,
+        severity: "medium",
+        icon: Code2,
+        recommendation:
+          "Add self-referencing canonicals to consolidate ranking signals and prevent duplicate-URL dilution.",
+      },
+      {
+        key: "nomobile",
+        label: "Non Mobile-Friendly Pages",
+        count: Math.max(0, pages - (c.total_mobile_pages || 0)),
+        prev: p
+          ? Math.max(0, (p.pages || 0) - (p.total_mobile_pages || 0))
+          : undefined,
+        severity: "medium",
+        icon: Smartphone,
+        recommendation:
+          "Google indexes mobile-first. Ensure every page renders and responds correctly on small screens.",
+      },
+      {
+        key: "redirects",
+        label: "Redirect Hops (3xx)",
+        count: c.total_redirects || 0,
+        prev: p?.total_redirects,
+        severity: "low",
+        icon: ArrowLeftRight,
+        recommendation:
+          "Point internal links directly at final URLs to preserve link equity and speed up crawling.",
+      },
+    ];
 
-    return Math.max(10, Math.round(100 - penalty));
+    const sevRank: Record<string, number> = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
+
+    return defs
+      .filter((d) => d.count > 0)
+      .map((d) => ({
+        ...d,
+        pct: pages > 0 ? (d.count / pages) * 100 : 0,
+      }))
+      .sort(
+        (a, b) => sevRank[a.severity] - sevRank[b.severity] || b.count - a.count,
+      );
+  }, [latestCrawl, previousCrawl]);
+
+  // Summary of the action plan for the header badges.
+  const issuesSummary = useMemo(() => {
+    const criticalTypes = prioritizedIssues.filter(
+      (i) => i.severity === "critical",
+    ).length;
+    const affected = prioritizedIssues.reduce((a, b) => a + b.count, 0);
+    return { types: prioritizedIssues.length, criticalTypes, affected };
+  }, [prioritizedIssues]);
+
+  // HTTP status-code distribution for the response-mix bar.
+  const statusDist = useMemo(() => {
+    if (!latestCrawl) return [];
+    return [
+      { name: "2xx OK", value: latestCrawl.status_2xx || 0, color: "#10b981" },
+      {
+        name: "3xx Redirect",
+        value: latestCrawl.status_3xx || 0,
+        color: "#f59e0b",
+      },
+      {
+        name: "4xx Broken",
+        value: latestCrawl.status_4xx || 0,
+        color: "#f43f5e",
+      },
+      {
+        name: "5xx Server",
+        value: latestCrawl.status_5xx || 0,
+        color: "#7c3aed",
+      },
+    ].filter((s) => s.value > 0);
+  }, [latestCrawl]);
+
+  // Coverage meters — share of crawl passing each key signal.
+  const coverage = useMemo(() => {
+    if (!latestCrawl) return [];
+    const pages = latestCrawl.pages || 1;
+    const pc = (n?: number) => Math.round(((n || 0) / pages) * 100);
+    return [
+      {
+        label: "Indexable",
+        pct: pc(latestCrawl.indexable_pages),
+        icon: Globe,
+      },
+      {
+        label: "HTTPS Secure",
+        pct: pc(latestCrawl.total_secure_pages),
+        icon: Shield,
+      },
+      {
+        label: "Mobile-Friendly",
+        pct: pc(latestCrawl.total_mobile_pages),
+        icon: Smartphone,
+      },
+      {
+        label: "Structured Data",
+        pct: pc(latestCrawl.total_schema_pages),
+        icon: CheckCircle,
+      },
+    ];
+  }, [latestCrawl]);
+
+  // Content-quality mini metrics.
+  const contentMetrics = useMemo(() => {
+    if (!latestCrawl) return [];
+    const c = latestCrawl;
+    return [
+      {
+        label: "Avg Word Count",
+        value: (c.avg_word_count || 0).toLocaleString(),
+        hint: (c.avg_word_count || 0) < 300 ? "Below depth target" : "Healthy depth",
+        good: (c.avg_word_count || 0) >= 300,
+        icon: FileText,
+      },
+      {
+        label: "Readability",
+        value: `${c.avg_readability || 0}`,
+        hint:
+          (c.avg_readability || 0) >= 60
+            ? "Easy to read"
+            : (c.avg_readability || 0) > 0
+              ? "Hard to read"
+              : "Not scored",
+        good: (c.avg_readability || 0) >= 60,
+        icon: BarChart4,
+      },
+      {
+        label: "Avg Page Size",
+        value: `${(c.avg_page_size_kb || 0).toLocaleString()} KB`,
+        hint: (c.avg_page_size_kb || 0) > 2048 ? "Heavy pages" : "Lean pages",
+        good: (c.avg_page_size_kb || 0) <= 2048,
+        icon: Database,
+      },
+      {
+        label: "Thin Content",
+        value: (c.thin_content_pages || 0).toLocaleString(),
+        hint: "Low-word pages",
+        good: (c.thin_content_pages || 0) === 0,
+        icon: AlertTriangle,
+      },
+    ];
   }, [latestCrawl]);
 
   // Tech Asset breakdown for Pie Chart
@@ -305,9 +774,9 @@ export default function DashboardSEO() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-brand-darker text-slate-800 dark:text-slate-200 overflow-y-auto px-6 py-4 pb-20 select-none">
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-brand-darker text-slate-800 dark:text-slate-200 overflow-y-auto px-6 pt-2 pb-20 select-none">
       {/* Top Filter Bar */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
         <div>
           <h1 className="text-base font-bold dark:text-white flex items-center gap-2">
             <BarChart4 className="w-5 h-5 text-sky-500" />
@@ -325,7 +794,10 @@ export default function DashboardSEO() {
             <Globe className="w-4 h-4 text-sky-500" />
             <select
               value={selectedDomain}
-              onChange={(e) => setSelectedDomain(e.target.value)}
+              onChange={(e) => {
+                setSelectedDomain(e.target.value);
+                setConfirmDeleteDomain(false);
+              }}
               className="bg-transparent border-0 outline-0 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer min-w-[150px]"
             >
               {domainsList.length === 0 && (
@@ -345,6 +817,35 @@ export default function DashboardSEO() {
             title="Refresh history data"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={handleDeleteDomainHistory}
+            onBlur={() => setConfirmDeleteDomain(false)}
+            disabled={
+              selectedDomain === "all" ||
+              selectedDomain === "none" ||
+              deletingDomain
+            }
+            className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              confirmDeleteDomain
+                ? "bg-rose-500 border-rose-500 text-white hover:bg-rose-600"
+                : "border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+            }`}
+            title={
+              confirmDeleteDomain
+                ? `Click again to permanently delete all history for ${selectedDomain}`
+                : `Delete historical data for ${selectedDomain}`
+            }
+          >
+            {confirmDeleteDomain ? (
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-1">
+                <Trash2 className="w-4 h-4" />
+                Confirm
+              </span>
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
           </button>
         </div>
       </header>
@@ -382,46 +883,61 @@ export default function DashboardSEO() {
             ))}
           </div>
 
-          {/* Sub-tab 1: Overview Scorecard */}
+          {/* Sub-tab 1: Crawl Audit Scorecard */}
           {activeSubTab === "overview" && latestCrawl && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300">
-              {/* Row 1: KPI Stats Grid */}
-              <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Health Score Card */}
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Technical Health
-                    </span>
-                    <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-500">
-                      <Activity className="w-4 h-4" />
+            <div className="flex flex-col gap-5 animate-in fade-in duration-300">
+              {/* Row 1: Headline KPI cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Overall Health Grade */}
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                  <div className="relative w-[70px] h-[70px] shrink-0">
+                    <svg viewBox="0 0 120 120" className="w-[70px] h-[70px] -rotate-90">
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        strokeWidth="12"
+                        className="stroke-slate-100 dark:stroke-slate-800"
+                      />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        strokeWidth="12"
+                        strokeLinecap="round"
+                        stroke={TONE[grade.tone].ring}
+                        strokeDasharray={2 * Math.PI * 52}
+                        strokeDashoffset={2 * Math.PI * 52 * (1 - healthScore / 100)}
+                        style={{ transition: "stroke-dashoffset 0.6s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-xl font-extrabold ${TONE[grade.tone].text}`}>
+                        {grade.letter}
+                      </span>
                     </div>
                   </div>
-                  <div className="my-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold tracking-tight dark:text-white">
-                      {healthScore}%
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Health Score
                     </span>
-                    {previousCrawl &&
-                      renderGrowth(healthScore, previousCrawl ? 88 : undefined)}
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-extrabold tracking-tight dark:text-white">
+                        {healthScore}
+                      </span>
+                      <span className="text-xs text-slate-400">/100</span>
+                      {prevHealth &&
+                        renderGrowth(healthScore, prevHealth.overall)}
+                    </div>
+                    <p className={`text-[10px] font-semibold ${TONE[grade.tone].text}`}>
+                      {grade.label}
+                    </p>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-                    <div
-                      className={`h-full rounded-full ${
-                        healthScore > 85
-                          ? "bg-emerald-500"
-                          : healthScore > 65
-                            ? "bg-amber-500"
-                            : "bg-rose-500"
-                      }`}
-                      style={{ width: `${healthScore}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-2">
-                    Weighted dynamic score of site health
-                  </p>
                 </div>
 
-                {/* Total Pages Crawled Card */}
+                {/* Pages Crawled */}
                 <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -447,11 +963,53 @@ export default function DashboardSEO() {
                       )}
                       %
                     </span>
-                    indexable ratio coverage
+                    indexable coverage
                   </div>
                 </div>
 
-                {/* Crawl Response Performance Card */}
+                {/* Broken / Error Pages */}
+                {(() => {
+                  const broken =
+                    (latestCrawl.status_4xx || 0) + (latestCrawl.status_5xx || 0);
+                  const prevBroken = previousCrawl
+                    ? (previousCrawl.status_4xx || 0) +
+                      (previousCrawl.status_5xx || 0)
+                    : undefined;
+                  const brokenPct = latestCrawl.pages
+                    ? (broken / latestCrawl.pages) * 100
+                    : 0;
+                  return (
+                    <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Broken Pages
+                        </span>
+                        <div
+                          className={`p-1.5 rounded-lg ${broken > 0 ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"}`}
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2 flex items-baseline gap-2">
+                        <span
+                          className={`text-3xl font-extrabold tracking-tight ${broken > 0 ? "text-rose-500" : "dark:text-white"}`}
+                        >
+                          {broken.toLocaleString()}
+                        </span>
+                        {previousCrawl &&
+                          renderGrowth(broken, prevBroken, true)}
+                      </div>
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                        <span className="font-semibold text-rose-500">
+                          {brokenPct.toFixed(1)}%
+                        </span>
+                        of crawl (4xx + 5xx)
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Avg Response Time */}
                 <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -476,325 +1034,468 @@ export default function DashboardSEO() {
                       )}
                   </div>
                   <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                    Max Depth reaches
+                    Max crawl depth
                     <span className="font-bold text-sky-500">
                       {latestCrawl.max_crawl_depth ?? 0}
                     </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Total Links Card */}
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Total Links Found
-                    </span>
-                    <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
-                      <Layers className="w-4 h-4" />
+              {/* Row 2: Prioritized Action Plan + Health Pillars */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                {/* Prioritized Action Plan */}
+                <div className="lg:col-span-8 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                        Prioritized Action Plan
+                      </h3>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Ranked by severity and pages affected — start at the top.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {issuesSummary.criticalTypes > 0 && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-rose-500/10 text-rose-500">
+                          {issuesSummary.criticalTypes} critical
+                        </span>
+                      )}
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300">
+                        {issuesSummary.types} issue{issuesSummary.types === 1 ? "" : "s"}
+                      </span>
                     </div>
                   </div>
-                  <div className="my-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold tracking-tight dark:text-white">
-                      {(latestCrawl.total_links || 0).toLocaleString()}
-                    </span>
-                    {previousCrawl &&
-                      renderGrowth(
-                        latestCrawl.total_links,
-                        previousCrawl.total_links,
-                      )}
-                  </div>
-                  <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                      {(latestCrawl.total_internal_links || 0).toLocaleString()}
-                    </span>
-                    int /
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                      {(latestCrawl.total_external_links || 0).toLocaleString()}
-                    </span>
-                    ext links
+
+                  {prioritizedIssues.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-500 mb-3">
+                        <CheckCircle className="w-7 h-7" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        No issues detected
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
+                        This crawl passed every technical, on-page and security
+                        check. Keep scanning regularly to catch regressions.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[430px] overflow-y-auto pr-1 -mr-1">
+                      {prioritizedIssues.map((issue, idx) => {
+                        const sev = SEV[issue.severity];
+                        const Icon = issue.icon;
+                        const delta =
+                          issue.prev !== undefined && issue.prev !== null
+                            ? issue.count - issue.prev
+                            : null;
+                        return (
+                          <div
+                            key={issue.key}
+                            className="group flex items-start gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-800/70 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                          >
+                            <div className="flex flex-col items-center pt-0.5">
+                              <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 w-4 text-center">
+                                {idx + 1}
+                              </span>
+                            </div>
+                            <div className={`p-1.5 rounded-lg shrink-0 ${sev.soft} ${sev.text}`}>
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                                    {issue.label}
+                                  </span>
+                                  <span
+                                    className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${sev.soft} ${sev.text} shrink-0`}
+                                  >
+                                    {sev.label}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {delta !== null && delta !== 0 && (
+                                    <span
+                                      className={`inline-flex items-center gap-0.5 text-[9px] font-semibold ${delta < 0 ? "text-emerald-500" : "text-rose-500"}`}
+                                    >
+                                      {delta < 0 ? (
+                                        <TrendingDown className="w-2.5 h-2.5" />
+                                      ) : (
+                                        <TrendingUp className="w-2.5 h-2.5" />
+                                      )}
+                                      {Math.abs(delta).toLocaleString()}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-extrabold text-slate-800 dark:text-white">
+                                    {issue.count.toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${sev.bar}`}
+                                    style={{
+                                      width: `${Math.max(2, Math.min(100, issue.pct))}%`,
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[9px] font-semibold text-slate-400 w-14 text-right">
+                                  {issue.pct.toFixed(1)}% of site
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                                {issue.recommendation}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Health Pillars */}
+                <div className="lg:col-span-4 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm flex flex-col">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1">
+                    Health Breakdown
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-5">
+                    Five weighted pillars behind the overall score.
+                  </p>
+
+                  <div className="space-y-4 flex-1">
+                    {[
+                      {
+                        label: "Indexability",
+                        value: health.pillars.indexability,
+                        prev: prevHealth?.pillars.indexability,
+                        icon: Globe,
+                      },
+                      {
+                        label: "HTTP Health",
+                        value: health.pillars.http,
+                        prev: prevHealth?.pillars.http,
+                        icon: Activity,
+                      },
+                      {
+                        label: "On-Page Meta",
+                        value: health.pillars.meta,
+                        prev: prevHealth?.pillars.meta,
+                        icon: Code2,
+                      },
+                      {
+                        label: "Content Quality",
+                        value: health.pillars.content,
+                        prev: prevHealth?.pillars.content,
+                        icon: FileText,
+                      },
+                      {
+                        label: "Security & Mobile",
+                        value: health.pillars.security,
+                        prev: prevHealth?.pillars.security,
+                        icon: Shield,
+                      },
+                    ].map((pillar) => {
+                      const tone = TONE[scoreTone(pillar.value)];
+                      const Icon = pillar.icon;
+                      const delta =
+                        pillar.prev !== undefined
+                          ? pillar.value - pillar.prev
+                          : null;
+                      return (
+                        <div key={pillar.label}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                              <Icon className={`w-3 h-3 ${tone.text}`} />
+                              {pillar.label}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {delta !== null && delta !== 0 && (
+                                <span
+                                  className={`text-[9px] font-semibold ${delta > 0 ? "text-emerald-500" : "text-rose-500"}`}
+                                >
+                                  {delta > 0 ? "+" : ""}
+                                  {delta}
+                                </span>
+                              )}
+                              <span className={`text-xs font-bold ${tone.text}`}>
+                                {pillar.value}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${tone.bar}`}
+                              style={{ width: `${pillar.value}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
-              {/* Column 2: Tech Audit Breakdown List */}
-              <div className="col-span-12 lg:col-span-8 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-4">
-                  On-Page SEO & Quality Audit
-                </h3>
+              {/* Row 3: Coverage & response mix + Tech assets */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                {/* Coverage meters + HTTP status distribution */}
+                <div className="lg:col-span-8 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-4">
+                    Coverage & Response Mix
+                  </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  {/* Left Column: Missing elements */}
-                  <div className="space-y-3.5">
-                    <h4 className="text-[10px] font-extrabold tracking-wider uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                      Missing & Critical Errors
-                    </h4>
-
-                    {/* Errors */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                        Critical Page Errors
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-bold ${latestCrawl.errors ? "text-rose-500" : "text-emerald-500"}`}
+                  {/* Coverage meters */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    {coverage.map((m) => {
+                      const tone = TONE[scoreTone(m.pct)];
+                      const Icon = m.icon;
+                      return (
+                        <div
+                          key={m.label}
+                          className="flex flex-col items-center text-center"
                         >
-                          {latestCrawl.errors}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.errors,
-                            previousCrawl.errors,
-                            true,
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Missing Title */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                        Missing Title Tags
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-bold ${latestCrawl.missing_title ? "text-amber-500" : "text-slate-400"}`}
-                        >
-                          {latestCrawl.missing_title ?? 0}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.missing_title || 0,
-                            previousCrawl.missing_title || 0,
-                            true,
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Missing Description */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                        Missing Meta Descriptions
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-bold ${latestCrawl.missing_description ? "text-amber-500" : "text-slate-400"}`}
-                        >
-                          {latestCrawl.missing_description ?? 0}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.missing_description || 0,
-                            previousCrawl.missing_description || 0,
-                            true,
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Redirects */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <ArrowLeftRight className="w-3.5 h-3.5 text-sky-500" />
-                        Crawl Redirects (3xx)
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          {latestCrawl.total_redirects ?? 0}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.total_redirects || 0,
-                            previousCrawl.total_redirects || 0,
-                            true,
-                          )}
-                      </div>
-                    </div>
+                          <div className="relative w-[62px] h-[62px]">
+                            <svg
+                              viewBox="0 0 120 120"
+                              className="w-[62px] h-[62px] -rotate-90"
+                            >
+                              <circle
+                                cx="60"
+                                cy="60"
+                                r="52"
+                                fill="none"
+                                strokeWidth="12"
+                                className="stroke-slate-100 dark:stroke-slate-800"
+                              />
+                              <circle
+                                cx="60"
+                                cy="60"
+                                r="52"
+                                fill="none"
+                                strokeWidth="12"
+                                strokeLinecap="round"
+                                stroke={tone.ring}
+                                strokeDasharray={2 * Math.PI * 52}
+                                strokeDashoffset={
+                                  2 * Math.PI * 52 * (1 - m.pct / 100)
+                                }
+                                style={{ transition: "stroke-dashoffset 0.6s ease" }}
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className={`text-xs font-extrabold ${tone.text}`}>
+                                {m.pct}%
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1">
+                            <Icon className="w-3 h-3" />
+                            {m.label}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Right Column: Schema & Security */}
-                  <div className="space-y-3.5">
-                    <h4 className="text-[10px] font-extrabold tracking-wider uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                      Compliance & Signals
-                    </h4>
-
-                    {/* HTTPS Secure */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <Shield className="w-3.5 h-3.5 text-emerald-500" />
-                        HTTPS Security Coverage
+                  {/* HTTP status distribution bar */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        HTTP Status Distribution
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          {latestCrawl.total_secure_pages ?? 0} /{" "}
-                          {latestCrawl.pages}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.total_secure_pages || 0,
-                            previousCrawl.total_secure_pages || 0,
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Schema Markup */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-indigo-500" />
-                        Structured Data / Schema
+                      <span className="text-[10px] text-slate-400">
+                        {statusDist
+                          .reduce((a, b) => a + b.value, 0)
+                          .toLocaleString()}{" "}
+                        responses
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          {latestCrawl.total_schema_pages ?? 0}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.total_schema_pages || 0,
-                            previousCrawl.total_schema_pages || 0,
-                          )}
-                      </div>
                     </div>
-
-                    {/* Mobile Friendly */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <Smartphone className="w-3.5 h-3.5 text-sky-500" />
-                        Mobile Friendliness
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          {latestCrawl.total_mobile_pages ?? 0} /{" "}
-                          {latestCrawl.pages}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.total_mobile_pages || 0,
-                            previousCrawl.total_mobile_pages || 0,
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Indexability */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5 text-indigo-500" />
-                        Indexable Page Count
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-emerald-500">
-                          {latestCrawl.indexable_pages}
-                        </span>
-                        {previousCrawl &&
-                          renderGrowth(
-                            latestCrawl.indexable_pages,
-                            previousCrawl.indexable_pages,
-                          )}
-                      </div>
-                    </div>
+                    {statusDist.length > 0 ? (
+                      <>
+                        <div className="flex w-full h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                          {statusDist.map((s) => {
+                            const total = statusDist.reduce(
+                              (a, b) => a + b.value,
+                              0,
+                            );
+                            const w = total > 0 ? (s.value / total) * 100 : 0;
+                            return (
+                              <div
+                                key={s.name}
+                                style={{
+                                  width: `${w}%`,
+                                  backgroundColor: s.color,
+                                }}
+                                title={`${s.name}: ${s.value}`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+                          {statusDist.map((s) => (
+                            <div
+                              key={s.name}
+                              className="flex items-center gap-1.5 text-[10px]"
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: s.color }}
+                              />
+                              <span className="text-slate-500 dark:text-slate-400">
+                                {s.name}
+                              </span>
+                              <span className="font-bold text-slate-700 dark:text-slate-200">
+                                {s.value.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-slate-400 py-4">
+                        No status-code data recorded for this crawl.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Dynamic Insight Card */}
-                <div className="mt-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-lg flex items-start gap-3">
-                  <div className="p-1 rounded bg-amber-500/10 text-amber-500 mt-0.5">
+                {/* Tech assets composition */}
+                <div className="lg:col-span-4 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm flex flex-col">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2">
+                    Technical Assets
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-4">
+                    Pages and secondary files discovered in the crawl.
+                  </p>
+
+                  {techAssetData.length > 0 ? (
+                    <div className="flex-1 flex flex-col justify-center items-center">
+                      <div className="h-[140px] w-full relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={techAssetData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={42}
+                              outerRadius={62}
+                              paddingAngle={4}
+                              dataKey="value"
+                            >
+                              {techAssetData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                background: "#0f172a",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontSize: "11px",
+                                color: "#fff",
+                              }}
+                              itemStyle={{ color: "#fff" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            Assets
+                          </span>
+                          <span className="text-lg font-extrabold tracking-tight dark:text-white">
+                            {techAssetData.reduce((a, b) => a + b.value, 0)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full mt-4">
+                        {techAssetData.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between text-[11px] border-b border-slate-100 dark:border-slate-800 pb-1"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className="w-[7px] h-[7px] rounded-full"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="font-medium text-slate-600 dark:text-slate-400">
+                                {item.name}
+                              </span>
+                            </div>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                              {item.value.toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center py-10">
+                      <span className="text-xs text-slate-400">
+                        No asset compositions found.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 4: Content quality metrics */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-4">
+                  Content Quality Signals
+                </h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {contentMetrics.map((m) => {
+                    const Icon = m.icon;
+                    return (
+                      <div
+                        key={m.label}
+                        className="rounded-lg border border-slate-100 dark:border-slate-800/70 p-3.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            {m.label}
+                          </span>
+                          <div
+                            className={`p-1 rounded ${m.good ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"}`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                        <div className="text-xl font-extrabold tracking-tight dark:text-white mt-1.5">
+                          {m.value}
+                        </div>
+                        <p
+                          className={`text-[10px] font-medium mt-0.5 ${m.good ? "text-emerald-500" : "text-amber-500"}`}
+                        >
+                          {m.hint}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Automated insight */}
+                <div className="mt-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-lg flex items-start gap-3">
+                  <div
+                    className={`p-1 rounded mt-0.5 ${prioritizedIssues.length === 0 ? "bg-emerald-500/10 text-emerald-500" : TONE[grade.tone].soft + " " + TONE[grade.tone].text}`}
+                  >
                     <AlertTriangle className="w-4 h-4" />
                   </div>
                   <div>
                     <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                      Automated SEO Auditing Insight
+                      Automated Audit Insight
                     </h5>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      {latestCrawl.errors > 0
-                        ? `Warning: There are ${latestCrawl.errors} critical link or server errors detected on your domain. Resolve these issues immediately to restore search engines indexing throughput.`
-                        : latestCrawl.missing_description &&
-                            latestCrawl.missing_description > 0
-                          ? `Insight: Found Z-index meta-issues. You have ${latestCrawl.missing_description} pages with missing meta-descriptions. Writing descriptions for these indexable pages will boost Click-Through-Rate (CTR).`
-                          : "Superb! Your website indexation health is looking excellent. Keep scanning regularly to monitor code changes, redirect loops, or meta tag anomalies."}
+                      {prioritizedIssues.length === 0
+                        ? "Excellent — this crawl passed every check. Keep scanning regularly to catch regressions in indexability, meta tags or redirect loops early."
+                        : `Grade ${grade.letter} (${healthScore}/100). Your biggest win right now is "${prioritizedIssues[0].label}", affecting ${prioritizedIssues[0].count.toLocaleString()} page${prioritizedIssues[0].count === 1 ? "" : "s"} (${prioritizedIssues[0].pct.toFixed(1)}% of the crawl). ${prioritizedIssues[0].recommendation}`}
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Column 3: Tech Assets Composition */}
-              <div className="col-span-12 lg:col-span-4 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm flex flex-col">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2">
-                  Technical Assets Distribution
-                </h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-6">
-                  Visual breakdown of web pages and secondary files in the
-                  crawl.
-                </p>
-
-                {techAssetData.length > 0 ? (
-                  <div className="flex-1 flex flex-col justify-center items-center">
-                    <div className="h-[150px] w-full relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={techAssetData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={65}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {techAssetData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              background: "#0f172a",
-                              border: "none",
-                              borderRadius: "8px",
-                              fontSize: "11px",
-                              color: "#fff",
-                            }}
-                            itemStyle={{ color: "#fff" }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Assets
-                        </span>
-                        <span className="text-xl font-extrabold tracking-tight dark:text-white">
-                          {techAssetData.reduce((a, b) => a + b.value, 0)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Legends */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full mt-6">
-                      {techAssetData.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between text-[11px] border-b border-slate-100 dark:border-slate-800 pb-1"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            <span className="font-medium text-slate-600 dark:text-slate-400">
-                              {item.name}
-                            </span>
-                          </div>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center py-10">
-                    <span className="text-xs text-slate-400">
-                      No asset compositions found.
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -887,7 +1588,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -959,7 +1661,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1052,7 +1755,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1115,7 +1819,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Bar
                         dataKey="errors"
@@ -1127,6 +1832,89 @@ export default function DashboardSEO() {
                         dataKey="total_redirects"
                         name="Redirects"
                         fill="#f97316"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 4b: HTTP Status Code Breakdown */}
+              <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-5 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                    HTTP Status Code Breakdown
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Response distribution per crawl — a growing 4xx/5xx share
+                    signals broken links or server issues.
+                  </p>
+                </div>
+                <div className="h-[250px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chronologicalHistory}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(255,255,255,0.05)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => v.split("T")[0]}
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        style={{ fontSize: "9px" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        iconType="circle"
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
+                      />
+                      <Bar
+                        dataKey="status_2xx"
+                        name="2xx Success"
+                        stackId="status"
+                        fill="#22c55e"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_3xx"
+                        name="3xx Redirect"
+                        stackId="status"
+                        fill="#f97316"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_4xx"
+                        name="4xx Client Error"
+                        stackId="status"
+                        fill="#ef4444"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="status_5xx"
+                        name="5xx Server Error"
+                        stackId="status"
+                        fill="#991b1b"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -1181,7 +1969,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1252,7 +2041,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1336,7 +2126,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1438,7 +2229,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1502,7 +2294,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Bar
                         dataKey="max_crawl_depth"
@@ -1564,7 +2357,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1637,7 +2431,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1711,7 +2506,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -1803,7 +2599,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1888,7 +2685,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -1972,7 +2770,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Area
                         type="natural"
@@ -2037,7 +2836,8 @@ export default function DashboardSEO() {
                         verticalAlign="top"
                         height={36}
                         iconType="circle"
-                        style={{ fontSize: "11px" }}
+                        iconSize={11.9}
+                        wrapperStyle={{ fontSize: "9.82px" }}
                       />
                       <Line
                         type="monotone"
@@ -2312,6 +3112,61 @@ export default function DashboardSEO() {
                           label: "Mobile-Friendly Pages",
                           key: "total_mobile_pages",
                           lowerIsBetter: false,
+                        },
+                        {
+                          label: "Missing H1 Tags",
+                          key: "missing_h1",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Missing Canonical Tags",
+                          key: "missing_canonical",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Thin Content Pages",
+                          key: "thin_content_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Noindex Pages",
+                          key: "noindex_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Mixed Content Pages",
+                          key: "mixed_content_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Cookie-Flagged Pages",
+                          key: "cookies_pages",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Avg Word Count",
+                          key: "avg_word_count",
+                          lowerIsBetter: false,
+                        },
+                        {
+                          label: "Avg Readability Score",
+                          key: "avg_readability",
+                          lowerIsBetter: false,
+                        },
+                        {
+                          label: "Avg Page Size (KB)",
+                          key: "avg_page_size_kb",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Duplicate Titles",
+                          key: "duplicate_titles",
+                          lowerIsBetter: true,
+                        },
+                        {
+                          label: "Duplicate Descriptions",
+                          key: "duplicate_descriptions",
+                          lowerIsBetter: true,
                         },
                       ].map((row, idx) => {
                         const val1 = (comparisonCrawl1[

@@ -3,6 +3,7 @@ pub mod database;
 pub mod db_deep;
 pub mod domain_commands;
 pub mod domain_crawler;
+pub mod duplicate_content;
 pub mod excel;
 pub mod extractors;
 pub mod helpers;

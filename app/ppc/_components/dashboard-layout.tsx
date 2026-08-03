@@ -52,8 +52,8 @@ export function DashboardLayout({
         {" "}
         {/* flex-1 to take remaining height, overflow-hidden for internal scrolling */}
         <Sidebar>
-          <SidebarHeader className="dark:border-brand-dark">
-            <div className="flex items-center px-2 py-3">
+          <SidebarHeader className="dark:border-brand-dark p-0">
+            <div className="flex items-center px-2 py-0">
               <div className="flex items-center gap-2">
                 {/* <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand-bright flex items-center justify-center text-primary-foreground font-bold"> */}
                 {/*   A */}

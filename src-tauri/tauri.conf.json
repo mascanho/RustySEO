@@ -16,6 +16,7 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
+      "icons/icon.png",
       "icons/icon.icns",
       "icons/icon.ico"
     ],
@@ -42,7 +43,7 @@
   },
   "productName": "RustySEO",
   "mainBinaryName": "RustySEO",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "identifier": "rustyseo.com",
   "plugins": {},
   "app": {
@@ -51,7 +52,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "RustySEO - 0.3.9",
+        "title": "RustySEO - 0.4.0",
         "minWidth": 1600,
         "minHeight": 1000,
         "width": 1800,

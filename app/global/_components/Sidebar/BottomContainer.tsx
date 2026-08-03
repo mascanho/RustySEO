@@ -38,8 +38,8 @@ const BottomContainer = () => {
             <FixesContainer />
           </div>
         </Tabs.Panel>
-        <Tabs.Panel value="history" className="flex-1 overflow-auto">
-          <div className="flex flex-col gap-y-2 dark:bg-gray-900">
+        <Tabs.Panel value="history" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col dark:bg-gray-900">
             <HistoryDomainCrawls />
           </div>
         </Tabs.Panel>
