@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Loader2,
   ExternalLink,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,38 @@ export default function GSCConnectionWizard({
 
   const handleNext = () => setStep((s) => s + 1);
   const handleBack = () => setStep((s) => s - 1);
+
+  const handleImportJson = async () => {
+    try {
+      const { open: openDialog } = await import("@tauri-apps/plugin-dialog");
+      const { readTextFile } = await import("@tauri-apps/plugin-fs");
+
+      const filePath = await openDialog({
+        multiple: false,
+        filters: [{ name: "Google OAuth Client", extensions: ["json"] }],
+      });
+      if (!filePath || typeof filePath !== "string") return;
+
+      const raw = await readTextFile(filePath);
+      const parsed = JSON.parse(raw);
+      const info = parsed.installed || parsed.web || parsed;
+
+      if (!info.client_id || !info.client_secret) {
+        toast.error("This file doesn't look like a Google OAuth client JSON");
+        return;
+      }
+
+      setConfig({
+        clientId: info.client_id,
+        projectId: info.project_id || "",
+        clientSecret: info.client_secret,
+      });
+      toast.success("Imported Client ID and Secret from file");
+    } catch (error) {
+      console.error("Import JSON error:", error);
+      toast.error("Failed to read the selected file");
+    }
+  };
 
   const handleConnect = async () => {
     if (!config.clientId || !config.clientSecret) {
@@ -182,7 +215,7 @@ export default function GSCConnectionWizard({
   };
 
   return (
-    <div className="flex flex-col h-[600px] w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
+    <div className="flex flex-col min-h-[600px] w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
       {/* Header */}
       <div className="p-6 border-b border-gray-100 dark:border-brand-dark flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -199,7 +232,7 @@ export default function GSCConnectionWizard({
           </div>
         </div>
         <button
-          onClick={onClose}
+          onClick={() => (step > 1 ? handleBack() : onClose())}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -284,7 +317,7 @@ export default function GSCConnectionWizard({
               exit="exit"
               className="flex flex-col h-full"
             >
-              <div className="flex-1 space-y-6">
+              <div className="flex-1 space-y-4">
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold dark:text-white">
                     API Configuration
@@ -298,6 +331,19 @@ export default function GSCConnectionWizard({
                       View Guide <ExternalLink className="h-3 w-3 ml-1" />
                     </a>
                   </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleImportJson}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-blue-300 dark:border-blue-500/50 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Import client_secret.json
+                </button>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-brand-dark" />
+                  or enter manually
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-brand-dark" />
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-1.5">

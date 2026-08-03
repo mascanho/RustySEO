@@ -10,6 +10,7 @@ export const changelogData = [
       "Deep Crawler: Context menus on Inlinks and Outlinks tables",
       "Deep Crawler: Improved GSC Queries tab",
       "Deep Crawler: Improved Site Tree",
+      "Deep Crawler: Easier GSC/GA4 Verification",
     ],
   },
   {
