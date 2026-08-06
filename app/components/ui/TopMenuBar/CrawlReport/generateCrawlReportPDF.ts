@@ -46,6 +46,39 @@ const domainFromUrl = (url: string | undefined): string => {
   }
 };
 
+interface LoadedImage {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+// Fetches a public/ asset and returns it as a data URL + natural dimensions
+// so it can be embedded via doc.addImage() at the correct aspect ratio.
+// Resolves to null (never throws) so a missing/broken asset just means the
+// report renders without the logo instead of failing outright.
+const loadImageDataUrl = async (path: string): Promise<LoadedImage | null> => {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ width: number; height: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth || 1, height: img.naturalHeight || 1 });
+      img.onerror = () => resolve({ width: 1, height: 1 });
+      img.src = dataUrl;
+    });
+    return { dataUrl, width: dims.width, height: dims.height };
+  } catch {
+    return null;
+  }
+};
+
 const safeTitle = (page: any): string => page?.title?.[0]?.title || "";
 const safeTitleLen = (page: any): number =>
   page?.title?.[0]?.title_len ?? safeTitle(page).length;
@@ -169,6 +202,13 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
       }),
     ]);
 
+  // RustySEO branding — icon glyph for the cover + per-page header,
+  // wordmark for the cover only. Missing assets degrade gracefully.
+  const [logoIcon, logoWordmark] = await Promise.all([
+    loadImageDataUrl("/icon.png"),
+    loadImageDataUrl("/rustyLight.png"),
+  ]);
+
   const images: any[] =
     imagesRes.status === "fulfilled" && Array.isArray(imagesRes.value)
       ? imagesRes.value
@@ -199,27 +239,44 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   doc.setFillColor(15, 23, 42); // slate-900
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-  doc.setTextColor(148, 163, 184);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("RUSTYSEO", pageWidth / 2, 70, { align: "center" });
+  // Logo lockup: icon glyph above the RustySEO wordmark, falls back to a
+  // plain text label if either asset failed to load.
+  let coverY = 32;
+  if (logoIcon) {
+    const iconH = 24;
+    const iconW = iconH * (logoIcon.width / logoIcon.height);
+    doc.addImage(logoIcon.dataUrl, "PNG", pageWidth / 2 - iconW / 2, coverY, iconW, iconH);
+    coverY += iconH + 8;
+  }
+  if (logoWordmark) {
+    const wmW = 62;
+    const wmH = wmW * (logoWordmark.height / logoWordmark.width);
+    doc.addImage(logoWordmark.dataUrl, "PNG", pageWidth / 2 - wmW / 2, coverY, wmW, wmH);
+    coverY += wmH + 14;
+  } else {
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("RUSTYSEO", pageWidth / 2, coverY + 6, { align: "center" });
+    coverY += 20;
+  }
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
-  doc.text("SEO Crawl Report", pageWidth / 2, 88, { align: "center" });
+  doc.text("SEO Crawl Report", pageWidth / 2, coverY, { align: "center" });
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(15);
   doc.setTextColor(226, 232, 240);
-  doc.text(domain, pageWidth / 2, 99, { align: "center" });
+  doc.text(domain, pageWidth / 2, coverY + 11, { align: "center" });
 
   doc.setFontSize(10);
   doc.setTextColor(148, 163, 184);
   doc.text(
     `Generated ${generatedAt.toLocaleDateString()} at ${generatedAt.toLocaleTimeString()}`,
     pageWidth / 2,
-    108,
+    coverY + 20,
     { align: "center" },
   );
 
@@ -233,7 +290,7 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   const boxGap = 6;
   const totalBoxWidth = highlightStats.length * boxWidth + (highlightStats.length - 1) * boxGap;
   let bx = pageWidth / 2 - totalBoxWidth / 2;
-  const boxY = 130;
+  const boxY = coverY + 40;
   highlightStats.forEach(([label, value]) => {
     doc.setFillColor(30, 41, 59); // slate-800
     doc.roundedRect(bx, boxY, boxWidth, 26, 2, 2, "F");
@@ -596,11 +653,20 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   // Header + footer on every page except the cover
   // ---------------------------------------------------------------------
   const totalDocPages = doc.internal.getNumberOfPages();
+  const headerIconH = 4.5;
+  const headerIconW = logoIcon ? headerIconH * (logoIcon.width / logoIcon.height) : 0;
   for (let i = 2; i <= totalDocPages; i++) {
     doc.setPage(i);
+    if (logoIcon) {
+      doc.addImage(logoIcon.dataUrl, "PNG", MARGIN, 5.5, headerIconW, headerIconH);
+    }
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
-    doc.text(`SEO Crawl Report — ${domain}`, MARGIN, 10);
+    doc.text(
+      `SEO Crawl Report — ${domain}`,
+      MARGIN + (logoIcon ? headerIconW + 2.5 : 0),
+      10,
+    );
     doc.setDrawColor(226, 232, 240);
     doc.line(MARGIN, 12, pageWidth - MARGIN, 12);
 
