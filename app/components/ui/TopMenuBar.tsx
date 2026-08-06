@@ -24,14 +24,15 @@ import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
 import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
+import { generateCrawlReportPDF } from "./TopMenuBar/CrawlReport/generateCrawlReportPDF";
 import { LuPanelRight } from "react-icons/lu";
 import {
   FiFile,
   FiEye,
   FiCheckSquare,
   FiBarChart2,
+  FiFileText,
   FiZap,
   FiTool,
   FiHelpCircle,
@@ -74,7 +75,7 @@ import { MdOutlineHttps } from "react-icons/md";
 import VisualisationsModal from "./Visualisations/VisualisationsModal";
 
 const TopMenuBar = () => {
-  const [download, setDownload] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const pathname = usePathname();
 
   const {
@@ -197,39 +198,24 @@ const TopMenuBar = () => {
     }
   }, []);
 
-  // Handle download
-  const handleDownloadSEO = async () => {
-    let path;
-    invoke("generate_seo_csv").then((result) => {
-      console.log(result);
-      setDownload(result);
-    });
-
-    path = await save({
-      defaultPath: "seo.csv",
-      filters: [{ name: "CSV Files", extensions: ["csv"] }],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
-    }
-  };
-
-  const handleDownloadPerformance = async () => {
-    let path;
-    invoke("generate_csv_command").then((result) => {
-      console.log(result);
-      // @ts-ignore
-      setDownload(result);
-    });
-
-    path = await save({
-      defaultPath: "performance.csv",
-      filters: [{ name: "CSV Files", extensions: ["csv"] }],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
+  // Generate the full crawl PDF report (on-page SEO, technical health,
+  // issues, performance and a full page inventory in one document).
+  const handleGenerateReport = async () => {
+    if (isGeneratingReport) return;
+    setIsGeneratingReport(true);
+    const toastId = toast.loading("Generating crawl report…");
+    try {
+      const result = await generateCrawlReportPDF();
+      if (result.success) {
+        toast.success(result.message, { id: toastId });
+      } else {
+        toast.message(result.message, { id: toastId });
+      }
+    } catch (error) {
+      console.error("Failed to generate crawl report:", error);
+      toast.error("Failed to generate the crawl report.", { id: toastId });
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -662,13 +648,14 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={handleDownloadPerformance}>
-                <FiBarChart2 className="mr-2" />
-                Performance History
-              </MenubarItem>
-              <MenubarItem onClick={handleDownloadSEO}>
-                <FiBarChart2 className="mr-2" />
-                SEO History
+              <MenubarItem
+                onClick={handleGenerateReport}
+                disabled={isGeneratingReport}
+              >
+                <FiFileText className="mr-2" />
+                {isGeneratingReport
+                  ? "Generating report…"
+                  : "Generate Crawl Report (PDF)"}
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
