@@ -17,6 +17,7 @@ const BRAND_COLOR = [37, 99, 235]; // blue-600
 const DANGER_COLOR = [220, 38, 38]; // red-600
 const APPENDIX_ROW_CAP = 200;
 const ISSUE_APPENDIX_ROW_CAP = 100;
+const FULL_INVENTORY_ROW_CAP = 500;
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -1410,11 +1411,19 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   doc.addPage();
   y = 20;
   y = sectionTitle(doc, `Full Page Inventory (${crawlData.length} pages)`, y);
+  if (crawlData.length > FULL_INVENTORY_ROW_CAP) {
+    y = subNote(
+      doc,
+      `This PDF lists the first ${FULL_INVENTORY_ROW_CAP} of ${crawlData.length} crawled pages to keep the file readable. ` +
+        `For the exhaustive list, export the individual tables from the app (Tables view — each column supports its own CSV/Excel export).`,
+      y,
+    );
+  }
   dataTable(
     doc,
     y,
     [["URL", "Status", "Title (chars)", "Desc (chars)", "H1s", "Words", "Indexable", "Canonical"]],
-    crawlData.map((p) => [
+    crawlData.slice(0, FULL_INVENTORY_ROW_CAP).map((p) => [
       truncate(p.url, 60),
       p.status_code ?? "-",
       String(safeTitleLen(p)),
