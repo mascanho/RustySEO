@@ -18,6 +18,7 @@ const DANGER_COLOR = [220, 38, 38]; // red-600
 const APPENDIX_ROW_CAP = 200;
 const ISSUE_APPENDIX_ROW_CAP = 100;
 const FULL_INVENTORY_ROW_CAP = 500;
+const ROBOTS_TXT_LINE_CAP = 1000;
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -859,6 +860,9 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   const crawlData: any[] = state.crawlData || [];
   const stats: any = state.finalCrawlStats || {};
   const robotsBlocked: string[] = state.robotsBlocked || [];
+  // Populated by the backend's "robots" event during a domain crawl —
+  // robots[0] is the raw robots.txt body fetched for the crawled domain.
+  const robotsTxt: string = (state.robots && state.robots[0]) || "";
 
   if (!crawlData.length) {
     return {
@@ -1262,14 +1266,70 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
       doc,
       y,
       [["Original URL", "Redirects To", "Type", "Status"]],
+      // `url` on this record is already the *final* (post-redirect)
+      // destination — the backend sets it to final_url and mirrors that same
+      // value into `redirect_url`. The actual pre-redirect origin is kept
+      // separately in `original_url`. Using `r.url` for "Original URL" here
+      // previously showed the destination in both columns.
       redirects.slice(0, APPENDIX_ROW_CAP).map((r) => [
-        truncate(r.url || r.original_url || "", 55),
-        truncate(r.redirect_url || "-", 55),
+        truncate(r.original_url || r.url || "", 55),
+        truncate(r.redirect_url || r.url || "-", 55),
         r.redirection_type || "-",
         r.status_code ?? "-",
       ]),
       { fontSize: 7 },
     );
+  }
+
+  // ---------------------------------------------------------------------
+  // Robots.txt
+  // ---------------------------------------------------------------------
+  doc.addPage();
+  y = 20;
+  y = sectionTitle(doc, "Robots.txt", y);
+  if (!robotsTxt) {
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text("No robots.txt was found (or fetched) for this domain.", MARGIN, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  } else {
+    y = subNote(
+      doc,
+      `Fetched from the crawled domain's /robots.txt.${
+        robotsBlocked.length ? ` ${robotsBlocked.length} URL(s) were blocked by its rules during this crawl.` : ""
+      }`,
+      y,
+    );
+
+    const usableWidth = pageWidth - MARGIN * 2;
+    let robotsLines = doc.splitTextToSize(robotsTxt, usableWidth);
+    const truncated = robotsLines.length > ROBOTS_TXT_LINE_CAP;
+    if (truncated) {
+      robotsLines = robotsLines.slice(0, ROBOTS_TXT_LINE_CAP);
+    }
+
+    y = ensureSpace(doc, y, 12);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 41, 59);
+    const lineHeight = 3.4;
+    for (const line of robotsLines) {
+      if (y + lineHeight > pageHeight - 18) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(line, MARGIN, y);
+      y += lineHeight;
+    }
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 4;
+
+    if (truncated) {
+      y = ensureSpace(doc, y, 10);
+      y = subNote(doc, `…truncated after ${ROBOTS_TXT_LINE_CAP} lines.`, y);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -1442,17 +1502,24 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   const totalDocPages = doc.internal.getNumberOfPages();
   const headerIconH = 4.5;
   const headerIconW = logoIcon ? headerIconH * (logoIcon.width / logoIcon.height) : 0;
+  const headerRowTopY = 5.5;
+  // Center the icon and the text on the same row using jsPDF's "middle"
+  // text baseline, instead of eyeballing a text y that lines up with a
+  // top-anchored image — the two were drawn against different reference
+  // points before (image top vs. text baseline), so they never lined up.
+  const headerRowCenterY = headerRowTopY + headerIconH / 2;
   for (let i = 2; i <= totalDocPages; i++) {
     doc.setPage(i);
     if (logoIcon) {
-      doc.addImage(logoIcon.dataUrl, "PNG", MARGIN, 5.5, headerIconW, headerIconH);
+      doc.addImage(logoIcon.dataUrl, "PNG", MARGIN, headerRowTopY, headerIconW, headerIconH);
     }
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
       `SEO Crawl Report — ${domain}`,
       MARGIN + (logoIcon ? headerIconW + 2.5 : 0),
-      10,
+      headerRowCenterY,
+      { baseline: "middle" },
     );
     doc.setDrawColor(226, 232, 240);
     doc.line(MARGIN, 12, pageWidth - MARGIN, 12);
