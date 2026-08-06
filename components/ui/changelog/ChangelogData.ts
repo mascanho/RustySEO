@@ -11,6 +11,7 @@ export const changelogData = [
       "Deep Crawler: Improved GSC Queries tab",
       "Deep Crawler: Improved Site Tree",
       "Deep Crawler: Easier GSC/GA4 Verification",
+      "Deep Crawler:  Full PDF report * Experimental *",
     ],
   },
   {
