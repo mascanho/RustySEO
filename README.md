@@ -80,20 +80,36 @@ Use at your own risk, this software is new and under development.
 
 ## 🤘 Features
 
-- Shallow & deep crawl;
-- Technical Diagnostics (core web vitals, Page Speed Insights);
-- On-Page SEO Analysis (content analysis, Keyword density, etc...);
+- Shallow & deep crawl, with adaptive throttling and concurrency for large sites;
+- JavaScript rendering (headless Chrome) for JS-heavy / SPA pages;
+- Technical Diagnostics (Core Web Vitals, PageSpeed Insights);
+- On-Page SEO Analysis (content analysis, keyword density, readability, etc...);
+- Custom Search — match and extract page content by CSS selector or regex, across multiple rules per crawl;
+- Duplicate & near-duplicate content detection;
+- Crawl comparison (Diff Checker) between two crawls of the same site;
 - Improvements / Suggestions on page crawl;
 - Dashboards;
-- Task Manager / Tracker
-- Reporting (CSV, Excel, Google Sheets, PDF);
+- Task Manager / Tracker;
+- In-depth PDF crawl reports (homepage screenshot, issues, hreflang, schema, keywords, redirects, and more), plus CSV & Excel exports;
 - Topic generator;
 - Keyword generator;
-- Local LLM (ollama);
+- Local LLM (Ollama);
 - Free API LLM (Google Gemini);
 - Built-in AI chatbot;
+- Community chat & in-app feedback/suggestion box;
 - Crawl history;
 - Image conversion and optimization;
+
+## 🏗️ Architecture
+
+RustySEO is a native desktop app, not a wrapped website — the crawler runs as a real, local process on your machine.
+
+- **Shell**: [Tauri](https://tauri.app/) (Rust) — a lightweight, cross-platform (macOS, Windows, Linux) desktop shell using the OS's native webview instead of bundling a full browser engine.
+- **Crawler engine**: Rust, async/concurrent (Tokio), with adaptive request throttling and optional JavaScript rendering via a headless Chrome instance for SPA / JS-heavy pages.
+- **UI**: Next.js, React & TypeScript, rendered inside the native webview.
+- **Storage**: SQLite, entirely local — crawl data, settings, history and reports live on your disk. RustySEO doesn't have a backend that your crawl data passes through.
+- **Third-party connectors are opt-in and direct**: when you connect Google Search Console, GA4, PageSpeed Insights, Gemini, etc., the app talks to those APIs directly using your own credentials — nothing is proxied through a RustySEO server.
+- **The one exception**: the built-in community chat and suggestion box, which is backed by a small Supabase project so messages/feedback can reach the team — entirely optional and unrelated to your crawl data.
 
 ## 🗺️ Roadmap
 
@@ -110,7 +126,7 @@ Use at your own risk, this software is new and under development.
 |  9  | Regression Analysis of GA4 data          |   ⚠️   |
 | 10  | Topic Modeling                           |   ⚠️   |
 | 11  | Chatbot Crawl Context                    |   ✅   |
-| 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
+| 12  | Extraction of HTML / JS / CSS fragments  |   ✅   |
 | 13  | Schema Generator & Validator             |   ✅   |
 | 14  | Keyword Clustering                       |   ✅   |
 | 15  | Machine Learning                         |   ✅   |
