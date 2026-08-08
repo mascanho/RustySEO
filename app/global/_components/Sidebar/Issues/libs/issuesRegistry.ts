@@ -171,8 +171,16 @@ export const ISSUE_REGISTRY: IssueDefinition[] = [
     priority: "Medium",
     recommendedFix:
       "Remove the noindex meta tag if this page should appear in search engine results.",
+    // Indexability only carries {indexability, indexability_reason} — there's
+    // no noindex/nofollow field there. The actual directive lives in
+    // meta_robots.meta_robots (e.g. ["noindex, nofollow"]).
     detect: (data) =>
-      data.filter((p) => p?.indexability?.noindex === true),
+      data.filter((p) =>
+        (p?.meta_robots?.meta_robots || [])
+          .join(", ")
+          .toLowerCase()
+          .includes("noindex"),
+      ),
   },
   {
     id: 16,
@@ -181,7 +189,12 @@ export const ISSUE_REGISTRY: IssueDefinition[] = [
     recommendedFix:
       "Remove the nofollow directive if this page should pass link equity to crawled links.",
     detect: (data) =>
-      data.filter((p) => p?.indexability?.nofollow === true),
+      data.filter((p) =>
+        (p?.meta_robots?.meta_robots || [])
+          .join(", ")
+          .toLowerCase()
+          .includes("nofollow"),
+      ),
   },
   {
     id: 17,

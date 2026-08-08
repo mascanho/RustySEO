@@ -35,6 +35,7 @@ pub mod pdf_checker;
 pub mod pdf_selector;
 pub mod robots;
 pub mod schema_selector;
+pub mod screenshot;
 pub mod sitemap;
 pub mod skip_url;
 pub mod text_ratio;

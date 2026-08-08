@@ -23,21 +23,24 @@ import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
+import SuggestionBox from "./Suggestion/SuggestionBox";
 import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
+import { generateCrawlReportPDF } from "./TopMenuBar/CrawlReport/generateCrawlReportPDF";
 import { LuPanelRight } from "react-icons/lu";
 import {
   FiFile,
   FiEye,
   FiCheckSquare,
   FiBarChart2,
+  FiFileText,
   FiZap,
   FiTool,
   FiHelpCircle,
   FiLogOut,
   FiGlobe,
   FiSearch,
+  FiMessageSquare,
 } from "react-icons/fi";
 import { GiRobotGrab, GiSpiderBot } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
@@ -74,7 +77,7 @@ import { MdOutlineHttps } from "react-icons/md";
 import VisualisationsModal from "./Visualisations/VisualisationsModal";
 
 const TopMenuBar = () => {
-  const [download, setDownload] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const pathname = usePathname();
 
   const {
@@ -118,6 +121,10 @@ const TopMenuBar = () => {
     useDisclosure(false);
   const [openedAbout, { open: openAbout, close: closeAbout }] =
     useDisclosure(false);
+  const [
+    openedSuggestion,
+    { open: openSuggestion, close: closeSuggestion },
+  ] = useDisclosure(false);
 
   const [
     openedSearchConsole,
@@ -197,39 +204,24 @@ const TopMenuBar = () => {
     }
   }, []);
 
-  // Handle download
-  const handleDownloadSEO = async () => {
-    let path;
-    invoke("generate_seo_csv").then((result) => {
-      console.log(result);
-      setDownload(result);
-    });
-
-    path = await save({
-      defaultPath: "seo.csv",
-      filters: [{ name: "CSV Files", extensions: ["csv"] }],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
-    }
-  };
-
-  const handleDownloadPerformance = async () => {
-    let path;
-    invoke("generate_csv_command").then((result) => {
-      console.log(result);
-      // @ts-ignore
-      setDownload(result);
-    });
-
-    path = await save({
-      defaultPath: "performance.csv",
-      filters: [{ name: "CSV Files", extensions: ["csv"] }],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
+  // Generate the full crawl PDF report (on-page SEO, technical health,
+  // issues, performance and a full page inventory in one document).
+  const handleGenerateReport = async () => {
+    if (isGeneratingReport) return;
+    setIsGeneratingReport(true);
+    const toastId = toast.loading("Generating crawl report…");
+    try {
+      const result = await generateCrawlReportPDF();
+      if (result.success) {
+        toast.success(result.message, { id: toastId });
+      } else {
+        toast.message(result.message, { id: toastId });
+      }
+    } catch (error) {
+      console.error("Failed to generate crawl report:", error);
+      toast.error("Failed to generate the crawl report.", { id: toastId });
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -407,6 +399,28 @@ const TopMenuBar = () => {
         <About close={closeAbout} />
       </Modal>
 
+      {/* Suggestion Box */}
+      <Modal
+        opened={openedSuggestion}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeSuggestion}
+        centered
+        size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+          },
+        }}
+      >
+        <SuggestionBox close={closeSuggestion} />
+      </Modal>
+
       {/* Drawer */}
       <Drawer
         offset={8}
@@ -575,12 +589,32 @@ const TopMenuBar = () => {
       </Modal>
 
       {/* Visualisations Hub */}
-      <VisualisationsModal opened={openedVisualisations} onClose={closeVisualisations} />
+      <VisualisationsModal
+        opened={openedVisualisations}
+        onClose={closeVisualisations}
+      />
 
-      {/* Extractor Component - Now controlled by global store */}
-      {visibility.customSearch && (
+      {/* Custom Search rule manager */}
+      <Modal
+        opened={visibility.customSearch}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={hideCustomSearch}
+        centered
+        size={"640px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+          },
+        }}
+      >
         <CustomSearchSelector close={hideCustomSearch} />
-      )}
+      </Modal>
 
       <Menubar className="fixed w-full top-0 z-[999999999] p-0 pl-0 dark:bg-brand-darker dark:text-white/50 text-black/70 bg-white dark:border-b-brand-dark border-b pb-1 font-mono font-light">
         <section className="flex -ml-3 space-x-1 cursor-pointer">
@@ -594,13 +628,14 @@ const TopMenuBar = () => {
                 />
                 Open Settings Folder
               </MenubarItem>
-              <MenubarItem onClick={handleOpenConfigFile}>
-                <CiSettings
-                  className=" text-sm mr-1.5 "
-                  style={{ marginLeft: "-1px" }}
-                />
-                Crawler settings (TOML)
-              </MenubarItem>
+              {/* NOTE: ONly stays here for dev purposes */}
+              {/* <MenubarItem onClick={handleOpenConfigFile}> */}
+              {/*   <CiSettings */}
+              {/*     className=" text-sm mr-1.5 " */}
+              {/*     style={{ marginLeft: "-1px" }} */}
+              {/*   /> */}
+              {/*   Crawler settings (TOML) */}
+              {/* </MenubarItem> */}
               <MenubarItem onClick={openSettings}>
                 <CiSettings
                   className=" text-sm mr-1.5 "
@@ -662,13 +697,14 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={handleDownloadPerformance}>
-                <FiBarChart2 className="mr-2" />
-                Performance History
-              </MenubarItem>
-              <MenubarItem onClick={handleDownloadSEO}>
-                <FiBarChart2 className="mr-2" />
-                SEO History
+              <MenubarItem
+                onClick={handleGenerateReport}
+                disabled={isGeneratingReport}
+              >
+                <FiFileText className="mr-2" />
+                {isGeneratingReport
+                  ? "Generating report…"
+                  : "Generate Crawl Report (PDF)"}
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
@@ -780,12 +816,12 @@ const TopMenuBar = () => {
             </MenubarContent>
           </MenubarMenu>
 
-
-
           {/* VISUALISATIONS */}
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3 text-xs">Visualisations</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">
+              Visualisations
+            </MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
@@ -797,7 +833,6 @@ const TopMenuBar = () => {
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
-
 
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
@@ -822,6 +857,11 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openAbout}>
                 <FiHelpCircle className="mr-2" />
                 About
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={openSuggestion}>
+                <FiMessageSquare className="mr-2" />
+                Send a Suggestion
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>

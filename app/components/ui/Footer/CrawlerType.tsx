@@ -1,42 +1,24 @@
 // @ts-nocheck
 "use client";
-import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
 import { useEffect, useState, useCallback } from "react";
-import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { emit } from "@tauri-apps/api/event";
 import { IconVolume } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { GiRobotAntennas, GiRobotHelmet, GiSpiderAlt } from "react-icons/gi";
 import useSettingsStore from "@/store/SettingsStore";
+import { useVisibilityStore } from "@/store/VisibilityStore";
+import { useCustomSearchRules } from "../Extractors/useCustomSearchRules";
 import { Tooltip, Stack, Text, Group, Badge } from "@mantine/core";
 
-// Constants for crawler types
-const CRAWLER_TYPES = {
-  SPIDER: "Spider",
-  CUSTOM_SEARCH: "Custom Search",
-};
-
 const CrawlerType = () => {
-    const crawlerType = useCrawlStore((state) => state.crawlerType);
-  const setCrawlerType = useCrawlStore((state) => state.setCrawlerType);
-  const { setCrawler } = useGlobalConsoleStore();
-  const { triggerRefresh } = useSettingsStore();
+  const { triggerRefresh, lastUpdated } = useSettingsStore();
+  const { showCustomSearch } = useVisibilityStore();
+  const { rules: customSearchRules } = useCustomSearchRules();
+  const activeRuleCount = customSearchRules.filter((r) => r.enabled).length;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load crawler type from localStorage on mount
-  useEffect(() => {
-    const savedType = localStorage.getItem("crawlerType");
-    if (
-      savedType &&
-      (savedType === CRAWLER_TYPES.SPIDER ||
-        savedType === CRAWLER_TYPES.CUSTOM_SEARCH)
-    ) {
-      setCrawlerType(savedType);
-      setCrawler(savedType);
-    }
-  }, [setCrawlerType, setCrawler]);
   // PSI DETAILS
   const [details, setDetails] = useState({
     apiKey: "",
@@ -101,18 +83,6 @@ const CrawlerType = () => {
     }
   }, [loadPSIDetailsFromLocalStorage]);
 
-  // Toggle between "Spider" and "Custom Search"
-  const toggleCrawlerType = () => {
-    const newType =
-      crawlerType === CRAWLER_TYPES.SPIDER
-        ? CRAWLER_TYPES.CUSTOM_SEARCH
-        : CRAWLER_TYPES.SPIDER;
-    setCrawlerType(newType);
-    setCrawler(newType);
-    // Save to localStorage
-    localStorage.setItem("crawlerType", newType);
-  };
-
   // Toggle PSI Crawl
   const togglePsiCrawl = async () => {
     const newPsiCrawlValue = !details.psiCrawl;
@@ -161,7 +131,7 @@ const CrawlerType = () => {
     if (isJs) return "animate-flash-orange mt-[2px]";
 
     // Fallback to existing logic
-    return crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
+    return activeRuleCount > 0
       ? "text-red-500 dark:text-red-500/50 mt-[2px]"
       : "text-black dark:text-white/50 mt-[2px]";
   };
@@ -180,6 +150,16 @@ const CrawlerType = () => {
       fetchBackendState();
     }
   }, [isModalOpen, fetchBackendState]);
+
+  // Re-sync whenever settings change elsewhere (e.g. the Settings modal's
+  // Crawler > JavaScript toggle) — without this, this icon's JS-active
+  // indicator only ever reflected its own dropdown's toggle and went stale
+  // the moment JS rendering was changed anywhere else.
+  useEffect(() => {
+    if (lastUpdated) {
+      fetchBackendState();
+    }
+  }, [lastUpdated, fetchBackendState]);
 
   return (
     <div className="relative">
@@ -212,14 +192,14 @@ const CrawlerType = () => {
 
             <Group justify="space-between" gap="xl" align="center">
               <Text size="xs" fw={500}>
-                Crawler Type
+                Custom Search
               </Text>
               <Badge
                 size="sm"
                 variant="light"
-                color={crawlerType === CRAWLER_TYPES.SPIDER ? "blue" : "red"}
+                color={activeRuleCount > 0 ? "red" : "gray"}
               >
-                {crawlerType}
+                {activeRuleCount} active
               </Badge>
             </Group>
 
@@ -253,6 +233,7 @@ const CrawlerType = () => {
           </Stack>
         }
         position="top"
+        offset={16}
         withArrow
         transitionProps={{ duration: 200, transition: "pop" }}
         multiline
@@ -302,27 +283,29 @@ const CrawlerType = () => {
               </button>
             </div>
 
-            {/* Toggle Switch for Crawler Type */}
+            {/* Custom Search status */}
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md mb-3">
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                Crawler:{" "}
+                Custom Search:{" "}
                 <span
-                  className={`${crawlerType === CRAWLER_TYPES.SPIDER ? "text-blue-600" : "text-red-500"}`}
+                  className={
+                    activeRuleCount > 0
+                      ? "text-red-500 font-medium"
+                      : "text-gray-500 font-medium"
+                  }
                 >
-                  {" "}
-                  {crawlerType}
+                  {activeRuleCount} active rule{activeRuleCount === 1 ? "" : "s"}
                 </span>
               </span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH}
-                  onChange={toggleCrawlerType}
-                  className="sr-only peer"
-                  aria-label="Toggle crawler type"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              </label>
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  showCustomSearch();
+                }}
+                className="text-xs font-medium text-brand-bright hover:underline"
+              >
+                Manage
+              </button>
             </div>
 
             {/* Toggle Switch for Javascript Rendering */}

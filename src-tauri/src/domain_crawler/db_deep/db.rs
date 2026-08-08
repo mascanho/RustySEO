@@ -343,65 +343,219 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
     Ok("Data inserted successfully".to_string())
 }
 
-// HANDLE THE EXTRACTORS
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct ExtractorConfig {
-    #[serde(rename = "type")]
-    pub config_type: String,
-    pub config: InnerConfig,
+// HANDLE THE CUSTOM SEARCH RULES
+//
+// Multiple named rules, each independently enabled, persisted across app
+// restarts (nothing here wipes the table on launch — see main.rs, which
+// used to call a since-removed clear_custom_search() on every startup).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum SearchMode {
+    Css,
+    Regex,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct InnerConfig {
-    #[serde(rename = "type")]
-    pub inner_type: Option<String>, // Optional nested type field
-    pub selector: String,
-    pub attribute: String,
+impl SearchMode {
+    fn as_str(&self) -> &'static str {
+        match self {
+            SearchMode::Css => "css",
+            SearchMode::Regex => "regex",
+        }
+    }
+
+    fn from_str(s: &str) -> Self {
+        match s {
+            "regex" => SearchMode::Regex,
+            _ => SearchMode::Css,
+        }
+    }
 }
 
-#[tauri::command]
-pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
-    // Open the connection
-    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+// Html/Attribute only apply in Css mode (element outerHTML / attribute
+// value); Regex mode always matches against the page's visible text.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum SearchTarget {
+    Text,
+    Html,
+    Attribute,
+}
 
-    // Create the table if it doesn't exist
+impl SearchTarget {
+    fn as_str(&self) -> &'static str {
+        match self {
+            SearchTarget::Text => "text",
+            SearchTarget::Html => "html",
+            SearchTarget::Attribute => "attribute",
+        }
+    }
+
+    fn from_str(s: &str) -> Self {
+        match s {
+            "html" => SearchTarget::Html,
+            "attribute" => SearchTarget::Attribute,
+            _ => SearchTarget::Text,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CustomSearchRule {
+    pub id: i64,
+    pub name: String,
+    pub mode: SearchMode,
+    pub pattern: String, // CSS selector, or regex source
+    pub search_text: Option<String>, // Css mode "contains" check; empty/None = "match if selector found"
+    pub target: SearchTarget,
+    pub attribute_name: Option<String>, // used when target == Attribute
+    pub enabled: bool,
+    pub created_at: String,
+}
+
+fn ensure_custom_search_rules_table(conn: &Connection) -> Result<(), String> {
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS custom_search (
+        "CREATE TABLE IF NOT EXISTS custom_search_rules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT NOT NULL,
-            selector TEXT NOT NULL,
-            search_text TEXT NOT NULL
-        );",
+            name TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            pattern TEXT NOT NULL,
+            search_text TEXT,
+            target TEXT NOT NULL,
+            attribute_name TEXT,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+        )",
         [],
     )
     .map_err(|e| e.to_string())?;
+    Ok(())
+}
 
-    // Delete the first row if it exists
-    conn.execute("DELETE FROM custom_search WHERE id = 1", [])
-        .map_err(|e| e.to_string())?;
+fn row_to_rule(row: &rusqlite::Row) -> rusqlite::Result<CustomSearchRule> {
+    let mode_str: String = row.get(2)?;
+    let target_str: String = row.get(5)?;
+    Ok(CustomSearchRule {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        mode: SearchMode::from_str(&mode_str),
+        pattern: row.get(3)?,
+        search_text: row.get(4)?,
+        target: SearchTarget::from_str(&target_str),
+        attribute_name: row.get(6)?,
+        enabled: row.get::<_, i64>(7)? != 0,
+        created_at: row.get(8)?,
+    })
+}
 
-    // Insert a new row
-    for item in &data {
-        conn.execute(
-            "INSERT INTO custom_search (id, type, selector, search_text) VALUES (1, ?, ?, ?)",
-            params![
-                &item.config_type,
-                &item.config.selector,
-                &item.config.attribute
-            ],
+#[tauri::command]
+pub fn list_custom_search_rules() -> Result<Vec<CustomSearchRule>, String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+    ensure_custom_search_rules_table(&conn)?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, mode, pattern, search_text, target, attribute_name, enabled, created_at
+             FROM custom_search_rules ORDER BY id ASC",
         )
         .map_err(|e| e.to_string())?;
-    }
 
-    println!("Replacing data in the DB: {:#?}", data);
+    let rows = stmt
+        .query_map([], row_to_rule)
+        .map_err(|e| e.to_string())?;
+
+    let mut rules = Vec::new();
+    for row in rows {
+        rules.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(rules)
+}
+
+#[tauri::command]
+pub fn create_custom_search_rule(rule: CustomSearchRule) -> Result<CustomSearchRule, String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+    ensure_custom_search_rules_table(&conn)?;
+
+    let created_at = chrono::Utc::now().to_rfc3339();
+
+    conn.execute(
+        "INSERT INTO custom_search_rules (name, mode, pattern, search_text, target, attribute_name, enabled, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![
+            &rule.name,
+            rule.mode.as_str(),
+            &rule.pattern,
+            &rule.search_text,
+            rule.target.as_str(),
+            &rule.attribute_name,
+            rule.enabled as i64,
+            &created_at,
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    let id = conn.last_insert_rowid();
+
+    Ok(CustomSearchRule {
+        id,
+        created_at,
+        ..rule
+    })
+}
+
+#[tauri::command]
+pub fn update_custom_search_rule(rule: CustomSearchRule) -> Result<(), String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+    ensure_custom_search_rules_table(&conn)?;
+
+    conn.execute(
+        "UPDATE custom_search_rules
+         SET name = ?1, mode = ?2, pattern = ?3, search_text = ?4, target = ?5, attribute_name = ?6, enabled = ?7
+         WHERE id = ?8",
+        params![
+            &rule.name,
+            rule.mode.as_str(),
+            &rule.pattern,
+            &rule.search_text,
+            rule.target.as_str(),
+            &rule.attribute_name,
+            rule.enabled as i64,
+            rule.id,
+        ],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
-// GET THE RESULTS STORED IN THE DB
-// Uses a direct Connection instead of creating a pool every time,
+#[tauri::command]
+pub fn delete_custom_search_rule(id: i64) -> Result<(), String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+    ensure_custom_search_rules_table(&conn)?;
+
+    conn.execute("DELETE FROM custom_search_rules WHERE id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_custom_search_rule_enabled(id: i64, enabled: bool) -> Result<(), String> {
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+    ensure_custom_search_rules_table(&conn)?;
+
+    conn.execute(
+        "UPDATE custom_search_rules SET enabled = ?1 WHERE id = ?2",
+        params![enabled as i64, id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+// Used only by extractors/html.rs's per-crawl cache refresh — not a Tauri
+// command. Uses a direct Connection instead of creating a pool every time,
 // since this is called for every URL during crawling.
-pub async fn fetch_custom_search() -> Result<Vec<ExtractorConfig>, String> {
+pub async fn fetch_enabled_custom_search_rules() -> Result<Vec<CustomSearchRule>, String> {
     let project_dirs =
         ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
 
@@ -412,43 +566,24 @@ pub async fn fetch_custom_search() -> Result<Vec<ExtractorConfig>, String> {
         std::fs::create_dir_all(&db_dir).expect("Failed to create directory");
     }
 
-    let configs = task::spawn_blocking(move || {
+    let rules = task::spawn_blocking(move || {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+        ensure_custom_search_rules_table(&conn)?;
+
         let mut stmt = conn
-            .prepare("SELECT type, selector, search_text FROM custom_search")
+            .prepare(
+                "SELECT id, name, mode, pattern, search_text, target, attribute_name, enabled, created_at
+                 FROM custom_search_rules WHERE enabled = 1",
+            )
             .map_err(|e| e.to_string())?;
 
-        let config_iter = stmt
-            .query_map(params![], |row| {
-                Ok(ExtractorConfig {
-                    config_type: row.get(0)?,
-                    config: InnerConfig {
-                        inner_type: None,
-                        selector: row.get(1)?,
-                        attribute: row.get(2)?,
-                    },
-                })
-            })
-            .map_err(|e| e.to_string())?;
+        let rule_iter = stmt.query_map(params![], row_to_rule).map_err(|e| e.to_string())?;
 
-        let configs: Result<Vec<_>, _> = config_iter.collect();
-        configs.map_err(|e| e.to_string())
+        let rules: Result<Vec<_>, _> = rule_iter.collect();
+        rules.map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| e.to_string())??;
 
-    Ok(configs)
-}
-
-// ENSURE THE THE DATA IS DELETED ON APP LAUNCH
-#[tauri::command]
-pub fn clear_custom_search() -> Result<(), String> {
-    // Open the connection
-    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?; // Use ? to propagate the error
-
-    // Delete the first row if it exists
-    conn.execute("DELETE FROM custom_search WHERE id = 1", [])
-        .map_err(|e| e.to_string())?; // Use ? to propagate the error
-
-    Ok(())
+    Ok(rules)
 }

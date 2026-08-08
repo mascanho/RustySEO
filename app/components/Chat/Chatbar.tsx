@@ -30,6 +30,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import { useChatNotificationStore } from "@/store/ChatNotificationStore";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { getClientId } from "@/lib/clientId";
 import { toast } from "sonner";
 
 type ChatMessage = {
@@ -53,7 +54,6 @@ type DirectMessage = {
 type ChatView = "public" | "dmList" | "dmThread";
 
 const NICKNAME_KEY = "rustyseo_chat_nickname";
-const CLIENT_ID_KEY = "rustyseo_chat_client_id";
 const BLOCKED_KEY = "rustyseo_chat_blocked";
 const DM_PEERS_KEY = "rustyseo_chat_dm_peers";
 // Keep in sync with the `content` check constraint in supabase_chat_schema.sql
@@ -79,16 +79,6 @@ const AVATAR_COLORS = [
   "#ca8a04",
   "#3f37c9",
 ];
-
-const getClientId = () => {
-  if (typeof window === "undefined") return "";
-  let id = localStorage.getItem(CLIENT_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(CLIENT_ID_KEY, id);
-  }
-  return id;
-};
 
 const colorForName = (name: string) => {
   let hash = 0;

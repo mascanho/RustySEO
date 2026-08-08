@@ -602,6 +602,126 @@ impl Database {
                     }
                     Ok(Value::Array(files))
                 }
+                "hreflang" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.hreflangs')
+                         FROM domain_crawl
+                         WHERE json_extract(data, '$.hreflangs') IS NOT NULL
+                           AND json_extract(data, '$.hreflangs') != '[]'
+                           AND json_extract(data, '$.hreflangs') != 'null'"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let hreflangs_json: String = row.get(1)?;
+                        Ok((page_url, hreflangs_json))
+                    })?;
+
+                    let mut hreflangs = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, hreflangs_json)) = row_res {
+                            if let Ok(tags) = serde_json::from_str::<Value>(&hreflangs_json) {
+                                hreflangs.push(serde_json::json!({
+                                    "url": page_url,
+                                    "hreflangs": tags
+                                }));
+                            }
+                        }
+                    }
+                    Ok(Value::Array(hreflangs))
+                }
+                "schema_types" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.schema')
+                         FROM domain_crawl
+                         WHERE json_extract(data, '$.schema') IS NOT NULL
+                           AND json_extract(data, '$.schema') != 'null'"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let schema_json: String = row.get(1)?;
+                        Ok((page_url, schema_json))
+                    })?;
+
+                    let mut schemas = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, schema_json)) = row_res {
+                            schemas.push(serde_json::json!({
+                                "url": page_url,
+                                "schema": schema_json
+                            }));
+                        }
+                    }
+                    Ok(Value::Array(schemas))
+                }
+                "custom_search" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.custom_search')
+                         FROM domain_crawl
+                         WHERE json_extract(data, '$.custom_search') IS NOT NULL
+                           AND json_extract(data, '$.custom_search') != '[]'
+                           AND json_extract(data, '$.custom_search') != 'null'"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let matches_json: String = row.get(1)?;
+                        Ok((page_url, matches_json))
+                    })?;
+
+                    let mut results = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, matches_json)) = row_res {
+                            if let Ok(matches) = serde_json::from_str::<Value>(&matches_json) {
+                                results.push(serde_json::json!({
+                                    "url": page_url,
+                                    "matches": matches
+                                }));
+                            }
+                        }
+                    }
+                    Ok(Value::Array(results))
+                }
+                "page_inventory" => {
+                    // Compact per-page summary for the whole crawl, straight from
+                    // SQLite — unlike the frontend's `crawlData` store (a JS-heap
+                    // ring buffer capped at `max_urls_stored` for large crawls),
+                    // this always covers every crawled page.
+                    let mut stmt = conn.prepare(
+                        "SELECT
+                            json_extract(data, '$.url'),
+                            CAST(json_extract(data, '$.status_code') AS INTEGER),
+                            COALESCE(
+                                CAST(json_extract(data, '$.title[0].title_len') AS INTEGER),
+                                LENGTH(json_extract(data, '$.title[0].title')),
+                                0
+                            ),
+                            COALESCE(LENGTH(json_extract(data, '$.description')), 0),
+                            COALESCE(json_array_length(data, '$.headings.h1'), 0),
+                            COALESCE(CAST(json_extract(data, '$.word_count') AS INTEGER), 0),
+                            COALESCE(CAST(json_extract(data, '$.indexability.indexability') AS REAL), 0),
+                            CASE WHEN COALESCE(json_array_length(data, '$.canonicals'), 0) > 0 THEN 1 ELSE 0 END
+                         FROM domain_crawl"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        Ok(serde_json::json!({
+                            "url": row.get::<_, Option<String>>(0)?,
+                            "status_code": row.get::<_, i64>(1).unwrap_or(0),
+                            "title_len": row.get::<_, i64>(2).unwrap_or(0),
+                            "desc_len": row.get::<_, i64>(3).unwrap_or(0),
+                            "h1_count": row.get::<_, i64>(4).unwrap_or(0),
+                            "word_count": row.get::<_, i64>(5).unwrap_or(0),
+                            "indexability": row.get::<_, f64>(6).unwrap_or(0.0),
+                            "has_canonical": row.get::<_, i64>(7).unwrap_or(0) == 1,
+                        }))
+                    })?;
+
+                    let mut inventory = Vec::new();
+                    for row_res in rows {
+                        if let Ok(row) = row_res {
+                            inventory.push(row);
+                        }
+                    }
+                    Ok(Value::Array(inventory))
+                }
                 _ => Ok(Value::Null),
             }
         })
@@ -1004,19 +1124,27 @@ fn ensure_link_score_column(conn: &Connection) -> Result<(), DatabaseError> {
     Ok(())
 }
 
-// Helper for file extension check
+// Helper for file extension check. Deliberately an allowlist of known
+// downloadable-document/media/archive extensions, scoped to only the final
+// path segment (not the whole URL) — the previous denylist approach matched
+// the last '.' anywhere in the string, so a bare "https://example.com/" was
+// misread as a file with extension "com" (short, not in the denylist).
+// Images/CSS/JS are intentionally excluded here since they're already
+// reported separately (Images, CSS, Javascript sections).
 fn has_file_extension(url: &str) -> bool {
-    let ignore = ["html", "htm", "php", "asp", "aspx", "jsp"];
-    let path = url.split('?').next().unwrap_or(url);
-    if let Some(idx) = path.rfind('.') {
-        if idx < path.len() - 1 {
-            let ext = &path[idx + 1..];
-            if ext.len() <= 4 && !ignore.contains(&ext.to_lowercase().as_str()) {
-                return true;
-            }
+    const FILE_EXTENSIONS: &[&str] = &[
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "csv", "txt", "rtf", "odt", "ods",
+        "odp", "zip", "rar", "7z", "tar", "gz", "mp3", "mp4", "wav", "avi", "mov", "wmv",
+    ];
+    let path = url.split('?').next().unwrap_or(url).split('#').next().unwrap_or(url);
+    let last_segment = path.rsplit('/').next().unwrap_or(path);
+    match last_segment.rfind('.') {
+        Some(idx) if idx < last_segment.len() - 1 => {
+            let ext = last_segment[idx + 1..].to_lowercase();
+            FILE_EXTENSIONS.contains(&ext.as_str())
         }
+        _ => false,
     }
-    false
 }
 
 pub async fn insert_crawl_data(

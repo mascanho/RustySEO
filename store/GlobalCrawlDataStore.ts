@@ -77,6 +77,7 @@ interface CrawlStore {
     redirects: any[];
     cwv: any[];
     files: any[];
+    customSearch: any[];
   };
   setAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
   appendAggregatedData: (data: Partial<CrawlStore["aggregatedData"]>) => void;
@@ -295,6 +296,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           redirects: [],
           cwv: [],
           files: [],
+          customSearch: [],
         },
       }),
     setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
@@ -389,6 +391,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       redirects: [],
       cwv: [],
       files: [],
+      customSearch: [],
     },
     domainCrawlLoading: false,
     crawlerType: "spider",

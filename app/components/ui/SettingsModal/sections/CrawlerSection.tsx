@@ -9,7 +9,7 @@ import {
   ToggleSwitch,
   SectionHeader,
 } from "../fields/SettingFields";
-import { Gauge, Layers, ArrowDownUp, TrendingUp, Copy } from "lucide-react";
+import { Gauge, Layers, ArrowDownUp, TrendingUp, Copy, Code } from "lucide-react";
 
 interface Props {
   settings: AppSettings;
@@ -161,6 +161,37 @@ const CrawlerSection = ({ settings, onUpdate }: Props) => (
       <ToggleSwitch
         checked={settings.duplicate_content_check_enabled}
         onChange={(v) => onUpdate("duplicate_content_check_enabled", v)}
+      />
+    </SettingField>
+
+    <SectionHeader title="JavaScript" icon={<Code className="w-3.5 h-3.5" />} />
+
+    <SettingField label="Expect HTML" description="Expect HTML content type">
+      <ToggleSwitch
+        checked={settings.html}
+        onChange={(v) => onUpdate("html", v)}
+      />
+    </SettingField>
+
+    <SettingField
+      label="JS Rendering"
+      description="Use headless Chrome for JS pages"
+    >
+      <ToggleSwitch
+        checked={settings.javascript_rendering}
+        onChange={(v) => onUpdate("javascript_rendering", v)}
+      />
+    </SettingField>
+
+    <SettingField
+      label="JS Concurrency"
+      description="Headless Chrome concurrency"
+    >
+      <NumberInput
+        value={settings.javascript_concurrency}
+        onChange={(v) => onUpdate("javascript_concurrency", v)}
+        min={1}
+        max={20}
       />
     </SettingField>
   </div>
