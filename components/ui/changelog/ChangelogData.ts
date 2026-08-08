@@ -4,7 +4,7 @@ export const changelogData = [
     date: "2026-08-19",
     type: "feature",
     changes: [
-      "Global: SEO CHAT username selection **VERY Experimental**",
+      "Global: SEO CHAT username selection (**VERY Experimental**)",
       "Global: Content Planner Calendar bug fix",
       "Global: Version Check Modal with Releases ",
       "Global: Improvement/Suggestion Box",
@@ -14,7 +14,7 @@ export const changelogData = [
       "Deep Crawler: Improved GSC Queries tab",
       "Deep Crawler: Improved Site Tree",
       "Deep Crawler: Easier GSC/GA4 Verification",
-      "Deep Crawler:  Full PDF report * Experimental *",
+      "Deep Crawler:  Full PDF report (** Experimental **)",
     ],
   },
   {

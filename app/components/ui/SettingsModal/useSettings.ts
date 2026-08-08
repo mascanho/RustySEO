@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useSettingsStore from "@/store/SettingsStore";
 
 export interface AppSettings {
     // System
@@ -140,6 +141,12 @@ export function useSettings() {
                         { updates: tomlValue },
                     );
                     setSettings(updated);
+
+                    // Signals other components (e.g. the footer's crawler-type
+                    // indicator) that settings changed elsewhere, so they can
+                    // refetch instead of showing a stale value — see
+                    // SettingsStore's lastUpdated/triggerRefresh.
+                    useSettingsStore.getState().triggerRefresh();
 
                     if (key === "max_urls_stored") {
                         useGlobalCrawlStore.setState((state) => {

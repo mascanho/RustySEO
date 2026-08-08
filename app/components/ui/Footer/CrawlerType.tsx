@@ -22,7 +22,7 @@ const CrawlerType = () => {
   const crawlerType = useCrawlStore((state) => state.crawlerType);
   const setCrawlerType = useCrawlStore((state) => state.setCrawlerType);
   const { setCrawler } = useGlobalConsoleStore();
-  const { triggerRefresh } = useSettingsStore();
+  const { triggerRefresh, lastUpdated } = useSettingsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load crawler type from localStorage on mount
@@ -180,6 +180,16 @@ const CrawlerType = () => {
       fetchBackendState();
     }
   }, [isModalOpen, fetchBackendState]);
+
+  // Re-sync whenever settings change elsewhere (e.g. the Settings modal's
+  // Crawler > JavaScript toggle) — without this, this icon's JS-active
+  // indicator only ever reflected its own dropdown's toggle and went stale
+  // the moment JS rendering was changed anywhere else.
+  useEffect(() => {
+    if (lastUpdated) {
+      fetchBackendState();
+    }
+  }, [lastUpdated, fetchBackendState]);
 
   return (
     <div className="relative">

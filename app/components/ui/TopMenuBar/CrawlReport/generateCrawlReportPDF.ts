@@ -1168,9 +1168,9 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
       imgW = imgH * (homepageScreenshot.width / homepageScreenshot.height);
     }
     const imgX = pageWidth / 2 - imgW / 2;
-    const framePad = 3;
+    const framePad = 0.75;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(imgX - framePad, frameTop - framePad, imgW + framePad * 2, imgH + framePad * 2, 2, 2, "F");
+    doc.roundedRect(imgX - framePad, frameTop - framePad, imgW + framePad * 2, imgH + framePad * 2, 1, 1, "F");
     doc.addImage(homepageScreenshot.dataUrl, "JPEG", imgX, frameTop, imgW, imgH);
   }
 
