@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { changelogData } from "./ChangelogData";
 import { usePathname } from "next/navigation";
 
-const getTypeColor = (type: string) => {
+export const getTypeColor = (type: string) => {
   switch (type) {
     case "feature":
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
@@ -17,7 +17,7 @@ const getTypeColor = (type: string) => {
   }
 };
 
-const getTypeLabel = (type: string) => {
+export const getTypeLabel = (type: string) => {
   switch (type) {
     case "feature":
       return "New";

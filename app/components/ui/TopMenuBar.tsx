@@ -561,7 +561,10 @@ const TopMenuBar = () => {
       </Modal>
 
       {/* Visualisations Hub */}
-      <VisualisationsModal opened={openedVisualisations} onClose={closeVisualisations} />
+      <VisualisationsModal
+        opened={openedVisualisations}
+        onClose={closeVisualisations}
+      />
 
       {/* Extractor Component - Now controlled by global store */}
       {visibility.customSearch && (
@@ -580,13 +583,14 @@ const TopMenuBar = () => {
                 />
                 Open Settings Folder
               </MenubarItem>
-              <MenubarItem onClick={handleOpenConfigFile}>
-                <CiSettings
-                  className=" text-sm mr-1.5 "
-                  style={{ marginLeft: "-1px" }}
-                />
-                Crawler settings (TOML)
-              </MenubarItem>
+              {/* NOTE: ONly stays here for dev purposes */}
+              {/* <MenubarItem onClick={handleOpenConfigFile}> */}
+              {/*   <CiSettings */}
+              {/*     className=" text-sm mr-1.5 " */}
+              {/*     style={{ marginLeft: "-1px" }} */}
+              {/*   /> */}
+              {/*   Crawler settings (TOML) */}
+              {/* </MenubarItem> */}
               <MenubarItem onClick={openSettings}>
                 <CiSettings
                   className=" text-sm mr-1.5 "
@@ -767,12 +771,12 @@ const TopMenuBar = () => {
             </MenubarContent>
           </MenubarMenu>
 
-
-
           {/* VISUALISATIONS */}
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3 text-xs">Visualisations</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">
+              Visualisations
+            </MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
@@ -784,7 +788,6 @@ const TopMenuBar = () => {
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
-
 
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
