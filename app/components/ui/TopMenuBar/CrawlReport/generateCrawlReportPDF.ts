@@ -19,6 +19,8 @@ const APPENDIX_ROW_CAP = 200;
 const ISSUE_APPENDIX_ROW_CAP = 100;
 const FULL_INVENTORY_ROW_CAP = 500;
 const ROBOTS_TXT_LINE_CAP = 1000;
+const DUPLICATE_GROUP_CAP = 50;
+const TOP_KEYWORDS_CAP = 30;
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -91,6 +93,31 @@ const loadImageDataUrl = async (path: string): Promise<LoadedImage | null> => {
 const safeTitle = (page: any): string => page?.title?.[0]?.title || "";
 const safeTitleLen = (page: any): number =>
   page?.title?.[0]?.title_len ?? safeTitle(page).length;
+
+// Walks a parsed JSON-LD value (object, array, or @graph-wrapped) and collects
+// every "@type" it finds. Schema.org allows @type to be a single string or an
+// array of strings, and multiple entities are commonly nested under @graph.
+const extractSchemaTypes = (raw: string): string[] => {
+  const types: string[] = [];
+  try {
+    const visit = (node: any) => {
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      if (node["@type"]) {
+        if (Array.isArray(node["@type"])) types.push(...node["@type"].map(String));
+        else types.push(String(node["@type"]));
+      }
+      if (Array.isArray(node["@graph"])) node["@graph"].forEach(visit);
+    };
+    visit(JSON.parse(raw));
+  } catch {
+    // Malformed JSON-LD on the page — skip it rather than fail the report.
+  }
+  return types;
+};
 
 // ---------------------------------------------------------------------------
 // PDF drawing helpers
@@ -878,21 +905,45 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   // Data that's only ever lazily fetched when the user opens a specific table
   // tab — fetch it fresh here so the report never depends on which tabs the
   // user happened to visit during/after the crawl.
-  const [imagesRes, redirectsRes, internalLinksRes, externalLinksRes] =
-    await Promise.allSettled([
-      invoke("get_aggregated_crawl_data_command", { dataType: "images" }),
-      invoke("get_aggregated_crawl_data_command", { dataType: "redirects" }),
-      invoke("get_links_page_command", {
-        dataType: "internal_links",
-        limit: 0,
-        offset: 0,
-      }),
-      invoke("get_links_page_command", {
-        dataType: "external_links",
-        limit: 0,
-        offset: 0,
-      }),
-    ]);
+  const [
+    imagesRes,
+    redirectsRes,
+    internalLinksRes,
+    externalLinksRes,
+    keywordsRes,
+    filesRes,
+    hreflangRes,
+    schemaTypesRes,
+    duplicateContentRes,
+    diffRes,
+    pageInventoryRes,
+  ] = await Promise.allSettled([
+    invoke("get_aggregated_crawl_data_command", { dataType: "images" }),
+    invoke("get_aggregated_crawl_data_command", { dataType: "redirects" }),
+    invoke("get_links_page_command", {
+      dataType: "internal_links",
+      limit: 0,
+      offset: 0,
+    }),
+    invoke("get_links_page_command", {
+      dataType: "external_links",
+      limit: 0,
+      offset: 0,
+    }),
+    invoke("get_aggregated_crawl_data_command", { dataType: "keywords" }),
+    invoke("get_aggregated_crawl_data_command", { dataType: "files" }),
+    invoke("get_aggregated_crawl_data_command", { dataType: "hreflang" }),
+    invoke("get_aggregated_crawl_data_command", { dataType: "schema_types" }),
+    invoke("find_duplicate_content_command"),
+    // Depends on the separate, opt-in Diff Checker feature's diff.db — most
+    // crawls won't have this populated, so a rejection here just means the
+    // section below renders its "not available" state, not a report failure.
+    invoke("get_url_diff_command"),
+    // Straight from SQLite, unlike crawlData (a JS-heap ring buffer capped at
+    // max_urls_stored) — this is what keeps the Full Page Inventory section's
+    // page count matching the app UI's crawl totals for large crawls.
+    invoke("get_aggregated_crawl_data_command", { dataType: "page_inventory" }),
+  ]);
 
   // RustySEO branding — icon glyph for the cover + per-page header,
   // wordmark for the cover only. Missing assets degrade gracefully.
@@ -920,6 +971,26 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   const brokenLinks = [...internalLinks, ...externalLinks].filter(
     (l) => typeof l?.status === "number" && l.status >= 400,
   );
+  const keywordsData: any[] =
+    keywordsRes.status === "fulfilled" && Array.isArray(keywordsRes.value) ? keywordsRes.value : [];
+  const filesData: any[] =
+    filesRes.status === "fulfilled" && Array.isArray(filesRes.value) ? filesRes.value : [];
+  const hreflangData: any[] =
+    hreflangRes.status === "fulfilled" && Array.isArray(hreflangRes.value) ? hreflangRes.value : [];
+  const schemaTypesData: any[] =
+    schemaTypesRes.status === "fulfilled" && Array.isArray(schemaTypesRes.value) ? schemaTypesRes.value : [];
+  const duplicateContent: { enabled: boolean; groups: any[] } =
+    duplicateContentRes.status === "fulfilled" && duplicateContentRes.value
+      ? (duplicateContentRes.value as any)
+      : { enabled: false, groups: [] };
+  const diffAnalysis: { added: any; removed: any } | null =
+    diffRes.status === "fulfilled" && diffRes.value ? (diffRes.value as any) : null;
+  // Falls back to the in-memory crawlData (and its possibly-capped count) only
+  // if the DB fetch itself failed — not merely because it's empty.
+  const pageInventory: any[] =
+    pageInventoryRes.status === "fulfilled" && Array.isArray(pageInventoryRes.value) && pageInventoryRes.value.length
+      ? pageInventoryRes.value
+      : crawlData;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -1207,6 +1278,155 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   }
 
   // ---------------------------------------------------------------------
+  // Top Keywords — summed across every crawled page, not just what's in the
+  // JS-heap crawlData, since this comes straight from a SQL aggregation.
+  // ---------------------------------------------------------------------
+  if (keywordsData.length) {
+    doc.addPage();
+    y = 20;
+    y = sectionTitle(doc, "Top Keywords", y);
+    const keywordTotals = new Map<string, { count: number; pages: Set<string> }>();
+    for (const entry of keywordsData) {
+      const kws = entry?.keywords;
+      if (!Array.isArray(kws)) continue;
+      for (const kw of kws) {
+        const word = Array.isArray(kw) ? kw[0] : kw?.word;
+        const count = Array.isArray(kw) ? kw[1] : kw?.count;
+        if (!word) continue;
+        const rec = keywordTotals.get(word) || { count: 0, pages: new Set<string>() };
+        rec.count += Number(count) || 0;
+        if (entry?.url) rec.pages.add(entry.url);
+        keywordTotals.set(word, rec);
+      }
+    }
+    const topKeywords = [...keywordTotals.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, TOP_KEYWORDS_CAP);
+    if (topKeywords.length) {
+      y = subNote(doc, `The ${topKeywords.length} most frequent keywords across all crawled pages.`, y);
+      y = dataTable(
+        doc,
+        y,
+        [["Keyword", "Total Occurrences", "Pages Found On"]],
+        topKeywords.map(([word, rec]) => [word, String(rec.count), String(rec.pages.size)]),
+        { fontSize: 8, extra: { columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } } } },
+      );
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("No keyword data available for this crawl.", MARGIN, y);
+      doc.setTextColor(0, 0, 0);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Files Found — linked non-HTML resources (PDFs, docs, archives, etc.)
+  // ---------------------------------------------------------------------
+  if (filesData.length) {
+    doc.addPage();
+    y = 20;
+    y = sectionTitle(doc, "Files Found", y);
+    y = subNote(
+      doc,
+      `${filesData.length} linked file(s) detected (PDFs, documents, archives, etc.) across all crawled pages.`,
+      y,
+    );
+    y = dataTable(
+      doc,
+      y,
+      [["File URL", "Found On", "Status"]],
+      filesData.slice(0, APPENDIX_ROW_CAP).map((f: any) => [
+        truncate(f.url || "", 60),
+        truncate(f.found_at || "", 50),
+        f.status ?? "-",
+      ]),
+      { fontSize: 7 },
+    );
+    if (filesData.length > APPENDIX_ROW_CAP) {
+      y = subNote(doc, `…and ${filesData.length - APPENDIX_ROW_CAP} more.`, y);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Schema Types — what kind of structured data is actually deployed,
+  // rather than just a with/without count.
+  // ---------------------------------------------------------------------
+  if (schemaTypesData.length) {
+    doc.addPage();
+    y = 20;
+    y = sectionTitle(doc, "Schema Types", y);
+    const schemaTypeCounts = new Map<string, number>();
+    for (const entry of schemaTypesData) {
+      const uniqueTypesOnPage = new Set(extractSchemaTypes(entry?.schema || ""));
+      for (const t of uniqueTypesOnPage) {
+        schemaTypeCounts.set(t, (schemaTypeCounts.get(t) || 0) + 1);
+      }
+    }
+    const schemaTypeRows = [...schemaTypeCounts.entries()].sort((a, b) => b[1] - a[1]);
+    if (schemaTypeRows.length) {
+      y = subNote(
+        doc,
+        `${schemaTypesData.length} page(s) carry structured data; breakdown by schema.org @type below (a page can use more than one type).`,
+        y,
+      );
+      y = dataTable(
+        doc,
+        y,
+        [["Schema Type", "Pages Using It"]],
+        schemaTypeRows.map(([type, count]) => [type, String(count)]),
+        { fontSize: 8, extra: { columnStyles: { 1: { halign: "right" } } } },
+      );
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Structured data was found but its JSON-LD could not be parsed for type analysis.", MARGIN, y);
+      doc.setTextColor(0, 0, 0);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Hreflang Analysis
+  // ---------------------------------------------------------------------
+  if (hreflangData.length) {
+    doc.addPage();
+    y = 20;
+    y = sectionTitle(doc, "Hreflang Analysis", y);
+    const crawledUrlSet = new Set(crawlData.map((p) => p.url));
+    const codeCounts = new Map<string, number>();
+    let missingSelfRef = 0;
+    let danglingReferences = 0;
+    for (const entry of hreflangData) {
+      const tags = Array.isArray(entry?.hreflangs) ? entry.hreflangs : [];
+      let hasSelfRef = false;
+      for (const tag of tags) {
+        const code = tag?.code;
+        const target = tag?.url;
+        if (code) codeCounts.set(code, (codeCounts.get(code) || 0) + 1);
+        if (target && target === entry.url) hasSelfRef = true;
+        if (target && !crawledUrlSet.has(target)) danglingReferences++;
+      }
+      if (!hasSelfRef) missingSelfRef++;
+    }
+    y = kvTable(doc, y, [
+      ["Pages With Hreflang Tags", String(hreflangData.length)],
+      ["Distinct Hreflang Codes", String(codeCounts.size)],
+      ["Pages Missing Self-Referencing Hreflang", String(missingSelfRef)],
+      ["References to URLs Outside This Crawl", String(danglingReferences)],
+    ]);
+    const codeRows = [...codeCounts.entries()].sort((a, b) => b[1] - a[1]);
+    if (codeRows.length) {
+      y = ensureSpace(doc, y, 30);
+      y = dataTable(
+        doc,
+        y,
+        [["Hreflang Code", "Pages Using It"]],
+        codeRows.map(([code, count]) => [code, String(count)]),
+        { fontSize: 8, extra: { columnStyles: { 1: { halign: "right" } } } },
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------
   // Broken links
   // ---------------------------------------------------------------------
   doc.addPage();
@@ -1329,6 +1549,51 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
     if (truncated) {
       y = ensureSpace(doc, y, 10);
       y = subNote(doc, `…truncated after ${ROBOTS_TXT_LINE_CAP} lines.`, y);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Duplicate Content — exact duplicate H1-H3 structure, and near-duplicate
+  // body content clustered by SimHash. Only populated when "Duplicated
+  // Content Check" was enabled in Settings > Crawler at crawl time.
+  // ---------------------------------------------------------------------
+  doc.addPage();
+  y = 20;
+  y = sectionTitle(doc, "Duplicate Content", y);
+  if (!duplicateContent.enabled) {
+    y = subNote(
+      doc,
+      "Duplicate Content Check was not enabled for this crawl (Settings → Crawler), so no fingerprint data is available to analyze.",
+      y,
+    );
+  } else if (!duplicateContent.groups.length) {
+    doc.setFontSize(10);
+    doc.setTextColor(21, 128, 61);
+    doc.text("No duplicate or near-duplicate content clusters were found.", MARGIN, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  } else {
+    const groups = duplicateContent.groups.slice(0, DUPLICATE_GROUP_CAP);
+    y = subNote(
+      doc,
+      `${duplicateContent.groups.length} duplicate cluster(s) found (exact heading matches and near-duplicate body content).${
+        duplicateContent.groups.length > DUPLICATE_GROUP_CAP
+          ? ` Showing the first ${DUPLICATE_GROUP_CAP}.`
+          : ""
+      }`,
+      y,
+    );
+    for (const group of groups) {
+      y = ensureSpace(doc, y, 30);
+      const kindLabel = group.kind === "headings" ? "Duplicate Headings" : "Near-Duplicate Content";
+      y = sectionTitle(doc, `${kindLabel} — ${group.similarity}% similarity (${group.pages.length} pages)`, y);
+      y = dataTable(
+        doc,
+        y,
+        [["URL", "Title", "Word Count"]],
+        group.pages.map((p: any) => [truncate(p.url, 60), truncate(p.title || "-", 40), String(p.word_count ?? "-")]),
+        { fontSize: 7.5 },
+      );
     }
   }
 
@@ -1466,25 +1731,93 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
   }
 
   // ---------------------------------------------------------------------
+  // Crawl Comparison — relies on the separate, opt-in Diff Checker feature's
+  // saved current_crawl/previous_crawl snapshots. Most crawls won't have this
+  // populated, which is expected and handled below, not an error state.
+  // ---------------------------------------------------------------------
+  doc.addPage();
+  y = 20;
+  y = sectionTitle(doc, "Crawl Comparison", y);
+  if (!diffAnalysis) {
+    y = subNote(
+      doc,
+      "No crawl comparison available. Use the app's Diff Checker tool to snapshot this crawl, then compare it against a future crawl to see what changed.",
+      y,
+    );
+  } else {
+    const added = (diffAnalysis as any).added;
+    const removed = (diffAnalysis as any).removed;
+    y = kvTable(doc, y, [
+      ["New Pages", String(added?.number_of_pages ?? 0)],
+      ["Removed Pages", String(removed?.number_of_pages ?? 0)],
+    ]);
+    if (added?.pages?.length) {
+      y = ensureSpace(doc, y, 30);
+      y = sectionTitle(doc, `New Pages (${added.pages.length})`, y);
+      y = dataTable(
+        doc,
+        y,
+        [["URL"]],
+        added.pages.slice(0, APPENDIX_ROW_CAP).map((u: string) => [truncate(u, 110)]),
+        { theme: "plain", fontSize: 7.5 },
+      );
+      if (added.pages.length > APPENDIX_ROW_CAP) {
+        y = subNote(doc, `…and ${added.pages.length - APPENDIX_ROW_CAP} more.`, y);
+      }
+    }
+    if (removed?.pages?.length) {
+      y = ensureSpace(doc, y, 30);
+      y = sectionTitle(doc, `Removed Pages (${removed.pages.length})`, y);
+      y = dataTable(
+        doc,
+        y,
+        [["URL"]],
+        removed.pages.slice(0, APPENDIX_ROW_CAP).map((u: string) => [truncate(u, 110)]),
+        { theme: "plain", fontSize: 7.5 },
+      );
+      if (removed.pages.length > APPENDIX_ROW_CAP) {
+        y = subNote(doc, `…and ${removed.pages.length - APPENDIX_ROW_CAP} more.`, y);
+      }
+    }
+    if (!added?.pages?.length && !removed?.pages?.length) {
+      y = subNote(doc, "No differences detected between the current and previous crawl snapshots.", y);
+    }
+  }
+
+  // ---------------------------------------------------------------------
   // Full page inventory
   // ---------------------------------------------------------------------
   doc.addPage();
   y = 20;
-  y = sectionTitle(doc, `Full Page Inventory (${crawlData.length} pages)`, y);
-  if (crawlData.length > FULL_INVENTORY_ROW_CAP) {
+  y = sectionTitle(doc, `Full Page Inventory (${pageInventory.length} pages)`, y);
+  if (pageInventory.length > FULL_INVENTORY_ROW_CAP) {
     y = subNote(
       doc,
-      `This PDF lists the first ${FULL_INVENTORY_ROW_CAP} of ${crawlData.length} crawled pages to keep the file readable. ` +
+      `This PDF lists the first ${FULL_INVENTORY_ROW_CAP} of ${pageInventory.length} crawled pages to keep the file readable. ` +
         `For the exhaustive list, export the individual tables from the app (Tables view — each column supports its own CSV/Excel export).`,
       y,
     );
   }
-  dataTable(
-    doc,
-    y,
-    [["URL", "Status", "Title (chars)", "Desc (chars)", "H1s", "Words", "Indexable", "Canonical"]],
-    crawlData.slice(0, FULL_INVENTORY_ROW_CAP).map((p) => [
-      truncate(p.url, 60),
+  // Handles two possible row shapes: the compact DB-sourced "page_inventory"
+  // rows (title_len/desc_len/h1_count/has_canonical, already flattened) used
+  // whenever available, or the in-memory crawlData (LightCrawlResult) shape
+  // used only as a fallback if that fetch failed.
+  const toInventoryRow = (p: any): (string | number)[] => {
+    const isDbRow = typeof p?.title_len === "number" || typeof p?.has_canonical === "boolean";
+    if (isDbRow) {
+      return [
+        truncate(p.url || "", 60),
+        p.status_code ?? "-",
+        String(p.title_len ?? 0),
+        String(p.desc_len ?? 0),
+        String(p.h1_count ?? 0),
+        String(p.word_count ?? 0),
+        (p.indexability ?? 0) >= 0.5 ? "Yes" : "No",
+        p.has_canonical ? "Yes" : "No",
+      ];
+    }
+    return [
+      truncate(p.url || "", 60),
       p.status_code ?? "-",
       String(safeTitleLen(p)),
       String(p.description?.length ?? 0),
@@ -1492,7 +1825,13 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
       String(p.word_count ?? 0),
       (p.indexability?.indexability ?? 0) >= 0.5 ? "Yes" : "No",
       p.canonicals?.length ? "Yes" : "No",
-    ]),
+    ];
+  };
+  dataTable(
+    doc,
+    y,
+    [["URL", "Status", "Title (chars)", "Desc (chars)", "H1s", "Words", "Indexable", "Canonical"]],
+    pageInventory.slice(0, FULL_INVENTORY_ROW_CAP).map(toInventoryRow),
     { fontSize: 6.5 },
   );
 
