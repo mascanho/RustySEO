@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Modal, ActionIcon, Text } from "@mantine/core";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -19,6 +19,49 @@ interface ChangelogModalProps {
   opened: boolean;
   onClose: () => void;
 }
+
+const getChangeDotColor = (type: string) => {
+  switch (type) {
+    case "feature":
+      return "bg-green-500";
+    case "fix":
+      return "bg-blue-500";
+    case "breaking":
+      return "bg-red-500";
+    default:
+      return "bg-orange-500";
+  }
+};
+
+// Most changelog lines follow "Area: what changed" (e.g. "Deep Crawler:
+// Schema detection export") — split that off so the area can render as a
+// small label instead of just running into the sentence.
+const CATEGORY_PATTERN = /^([^:]{2,20}):\s*(.+)$/;
+const parseChange = (change: string) => {
+  const match = change.match(CATEGORY_PATTERN);
+  return match
+    ? { category: match[1], text: match[2] }
+    : { category: null, text: change };
+};
+
+// Renders "**text**" segments (used for flags like "**Experimental**" in the
+// changelog data) as an emphasized inline span instead of literal asterisks.
+const renderChangeText = (text: string) => {
+  const parts = text.split(/(\*\*.+?\*\*)/g);
+  return parts.map((part, i) => {
+    const match = part.match(/^\*\*(.+)\*\*$/);
+    return match ? (
+      <span
+        key={i}
+        className="font-semibold text-amber-600 dark:text-amber-400"
+      >
+        {match[1]}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    );
+  });
+};
 
 export default function ChangelogModal({
   opened,
@@ -123,9 +166,9 @@ export default function ChangelogModal({
 
           {entry && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">
-                  v{entry.version}
+                  Released in:
                 </span>
                 <span className="text-xs text-brand-bright">
                   {new Date(entry.date).toLocaleDateString("en-US", {
@@ -136,15 +179,33 @@ export default function ChangelogModal({
                 </span>
               </div>
               <Separator />
-              <ul className="space-y-1.5 h-[320px] overflow-y-auto pr-1">
-                {entry.changes.map((change, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-muted-foreground dark:text-white/50 mt-1.5 block w-1 h-1 bg-current rounded-full flex-shrink-0" />
-                    <span className="leading-relaxed text-xs text-gray-600 dark:text-white/50">
-                      {change}
-                    </span>
-                  </li>
-                ))}
+              <ul className="space-y-1 h-[320px] overflow-y-auto pr-1">
+                {entry.changes.map((change, i) => {
+                  const { category, text } = parseChange(change);
+                  return (
+                    <li
+                      key={i}
+                      className="group flex items-start gap-2.5 rounded-lg px-2.5 py-2 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
+                    >
+                      <span
+                        className={`mt-0.5 flex h-4 w-4 flex-none items-center justify-center rounded-full ${getChangeDotColor(entry.type)}`}
+                      >
+                        <Check
+                          className="h-2.5 w-2.5 text-white"
+                          strokeWidth={3}
+                        />
+                      </span>
+                      <span className="leading-relaxed text-xs text-gray-600 dark:text-white/70">
+                        {category && (
+                          <span className="mr-1.5 inline-block rounded-md bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/50">
+                            {category}
+                          </span>
+                        )}
+                        {renderChangeText(text)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

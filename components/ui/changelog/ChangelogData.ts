@@ -6,6 +6,8 @@ export const changelogData = [
     changes: [
       "Global: SEO CHAT username selection **VERY Experimental**",
       "Global: Content Planner Calendar bug fix",
+      "Global: Version Check Modal with Releases ",
+      "Global: Improvement/Suggestion Box",
       "Deep Crawler: Schema detection export",
       "Deep Crawler: Context menus on Inlinks and Outlinks tables",
       "Deep Crawler: Improved GSC Queries tab",
