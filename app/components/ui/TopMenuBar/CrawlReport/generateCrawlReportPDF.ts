@@ -63,6 +63,14 @@ interface LoadedImage {
   height: number;
 }
 
+const loadImageDimensions = (dataUrl: string): Promise<{ width: number; height: number }> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth || 1, height: img.naturalHeight || 1 });
+    img.onerror = () => resolve({ width: 1, height: 1 });
+    img.src = dataUrl;
+  });
+
 // Fetches a public/ asset and returns it as a data URL + natural dimensions
 // so it can be embedded via doc.addImage() at the correct aspect ratio.
 // Resolves to null (never throws) so a missing/broken asset just means the
@@ -78,14 +86,41 @@ const loadImageDataUrl = async (path: string): Promise<LoadedImage | null> => {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-    const dims = await new Promise<{ width: number; height: number }>((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve({ width: img.naturalWidth || 1, height: img.naturalHeight || 1 });
-      img.onerror = () => resolve({ width: 1, height: 1 });
-      img.src = dataUrl;
-    });
+    const dims = await loadImageDimensions(dataUrl);
     return { dataUrl, width: dims.width, height: dims.height };
   } catch {
+    return null;
+  }
+};
+
+// Lighthouse always computes a "final-screenshot" audit as part of the
+// performance category (see runPagespeed's category=performance in
+// bulk.rs), so PSI data already fetched during the crawl doubles as a free
+// homepage preview — no separate screenshot infrastructure needed. Checks
+// every strategy (mobile/desktop) and returns the first screenshot found.
+const extractFinalScreenshot = (psiResults: any): string | null => {
+  if (!Array.isArray(psiResults)) return null;
+  for (const strategy of psiResults) {
+    const data = strategy?.audits?.["final-screenshot"]?.details?.data;
+    if (typeof data === "string" && data.length > 0) return data;
+  }
+  return null;
+};
+
+// Fetches the full record for the crawl's root page (depth 0) and pulls its
+// Lighthouse screenshot out, if PSI analysis was run for this crawl. Never
+// throws — no PSI data just means the cover page renders without a preview.
+const fetchRootScreenshot = async (crawlData: any[]): Promise<LoadedImage | null> => {
+  const rootPage = crawlData.find((p) => p?.url_depth === 0) || crawlData[0];
+  if (!rootPage?.url) return null;
+  try {
+    const fullData: any = await invoke("get_url_data_command", { url: rootPage.url });
+    const shotDataUrl = extractFinalScreenshot(fullData?.psi_results);
+    if (!shotDataUrl) return null;
+    const dims = await loadImageDimensions(shotDataUrl);
+    return { dataUrl: shotDataUrl, width: dims.width, height: dims.height };
+  } catch (error) {
+    console.error("Failed to fetch homepage screenshot:", error);
     return null;
   }
 };
@@ -184,7 +219,11 @@ const dataTable = (
     head,
     body,
     theme: opts.theme || "striped",
-    headStyles: { fillColor: opts.headColor || BRAND_COLOR, fontSize: 8.5 },
+    // Explicit white text on every filled header row — relying on the
+    // autoTable theme's default head textColor is fragile, since any future
+    // headStyles override here could silently drop it and leave dark text
+    // on a dark (blue/red) background.
+    headStyles: { fillColor: opts.headColor || BRAND_COLOR, textColor: [255, 255, 255], fontSize: 8.5 },
     styles: { fontSize: opts.fontSize || 8.5, cellPadding: 1.8, overflow: "linebreak" },
     margin: { left: MARGIN, right: MARGIN },
     ...opts.extra,
@@ -947,9 +986,10 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
 
   // RustySEO branding — icon glyph for the cover + per-page header,
   // wordmark for the cover only. Missing assets degrade gracefully.
-  const [logoIcon, logoWordmark] = await Promise.all([
+  const [logoIcon, logoWordmark, homepageScreenshot] = await Promise.all([
     loadImageDataUrl("/icon.png"),
     loadImageDataUrl("/rustyLight.png"),
+    fetchRootScreenshot(crawlData),
   ]);
 
   const images: any[] =
@@ -1067,6 +1107,33 @@ export async function generateCrawlReportPDF(): Promise<CrawlReportResult> {
     doc.text(label, bx + boxWidth / 2, boxY + 19, { align: "center" });
     bx += boxWidth + boxGap;
   });
+
+  // Homepage preview — pulled from the Lighthouse "final-screenshot" audit
+  // already captured for the root page during PSI analysis, if it ran for
+  // this crawl. Skipped entirely (cover page unchanged) when unavailable.
+  if (homepageScreenshot) {
+    const sectionTop = boxY + 26 + 14;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("HOMEPAGE PREVIEW", pageWidth / 2, sectionTop, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    const frameTop = sectionTop + 6;
+    const maxImgW = 150;
+    const maxImgH = Math.max(40, Math.min(82, pageHeight - 34 - frameTop));
+    let imgW = maxImgW;
+    let imgH = imgW * (homepageScreenshot.height / homepageScreenshot.width);
+    if (imgH > maxImgH) {
+      imgH = maxImgH;
+      imgW = imgH * (homepageScreenshot.width / homepageScreenshot.height);
+    }
+    const imgX = pageWidth / 2 - imgW / 2;
+    const framePad = 3;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(imgX - framePad, frameTop - framePad, imgW + framePad * 2, imgH + framePad * 2, 2, 2, "F");
+    doc.addImage(homepageScreenshot.dataUrl, "JPEG", imgX, frameTop, imgW, imgH);
+  }
 
   doc.setFontSize(8.5);
   doc.setTextColor(100, 116, 139);
