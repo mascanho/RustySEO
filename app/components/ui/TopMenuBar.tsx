@@ -23,6 +23,7 @@ import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
+import SuggestionBox from "./Suggestion/SuggestionBox";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { generateCrawlReportPDF } from "./TopMenuBar/CrawlReport/generateCrawlReportPDF";
@@ -39,6 +40,7 @@ import {
   FiLogOut,
   FiGlobe,
   FiSearch,
+  FiMessageSquare,
 } from "react-icons/fi";
 import { GiRobotGrab, GiSpiderBot } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
@@ -119,6 +121,10 @@ const TopMenuBar = () => {
     useDisclosure(false);
   const [openedAbout, { open: openAbout, close: closeAbout }] =
     useDisclosure(false);
+  const [
+    openedSuggestion,
+    { open: openSuggestion, close: closeSuggestion },
+  ] = useDisclosure(false);
 
   const [
     openedSearchConsole,
@@ -391,6 +397,28 @@ const TopMenuBar = () => {
         }}
       >
         <About close={closeAbout} />
+      </Modal>
+
+      {/* Suggestion Box */}
+      <Modal
+        opened={openedSuggestion}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeSuggestion}
+        centered
+        size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+          },
+        }}
+      >
+        <SuggestionBox close={closeSuggestion} />
       </Modal>
 
       {/* Drawer */}
@@ -812,6 +840,11 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openAbout}>
                 <FiHelpCircle className="mr-2" />
                 About
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={openSuggestion}>
+                <FiMessageSquare className="mr-2" />
+                Send a Suggestion
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
