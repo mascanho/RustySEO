@@ -653,6 +653,33 @@ impl Database {
                     }
                     Ok(Value::Array(schemas))
                 }
+                "custom_search" => {
+                    let mut stmt = conn.prepare(
+                        "SELECT json_extract(data, '$.url'), json_extract(data, '$.custom_search')
+                         FROM domain_crawl
+                         WHERE json_extract(data, '$.custom_search') IS NOT NULL
+                           AND json_extract(data, '$.custom_search') != '[]'
+                           AND json_extract(data, '$.custom_search') != 'null'"
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let page_url: String = row.get(0)?;
+                        let matches_json: String = row.get(1)?;
+                        Ok((page_url, matches_json))
+                    })?;
+
+                    let mut results = Vec::new();
+                    for row_res in rows {
+                        if let Ok((page_url, matches_json)) = row_res {
+                            if let Ok(matches) = serde_json::from_str::<Value>(&matches_json) {
+                                results.push(serde_json::json!({
+                                    "url": page_url,
+                                    "matches": matches
+                                }));
+                            }
+                        }
+                    }
+                    Ok(Value::Array(results))
+                }
                 "page_inventory" => {
                     // Compact per-page summary for the whole crawl, straight from
                     // SQLite — unlike the frontend's `crawlData` store (a JS-heap

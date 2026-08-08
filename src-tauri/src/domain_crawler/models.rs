@@ -18,22 +18,14 @@ pub struct RedirectHop {
     pub status_code: u16,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Extractor {
-    pub html: bool,
-    pub css: bool,
-    pub regex: bool,
-}
-
-// Implement Default for Extractor
-impl Default for Extractor {
-    fn default() -> Self {
-        Self {
-            html: false,
-            css: false,
-            regex: false,
-        }
-    }
+// Result of evaluating one Custom Search rule (see db_deep::db::CustomSearchRule)
+// against a single page. One of these per *enabled* rule, per crawled page.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct CustomSearchMatch {
+    pub rule_id: i64,
+    pub rule_name: String,
+    pub matched: bool,
+    pub value: Option<String>,
 }
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
@@ -67,7 +59,8 @@ pub struct DomainCrawlResults {
     pub hreflangs: Option<Vec<HreflangObject>>,
     pub language: Option<String>,
     pub flesch: Result<(f64, String), String>,
-    pub extractor: Extractor,
+    #[serde(default)]
+    pub custom_search: Vec<CustomSearchMatch>,
     pub headers: Vec<(String, String)>,
     pub pdf_files: Vec<String>,
     pub https: bool,
@@ -128,7 +121,7 @@ impl Default for DomainCrawlResults {
             hreflangs: None,
             language: None,
             flesch: Ok((0.0, String::new())),
-            extractor: Extractor::default(),
+            custom_search: Vec::new(),
             headers: Vec::new(),
             pdf_files: Vec::new(),
             https: false,
@@ -177,7 +170,8 @@ pub struct LightCrawlResult {
     pub flesch: Option<f64>,
     pub flesch_grade: Option<String>,
     pub text_ratio: Option<f64>,
-    pub extractor: Extractor,
+    #[serde(default)]
+    pub custom_search: Vec<CustomSearchMatch>,
     pub images_count: usize,
     pub images_with_alt: usize,
     pub images_without_alt: usize,
@@ -278,7 +272,7 @@ impl LightCrawlResult {
                 .as_ref()
                 .and_then(|tr| tr.first())
                 .map(|tr| tr.text_ratio),
-            extractor: full.extractor.clone(),
+            custom_search: full.custom_search.clone(),
             images_count: img_count,
             images_with_alt: img_with_alt,
             images_without_alt: img_without_alt,

@@ -1196,36 +1196,21 @@ function computeGeneralOverview(
     }
   }
 
-  // 28. Custom Search (only rendered if at least one page carries extractor results)
+  // 28. Custom Search (only rendered if at least one enabled rule has matched)
   {
-    let html = 0,
-      css = 0,
-      regex = 0,
-      anyExtractor = false;
+    const ruleCounts = new Map<string, number>();
     for (const p of crawlData) {
-      if (p?.extractor?.html) {
-        html++;
-        anyExtractor = true;
-      }
-      if (p?.extractor?.css) {
-        css++;
-        anyExtractor = true;
-      }
-      if (p?.extractor?.regex) {
-        regex++;
-        anyExtractor = true;
+      for (const match of p?.custom_search || []) {
+        if (match.matched) {
+          ruleCounts.set(match.rule_name, (ruleCounts.get(match.rule_name) || 0) + 1);
+        }
       }
     }
-    if (anyExtractor) {
-      const totalExtractors = html + css + regex;
-      categories.push(
-        cat("Custom Search", [
-          ["Total", String(totalExtractors), "100%"],
-          ["HTML Search", String(html), pct0(html, totalPages)],
-          ["CSS Search", String(css), pct0(css, totalPages)],
-          ["Regex Search", String(regex), pct0(regex, totalPages)],
-        ]),
-      );
+    if (ruleCounts.size > 0) {
+      const rows: [string, string, string][] = [...ruleCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([ruleName, count]) => [ruleName, String(count), pct0(count, totalPages)]);
+      categories.push(cat("Custom Search", rows));
     }
   }
 

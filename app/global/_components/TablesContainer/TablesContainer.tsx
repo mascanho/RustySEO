@@ -35,6 +35,8 @@ import FilesTable from "./FilesTable/FilesTable";
 import OpenGraphPreview from "./SubTables/OpenGraphPreview/OpenGraphPreview";
 import PageInternalSubTable from "./SubTables/PageLinksSubTable/PageInternalSubTable";
 import PageExternalSubTable from "./SubTables/PageLinksSubTable/PageExternalSubTable";
+import TableCustomSearch from "./CustomSearchTable/TableCustomSearch";
+import { useCustomSearchRules } from "@/app/components/ui/Extractors/useCustomSearchRules";
 import { invoke } from "@tauri-apps/api/core";
 
 const EMPTY_ARRAY: any[] = [];
@@ -255,6 +257,11 @@ export default function Home() {
               dataType: "files",
             });
             if (isSubscribed) setAggregatedData({ files: res || [] });
+          } else if (activeTab === "search") {
+            const res = await invoke("get_aggregated_crawl_data_command", {
+              dataType: "custom_search",
+            });
+            if (isSubscribed) setAggregatedData({ customSearch: res || [] });
           }
         } catch (e) {
           console.error("Error fetching aggregated data:", e);
@@ -308,6 +315,11 @@ export default function Home() {
       else if (
         activeTab === "cwv" &&
         (!currentData.cwv || currentData.cwv.length === 0)
+      )
+        shouldFetchImmediate = true;
+      else if (
+        activeTab === "search" &&
+        (!currentData.customSearch || currentData.customSearch.length === 0)
       )
         shouldFetchImmediate = true;
 
@@ -405,13 +417,15 @@ export default function Home() {
     return aggregatedData.keywords || [];
   }, [aggregatedData.keywords, activeTab]);
 
+  // Sourced from the DB-backed "custom_search" aggregation (same mechanism as
+  // keywords/redirects) rather than the in-memory crawlData ring buffer, so
+  // results are durable across tab switches and reopened crawl sessions, and
+  // reflect every enabled rule instead of a single hardcoded boolean.
   const filteredCustomSearch = useMemo(() => {
     if (activeTab !== "search") return EMPTY_ARRAY;
-    const state = useGlobalCrawlStore.getState();
-    const crawlData = state.crawlData;
-    if (!crawlData || !Array.isArray(crawlData)) return EMPTY_ARRAY;
-    return crawlData.filter((search) => search?.extractor?.html === true);
-  }, [crawlDataVersion, activeTab, isFinishedDeepCrawl]);
+    return aggregatedData.customSearch || [];
+  }, [aggregatedData.customSearch, activeTab]);
+  const { rules: customSearchRules } = useCustomSearchRules();
 
   const cwvRows = useMemo(() => {
     if (activeTab !== "cwv") return EMPTY_ARRAY;
@@ -590,9 +604,9 @@ export default function Home() {
             )}
             {activeTab === "search" && (
               <div className="flex-1 min-h-0 h-full overflow-hidden">
-                <TableCrawl
+                <TableCustomSearch
                   rows={filteredCustomSearch}
-                  tabName={"Custom Search"}
+                  rules={customSearchRules}
                 />
               </div>
             )}

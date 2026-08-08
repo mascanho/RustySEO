@@ -211,12 +211,6 @@ async fn main() {
         };
     });
 
-    // clear the custom_search DB entry
-    match db::clear_custom_search() {
-        Ok(_) => println!("Custom search entry cleared successfully"),
-        Err(err) => eprintln!("Error clearing custom search entry: {}", err),
-    }
-
     // Set the configurations
     let settings = match settings::settings::init_settings().await {
         Ok(s) => Arc::new(RwLock::new(s)),
@@ -361,7 +355,11 @@ async fn main() {
             db::delete_domain_results_history,
             db::delete_domain_result_by_id,
             db::delete_domain_results_by_ids,
-            db::store_custom_search,
+            db::list_custom_search_rules,
+            db::create_custom_search_rule,
+            db::update_custom_search_rule,
+            db::delete_custom_search_rule,
+            db::set_custom_search_rule_enabled,
             domain_crawler::issues_report::store_issues_report,
             domain_crawler::issues_report::get_issues_reports,
             domain_commands::create_excel_two_cols,

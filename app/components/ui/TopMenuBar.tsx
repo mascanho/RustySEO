@@ -594,10 +594,27 @@ const TopMenuBar = () => {
         onClose={closeVisualisations}
       />
 
-      {/* Extractor Component - Now controlled by global store */}
-      {visibility.customSearch && (
+      {/* Custom Search rule manager */}
+      <Modal
+        opened={visibility.customSearch}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={hideCustomSearch}
+        centered
+        size={"640px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+          },
+        }}
+      >
         <CustomSearchSelector close={hideCustomSearch} />
-      )}
+      </Modal>
 
       <Menubar className="fixed w-full top-0 z-[999999999] p-0 pl-0 dark:bg-brand-darker dark:text-white/50 text-black/70 bg-white dark:border-b-brand-dark border-b pb-1 font-mono font-light">
         <section className="flex -ml-3 space-x-1 cursor-pointer">

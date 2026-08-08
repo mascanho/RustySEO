@@ -1,322 +1,153 @@
-// @ts-nocheck
 "use client";
 
 import { useState } from "react";
-import { Hash, Code, FileType2, ChevronDown, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Search, Plus, Pencil, Trash2, X } from "lucide-react";
+import { ActionIcon, Text } from "@mantine/core";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { htmlElements } from "./HtmlElements";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/core";
-import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import { ToggleSwitch } from "../SettingsModal/fields/SettingFields";
+import CustomSearchRuleEditor from "./CustomSearchRuleEditor";
+import { useCustomSearchRules, CustomSearchRule } from "./useCustomSearchRules";
 
-export default function CustomSearchSelector({ close }) {
-    const setCrawlerType = useGlobalCrawlStore((state) => state.setCrawlerType);
-  const { setCrawler } = useGlobalConsoleStore();
-  const [activeTab, setActiveTab] = useState("html");
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [extractorConfig, setExtractorConfig] = useState({
-    css: { selector: "", attribute: "text", multiple: false },
-    html: {
-      tag: "div",
-      attributeName: "",
-      attributeValue: "",
-    },
-    regex: { pattern: "", flags: "g", group: 0 },
-  });
+interface CustomSearchSelectorProps {
+  close: () => void;
+}
 
-  const handleChange = (tab, field, value) => {
-    setExtractorConfig({
-      ...extractorConfig,
-      [tab]: { ...extractorConfig[tab], [field]: value },
-    });
+const modeLabel = (rule: CustomSearchRule) =>
+  rule.mode === "css" ? "CSS" : "Regex";
+
+export default function CustomSearchSelector({ close }: CustomSearchSelectorProps) {
+  const { rules, loading, createRule, updateRule, deleteRule, setRuleEnabled } =
+    useCustomSearchRules();
+  const [editing, setEditing] = useState<CustomSearchRule | "new" | null>(null);
+
+  const handleSave = async (rule: Omit<CustomSearchRule, "created_at"> & { id: number }) => {
+    if (rule.id) {
+      await updateRule(rule as CustomSearchRule);
+    } else {
+      const { id, ...rest } = rule;
+      await createRule(rest);
+    }
+    setEditing(null);
   };
 
-  const validateFields = () => {
-    switch (activeTab) {
-      case "css":
-        return extractorConfig.css.selector.trim() !== "";
-      case "html":
-        return (
-          extractorConfig.html.tag.trim() !== "" &&
-          // extractorConfig.html.attributeName.trim() !== "" &&
-          extractorConfig.html.attributeValue.trim() !== ""
-        );
-      case "regex":
-        return extractorConfig.regex.pattern.trim() !== "";
-      default:
-        return false;
-    }
-  };
-
-  const handleApply = () => {
-    if (!validateFields()) return;
-
-    // Construct the config object based on the active tab
-    let config;
-    switch (activeTab) {
-      case "css":
-        config = {
-          type: "css",
-          config: {
-            type: "css",
-            selector: extractorConfig.css.selector,
-            attribute: extractorConfig.css.attribute,
-          },
-        };
-        break;
-      case "html":
-        config = {
-          type: "html",
-          config: {
-            selector: extractorConfig.html.tag,
-            attribute: extractorConfig.html.attributeValue,
-          },
-        };
-        break;
-      case "regex":
-        config = {
-          type: "regex",
-          config: {
-            type: "regex",
-            selector: extractorConfig.regex.pattern,
-            attribute: extractorConfig.regex.flags,
-          },
-        };
-        break;
-      default:
-        console.error("Unknown tab type");
-        return;
-    }
-
-    console.log("Extractor configuration:", config);
-    setCrawlerType("Custom Search");
-    setCrawler("Custom Search");
-
-    try {
-      invoke("store_custom_search", { data: [config] }).then((result) => {
-        console.log("Sending data to Rust DB");
-      });
-    } catch (err) {
-      console.log(err);
-    }
-
-    toast.success("RustySEO is now in custom search mode");
-    close();
+  const handleDelete = async (rule: CustomSearchRule) => {
+    if (!window.confirm(`Delete rule "${rule.name}"?`)) return;
+    await deleteRule(rule.id);
   };
 
   return (
-    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 dark:bg-brand-darker  border border-gray-300 dark:border-brand-dark rounded-md shadow-lg font-sans flex flex-col">
-      {/* Window-like Title Bar */}
-      <div className="flex items-center justify-between px-2 py-1 dark:bg-brand-dark bg-gray-200 border-b border-gray-300 dark:border-b-brand-dark">
-        <span className="text-sm font-medium dark:text-white/90">
-          Custom Search
-        </span>
-        <div className="flex gap-1">
-          <Button
-            onClick={close}
-            variant="ghost"
-            size="sm"
-            className="p-1 h-6 w-6"
-          >
-            <X className="h-4 w-4 dark:text-white" />
-          </Button>
+    <div className="flex flex-col w-full bg-white dark:bg-[#0f0f0f] rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5">
+      {/* Header */}
+      <header className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 bg-brand-bright/10 dark:bg-brand-bright/20 rounded-xl">
+            <Search className="w-6 h-6 text-brand-bright" />
+          </div>
+          <div>
+            <Text fw={800} size="lg" className="text-gray-900 dark:text-white tracking-tight">
+              Custom Search
+            </Text>
+            <Text size="xs" className="text-gray-500 dark:text-gray-400 font-medium">
+              {rules.length === 0
+                ? "No rules configured yet"
+                : `${rules.filter((r) => r.enabled).length} of ${rules.length} rule(s) active`}
+            </Text>
+          </div>
         </div>
-      </div>
+        <ActionIcon
+          onClick={close}
+          variant="subtle"
+          color="gray"
+          radius="xl"
+          size="lg"
+          className="hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+        >
+          <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        </ActionIcon>
+      </header>
 
-      {/* Main Content (Collapsible) */}
-      {!isMinimized && (
-        <div className="flex flex-col h-full dark:text-white">
-          <div className="p-3 space-y-4 flex-grow overflow-auto">
-            {/* Tab-like Toolbar */}
-            <div className="flex gap-1 bg-gray-200 p-1  dark:bg-brand-dark text-xs">
-              {[
-                // { id: "css", icon: Hash, label: "CSS" },
-                { id: "html", icon: FileType2, label: "HTML" },
-                // { id: "regex", icon: Code, label: "Regex" },
-              ].map((tab) => (
-                <Button
-                  key={tab.id}
-                  variant={activeTab === tab.id ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1 flex items-center gap-1 text-xs h-6 text-xs"
-                  style={{
-                    background: activeTab === tab.id ? "#2B6CC4" : "#ccc",
-                    borderRadius: "0px",
-                    fontSize: "10px",
-                    color: activeTab === tab.id ? "white" : "black",
-                  }}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  <tab.icon className="h-3 w-3" />
-                  {tab.label}
-                </Button>
-              ))}
+      {/* Body */}
+      <div className="p-6 min-h-[220px] max-h-[480px] overflow-y-auto">
+        {editing ? (
+          <CustomSearchRuleEditor
+            initialRule={editing === "new" ? null : editing}
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
+        ) : (
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              <Button size="sm" className="gap-1.5" onClick={() => setEditing("new")}>
+                <Plus className="w-3.5 h-3.5" />
+                Add Rule
+              </Button>
             </div>
 
-            {/* CSS Panel */}
-            {/* {activeTab === "css" && (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">Selector</Label>
-                  <Input
-                    placeholder=".class, #id"
-                    value={extractorConfig.css.selector}
-                    onChange={(e) =>
-                      handleChange("css", "selector", e.target.value)
-                    }
-                    className="text-sm h-8"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Extract</Label>
-                  <Select
-                    value={extractorConfig.css.attribute}
-                    onValueChange={(value) =>
-                      handleChange("css", "attribute", value)
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["text", "html", "href", "src", "value", "data-*"].map(
-                        (opt) => (
-                          <SelectItem key={opt} value={opt} className="text-sm">
-                            {opt}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+            {loading ? (
+              <div className="py-10 text-center text-xs text-gray-400 dark:text-gray-500">
+                Loading rules…
               </div>
-            )} */}
-
-            {/* HTML Panel */}
-            {activeTab === "html" && (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">Tag</Label>
-                  <Select
-                    value={extractorConfig.html.tag}
-                    onValueChange={(value) =>
-                      handleChange("html", "tag", value)
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {htmlElements.map((tag) => (
-                        <SelectItem key={tag} value={tag} className="text-sm">
-                          {tag}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  <div>
-                    <Label className="text-xs">Value</Label>
-                    <Input
-                      placeholder="value"
-                      value={extractorConfig.html.attributeValue}
-                      onChange={(e) =>
-                        handleChange("html", "attributeValue", e.target.value)
-                      }
-                      className="text-sm h-8"
-                    />
-                  </div>
-                </div>
+            ) : rules.length === 0 ? (
+              <div className="py-10 text-center space-y-1">
+                <Text size="sm" fw={600} className="text-gray-600 dark:text-gray-300">
+                  Nothing to search for yet
+                </Text>
+                <Text size="xs" className="text-gray-400 dark:text-gray-500">
+                  Add a rule to start matching pages by CSS selector or regex during every crawl.
+                </Text>
               </div>
-            )}
-
-            {/* Regex Panel */}
-            {activeTab === "regex" && (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">Pattern</Label>
-                  <Input
-                    placeholder="(\w+)"
-                    value={extractorConfig.regex.pattern}
-                    onChange={(e) =>
-                      handleChange("regex", "pattern", e.target.value)
-                    }
-                    className="text-sm h-8"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Flags</Label>
-                  <div className="flex gap-2">
-                    {["g", "i", "m"].map((flag) => (
-                      <div key={flag} className="flex items-center gap-1">
-                        <Checkbox
-                          id={`flag-${flag}`}
-                          checked={extractorConfig.regex.flags.includes(flag)}
-                          onCheckedChange={(checked) => {
-                            const flags = checked
-                              ? extractorConfig.regex.flags + flag
-                              : extractorConfig.regex.flags.replace(flag, "");
-                            handleChange("regex", "flags", flags);
-                          }}
-                        />
-                        <Label htmlFor={`flag-${flag}`} className="text-xs">
-                          {flag}
-                        </Label>
+            ) : (
+              <ul className="space-y-1.5">
+                {rules.map((rule) => (
+                  <li
+                    key={rule.id}
+                    className="group flex items-center justify-between gap-3 rounded-lg border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02] px-3 py-2.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-800 dark:text-white truncate">
+                          {rule.name}
+                        </span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                          {modeLabel(rule)}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Group</Label>
-                  <RadioGroup
-                    value={extractorConfig.regex.group.toString()}
-                    onValueChange={(value) =>
-                      handleChange("regex", "group", Number(value))
-                    }
-                    className="flex gap-2"
-                  >
-                    {[0, 1, 2].map((group) => (
-                      <div key={group} className="flex items-center gap-1">
-                        <RadioGroupItem
-                          value={group.toString()}
-                          id={`group-${group}`}
-                        />
-                        <Label htmlFor={`group-${group}`} className="text-xs">
-                          {group}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-              </div>
+                      <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                        {rule.pattern}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <ToggleSwitch
+                        checked={rule.enabled}
+                        onChange={(v: boolean) => setRuleEnabled(rule.id, v)}
+                      />
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="sm"
+                        onClick={() => setEditing(rule)}
+                        className="hover:bg-gray-100 dark:hover:bg-white/10"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        size="sm"
+                        onClick={() => handleDelete(rule)}
+                        className="hover:bg-red-50 dark:hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </ActionIcon>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-
-          {/* Footer - Always at the bottom */}
-          <div className="p-3 pt-0 border-t dark:border-0 mt-auto">
-            <Button
-              onClick={handleApply}
-              disabled={!validateFields()}
-              className="w-full h-8 text-sm bg-brand-bright  rounded-none dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright hover:text-white dark:bg-brand-dark dark:hover:text-white"
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

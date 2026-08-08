@@ -19,7 +19,6 @@ use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::helpers::{headless_fetch, opengraph, url_depth};
-use crate::domain_crawler::models::Extractor;
 use crate::settings::settings::Settings;
 
 use super::helpers::canonical_selector::get_canonical;
@@ -391,7 +390,7 @@ pub async fn process_url(
         hreflangs_val,
         language_val,
         flesch_val,
-        html_extractor_val,
+        custom_search_matches_val,
         cross_origin_data,
         links_for_crawler,
         _ngrams_data,
@@ -565,11 +564,7 @@ pub async fn process_url(
         language: language_val,
         flesch: flesch_val,
         psi_results,
-        extractor: Extractor {
-            html: html_extractor_val,
-            css: false,
-            regex: false,
-        },
+        custom_search: custom_search_matches_val,
         headers,
         pdf_files,
         https,
