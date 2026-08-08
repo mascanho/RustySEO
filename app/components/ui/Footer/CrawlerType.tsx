@@ -19,7 +19,7 @@ const CRAWLER_TYPES = {
 };
 
 const CrawlerType = () => {
-    const crawlerType = useCrawlStore((state) => state.crawlerType);
+  const crawlerType = useCrawlStore((state) => state.crawlerType);
   const setCrawlerType = useCrawlStore((state) => state.setCrawlerType);
   const { setCrawler } = useGlobalConsoleStore();
   const { triggerRefresh } = useSettingsStore();
@@ -253,6 +253,7 @@ const CrawlerType = () => {
           </Stack>
         }
         position="top"
+        offset={16}
         withArrow
         transitionProps={{ duration: 200, transition: "pop" }}
         multiline

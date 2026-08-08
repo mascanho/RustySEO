@@ -9,6 +9,7 @@ export const changelogData = [
       "Global: Version Check Modal with Releases ",
       "Global: Improvement/Suggestion Box",
       "Deep Crawler: Schema detection export",
+      "Deep Crawler: Javascript Crawling in General Settings",
       "Deep Crawler: Context menus on Inlinks and Outlinks tables",
       "Deep Crawler: Improved GSC Queries tab",
       "Deep Crawler: Improved Site Tree",
