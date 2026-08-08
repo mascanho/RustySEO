@@ -4,7 +4,7 @@ export const changelogData = [
     date: "2026-08-19",
     type: "feature",
     changes: [
-      "Global: SEO CHAT username selection (**VERY Experimental**)",
+      "Global: SEO CHAT username selection ( **VERY Experimental** )",
       "Global: Content Planner Calendar bug fix",
       "Global: Version Check Modal with Releases ",
       "Global: Improvement/Suggestion Box",

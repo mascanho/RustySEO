@@ -129,7 +129,7 @@ export default function ChangelogModal({
 
           {entry && (
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-gray-900 dark:text-white">
                   Released in:
                 </span>
@@ -180,7 +180,7 @@ export default function ChangelogModal({
             target="_blank"
             rel="noopener noreferrer"
             href="https://github.com/mascanho/rustyseo/releases"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors dark:text-white"
           >
             View all releases →
           </a>
