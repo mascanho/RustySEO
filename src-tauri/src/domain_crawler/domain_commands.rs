@@ -172,6 +172,16 @@ pub async fn get_url_data_command(url: String) -> Result<Value, String> {
     db.get_url_data(url).await.map_err(|e| e.to_string())
 }
 
+// On-demand screenshot for the crawl report cover page — deliberately
+// independent of PageSpeed Insights (opt-in, often not run) and the JS
+// crawling setting; launches its own short-lived headless Chrome tab.
+#[tauri::command]
+pub async fn capture_page_screenshot_command(url: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || super::helpers::screenshot::capture_page_screenshot(&url))
+        .await
+        .map_err(|e| format!("Screenshot task panicked: {}", e))?
+}
+
 #[tauri::command]
 pub async fn get_aggregated_crawl_data_command(data_type: String) -> Result<Value, String> {
     let db = database::get_or_create_shared_db().await.map_err(|e| e.to_string())?;

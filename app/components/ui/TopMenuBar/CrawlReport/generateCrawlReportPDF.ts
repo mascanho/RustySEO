@@ -107,20 +107,59 @@ const extractFinalScreenshot = (psiResults: any): string | null => {
   return null;
 };
 
-// Fetches the full record for the crawl's root page (depth 0) and pulls its
-// Lighthouse screenshot out, if PSI analysis was run for this crawl. Never
-// throws — no PSI data just means the cover page renders without a preview.
-const fetchRootScreenshot = async (crawlData: any[]): Promise<LoadedImage | null> => {
-  const rootPage = crawlData.find((p) => p?.url_depth === 0) || crawlData[0];
-  if (!rootPage?.url) return null;
+// Finds the URL for the crawl's root/homepage — deterministically, not by
+// array position. crawlData is populated as page fetches complete, and under
+// concurrent crawling that finishing order has nothing to do with crawl
+// depth, so crawlData[0] is really just "whichever request finished first"
+// and is NOT reliably the homepage. url_depth === 0 is the actual semantic
+// marker for the seed URL, so it's the only thing trusted here; if that
+// record isn't in the (possibly capped) buffer for some reason, the domain
+// root is reconstructed directly from any crawled URL instead of guessing
+// from array order.
+const findRootPageUrl = (crawlData: any[]): string | null => {
+  const depthZero = crawlData.find((p) => p?.url_depth === 0);
+  if (depthZero?.url) return depthZero.url;
+
+  const anyPage = crawlData.find((p) => p?.url);
+  if (!anyPage?.url) return null;
   try {
-    const fullData: any = await invoke("get_url_data_command", { url: rootPage.url });
-    const shotDataUrl = extractFinalScreenshot(fullData?.psi_results);
-    if (!shotDataUrl) return null;
-    const dims = await loadImageDimensions(shotDataUrl);
-    return { dataUrl: shotDataUrl, width: dims.width, height: dims.height };
+    const u = new URL(anyPage.url);
+    return `${u.protocol}//${u.host}/`;
+  } catch {
+    return anyPage.url;
+  }
+};
+
+// Homepage preview for the cover page. PSI is opt-in and often wasn't run
+// for a given crawl, so this can't rely on it alone: first checks for a free
+// Lighthouse "final-screenshot" (no extra cost, already fetched during the
+// crawl if PSI ran), then falls back to an on-demand headless-Chrome capture
+// (capture_page_screenshot_command) so a preview is available either way.
+// Never throws — a failure on both paths just means no preview.
+const fetchRootScreenshot = async (crawlData: any[]): Promise<LoadedImage | null> => {
+  const rootUrl = findRootPageUrl(crawlData);
+  if (!rootUrl) return null;
+
+  try {
+    const fullData: any = await invoke("get_url_data_command", { url: rootUrl });
+    const psiShot = extractFinalScreenshot(fullData?.psi_results);
+    if (psiShot) {
+      const dims = await loadImageDimensions(psiShot);
+      return { dataUrl: psiShot, width: dims.width, height: dims.height };
+    }
   } catch (error) {
-    console.error("Failed to fetch homepage screenshot:", error);
+    console.error("Failed to check PSI data for a homepage screenshot:", error);
+  }
+
+  try {
+    const capturedShot: string = await invoke("capture_page_screenshot_command", {
+      url: rootUrl,
+    });
+    if (!capturedShot) return null;
+    const dims = await loadImageDimensions(capturedShot);
+    return { dataUrl: capturedShot, width: dims.width, height: dims.height };
+  } catch (error) {
+    console.error("Failed to capture a homepage screenshot:", error);
     return null;
   }
 };
