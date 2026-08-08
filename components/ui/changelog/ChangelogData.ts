@@ -8,6 +8,7 @@ export const changelogData = [
       "Global: Content Planner Calendar bug fix",
       "Global: Version Check Modal with Releases ",
       "Global: Improvement/Suggestion Box",
+      "Global: Improved logo on linux",
       "Deep Crawler: Schema detection export",
       "Deep Crawler: Javascript Crawling in General Settings",
       "Deep Crawler: Context menus on Inlinks and Outlinks tables",
